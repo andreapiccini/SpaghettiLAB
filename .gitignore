@@ -1,0 +1,14 @@
+# KiCad cache
+*-cache.lib
+*.kicad_prl
+*.kicad_pro-bak
+*.bak
+
+# Autosave
+_autosave-*
+
+# Lock files
+*.lck
+
+# Temporary
+*.tmp
