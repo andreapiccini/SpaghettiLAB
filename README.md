@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/spaghetti-logo-blu.png" width="500">
+  <img src="spaghetti-logo-blu.png" width="500">
 </p>
 
 From prototype to product.
