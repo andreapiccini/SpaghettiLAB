@@ -1,7 +1,7 @@
 # Spaghetti LAB
 
 <p align="center">
-  <img src="spaghetti-logo-blu.PNG" width="400">
+  <img src="spaghetti-logo-blu.png" width="400">
 </p>
 
 From prototype to product.
