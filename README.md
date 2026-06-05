@@ -12,3 +12,17 @@ SpaghettiLAB is an open ecosystem of stackable hardware modules, firmware, and s
 - Firmware
 - Software
 - Documentation
+
+
+## Citation
+
+If you use SpaghettiLAB in research, publications,
+articles, videos, blog posts, educational material,
+or derivative projects, please cite:
+
+> Piccini, A. (2026).
+> SpaghettiLAB: Modular Stackable Electronics Platform.
+> GitHub Repository.
+> https://github.com/andreapiccini/SpaghettiLAB
+
+A machine-readable citation file is available in `CITATION.cff`.
