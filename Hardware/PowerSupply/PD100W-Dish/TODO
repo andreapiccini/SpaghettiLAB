@@ -1,0 +1,7 @@
+TODO (Rev.B):
+Add output OR-ing / Ideal Diode stage.
+
+Reason:
+Allow safe parallel operation of multiple PD100W-Dish modules.
+Prevent reverse current/backfeed between stacked power modules.
+Enable future multi-source power sharing (>100W stack).
