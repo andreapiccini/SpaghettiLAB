@@ -26,3 +26,19 @@ or derivative projects, please cite:
 > https://github.com/andreapiccini/SpaghettiLAB
 
 A machine-readable citation file is available in `CITATION.cff`.
+
+## Licensing
+
+SpaghettiLAB uses multiple licenses:
+
+| Content | License |
+
+|----------|----------|
+
+| Software & Firmware | Apache 2.0 |
+
+| Hardware Designs | CERN-OHL-S-2.0 |
+
+| Documentation | CC BY 4.0 |
+
+See the LICENSE files in each directory.
