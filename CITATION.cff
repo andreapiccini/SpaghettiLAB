@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: "SpaghettiLAB"
+message: "If you use SpaghettiLAB in your work, please cite it using the metadata below."
+type: software
+
+authors:
+  - family-names: "Piccini"
+    given-names: "Andrea"
+
+repository-code: "https://github.com/andreapiccini/SpaghettiLAB"
+
+license: "Apache-2.0"
+
+abstract: >
+  SpaghettiLAB is an open-source modular stackable electronics
+  platform designed to simplify prototyping and embedded systems
+  development through magnetically connected functional modules.
+
+keywords:
+  - electronics
+  - embedded
+  - prototyping
+  - hardware
+  - maker
+  - modular
+  - pcb
+
+version: "0.1.0"
+date-released: 2026-06-05
