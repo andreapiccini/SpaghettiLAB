@@ -1,0 +1,5031 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "8e51b5c2-de59-4c7f-b615-a58a9e8e49ba")
+	(paper "A4")
+	(lib_symbols
+		(symbol "Device:D_Schottky"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "D_Schottky"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Schottky diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "diode Schottky"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "TO-???* *_Diode_* *SingleDiode* D_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_Schottky_0_1"
+				(polyline
+					(pts
+						(xy -1.905 0.635) (xy -1.905 1.27) (xy -1.27 1.27) (xy -1.27 -1.27) (xy -0.635 -1.27) (xy -0.635 -0.635)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.27 -1.27) (xy -1.27 0) (xy 1.27 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_Schottky_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Jumper:SolderJumper_3_Open"
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "JP"
+				(at -2.54 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "SolderJumper_3_Open"
+				(at 0 2.794 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 -15.24 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Solder Jumper, 3-pole, open"
+				(at 0 -12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property private "KLC_S5.1" "This is a generic symbol, it has fp-filter, but no default footprint"
+				(at 0 -17.78 0)
+				(show_name yes)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property private "KLC_S3.3" "Graphical-Symbol: thickness is 6mm, fill is background"
+				(at 0 -20.32 0)
+				(show_name yes)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "Solder Jumper SPDT"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "SolderJumper*Open*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "SolderJumper_3_Open_0_1"
+				(polyline
+					(pts
+						(xy -2.54 0) (xy -2.032 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.016 1.016) (xy -1.016 -1.016)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -1.016 -1.016)
+					(mid -2.0276 0)
+					(end -1.016 1.016)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(rectangle
+					(start -0.508 1.016)
+					(end 0.508 -1.016)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -1.27) (xy 0 -1.016)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 1.016 1.016)
+					(mid 2.0276 0)
+					(end 1.016 -1.016)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.016 1.016) (xy 1.016 -1.016)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 0) (xy 2.032 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "SolderJumper_3_Open_1_1"
+				(pin passive line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 2.54)
+					(name "C"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 0 180)
+					(length 2.54)
+					(name "B"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "USBC_PD_mo-easyedapro:AP2112K-3.3TRG1"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "USBC_PD_mo-easyedapro:SOT-25-5_L2.9-W1.6-P0.95-LS2.8-BL"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "https://item.szlcsc.com/datasheet/AP2112K-3.3TRG1/52131.html"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer Part" "AP2112K-3.3TRG1"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer" "DIODES(美台)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier Part" "C51118"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier" "LCSC"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "LCSC Part Name" "输入6V 输出3.3V 600mA"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "AP2112K-3.3TRG1_1_0"
+				(rectangle
+					(start -10.16 5.08)
+					(end 10.16 -5.08)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center -8.89 3.81)
+					(radius 0.381)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin unspecified line
+					(at -12.7 2.54 0)
+					(length 2.54)
+					(name "VIN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -12.7 0 0)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -12.7 -2.54 0)
+					(length 2.54)
+					(name "EN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 -2.54 180)
+					(length 2.54)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 2.54 180)
+					(length 2.54)
+					(name "VOUT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "USBC_PD_mo-easyedapro:CL10A105KB8NNNC"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "C"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "1uF"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "USBC_PD_mo-easyedapro:C0603"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "https://item.szlcsc.com/datasheet/CL10A105KB8NNNC/16531.html"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer Part" "CL10A105KB8NNNC"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer" "SAMSUNG(三星)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier Part" "C15849"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier" "LCSC"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "LCSC Part Name" "1uF ±10% 50V"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "CL10A105KB8NNNC_1_0"
+				(polyline
+					(pts
+						(xy -0.508 0) (xy -2.54 0)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.508 -2.032) (xy -0.508 2.032)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.508 2.032) (xy 0.508 -2.032)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 0) (xy 0.508 0)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin unspecified line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 5.08 0 180)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "USBC_PD_mo-easyedapro:FRC0805J103TS"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "R"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "10kΩ"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "USBC_PD_mo-easyedapro:R0805"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer Part" "FRC0805J103TS"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer" "FOJAN(富捷)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier Part" "C2930231"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier" "LCSC"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "LCSC Part Name" "10kΩ ±5% 125mW 厚膜电阻"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "FRC0805J103TS_1_0"
+				(rectangle
+					(start -2.54 1.27)
+					(end 2.54 -1.27)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin unspecified line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 5.08 0 180)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "USBC_PD_mo-easyedapro:Ground-GND"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "GND"
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.5748 1.5748)
+					)
+				)
+			)
+			(property "Footprint" "USBC_PD_mo-easyedapro:"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Ground-GND_1_0"
+				(polyline
+					(pts
+						(xy -2.54 -2.54) (xy 2.54 -2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 -3.302) (xy 1.778 -3.302)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.016 -4.064) (xy 1.016 -4.064)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.254 -4.826) (xy 0.254 -4.826)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin power_in line
+					(at 0 0 270)
+					(length 2.54)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "USBC_PD_mo-easyedapro:Power-VCC"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.5748 1.5748)
+					)
+				)
+			)
+			(property "Footprint" "USBC_PD_mo-easyedapro:"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Power-VCC_1_0"
+				(polyline
+					(pts
+						(xy -1.27 2.54) (xy 1.27 2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin power_in line
+					(at 0 0 90)
+					(length 1.27)
+					(name "VHV"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0.0254 0.0254)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "USBC_PD_mo-easyedapro:TYPEC-324G-BCP24"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "USB"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "USBC_PD_mo-easyedapro:USB-C-SMD_TYPEC-324G-BCP24"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "https://item.szlcsc.com/datasheet/TYPEC-324G-BCP24/998515.html"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer Part" "TYPEC-324G-BCP24"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Manufacturer" "XUNPU(讯普)"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier Part" "C920230"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Supplier" "LCSC"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "LCSC Part Name" "Type-C 母 卧贴"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TYPEC-324G-BCP24_1_0"
+				(rectangle
+					(start -12.7 20.32)
+					(end 10.16 -17.78)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center -10.16 17.78)
+					(radius 0.381)
+					(stroke
+						(width 0.254)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin unspecified line
+					(at -5.08 -20.32 90)
+					(length 2.54)
+					(name "EP"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -2.54 -20.32 90)
+					(length 2.54)
+					(name "EP"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 0 -20.32 90)
+					(length 2.54)
+					(name "EP"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 2.54 -20.32 90)
+					(length 2.54)
+					(name "EP"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 15.24 0)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 12.7 0)
+					(length 2.54)
+					(name "SSTXP1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 10.16 0)
+					(length 2.54)
+					(name "SSTXn1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 7.62 0)
+					(length 2.54)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 5.08 0)
+					(length 2.54)
+					(name "CC1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 2.54 0)
+					(length 2.54)
+					(name "DP1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 0 0)
+					(length 2.54)
+					(name "DN1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 -2.54 0)
+					(length 2.54)
+					(name "SUB1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 -5.08 0)
+					(length 2.54)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 -7.62 0)
+					(length 2.54)
+					(name "SSRXn2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A10"
+						(effects
+							(font
+								(size 0.8466 0.8466)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 -10.16 0)
+					(length 2.54)
+					(name "SSRXp2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A11"
+						(effects
+							(font
+								(size 0.8466 0.8466)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at -15.24 -12.7 0)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A12"
+						(effects
+							(font
+								(size 0.8466 0.8466)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 -12.7 180)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 -10.16 180)
+					(length 2.54)
+					(name "SSTXp2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 -7.62 180)
+					(length 2.54)
+					(name "SSTXn2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 -5.08 180)
+					(length 2.54)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 -2.54 180)
+					(length 2.54)
+					(name "CC2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 0 180)
+					(length 2.54)
+					(name "DP2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 2.54 180)
+					(length 2.54)
+					(name "DN2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 5.08 180)
+					(length 2.54)
+					(name "SUB2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 7.62 180)
+					(length 2.54)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 10.16 180)
+					(length 2.54)
+					(name "SSRXn1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B10"
+						(effects
+							(font
+								(size 0.8466 0.8466)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 12.7 180)
+					(length 2.54)
+					(name "SSRXp1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B11"
+						(effects
+							(font
+								(size 0.8466 0.8466)
+							)
+						)
+					)
+				)
+				(pin unspecified line
+					(at 12.7 15.24 180)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B12"
+						(effects
+							(font
+								(size 0.8466 0.8466)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(text "LOW DROPOUT"
+		(exclude_from_sim no)
+		(at 77.724 53.848 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "19a9a330-1337-4fb5-b6d4-0cbcc2bc709b")
+	)
+	(text "LOW DROPOUT"
+		(exclude_from_sim no)
+		(at 239.522 70.104 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "a0778bf4-a091-4edf-bd78-ccf0083b4e98")
+	)
+	(junction
+		(at 229.87 66.04)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2f50f6ac-669b-49a4-bee6-b547711c4272")
+	)
+	(junction
+		(at 154.94 107.95)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "52c520e5-e772-4c7a-b611-e0a56b442884")
+	)
+	(junction
+		(at 173.99 63.5)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "56bb3f4c-4fb3-459b-923a-f368603a6304")
+	)
+	(junction
+		(at 118.11 148.59)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5805bf29-f11c-41dc-80f4-bdf9fb3cbe53")
+	)
+	(junction
+		(at 229.87 71.12)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a5fb0d08-5a05-4806-8d83-092e3997cf55")
+	)
+	(junction
+		(at 167.64 63.5)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "aabffbde-6b00-467d-b04d-769d68eec237")
+	)
+	(junction
+		(at 85.09 63.5)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c710b735-aa9a-40b2-b61a-ae5c4aae1643")
+	)
+	(junction
+		(at 85.09 107.95)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "cb615f16-a1b7-43c5-9ca0-f90d73e4d3c7")
+	)
+	(junction
+		(at 119.38 148.59)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "cf7aea84-1799-482f-86d3-64aef431868b")
+	)
+	(junction
+		(at 120.65 148.59)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d53c956c-11db-4eae-800a-34c55d817c96")
+	)
+	(junction
+		(at 154.94 63.5)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "e5bd6e12-3cc2-4aec-8000-128dc479c2b6")
+	)
+	(no_connect
+		(at 133.35 123.19)
+		(uuid "0c238846-b953-4d97-ae4c-faf075ada745")
+	)
+	(no_connect
+		(at 105.41 105.41)
+		(uuid "18f938df-7a06-42ce-9d50-935142085a94")
+	)
+	(no_connect
+		(at 105.41 118.11)
+		(uuid "26441d80-8467-4392-b995-c698a9402dd9")
+	)
+	(no_connect
+		(at 133.35 110.49)
+		(uuid "36610c2d-6c17-4583-ab2c-97373ffa0697")
+	)
+	(no_connect
+		(at 133.35 105.41)
+		(uuid "384bd795-3217-4558-9a73-c4021848c293")
+	)
+	(no_connect
+		(at 105.41 125.73)
+		(uuid "4fdae150-2285-466e-9c63-f4bb3c84b6d5")
+	)
+	(no_connect
+		(at 133.35 102.87)
+		(uuid "6eda071b-e992-4325-aa35-9454ebbbc97b")
+	)
+	(no_connect
+		(at 133.35 125.73)
+		(uuid "77f401f8-38a4-4d4b-8f4b-c3c92e536d4c")
+	)
+	(no_connect
+		(at 105.41 102.87)
+		(uuid "adbc5256-209a-4dca-8564-12858ddc71ac")
+	)
+	(no_connect
+		(at 105.41 123.19)
+		(uuid "f0b3524c-b36e-440a-b938-709fa60cc26b")
+	)
+	(no_connect
+		(at 213.36 76.2)
+		(uuid "ff27b6db-6c42-4c96-a51f-988379c0e174")
+	)
+	(wire
+		(pts
+			(xy 144.78 82.55) (xy 144.78 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "06059a16-c1c2-4c66-8e09-62563dd38174")
+	)
+	(wire
+		(pts
+			(xy 144.78 135.89) (xy 144.78 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0811e995-f951-46e1-873c-d69656eccd1b")
+	)
+	(wire
+		(pts
+			(xy 76.2 110.49) (xy 105.41 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0bca5f10-c921-4326-a8aa-f7c81fa7c725")
+	)
+	(wire
+		(pts
+			(xy 76.2 135.89) (xy 76.2 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0e6181ce-f451-4ac7-9d03-45b47a55bd54")
+	)
+	(wire
+		(pts
+			(xy 173.99 63.5) (xy 173.99 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "172983e2-c0fb-4e52-ad4f-dae63a1f25d0")
+	)
+	(wire
+		(pts
+			(xy 184.15 63.5) (xy 184.15 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1b172038-7519-4c0c-8e83-66264ea24779")
+	)
+	(wire
+		(pts
+			(xy 154.94 63.5) (xy 167.64 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1bfef4e0-2154-4139-8287-d7df73bc63f7")
+	)
+	(wire
+		(pts
+			(xy 154.94 120.65) (xy 154.94 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "21d1fdcb-ae5d-4054-8400-25a5af586735")
+	)
+	(wire
+		(pts
+			(xy 229.87 71.12) (xy 213.36 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "23a06fc8-075f-4ee6-9b35-ab40ff8d5f8a")
+	)
+	(wire
+		(pts
+			(xy 85.09 120.65) (xy 85.09 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "25d5047c-ce33-455a-8c01-40b736f1c532")
+	)
+	(wire
+		(pts
+			(xy 120.65 148.59) (xy 119.38 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "33eecf89-6885-4eac-b60c-f89d6f3e2357")
+	)
+	(wire
+		(pts
+			(xy 105.41 113.03) (xy 99.06 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "36999630-86eb-4738-a70c-9622e8e7ddfc")
+	)
+	(wire
+		(pts
+			(xy 62.23 63.5) (xy 69.85 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "38d10586-a364-4b5f-9bf9-ffd24742874f")
+	)
+	(wire
+		(pts
+			(xy 229.87 74.93) (xy 229.87 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "40541621-014c-4230-ae0c-8b169caf5b4f")
+	)
+	(wire
+		(pts
+			(xy 91.44 100.33) (xy 105.41 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "40da582d-e0e2-4252-a6f0-1ff701d6584f")
+	)
+	(wire
+		(pts
+			(xy 91.44 128.27) (xy 105.41 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4278af65-4682-4334-8a35-0a401c7617a8")
+	)
+	(wire
+		(pts
+			(xy 123.19 148.59) (xy 120.65 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "42898907-f829-4b95-82c7-58780e917f81")
+	)
+	(wire
+		(pts
+			(xy 242.57 66.04) (xy 250.19 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "43dd85d6-0d66-423f-a68e-ba84782b425f")
+	)
+	(wire
+		(pts
+			(xy 115.57 148.59) (xy 118.11 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4b905aa4-70a0-460d-aef7-961ff567c8bb")
+	)
+	(wire
+		(pts
+			(xy 229.87 91.44) (xy 229.87 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "547ae2fe-e507-4bec-804e-5851310addb0")
+	)
+	(wire
+		(pts
+			(xy 91.44 135.89) (xy 91.44 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5dca2127-2b95-4067-9090-7a6782a85aaa")
+	)
+	(wire
+		(pts
+			(xy 118.11 148.59) (xy 119.38 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "69cd9919-9dd1-45b4-bbe8-2efa9aec51fa")
+	)
+	(wire
+		(pts
+			(xy 85.09 107.95) (xy 105.41 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6ea72472-71d0-4a6a-9edb-7be6af877c2e")
+	)
+	(wire
+		(pts
+			(xy 184.15 91.44) (xy 184.15 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6f59f45d-59fc-4ed3-b368-9c7bad5e21df")
+	)
+	(wire
+		(pts
+			(xy 173.99 81.28) (xy 173.99 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7143761c-bb89-4590-9214-168316bdca52")
+	)
+	(wire
+		(pts
+			(xy 167.64 63.5) (xy 167.64 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "715e1c27-9c3d-4894-8620-c04e62072818")
+	)
+	(wire
+		(pts
+			(xy 133.35 120.65) (xy 154.94 120.65)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7270905c-e8d3-4eaa-a64b-e5c2f0a413da")
+	)
+	(wire
+		(pts
+			(xy 144.78 128.27) (xy 133.35 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7799ccd6-4c4e-4e1e-8adc-df8a4d940f2b")
+	)
+	(wire
+		(pts
+			(xy 123.19 135.89) (xy 123.19 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "78705eec-8a95-4195-831a-231cc1259f61")
+	)
+	(wire
+		(pts
+			(xy 154.94 63.5) (xy 154.94 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7fa006e0-0b8e-479a-8be0-0273d42d24a3")
+	)
+	(wire
+		(pts
+			(xy 158.75 118.11) (xy 158.75 129.54)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "82c79830-7658-4674-b80f-175eba816ece")
+	)
+	(wire
+		(pts
+			(xy 76.2 110.49) (xy 76.2 125.73)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8972f96a-79a2-473a-901e-d7822f961409")
+	)
+	(wire
+		(pts
+			(xy 167.64 87.63) (xy 167.64 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8eacf0eb-4015-410e-b2fc-abaa0937203c")
+	)
+	(wire
+		(pts
+			(xy 91.44 82.55) (xy 91.44 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "99b0b2b1-0312-433c-9ea6-84f039878d31")
+	)
+	(wire
+		(pts
+			(xy 229.87 59.69) (xy 229.87 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a2ec92c7-2cf5-4747-9ab5-ec7bf0884b67")
+	)
+	(wire
+		(pts
+			(xy 120.65 148.59) (xy 120.65 135.89)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a34f139a-c549-4737-bc93-8f1e6de18154")
+	)
+	(wire
+		(pts
+			(xy 139.7 115.57) (xy 133.35 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a4611819-8efc-48ce-81cb-74637c81816b")
+	)
+	(wire
+		(pts
+			(xy 184.15 73.66) (xy 187.96 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b388c3e8-482d-4dc9-bee6-8606a7369e46")
+	)
+	(wire
+		(pts
+			(xy 85.09 63.5) (xy 154.94 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b87f0848-a152-4343-ab0c-1dfa4e384ce8")
+	)
+	(wire
+		(pts
+			(xy 139.7 113.03) (xy 133.35 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bbc6da7f-06e0-4883-bf60-f9a39c783d3d")
+	)
+	(wire
+		(pts
+			(xy 187.96 76.2) (xy 177.8 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bcec31f7-eaa5-4bc5-933f-0b3b691adfc4")
+	)
+	(wire
+		(pts
+			(xy 229.87 66.04) (xy 229.87 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bef94f2a-3873-4bbc-bc60-a2206bc0bbcf")
+	)
+	(wire
+		(pts
+			(xy 229.87 66.04) (xy 234.95 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c0e41bc7-5caa-4e5a-b8ba-f7ce3808cfff")
+	)
+	(wire
+		(pts
+			(xy 77.47 63.5) (xy 85.09 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c34c55d5-2d34-40ff-aa07-a3741227a487")
+	)
+	(wire
+		(pts
+			(xy 105.41 115.57) (xy 99.06 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c732a655-f031-462c-bf5f-ae8a45bb4fce")
+	)
+	(wire
+		(pts
+			(xy 115.57 148.59) (xy 115.57 135.89)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c9e46db7-31e8-4a9e-89fd-144f00cb82e2")
+	)
+	(wire
+		(pts
+			(xy 119.38 156.21) (xy 119.38 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "caf54bf2-fd8b-450e-8bc5-d7d7fd4d931c")
+	)
+	(wire
+		(pts
+			(xy 85.09 63.5) (xy 85.09 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d1b48ff9-b5c0-4729-8429-249cb2a16014")
+	)
+	(wire
+		(pts
+			(xy 184.15 71.12) (xy 187.96 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d1be3e7b-709c-4cca-98bf-9f26140108a2")
+	)
+	(wire
+		(pts
+			(xy 62.23 54.61) (xy 62.23 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d5e20510-2bcf-4ded-b1aa-f2afc6a3639b")
+	)
+	(wire
+		(pts
+			(xy 158.75 118.11) (xy 133.35 118.11)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d6106f05-3e51-4c45-a8be-a9ab4db903b8")
+	)
+	(wire
+		(pts
+			(xy 173.99 63.5) (xy 184.15 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d81a4de8-02e4-4276-b4aa-2c9a3337f710")
+	)
+	(wire
+		(pts
+			(xy 154.94 107.95) (xy 133.35 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e1f3fb78-c98e-4739-86d0-fbfa027b923b")
+	)
+	(wire
+		(pts
+			(xy 167.64 63.5) (xy 173.99 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ea22410d-605f-46a5-b768-e4e48fca0784")
+	)
+	(wire
+		(pts
+			(xy 118.11 135.89) (xy 118.11 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "edaab234-1286-48bc-8d69-537dca777b90")
+	)
+	(wire
+		(pts
+			(xy 250.19 66.04) (xy 250.19 59.69)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ee5eea7b-7436-4def-9bf5-e34477d403b6")
+	)
+	(wire
+		(pts
+			(xy 158.75 143.51) (xy 158.75 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f7031a69-d766-4cb2-a1dc-69e34e55116f")
+	)
+	(wire
+		(pts
+			(xy 105.41 120.65) (xy 85.09 120.65)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f90cd1b4-7761-4b88-8f8a-28a21ad77f7a")
+	)
+	(wire
+		(pts
+			(xy 144.78 100.33) (xy 133.35 100.33)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fcd0a88b-19ff-42d0-ac2f-1b82c92e3a1f")
+	)
+	(label "GND"
+		(at 120.65 148.59 0)
+		(effects
+			(font
+				(size 1.2446 1.2446)
+			)
+			(justify left bottom)
+		)
+		(uuid "28ac2471-eae8-4123-80f4-7e8e44f98fc9")
+	)
+	(label "USBC_CC1"
+		(at 76.2 124.46 90)
+		(effects
+			(font
+				(size 1.2446 1.2446)
+			)
+			(justify left top)
+		)
+		(uuid "6efd8bcb-89f3-4548-97a8-330eeedefa57")
+	)
+	(label "USBC_CC2"
+		(at 158.75 128.27 90)
+		(effects
+			(font
+				(size 1.2446 1.2446)
+			)
+			(justify left bottom)
+		)
+		(uuid "e9f2be4b-40fc-4508-bd74-7dd468ee7a80")
+	)
+	(hierarchical_label "USBC_P"
+		(shape input)
+		(at 99.06 113.03 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "121a6c4b-bc72-4882-a147-8921959d2374")
+	)
+	(hierarchical_label "USBC_N"
+		(shape input)
+		(at 99.06 115.57 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "1cfdc9f0-aa43-4f4e-b4db-61ffaa415c22")
+	)
+	(hierarchical_label "USBC_P"
+		(shape input)
+		(at 139.7 115.57 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "6465b66c-8b35-4adb-9e57-2d44b29a5d0a")
+	)
+	(hierarchical_label "USBC_N"
+		(shape input)
+		(at 139.7 113.03 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "9ce79169-c1e8-450d-82b9-4ec8e16d94d9")
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 144.78 82.55 0)
+		(mirror x)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "0491b27e-247f-49ce-a7dd-53ccdb089337")
+		(property "Reference" "#PWR05"
+			(at 144.78 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 144.78 76.2 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 144.78 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 144.78 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 144.78 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "de96b48c-481f-4a47-b4e5-73d77e4c85dd")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR05")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 184.15 91.44 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "0f1e2d84-e24e-42bf-ac98-5fc7b2c21d32")
+		(property "Reference" "#PWR07"
+			(at 184.15 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 184.15 97.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 184.15 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 184.15 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 184.15 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "918809d0-d2ac-4b04-80f5-e4554945e93c")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR07")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:CL10A105KB8NNNC")
+		(at 229.87 80.01 90)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "24290e6d-6041-4847-b06b-7b9257d89ff9")
+		(property "Reference" "C66"
+			(at 233.68 80.01 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1uF"
+			(at 233.68 82.55 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:C0603"
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://item.szlcsc.com/datasheet/CL10A105KB8NNNC/16531.html"
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Field42" ""
+			(at -3.81 273.05 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer Part" "CL10A105KB8NNNC"
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "SAMSUNG(三星)"
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier Part" "C15849"
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier" "LCSC"
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC Part Name" "1uF ±10% 50V"
+			(at 229.87 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "566ce526-67bc-495d-975f-1c14a8ce397d")
+		)
+		(pin "1"
+			(uuid "8e4dba1c-3479-4254-9832-314d346872cd")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "C66")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 119.38 156.21 0)
+		(mirror y)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "271700b7-da2d-4a6e-a24e-368d5c602cf0")
+		(property "Reference" "#PWR04"
+			(at 119.38 156.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 119.38 162.56 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 119.38 156.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 119.38 156.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 119.38 156.21 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ceeb27d4-b3e0-489b-bc75-58d01df77145")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR04")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:FRC0805J103TS")
+		(at 158.75 134.62 90)
+		(mirror x)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "29899db0-7bfd-42b5-b26d-8ec4ba9e1439")
+		(property "Reference" "R38"
+			(at 156.21 134.62 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left top)
+			)
+		)
+		(property "Value" "5.1kΩ"
+			(at 156.21 132.08 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left top)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:R0805"
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Field42" ""
+			(at 392.43 -3.81 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer Part" "FRC0805J103TS"
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "FOJAN(富捷)"
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier Part" "C2930231"
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier" "LCSC"
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC Part Name" "10kΩ ±5% 125mW 厚膜电阻"
+			(at 158.75 134.62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "40c196fe-6c69-4ed9-bb8f-0fefcaf529d8")
+		)
+		(pin "2"
+			(uuid "a34606f1-99cb-4a9f-9df5-9c8ae4a9b5cf")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "R38")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:AP2112K-3.3TRG1")
+		(at 200.66 73.66 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "33630243-74ed-46a3-a80c-2662686a81d5")
+		(property "Reference" "U16"
+			(at 190.5 68.58 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Value" "AP2112K-3.3TRG1"
+			(at 190.5 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:SOT-25-5_L2.9-W1.6-P0.95-LS2.8-BL"
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://item.szlcsc.com/datasheet/AP2112K-3.3TRG1/52131.html"
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Field42" ""
+			(at -3.81 273.05 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer Part" "AP2112K-3.3TRG1"
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "DIODES(美台)"
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier Part" "C51118"
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier" "LCSC"
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC Part Name" "输入6V 输出3.3V 600mA"
+			(at 200.66 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "1cdb5f29-107e-4a2c-9aeb-c4e84b6b5503")
+		)
+		(pin "1"
+			(uuid "09ed46da-201b-4fa2-a6ab-65fa634d5ec2")
+		)
+		(pin "3"
+			(uuid "0f5bb1e8-d643-4085-a4b5-ae9c14d95bba")
+		)
+		(pin "5"
+			(uuid "f6fa9a12-a1f9-4106-954b-34784d4afbdf")
+		)
+		(pin "4"
+			(uuid "c102167c-46cc-4571-a689-e283c84e63f6")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "U16")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 76.2 139.7 0)
+		(mirror y)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3a06c9f8-18be-4674-a8de-415e2c7b2bcb")
+		(property "Reference" "#PWR08"
+			(at 76.2 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 76.2 146.05 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 76.2 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 76.2 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 76.2 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e42f71f5-04fb-4215-b290-12e4cf27f2b7")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 158.75 143.51 0)
+		(mirror y)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "47f1c092-09c6-42f1-9538-ab8916c657f9")
+		(property "Reference" "#PWR09"
+			(at 158.75 143.51 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 158.75 149.86 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 158.75 143.51 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 158.75 143.51 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 158.75 143.51 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c349359d-68b6-42a1-b0b8-fceeab6c6fc0")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR09")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:FRC0805J103TS")
+		(at 76.2 130.81 90)
+		(mirror x)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "556b33a3-e7bc-4bfe-91a4-db86ba962f7e")
+		(property "Reference" "R41"
+			(at 73.66 130.81 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left top)
+			)
+		)
+		(property "Value" "5.1kΩ"
+			(at 73.66 128.27 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left top)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:R0805"
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Field42" ""
+			(at 309.88 -7.62 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer Part" "FRC0805J103TS"
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "FOJAN(富捷)"
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier Part" "C2930231"
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier" "LCSC"
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC Part Name" "10kΩ ±5% 125mW 厚膜电阻"
+			(at 76.2 130.81 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "6bc04583-7103-434e-a452-dba665bf40ef")
+		)
+		(pin "2"
+			(uuid "c0988dcf-afdb-4ccd-ac88-66a45ba7fbae")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "R41")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:D_Schottky")
+		(at 238.76 66.04 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "57645326-6799-43c0-bebf-77dd5332f54f")
+		(property "Reference" "D4"
+			(at 239.0775 59.69 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "D_Schottky"
+			(at 239.0775 62.23 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 238.76 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 238.76 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Schottky diode"
+			(at 238.76 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "45b98259-9ba5-42a1-918e-f4f40152e4e6")
+		)
+		(pin "1"
+			(uuid "174e74a4-be98-4b9a-bbbb-1623d649589b")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "D4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 91.44 135.89 0)
+		(mirror y)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "66961acd-09b6-4be2-935a-7d3b1d283543")
+		(property "Reference" "#PWR03"
+			(at 91.44 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 91.44 142.24 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 91.44 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 91.44 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 91.44 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "a6548272-0f73-438b-bf23-c8725b661eeb")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR03")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
+		(at 62.23 54.61 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "70455be5-ad86-4ed9-83cf-7d45daabd904")
+		(property "Reference" "#PWR038"
+			(at 62.23 54.61 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VHV"
+			(at 62.23 50.8 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 62.23 54.61 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 62.23 54.61 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 62.23 54.61 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "5a733d4d-767c-466c-87af-e4bbec51e62b")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR038")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 173.99 92.71 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "72f7dae0-bcca-4dab-ad4a-675809fd8161")
+		(property "Reference" "#PWR039"
+			(at 173.99 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 173.99 99.06 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 173.99 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 173.99 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 173.99 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "fbcdb478-73ac-4a42-b746-c670c2bab80d")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR039")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Jumper:SolderJumper_3_Open")
+		(at 173.99 76.2 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "8dbebdbe-c1ba-4d1b-8a98-05700f0162a4")
+		(property "Reference" "JP1"
+			(at 171.45 74.9299 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "SolderJumper_3_Open"
+			(at 171.45 77.4699 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 173.99 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 189.23 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Solder Jumper, 3-pole, open"
+			(at 186.69 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property private "KLC_S5.1" "This is a generic symbol, it has fp-filter, but no default footprint"
+			(at 191.77 76.2 0)
+			(hide yes)
+			(show_name yes)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property private "KLC_S3.3" "Graphical-Symbol: thickness is 6mm, fill is background"
+			(at 194.31 76.2 0)
+			(hide yes)
+			(show_name yes)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "0adc88f5-54d4-420c-8b0d-030cc9dcb05b")
+		)
+		(pin "3"
+			(uuid "d316a1ac-237f-444b-b12f-49cf933f2dbe")
+		)
+		(pin "1"
+			(uuid "a63cb779-7f90-43a7-80c3-41ced578d900")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "JP1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:TYPEC-324G-BCP24")
+		(at 120.65 115.57 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "93cb3dcd-9cd1-4aa7-a115-4517bc240deb")
+		(property "Reference" "USB4"
+			(at 107.95 95.25 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Value" "TYPEC-324G-BCP24"
+			(at 107.95 139.7 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:USB-C-SMD_TYPEC-324G-BCP24"
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://item.szlcsc.com/datasheet/TYPEC-324G-BCP24/998515.html"
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer Part" "TYPEC-324G-BCP24"
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "XUNPU(讯普)"
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier Part" "C920230"
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier" "LCSC"
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC Part Name" "Type-C 母 卧贴"
+			(at 120.65 115.57 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "A6"
+			(uuid "ee9415b4-d192-4538-9eca-46c509bf7660")
+		)
+		(pin "B7"
+			(uuid "07c71be6-84eb-4baa-aa0a-efcec5e7eb00")
+		)
+		(pin "A8"
+			(uuid "86da74e1-1165-4636-8536-b9ae0569be21")
+		)
+		(pin "A11"
+			(uuid "a81a5298-3047-402b-acc0-78af4d8c9bf8")
+		)
+		(pin "B12"
+			(uuid "97330f51-40a2-485a-800b-bc415e5aeb32")
+		)
+		(pin "A4"
+			(uuid "5c0b6468-6754-4af2-b3e2-76b11fab9a0b")
+		)
+		(pin "B6"
+			(uuid "4f21fcea-c730-47a1-b1c1-befd7208994f")
+		)
+		(pin "A10"
+			(uuid "10551694-99bf-4457-b8c7-525bff299611")
+		)
+		(pin "A5"
+			(uuid "ac0cbb9a-3501-4524-b335-13fe45471960")
+		)
+		(pin "B9"
+			(uuid "4e39f7f6-1efc-435d-baa2-f105aa736809")
+		)
+		(pin "A12"
+			(uuid "5f274ba1-659e-43d1-b1d1-abb3d27d30d3")
+		)
+		(pin "B10"
+			(uuid "19b551da-84ec-4931-ad27-924090609e3a")
+		)
+		(pin "B11"
+			(uuid "4374fb7e-98fe-4b89-809a-30444029f05d")
+		)
+		(pin "B3"
+			(uuid "c6a7d84f-9ece-4cb4-9ad3-dd1c3179e903")
+		)
+		(pin "B5"
+			(uuid "a53ef9ce-7167-482e-8295-4e9b773588d5")
+		)
+		(pin "B8"
+			(uuid "3ac6d3c8-d9d3-40ef-a91c-d7eff4ae1dad")
+		)
+		(pin "A9"
+			(uuid "5aad1027-99f1-4ba3-b6da-cd37dc1da92c")
+		)
+		(pin "A7"
+			(uuid "aa7492ef-9456-497e-b760-2bb0925333cb")
+		)
+		(pin "B4"
+			(uuid "05439902-6891-4782-8aa4-9b866eeb85c9")
+		)
+		(pin "B1"
+			(uuid "29366416-fb51-4093-8eb6-e4ce4c082cbb")
+		)
+		(pin "B2"
+			(uuid "589bba64-a4bc-412e-9d4f-65ac178c249c")
+		)
+		(pin "1"
+			(uuid "9971590f-f07d-4477-848a-af6e1eadd13f")
+		)
+		(pin "A1"
+			(uuid "c955bbd1-5f9c-47d5-a525-a10b2fc0ef88")
+		)
+		(pin "2"
+			(uuid "7b8eb198-94cc-4184-808c-e23b639380b8")
+		)
+		(pin "4"
+			(uuid "7951200a-f8c1-41a2-b988-0c7e1affebc3")
+		)
+		(pin "A3"
+			(uuid "6955b55d-4909-455b-87c1-48913e788257")
+		)
+		(pin "A2"
+			(uuid "5091cedc-f249-4e6f-9a09-ebac4f6284e5")
+		)
+		(pin "3"
+			(uuid "b3797acc-9dd7-4996-8da0-1b1c859486ab")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "USB4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 144.78 135.89 0)
+		(mirror y)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "951366b6-81fb-4f82-8d5a-0670c169f0fa")
+		(property "Reference" "#PWR06"
+			(at 144.78 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 144.78 142.24 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 144.78 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 144.78 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 144.78 135.89 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "0258536d-6068-4227-8065-26165acc47df")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR06")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:CL10A105KB8NNNC")
+		(at 167.64 82.55 90)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "9beb7fad-5360-49b9-a565-dedb30619087")
+		(property "Reference" "C65"
+			(at 171.45 82.55 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1uF"
+			(at 171.45 85.09 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.2446 1.2446)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:C0603"
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" "https://item.szlcsc.com/datasheet/CL10A105KB8NNNC/16531.html"
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Field42" ""
+			(at -10.16 273.05 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer Part" "CL10A105KB8NNNC"
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "SAMSUNG(三星)"
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier Part" "C15849"
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Supplier" "LCSC"
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC Part Name" "1uF ±10% 50V"
+			(at 167.64 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c5cbaa5f-439c-4bcb-9192-d8fb148f6ac6")
+		)
+		(pin "2"
+			(uuid "d6a76e6e-071a-450b-b78d-bf62f50ca400")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "C65")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
+		(at 250.19 59.69 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "9db90cf9-e713-4910-b11f-5b3e8272bb5e")
+		(property "Reference" "#PWR030"
+			(at 250.19 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VLOGIC"
+			(at 250.19 55.88 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 250.19 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 250.19 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 250.19 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "41773a4e-8dba-48fb-ba2b-2ca5e4a68c83")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR030")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 229.87 91.44 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "a2578f31-0cd4-40d5-8753-6211c116b2c9")
+		(property "Reference" "#PWR020"
+			(at 229.87 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 229.87 97.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 229.87 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 229.87 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 229.87 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "61ba7242-1970-4280-acdc-cc80ec51f50f")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR020")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
+		(at 229.87 59.69 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "a3924c72-1679-43f5-8b22-537ea53f71ed")
+		(property "Reference" "#PWR015"
+			(at 229.87 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "3.3V"
+			(at 229.87 55.88 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 229.87 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 229.87 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 229.87 59.69 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "95db503d-799e-49fd-8864-5e8b5631c36b")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR015")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 167.64 92.71 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bf2becf8-4433-49ec-9519-7b95825f0bc6")
+		(property "Reference" "#PWR01"
+			(at 167.64 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 167.64 99.06 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 167.64 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 167.64 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 167.64 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "aeafdd8d-0560-4226-8caf-c155d1598d7c")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR01")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Ground-GND")
+		(at 91.44 82.55 0)
+		(mirror x)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d148b76f-8db0-473e-bf17-338c83b26242")
+		(property "Reference" "#PWR02"
+			(at 91.44 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 91.44 76.2 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 91.44 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 91.44 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 91.44 82.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "be8eff4a-98f3-43d0-8c8c-ab35bcb0392b")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "#PWR02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:D_Schottky")
+		(at 73.66 63.5 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d3184298-029f-4850-988d-9f44219f559b")
+		(property "Reference" "D3"
+			(at 73.3425 57.15 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "D_Schottky"
+			(at 73.3425 59.69 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 73.66 63.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 73.66 63.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Schottky diode"
+			(at 73.66 63.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "ff6d148b-16c2-4047-b3b8-e06ee27e32d7")
+		)
+		(pin "1"
+			(uuid "5efdde7e-c3ec-4ab0-b207-e3a716d6e170")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8"
+					(reference "D3")
+					(unit 1)
+				)
+			)
+		)
+	)
+)

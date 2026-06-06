@@ -488,7 +488,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "USBC_PD_module.kicad_pro",
+    "filename": "PD100W-Dish.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -643,8 +643,8 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "USBC_PD_module.kicad_sch",
-        "name": "Schematic1",
+        "filename": "PD100W-Dish.kicad_sch",
+        "name": "PD100W-Dish",
         "uuid": "82bc748d-f4cf-4820-9c2e-ff33773d95d0"
       }
     ],
