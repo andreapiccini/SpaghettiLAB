@@ -13,6 +13,12 @@ SpaghettiLAB is an open ecosystem of stackable hardware modules, firmware, and s
 - Software
 - Documentation
 
+## KiCAD configs
+Import Guy configuration:
+Library save location:
+${KIPRJMOD}/../../Libraries
+Single lib name:
+SpaghettiLAB
 
 ## Citation
 
