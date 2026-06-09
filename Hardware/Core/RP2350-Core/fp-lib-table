@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "Libraries") (type "KiCad") (uri "C:/Users/andrea.piccini/Desktop/spaghetti-lab/SpaghettiLAB/Hardware/Libraries") (options "") (descr ""))
+)

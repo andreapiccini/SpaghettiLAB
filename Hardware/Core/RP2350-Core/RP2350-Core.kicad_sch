@@ -47,16 +47,6 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 114.3) (xy 119.38 114.3)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "15b1e17f-298e-4eb6-b284-240d2f3f0d0e")
-	)
-	(wire
-		(pts
 			(xy 130.81 57.15) (xy 130.81 97.79)
 		)
 		(stroke
@@ -247,26 +237,6 @@
 	)
 	(wire
 		(pts
-			(xy 76.2 111.76) (xy 119.38 111.76)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a8637082-509a-45cc-91c7-733b20f8a80c")
-	)
-	(wire
-		(pts
-			(xy 72.39 55.88) (xy 72.39 114.3)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bee6b606-637c-4bc7-beb2-96c6a62e4ed9")
-	)
-	(wire
-		(pts
 			(xy 140.97 57.15) (xy 140.97 97.79)
 		)
 		(stroke
@@ -274,16 +244,6 @@
 			(type default)
 		)
 		(uuid "d71bddd3-5b5f-40d8-bf63-e8742de33635")
-	)
-	(wire
-		(pts
-			(xy 76.2 55.88) (xy 76.2 111.76)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d9492bbe-c6d2-4813-8074-6503214a7e8c")
 	)
 	(wire
 		(pts
@@ -712,72 +672,6 @@
 		)
 	)
 	(sheet
-		(at 52.07 34.29)
-		(size 40.64 21.59)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(fill
-			(color 0 0 0 0)
-		)
-		(uuid "3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8")
-		(property "Sheetname" "USB"
-			(at 52.07 33.5784 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Sheetfile" "USB.kicad_sch"
-			(at 52.07 56.4646 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left top)
-			)
-		)
-		(pin "USBC_N" input
-			(at 76.2 55.88 270)
-			(uuid "0f12a5e5-b084-4f37-8011-58772b4af05e")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(pin "USBC_P" input
-			(at 72.39 55.88 270)
-			(uuid "5a66718a-874c-4a18-8998-7c26f41d487b")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(instances
-			(project "RP2350-Core"
-				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561"
-					(page "3")
-				)
-			)
-		)
-	)
-	(sheet
 		(at 119.38 97.79)
 		(size 123.19 30.48)
 		(exclude_from_sim no)
@@ -933,26 +827,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-			)
-		)
-		(pin "USBC_N" input
-			(at 119.38 111.76 180)
-			(uuid "6818eb31-c20b-4028-a528-5d5ac5f54e9a")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(pin "USBC_P" input
-			(at 119.38 114.3 180)
-			(uuid "229703a8-7657-4aa1-abc2-c676e2c65227")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 			)
 		)
 		(pin "GPIO0" input

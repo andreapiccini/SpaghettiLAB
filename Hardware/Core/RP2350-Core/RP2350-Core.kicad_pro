@@ -449,6 +449,7 @@
       "footprint_filter": "ignore",
       "footprint_link_issues": "warning",
       "four_way_junction": "ignore",
+      "global_label_dangling": "warning",
       "ground_pin_not_ground": "warning",
       "hier_label_mismatch": "error",
       "isolated_pin_label": "warning",
@@ -522,10 +523,14 @@
   },
   "pcbnew": {
     "last_paths": {
+      "gencad": "",
       "idf": "",
       "netlist": "",
       "plot": "",
+      "pos_files": "",
       "specctra_dsn": "",
+      "step": "",
+      "svg": "",
       "vrml": ""
     },
     "page_layout_descr_file": ""
@@ -636,9 +641,17 @@
     "meta": {
       "version": 1
     },
+    "net_format_name": "",
     "page_layout_descr_file": "",
     "plot_directory": "",
     "reuse_designators": true,
+    "space_save_all_events": true,
+    "spice_current_sheet_as_root": false,
+    "spice_external_command": "spice \"%I\"",
+    "spice_model_current_sheet_as_root": true,
+    "spice_save_all_currents": false,
+    "spice_save_all_dissipations": false,
+    "spice_save_all_voltages": false,
     "subpart_first_id": 65,
     "subpart_id_separator": 0,
     "top_level_sheets": [
@@ -648,7 +661,7 @@
         "uuid": "8bfb0932-e2fe-4425-80ff-903dfd664561"
       }
     ],
-    "used_designators": "J1-4,SCREW1,SCREW3-4,CN7-11,1,JP1,Q1,Q4-5,P1,C43-44,C54,C56-58,C65-68,C70-74,C76,C102-104,C109-110,U1,U16-17,U19,U33,U35-39,SW1,L4,USB4,X1,TP1-2,TP4,LED1-2,LED7-8,H1,R37-43,R48-49,R61,D1-4,#PWR1-70",
+    "used_designators": "U1-3,U14,U19,D2,#PWR7,#PWR15,#PWR20,#PWR30-32,#PWR37-39,#PWR67,#PWR69-89,#PWR96-101,Q2-3,J1-2,J5-9,R23,R29-31,R44-47,R49-57,#FLG1-4,C2,C5-6,C24-29,C34-41,C58,C69,L1,L5,RESET1,USBDEV1,Y1,TP3-5,X2",
     "variants": []
   },
   "sheets": [
@@ -659,10 +672,6 @@
     [
       "72dc90e8-520e-4b34-baab-d68eea14a92b",
       "Logic"
-    ],
-    [
-      "3f5de8fa-60a8-4a9e-ab7d-2ac6e0bb79c8",
-      "USB"
     ],
     [
       "27bbabe4-82c1-4236-a6b4-4cbf33a3dca0",
