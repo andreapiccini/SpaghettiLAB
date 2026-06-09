@@ -5315,7 +5315,7 @@
 				)
 			)
 		)
-		(property "Footprint" "USBC_PD_mo-easyedapro:Screw-Hole-M2"
+		(property "Footprint" "MountingHole:MountingHole_2.2mm_M2"
 			(at 222.25 30.48 0)
 			(hide yes)
 			(show_name no)
@@ -6924,7 +6924,7 @@
 				)
 			)
 		)
-		(property "Footprint" "USBC_PD_mo-easyedapro:Screw-Hole-M2"
+		(property "Footprint" "MountingHole:MountingHole_2.2mm_M2"
 			(at 247.65 30.48 0)
 			(hide yes)
 			(show_name no)
@@ -7001,7 +7001,7 @@
 				)
 			)
 		)
-		(property "Footprint" "USBC_PD_mo-easyedapro:Screw-Hole-M2"
+		(property "Footprint" "MountingHole:MountingHole_2.2mm_M2"
 			(at 270.51 30.48 0)
 			(hide yes)
 			(show_name no)
