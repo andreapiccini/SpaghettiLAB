@@ -6378,7 +6378,7 @@
 	)
 	(text "If 5V present: \nQ3 ON, Q2 OFF -> PS_EN high, On Board Power Supply enabled.\n\nIf 5V is not present:\nQ3 OFF, Q2 ON -> PS_EN low, On Board Power Supply disabled."
 		(exclude_from_sim no)
-		(at 350.52 167.64 0)
+		(at 350.266 174.498 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6529,6 +6529,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "6e995aef-dc70-4f17-87eb-b439370d1b2c")
+	)
+	(junction
+		(at 248.92 86.36)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "73a1375d-e327-423d-ae15-18870a6949d6")
 	)
 	(junction
 		(at 72.39 71.12)
@@ -6945,6 +6951,16 @@
 			(type default)
 		)
 		(uuid "122720da-1d88-4a79-a1a0-c6f82474e273")
+	)
+	(wire
+		(pts
+			(xy 248.92 95.25) (xy 248.92 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "12356f83-bbaa-49f0-b34f-9e11e4fc2acd")
 	)
 	(wire
 		(pts
@@ -7448,7 +7464,7 @@
 	)
 	(wire
 		(pts
-			(xy 215.9 86.36) (xy 261.62 86.36)
+			(xy 215.9 86.36) (xy 248.92 86.36)
 		)
 		(stroke
 			(width 0)
@@ -7555,6 +7571,16 @@
 			(type default)
 		)
 		(uuid "5d4244ca-712d-4487-9673-69293c0de680")
+	)
+	(wire
+		(pts
+			(xy 248.92 86.36) (xy 261.62 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5f0b029f-b4c1-46ee-b70d-bb1fd8dabfca")
 	)
 	(wire
 		(pts
@@ -7975,6 +8001,16 @@
 			(type default)
 		)
 		(uuid "7fed383b-5e48-4f35-b159-7ea7f87e2341")
+	)
+	(wire
+		(pts
+			(xy 248.92 86.36) (xy 248.92 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8075c1b2-bb44-46f3-9bc0-965d99228492")
 	)
 	(wire
 		(pts
@@ -12929,6 +12965,82 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 248.92 96.52 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "518089aa-0512-4ee6-aabf-222958d24f24")
+		(property "Reference" "#PWR090"
+			(at 248.92 102.87 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 248.92 100.33 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 248.92 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 248.92 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 248.92 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "b1962d39-6557-4295-8d11-4e8f06ce3604")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/72dc90e8-520e-4b34-baab-d68eea14a92b"
+					(reference "#PWR090")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Connector:USB_C_Receptacle_USB2.0_14P")
 		(at 231.14 110.49 0)
 		(mirror y)
@@ -13067,6 +13179,109 @@
 			(project "RP2350-Core"
 				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/72dc90e8-520e-4b34-baab-d68eea14a92b"
 					(reference "J8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 248.92 91.44 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "5500041a-bfbe-4b77-b4c0-88413b1cec0d")
+		(property "Reference" "C3"
+			(at 252.73 90.1699 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "1uF"
+			(at 252.73 92.7099 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+			(at 247.9548 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 248.92 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 248.92 91.44 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MFGR" "generic"
+			(at 248.92 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "CL05B104KA5NNNC"
+			(at 248.92 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ce51b49d-58da-4faf-8595-9ca302504455")
+		)
+		(pin "2"
+			(uuid "9a53eb47-e577-457f-95f9-b0200aa0fed9")
+		)
+		(instances
+			(project "RP2350-Core"
+				(path "/8bfb0932-e2fe-4425-80ff-903dfd664561/72dc90e8-520e-4b34-baab-d68eea14a92b"
+					(reference "C3")
 					(unit 1)
 				)
 			)
@@ -14263,7 +14478,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "0.1uF"
+		(property "Value" "1uF"
 			(at 287.02 93.9799 0)
 			(show_name no)
 			(do_not_autoplace no)
