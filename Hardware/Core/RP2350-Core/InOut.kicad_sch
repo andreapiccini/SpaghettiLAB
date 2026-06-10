@@ -2240,6 +2240,16 @@
 		)
 		(uuid "cdbc3498-e012-4978-86d2-105128f07559")
 	)
+	(text "Only for RP235X-B"
+		(exclude_from_sim no)
+		(at 256.54 111.76 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+			)
+		)
+		(uuid "dfc08761-7eed-4cbe-98cb-0007e147838e")
+	)
 	(text "For battery charging"
 		(exclude_from_sim no)
 		(at 76.2 177.8 0)
