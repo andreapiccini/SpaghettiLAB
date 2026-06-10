@@ -648,7 +648,7 @@
         "uuid": "8bfb0932-e2fe-4425-80ff-903dfd664561"
       }
     ],
-    "used_designators": "J8,#PWR102-103,SW1-2,USBC1,C59",
+    "used_designators": "#FLG5-8,R24,R31,R50-51,R58-61,J3-4,J8,J10,L1,D2,#PWR1-5,#PWR7-10,#PWR14,#PWR17,#PWR35,#PWR75,#PWR91-94,#PWR103-108,C4,C7-8,C30-33,C42-51,RESET1,U1,U4,U14,USBDEV1,Y2,H1-4",
     "variants": []
   },
   "sheets": [
