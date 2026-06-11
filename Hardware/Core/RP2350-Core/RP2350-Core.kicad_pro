@@ -508,9 +508,41 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.6,
+        "via_diameter": 0.5,
         "via_drill": 0.3,
         "wire_width": 6
+      },
+      {
+        "clearance": 0.2,
+        "name": "1.1V",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 0,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "tuning_profile": "",
+        "via_diameter": 0.5,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
+        "name": "3.3V",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 1,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.4,
+        "tuning_profile": "",
+        "via_diameter": 0.5,
+        "via_drill": 0.3
+      },
+      {
+        "clearance": 0.2,
+        "name": "5V",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 2,
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "track_width": 0.5,
+        "tuning_profile": "",
+        "via_diameter": 0.5,
+        "via_drill": 0.3
       }
     ],
     "meta": {
@@ -648,7 +680,7 @@
         "uuid": "8bfb0932-e2fe-4425-80ff-903dfd664561"
       }
     ],
-    "used_designators": "",
+    "used_designators": "#PWR75,#PWR104",
     "variants": []
   },
   "sheets": [

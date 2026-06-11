@@ -930,7 +930,7 @@
 			)
 		)
 		(pin "ID" input
-			(at 135.573 97.79 90)
+			(at 135.89 97.79 90)
 			(uuid "d2ad85fe-9874-4219-88b7-36bb339efcce")
 			(effects
 				(font
@@ -1192,16 +1192,6 @@
 		(pin "QSPI_SD3" input
 			(at 240.03 97.79 90)
 			(uuid "a5904a2a-5365-4c5a-979e-89489da5ab35")
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(pin "PWR_SOURCE_ST" input
-			(at 130.2931 97.79 90)
-			(uuid "3363e764-5e16-4c02-9b5c-a4e6272b7b00")
 			(effects
 				(font
 					(size 1.27 1.27)
