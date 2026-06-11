@@ -40,7 +40,7 @@
 	(fp_line (start 1.30 2.55) (end -1.30 2.55) (layer F.CrtYd) (width 0.05))
 	(fp_line (start -1.30 2.55) (end -2.55 1.30) (layer F.CrtYd) (width 0.05))
 	(fp_line (start -2.55 1.30) (end -2.55 -1.30) (layer F.CrtYd) (width 0.05))
-	(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5.wrl"
+	(model "../SpaghettiLAB.3dshapes/SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5.wrl"
 		(offset (xyz 0.000 0.000 0.000))
 		(scale (xyz 1 1 1))
 		(rotate (xyz 0 0 0))

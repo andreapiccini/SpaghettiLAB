@@ -27,7 +27,7 @@
 	(fp_line (start -0.75 -1.45) (end 0.75 -1.45) (layer F.CrtYd) (width 0.05))
 	(fp_line (start 0.75 -1.45) (end 0.75 1.45) (layer F.CrtYd) (width 0.05))
 	(fp_line (start 0.75 1.45) (end -0.75 1.45) (layer F.CrtYd) (width 0.05))
-	(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SOT-23-3_L2.9-W1.5-P1.90-LS2.6-BR.wrl"
+	(model "../SpaghettiLAB.3dshapes/SOT-23-3_L2.9-W1.5-P1.90-LS2.6-BR.wrl"
 		(offset (xyz 0.000 0.000 0.000))
 		(scale (xyz 1 1 1))
 		(rotate (xyz 0 0 270))

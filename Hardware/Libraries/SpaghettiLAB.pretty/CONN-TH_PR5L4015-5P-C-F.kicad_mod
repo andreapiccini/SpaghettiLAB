@@ -41,7 +41,7 @@
 	(fp_line (start -11.04 -2.00) (end 11.04 -2.00) (layer F.CrtYd) (width 0.05))
 	(fp_line (start 11.04 -2.00) (end 11.04 2.00) (layer F.CrtYd) (width 0.05))
 	(fp_line (start 11.04 2.00) (end -11.04 2.00) (layer F.CrtYd) (width 0.05))
-	(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
+	(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
 		(offset (xyz 0.000 0.000 0.000))
 		(scale (xyz 1 1 1))
 		(rotate (xyz 0 0 0))

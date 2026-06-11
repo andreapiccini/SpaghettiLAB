@@ -56,7 +56,7 @@
 	(fp_line (start -4.47 -2.59) (end 4.47 -2.59) (layer F.CrtYd) (width 0.05))
 	(fp_line (start 4.47 -2.59) (end 4.47 5.31) (layer F.CrtYd) (width 0.05))
 	(fp_line (start 4.47 5.31) (end -4.47 5.31) (layer F.CrtYd) (width 0.05))
-	(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/USB-C-SMD_TYPEC-324G-BCP24.wrl"
+	(model "../SpaghettiLAB.3dshapes/USB-C-SMD_TYPEC-324G-BCP24.wrl"
 		(offset (xyz 0.000 0.000 0.000))
 		(scale (xyz 1 1 1))
 		(rotate (xyz 0 0 0))
