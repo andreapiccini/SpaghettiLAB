@@ -27,6 +27,16 @@
 	)
 	(wire
 		(pts
+			(xy 232.41 57.15) (xy 232.41 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "117341da-c922-4c2c-af91-87c679a9506c")
+	)
+	(wire
+		(pts
 			(xy 190.5 57.15) (xy 190.5 97.79)
 		)
 		(stroke
@@ -44,6 +54,16 @@
 			(type default)
 		)
 		(uuid "13371e5f-39c5-4dd7-8f0d-ead53349be8a")
+	)
+	(wire
+		(pts
+			(xy 234.95 57.15) (xy 234.95 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "166ab405-adc2-41a0-9ddf-04dbda6a76c1")
 	)
 	(wire
 		(pts
@@ -114,6 +134,16 @@
 			(type default)
 		)
 		(uuid "41087545-9235-40c9-a0d2-1f92bc40dd2c")
+	)
+	(wire
+		(pts
+			(xy 227.33 57.15) (xy 227.33 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "550f54ee-95af-4c9f-8010-02497e3dc325")
 	)
 	(wire
 		(pts
@@ -197,6 +227,16 @@
 	)
 	(wire
 		(pts
+			(xy 240.03 57.15) (xy 240.03 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8463ae8e-589c-42ba-ac9a-12ee44da66f3")
+	)
+	(wire
+		(pts
 			(xy 205.74 57.15) (xy 205.74 97.79)
 		)
 		(stroke
@@ -234,6 +274,16 @@
 			(type default)
 		)
 		(uuid "a23459fe-df56-4814-9f31-717a9817b91a")
+	)
+	(wire
+		(pts
+			(xy 237.49 57.15) (xy 237.49 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c7e0774c-d945-4585-8325-f26d5f1effd7")
 	)
 	(wire
 		(pts
@@ -297,6 +347,16 @@
 	)
 	(wire
 		(pts
+			(xy 229.87 57.15) (xy 229.87 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fc43b27b-223a-4930-b6d3-bb266350b3e4")
+	)
+	(wire
+		(pts
 			(xy 138.43 57.15) (xy 138.43 97.79)
 		)
 		(stroke
@@ -317,7 +377,7 @@
 	)
 	(sheet
 		(at 121.8877 25.4)
-		(size 102.9023 31.75)
+		(size 120.6823 31.75)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -332,7 +392,7 @@
 		)
 		(uuid "27bbabe4-82c1-4236-a6b4-4cbf33a3dca0")
 		(property "Sheetname" "InOut (page 4)"
-			(at 121.8877 24.6884 0)
+			(at 121.1761 57.15 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -343,7 +403,7 @@
 			)
 		)
 		(property "Sheetfile" "InOut.kicad_sch"
-			(at 121.8877 57.7346 0)
+			(at 243.1546 57.15 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -656,6 +716,66 @@
 		(pin "SWDIO" input
 			(at 220.98 57.15 270)
 			(uuid "d6621da5-df93-4790-9af9-d1fcd2e3918b")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "QSPI_SD2" input
+			(at 237.49 57.15 270)
+			(uuid "ba261505-5f72-4557-a312-dbd15d5a75a8")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "QSPI_SD1" input
+			(at 234.95 57.15 270)
+			(uuid "3dfb3ea4-5871-4c35-947d-1df67b904cd7")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "QSPI_SD0" input
+			(at 232.41 57.15 270)
+			(uuid "723f7a13-7449-4c21-8d38-dbf1cb642baf")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "QSPI_SD3" input
+			(at 240.03 57.15 270)
+			(uuid "1d6d39a4-568a-416c-a331-4cf277850911")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "QSPI_SCLK" input
+			(at 229.87 57.15 270)
+			(uuid "3415a226-27af-47a1-8261-4834ac935e53")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "QSPI_SS" input
+			(at 227.33 57.15 270)
+			(uuid "48472fa9-2afa-405d-9538-3256daef8f32")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1012,6 +1132,76 @@
 		(pin "SWDIO" input
 			(at 220.98 97.79 90)
 			(uuid "9fcfacef-5c17-4adb-af1f-18476b814be0")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "QSPI_SD0" input
+			(at 232.41 97.79 90)
+			(uuid "41301be6-2c54-4132-8968-9ebb92fee19b")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "QSPI_SCLK" input
+			(at 229.87 97.79 90)
+			(uuid "0531be30-9246-4624-b934-d682966a9b7c")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "QSPI_SS" input
+			(at 227.33 97.79 90)
+			(uuid "4acca5bf-d271-4ec7-afdb-77b2a7b48675")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "QSPI_SD1" input
+			(at 234.95 97.79 90)
+			(uuid "1ba2eb23-4650-46f0-976a-25f18071c86a")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "QSPI_SD2" input
+			(at 237.49 97.79 90)
+			(uuid "d04799e7-e473-41b6-8fad-84917542817b")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "QSPI_SD3" input
+			(at 240.03 97.79 90)
+			(uuid "a5904a2a-5365-4c5a-979e-89489da5ab35")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "PWR_SOURCE_ST" input
+			(at 130.2931 97.79 90)
+			(uuid "3363e764-5e16-4c02-9b5c-a4e6272b7b00")
 			(effects
 				(font
 					(size 1.27 1.27)
