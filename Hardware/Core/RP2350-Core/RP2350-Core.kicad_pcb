@@ -454,6 +454,7 @@
 		)
 		(embedded_fonts no)
 		(model "${KICAD10_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x05_P2.54mm_Vertical.step"
+			(hide yes)
 			(offset
 				(xyz 0 0 0)
 			)
@@ -521,6 +522,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -529,7 +531,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "6a7edab0-375a-4e7e-abe6-16a31b05dd7c")
+			(uuid "58b87191-a801-49dd-b0a5-c6a89be0b275")
 			(effects
 				(font
 					(size 1 1)
@@ -542,7 +544,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8f652460-1cd4-4ffc-8145-a57bd55ebe13")
+			(uuid "3a862de8-81f8-461a-9856-99bbdeadead3")
 			(effects
 				(font
 					(size 1 1)
@@ -871,7 +873,7 @@
 			(uuid "255ad3eb-375c-43ce-9059-bb0da675abec")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5.wrl"
+		(model "../SpaghettiLAB.3dshapes/SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -1094,7 +1096,7 @@
 		(descr "Through hole straight socket strip, 2x05, 2.54mm pitch, double rows (from Kicad 4.0.7), script generated")
 		(tags "Through hole socket strip THT 2x05 2.54mm double row")
 		(property "Reference" "J2"
-			(at -1.27 -2.77 0)
+			(at -1.27 -2.77 180)
 			(layer "F.SilkS")
 			(uuid "0bc25ab3-5978-452d-8237-9ea14e473c83")
 			(effects
@@ -1105,7 +1107,7 @@
 			)
 		)
 		(property "Value" "Conn_02x05_Counter_Clockwise"
-			(at -1.27 12.93 0)
+			(at -1.27 12.93 180)
 			(layer "F.Fab")
 			(uuid "d3aeffbd-b630-4c95-810a-370b2bb2a347")
 			(effects
@@ -1116,7 +1118,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2d9c1263-dd89-4f2d-8718-7a1111965fd7")
@@ -1127,7 +1129,7 @@
 			)
 		)
 		(property "Description" "Generic connector, double row, 02x05, counter clockwise pin numbering scheme (similar to DIP package numbering), script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "01294ead-884c-4908-8888-3a671695964b")
@@ -1138,7 +1140,7 @@
 			)
 		)
 		(property "KiLib_Generator" "connector/pin_header_socket"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "393eaa50-b719-4329-89b4-d8c248d1ae87")
@@ -1162,7 +1164,7 @@
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
-			(start 1.33 1.270001)
+			(start 1.33 1.27)
 			(end 1.33 11.49)
 			(stroke
 				(width 0.12)
@@ -1193,7 +1195,7 @@
 		)
 		(fp_line
 			(start -1.27 1.27)
-			(end 1.33 1.270001)
+			(end 1.33 1.27)
 			(stroke
 				(width 0.12)
 				(type solid)
@@ -1202,7 +1204,7 @@
 			(uuid "a4b85204-b3aa-411e-b97b-14ab7ff277be")
 		)
 		(fp_line
-			(start -1.270001 -1.33)
+			(start -1.27 -1.33)
 			(end -1.27 1.27)
 			(stroke
 				(width 0.12)
@@ -1223,7 +1225,7 @@
 		)
 		(fp_line
 			(start -3.87 -1.33)
-			(end -1.270001 -1.33)
+			(end -1.27 -1.33)
 			(stroke
 				(width 0.12)
 				(type solid)
@@ -1332,7 +1334,7 @@
 			(uuid "76104324-3492-48f6-8776-fe742d045a44")
 		)
 		(fp_text user "${REFERENCE}"
-			(at -1.27 5.08 90)
+			(at -1.27 5.08 270)
 			(layer "F.Fab")
 			(uuid "c7ddb613-ddcf-4f5a-a1b6-473e8ce259fe")
 			(effects
@@ -1387,7 +1389,7 @@
 			(uuid "da2de1c0-1a7c-45fd-b06d-96c239abc817")
 		)
 		(pad "5" thru_hole circle
-			(at 0 5.079999 180)
+			(at 0 5.08 180)
 			(size 1.7 1.7)
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
@@ -1454,6 +1456,7 @@
 		)
 		(embedded_fonts no)
 		(model "${KICAD10_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x05_P2.54mm_Vertical.step"
+			(hide yes)
 			(offset
 				(xyz 0 0 0)
 			)
@@ -1470,7 +1473,7 @@
 		(uuid "0a85a915-3b94-4d0f-9542-cffb809ec084")
 		(at 98.5 74.3 -90)
 		(property "Reference" "L5"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "34307ffe-4b7b-4558-b637-9e90872c602c")
 			(effects
@@ -1481,7 +1484,7 @@
 			)
 		)
 		(property "Value" "3.3uH"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "95f1df4c-2bc3-45e1-85cd-d0827dc9e239")
 			(effects
@@ -1492,7 +1495,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/CMI322513U3R3KT/150561.html"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "892d8c58-f846-4770-94ab-eef3cc5ca509")
@@ -1503,7 +1506,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "29453bfa-bca3-4ac1-ac39-c690450e47b4")
@@ -1514,13 +1517,14 @@
 			)
 		)
 		(property "LCSC Part" "C139240"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b4f952f7-996a-4b5d-94b0-e38f955500ed")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -1529,7 +1533,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ea50d9ce-ac7f-4315-8705-0cf929efefb9")
+			(uuid "9a227fce-1a38-4a02-8b38-a42088686ab5")
 			(effects
 				(font
 					(size 1 1)
@@ -1542,7 +1546,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "868f3f14-8b10-458b-8c37-5bcbbbd9e7dd")
+			(uuid "788578a3-746f-4696-9880-5d2b5dafe418")
 			(effects
 				(font
 					(size 1 1)
@@ -1555,7 +1559,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "14cb549b-ebb7-4de7-8a98-ddbe1e4b626f")
+			(uuid "7e335927-e0b9-496c-92a6-ec35a36a1dda")
 			(effects
 				(font
 					(size 1 1)
@@ -1568,7 +1572,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "fb1d97ae-32ea-45d6-a918-a351f909a03a")
+			(uuid "9371bc01-be21-4545-95f4-79c875fd2a23")
 			(effects
 				(font
 					(size 1 1)
@@ -1581,7 +1585,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "144ff1b0-2ebc-448e-b596-43ba49c790fe")
+			(uuid "c01763ec-1236-48ad-b88b-3b5dd069e805")
 			(effects
 				(font
 					(size 1 1)
@@ -1594,7 +1598,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "af901c6a-f8ad-4872-bd30-202574aee368")
+			(uuid "263614e9-1d4a-4452-82e3-4e8437c54f27")
 			(effects
 				(font
 					(size 1 1)
@@ -1765,7 +1769,7 @@
 			(uuid "d2fb0047-4e0e-4d31-a820-abdc3552d2ed")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "73653cd0-4c09-4af6-8d95-0d4b94a426af")
 			(effects
@@ -1794,7 +1798,7 @@
 			(uuid "a9ce555e-39a0-4927-92cb-e341eed12703")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/L1210.wrl"
+		(model "../SpaghettiLAB.3dshapes/L1210.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -2091,7 +2095,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7ef3531c-25e3-4ec0-89c5-52fa86b165d8")
+			(uuid "eafd5c50-e5a5-4d0b-baa3-b2131705c2e7")
 			(effects
 				(font
 					(size 1 1)
@@ -2104,7 +2108,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "51385570-62ae-4b24-8a01-5a321142746b")
+			(uuid "4a923942-32a7-4d91-ac0d-83a22999b3d4")
 			(effects
 				(font
 					(size 1 1)
@@ -2291,6 +2295,7 @@
 		)
 		(embedded_fonts no)
 		(model "${KICAD10_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x03_P2.54mm_Vertical.step"
+			(hide yes)
 			(offset
 				(xyz 0 0 0)
 			)
@@ -2307,7 +2312,7 @@
 		(uuid "1014ba77-cc64-4f99-a646-61d3ebe3f571")
 		(at 101.6 59.5 -90)
 		(property "Reference" "R54"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "a5a42588-4056-4f18-9f94-5c33316785e0")
 			(effects
@@ -2318,7 +2323,7 @@
 			)
 		)
 		(property "Value" "1k"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "ac7e14b2-62cd-49a7-b21e-f2e1b6740136")
 			(effects
@@ -2329,7 +2334,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "e3748c2b-c90c-4c65-bfb4-58100a1e4203")
@@ -2340,7 +2345,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f9f7f35c-4b84-49ba-b49e-702506fd3d56")
@@ -2351,13 +2356,14 @@
 			)
 		)
 		(property "LCSC Part" "C2930027"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "1ef41262-a5b3-4077-838c-ca20756bcbcb")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2366,7 +2372,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7b3cd5b9-6569-44c6-8bb1-543802b9da80")
+			(uuid "b67cd9ff-276c-4804-8e90-07406c2b50af")
 			(effects
 				(font
 					(size 1 1)
@@ -2379,7 +2385,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "68effab1-e02a-4193-ab36-17df0d4c8fa1")
+			(uuid "f9692c3c-1fc7-4bdb-ab9c-e0dec8cceafd")
 			(effects
 				(font
 					(size 1 1)
@@ -2511,7 +2517,7 @@
 			(uuid "3cd79f4c-4091-4cd8-8eab-9ee4e448613d")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "b4772750-ec2d-49c1-9a20-c622eacd22b9")
 			(effects
@@ -2538,7 +2544,7 @@
 			(uuid "29a4391c-d71f-4fd3-a507-54f183f3ccb4")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -2555,7 +2561,7 @@
 		(uuid "18b35f0c-e316-46d6-85dd-ce58a2da4841")
 		(at 85.62 39.2 180)
 		(property "Reference" "U36"
-			(at 0 -4 0)
+			(at 0 -4 180)
 			(layer "F.SilkS")
 			(uuid "a6db232f-a93f-4022-ad2f-4629d0347fdd")
 			(effects
@@ -2566,7 +2572,7 @@
 			)
 		)
 		(property "Value" "PR5L5015-5P-C-H"
-			(at 0 4 0)
+			(at 0 4 180)
 			(layer "F.Fab")
 			(uuid "adc5a699-49b2-4873-894a-012011e90d37")
 			(effects
@@ -2577,7 +2583,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "80b9cd88-3d77-4853-95b2-058ba11e0d1e")
@@ -2588,7 +2594,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a7497004-179a-4be1-9a8f-60e98be970fa")
@@ -2599,13 +2605,14 @@
 			)
 		)
 		(property "LCSC Part" "C41361293"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d5eef6ea-c6bf-4cd3-bba9-f647c85574b5")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -2614,7 +2621,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5a2e3679-871e-452e-871d-81a043330dce")
+			(uuid "4f98e8c7-0013-423e-ae44-b8b29e622b5b")
 			(effects
 				(font
 					(size 1 1)
@@ -2627,7 +2634,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "601186d9-cfc5-4330-9f3f-97d88aee0186")
+			(uuid "7db17f78-aa90-4a16-ac4a-8a1e0b2ade2b")
 			(effects
 				(font
 					(size 1 1)
@@ -2640,7 +2647,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "b1658812-2caf-44c9-a9bd-430b918518c1")
+			(uuid "d108f576-a420-448f-b658-b5130ff1e5ae")
 			(effects
 				(font
 					(size 1 1)
@@ -2653,7 +2660,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "caa8c8bd-75b0-47a8-9150-265436b3ccf8")
+			(uuid "0e038f7f-eb2f-4349-bb0f-d5e1cbdc82d9")
 			(effects
 				(font
 					(size 1 1)
@@ -2666,7 +2673,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "19a0bfd7-b96a-4895-98b7-2a5302efb3c5")
+			(uuid "b01336a2-2132-4da6-92c6-fe1dc7ec07d1")
 			(effects
 				(font
 					(size 1 1)
@@ -2856,7 +2863,7 @@
 			(uuid "baf57f70-03ba-4b2a-9abb-282d6b3d381d")
 		)
 		(fp_text user "S"
-			(at 7.32 0.76 0)
+			(at 7.32 0.76 180)
 			(layer "F.SilkS")
 			(uuid "aeed5a4d-c9f4-46f4-8bed-cc1be1502352")
 			(effects
@@ -2864,11 +2871,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 		(fp_text user "N"
-			(at -8.33 0.76 0)
+			(at -8.33 0.76 180)
 			(layer "F.SilkS")
 			(uuid "1e9d7918-a8aa-4efa-b359-d8bb9485cb08")
 			(effects
@@ -2876,11 +2883,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "cce03419-ee97-4210-bc25-859af2c4e93b")
 			(effects
@@ -2946,7 +2953,7 @@
 			(uuid "3a2c5e16-5248-46d0-b5e9-f22ffadbc635")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -2964,7 +2971,7 @@
 		(at 79.2 65.1 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C39"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "b4414c7f-6c29-43e1-8d94-d94c3253ab5c")
 			(effects
@@ -2975,7 +2982,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 2.1 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "169f2ed1-a0e1-445e-b0e9-985d08b6c606")
 			(effects
@@ -2986,7 +2993,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0efbaded-d0f8-4a18-8285-ef89b3a0dfc3")
@@ -2997,7 +3004,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "3f0d43ec-9b52-433b-9678-fa9f610a5a02")
@@ -3008,13 +3015,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "8c21874b-7933-43df-8515-3ac5379df0c0")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -3023,7 +3031,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e5fb5361-3e6e-4332-9d36-95f196bef2ac")
+			(uuid "cbb02afc-0034-4bb7-9c87-6fafa27fdf44")
 			(effects
 				(font
 					(size 1 1)
@@ -3036,7 +3044,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "777cd0ad-9f0c-4968-99c3-b06631c3eee4")
+			(uuid "3fbfff81-8479-438d-b17c-216b51097037")
 			(effects
 				(font
 					(size 1 1)
@@ -3212,7 +3220,7 @@
 			(uuid "592e5d36-1af9-403c-9a33-9832583d7389")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "c139dfa3-8607-4942-bd86-c790550460fe")
 			(effects
@@ -3239,7 +3247,7 @@
 			(uuid "0d43aa02-a34b-4b63-bdd9-74e2df682c6f")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -3257,7 +3265,7 @@
 		(at 89.4 63.1 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C40"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "c581d617-8c0c-4738-b5ea-1bb58cd4751c")
 			(effects
@@ -3268,7 +3276,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "0e4291a8-4216-4de5-b8f1-7283afcc71cc")
 			(effects
@@ -3279,7 +3287,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "1e945464-4f4f-422f-b824-4c345a7bcaad")
@@ -3290,7 +3298,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d063716a-631c-4fce-bca5-b9e7362d9fca")
@@ -3301,13 +3309,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f156604f-929b-4ab3-8fb5-f8f8a29f0a95")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -3316,7 +3325,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7822e65f-4f50-4655-aea1-58d13f74ec59")
+			(uuid "a5161940-ff6e-4319-ac1e-6ae6912db574")
 			(effects
 				(font
 					(size 1 1)
@@ -3329,7 +3338,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e60cb03c-d24d-4e3e-abba-c78fadabad26")
+			(uuid "1f02ca81-0192-45db-9038-ac5590124a55")
 			(effects
 				(font
 					(size 1 1)
@@ -3505,7 +3514,7 @@
 			(uuid "4433b91e-2d56-4bf6-b894-1f9544efe326")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "f359b577-4d9a-45c3-840b-022b452c4d8c")
 			(effects
@@ -3532,7 +3541,7 @@
 			(uuid "4f32f9f3-befa-41ca-b7e7-f69112b7933d")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -3666,7 +3675,7 @@
 		(at 77 63.5 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C29"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "00e7fe88-2124-41fc-a8f0-75d92a3989fc")
 			(effects
@@ -3677,7 +3686,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "3b1f2fce-89f3-4262-a993-3244e9de5270")
 			(effects
@@ -3688,7 +3697,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2bd4c805-8652-42f0-bdf0-f0f56fb0c40f")
@@ -3699,7 +3708,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "52b117cb-0ab4-4613-8159-5f71549b4fc1")
@@ -3710,13 +3719,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9badc7af-b7df-4c02-bd02-653fd22b4bad")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -3725,7 +3735,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7021e47a-993f-436a-be2f-7e2a80e2548d")
+			(uuid "17652bd4-d379-4ed1-b3af-3a8ce07f608a")
 			(effects
 				(font
 					(size 1 1)
@@ -3738,7 +3748,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "572f73b3-d1c2-49c3-b914-48a42ce733a1")
+			(uuid "723de0d3-ef41-43c9-8dd1-08f4c9947d34")
 			(effects
 				(font
 					(size 1 1)
@@ -3914,7 +3924,7 @@
 			(uuid "20be7d9b-7bdf-4aab-a233-2c92b42d91ce")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "c37814a3-ca0a-4aaf-9d3d-507637fb9e52")
 			(effects
@@ -3941,7 +3951,7 @@
 			(uuid "b469b1d7-8d65-4d2d-b750-0f96cd24881f")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -4068,7 +4078,7 @@
 		(at 77.6 69.15)
 		(descr "YSX321SL 12MHZ 20PF 10PPM -40~+85℃")
 		(property "Reference" "Y1"
-			(at 1.9 -4.85 0)
+			(at 0 -4.85 0)
 			(layer "F.SilkS")
 			(uuid "576a46bd-5d9f-488e-af8f-e69e39f2a167")
 			(effects
@@ -4119,6 +4129,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -4127,7 +4138,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8345e15d-55dd-464b-be82-8ee7f2da328a")
+			(uuid "fc24c8d8-6779-4dca-867f-baf597541d71")
 			(effects
 				(font
 					(size 1 1)
@@ -4140,7 +4151,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "354421b5-c73e-4fdd-8cfd-e5a9704f1760")
+			(uuid "010489b6-5884-402d-81a6-b5a1da60bec3")
 			(effects
 				(font
 					(size 1 1)
@@ -4330,7 +4341,7 @@
 			(uuid "35931104-964a-4c1f-898e-9f81de78c083")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CRYSTAL-SMD_4P-L3.2-W2.5-BL.wrl"
+		(model "../SpaghettiLAB.3dshapes/CRYSTAL-SMD_4P-L3.2-W2.5-BL.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -4347,7 +4358,7 @@
 		(uuid "2fd25f87-8b11-4682-a60d-eb5ab9353969")
 		(at 88.9 59.7 180)
 		(property "Reference" "R30"
-			(at 0 -4 0)
+			(at 0 -4 180)
 			(layer "F.SilkS")
 			(uuid "5c8c49b6-e0e8-497c-b57b-a40e9163cf67")
 			(effects
@@ -4358,7 +4369,7 @@
 			)
 		)
 		(property "Value" "100k"
-			(at 0 4 0)
+			(at 0 4 180)
 			(layer "F.Fab")
 			(uuid "26d32600-f9d5-43b0-bddb-50abe40661cb")
 			(effects
@@ -4369,7 +4380,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0326c88d-ec59-4f8c-b9f3-8729b239870f")
@@ -4380,7 +4391,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b22c1d97-e3ed-467a-a074-18c9616522e4")
@@ -4391,13 +4402,14 @@
 			)
 		)
 		(property "LCSC Part" "C2930027"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "73b77a76-7e19-4718-8d70-035908338e50")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -4406,7 +4418,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c2ce45e4-faa3-4a56-ad70-0aac911f698d")
+			(uuid "f0c84e10-17bf-4cac-a60d-eea4f9708511")
 			(effects
 				(font
 					(size 1 1)
@@ -4419,7 +4431,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d368ff46-d651-41ee-bf24-3cb059f218c2")
+			(uuid "298f12ee-311d-48e5-b0d3-c913314055f1")
 			(effects
 				(font
 					(size 1 1)
@@ -4551,7 +4563,7 @@
 			(uuid "147bf61d-835d-42a3-b4df-412e93be8ca1")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "1adb201d-ebb2-4264-b733-5047881bce2d")
 			(effects
@@ -4578,7 +4590,7 @@
 			(uuid "9cdd3509-c975-414d-af47-8e4b0692865a")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -4595,7 +4607,7 @@
 		(uuid "361b3d7a-8bfd-43de-a3de-b3467cab9787")
 		(at 57.131269 58.986819 -110)
 		(property "Reference" "U35"
-			(at 0.000001 -4 70)
+			(at 0.000002 -4 250)
 			(layer "F.SilkS")
 			(uuid "11207e25-bedb-4b7a-81f2-cbcbd3d7952e")
 			(effects
@@ -4606,7 +4618,7 @@
 			)
 		)
 		(property "Value" "PR5L5015-5P-C-H"
-			(at -0.000001 4 70)
+			(at -0.000002 4 250)
 			(layer "F.Fab")
 			(uuid "5e89886f-5779-4066-9949-637f74c8e3b5")
 			(effects
@@ -4617,7 +4629,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
-			(at 0 0 70)
+			(at 0 0 250)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "22f96679-85c2-42a9-8229-f33f99a9ab69")
@@ -4628,7 +4640,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 70)
+			(at 0 0 250)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "57f9daab-758d-4ed7-b457-a0b99fb32be9")
@@ -4639,13 +4651,14 @@
 			)
 		)
 		(property "LCSC Part" "C41361293"
-			(at 0 0 70)
+			(at 0 0 250)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "fe908012-fafd-4a38-abff-b4761d84ac69")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -4654,7 +4667,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "67ec1a7d-a575-491a-9094-d4af04e43101")
+			(uuid "24e43195-8224-4346-9edf-617fc90e6ef1")
 			(effects
 				(font
 					(size 1 1)
@@ -4667,7 +4680,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "08534c0b-7a3b-44cb-81ea-2b7c62cd290f")
+			(uuid "609d2669-0209-49f6-8ee4-90213d658dee")
 			(effects
 				(font
 					(size 1 1)
@@ -4680,7 +4693,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "2f896c50-7c6b-4684-a3d9-7c53fab83ded")
+			(uuid "51f507d6-e669-4a34-a806-362091952b7a")
 			(effects
 				(font
 					(size 1 1)
@@ -4693,7 +4706,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "2a19c1b4-5cc5-40db-834c-b558c42815db")
+			(uuid "a577c119-32f3-4470-ab21-5a74791e355a")
 			(effects
 				(font
 					(size 1 1)
@@ -4706,7 +4719,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9bbc713d-1723-408c-9897-53e88175a03b")
+			(uuid "6c162bba-70b3-43ef-9da1-077a7d53f550")
 			(effects
 				(font
 					(size 1 1)
@@ -4896,7 +4909,7 @@
 			(uuid "5a543149-b2b8-4822-a959-c0bc6ed1cf59")
 		)
 		(fp_text user "S"
-			(at 7.32 0.76 70)
+			(at 7.32 0.76 250)
 			(layer "F.SilkS")
 			(uuid "ca042cfa-7913-41ed-ad6c-76b4213c970b")
 			(effects
@@ -4904,11 +4917,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 		(fp_text user "N"
-			(at -8.33 0.76 70)
+			(at -8.33 0.76 250)
 			(layer "F.SilkS")
 			(uuid "ad594a08-e443-4c44-9f3e-985ba543d99d")
 			(effects
@@ -4916,11 +4929,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 70)
+			(at 0 0 250)
 			(layer "F.Fab")
 			(uuid "0277546b-39ba-4e36-be63-50f0e553d4c7")
 			(effects
@@ -4986,7 +4999,7 @@
 			(uuid "2a2724c8-2ada-400f-ad6f-e05239e69604")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -5004,7 +5017,7 @@
 		(at 88.9 56.5 -90)
 		(descr "2N7002 7002")
 		(property "Reference" "Q2"
-			(at 0 -4.95 90)
+			(at 0 -4.95 270)
 			(layer "F.SilkS")
 			(uuid "a4eff754-a8ec-4e75-8c74-6458eee8030c")
 			(effects
@@ -5015,7 +5028,7 @@
 			)
 		)
 		(property "Value" "2N7002"
-			(at 0 4.95 90)
+			(at 0 4.95 270)
 			(layer "F.Fab")
 			(uuid "178bc15b-5768-4164-ac12-9979fc478579")
 			(effects
@@ -5026,7 +5039,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/NDS7002A-D.PDF"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "7f4a60f5-8cad-4355-8ae1-663ba4e39e38")
@@ -5037,7 +5050,7 @@
 			)
 		)
 		(property "Description" "0.115A Id, 60V Vds, N-Channel MOSFET, SOT-23"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "79a8f912-05da-44f4-a0fc-197f42d296ac")
@@ -5048,13 +5061,14 @@
 			)
 		)
 		(property "LCSC Part" "C8545"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9f867f2a-464c-4f6c-848c-563405dca085")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -5183,7 +5197,7 @@
 			(uuid "244f85c4-cdd1-4843-9e02-d5455df7b1ac")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "ac160acb-5cee-4f2b-8230-8720d69a64e9")
 			(effects
@@ -5221,7 +5235,7 @@
 			(uuid "e2a13b44-6ca0-4aba-a2e6-6d55f5f91f4b")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95.wrl"
+		(model "../SpaghettiLAB.3dshapes/SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -5587,7 +5601,7 @@
 			(uuid "c0294eed-6b27-4937-b2e1-0ec930345724")
 		)
 		(fp_text user "${REFERENCE}"
-			(at -1.27 5.08 45)
+			(at -1.27 5.08 225)
 			(layer "F.Fab")
 			(uuid "5651a2e3-ddce-4e0e-88e9-6b94f8724146")
 			(effects
@@ -5709,6 +5723,7 @@
 		)
 		(embedded_fonts no)
 		(model "${KICAD10_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_2x05_P2.54mm_Vertical.step"
+			(hide yes)
 			(offset
 				(xyz 0 0 0)
 			)
@@ -5777,6 +5792,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -5785,7 +5801,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5bf5a256-34ca-47b3-8571-0d793d155496")
+			(uuid "ec6aefc1-a405-44ea-9054-3497fcf0bc07")
 			(effects
 				(font
 					(size 1 1)
@@ -5798,7 +5814,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "fdb56fe5-c9f7-49c5-b99a-f091944ac6af")
+			(uuid "743f3140-6247-4377-86e4-46aff9dda938")
 			(effects
 				(font
 					(size 1 1)
@@ -6001,7 +6017,7 @@
 			(uuid "acd013f6-8233-4d8f-9fa5-7034674227bf")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -6069,6 +6085,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -6077,7 +6094,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "10b400ff-4f02-4220-a9e3-42c5b805ffca")
+			(uuid "31562c3a-9081-460d-8962-c6f496bab751")
 			(effects
 				(font
 					(size 1 1)
@@ -6090,7 +6107,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "426b7e15-84ed-4573-9ae1-1e1cad7311ae")
+			(uuid "a55d9b6e-dd38-4956-8266-e293013dfc66")
 			(effects
 				(font
 					(size 1 1)
@@ -6306,7 +6323,7 @@
 			(uuid "d4e9dc96-d60b-46d4-aaa7-0f83458f74f4")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SOT-583-8_L2.1-W1.2-P0.50-LS1.6-BL.wrl"
+		(model "../SpaghettiLAB.3dshapes/SOT-583-8_L2.1-W1.2-P0.50-LS1.6-BL.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -6432,7 +6449,7 @@
 		(uuid "5345e2bf-a97c-4340-83dc-59a3c1744bd0")
 		(at 108.265361 88.608494 -130)
 		(property "Reference" "U39"
-			(at 0 -4 50)
+			(at 0 -4 230)
 			(layer "F.SilkS")
 			(uuid "9391a591-8949-4542-8a77-62ad1eddcb75")
 			(effects
@@ -6443,7 +6460,7 @@
 			)
 		)
 		(property "Value" "PR5L5015-5P-C-H"
-			(at 0 4 50)
+			(at 0 4 230)
 			(layer "F.Fab")
 			(uuid "2996ace1-820d-4593-a69a-fce155b1eb07")
 			(effects
@@ -6454,7 +6471,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
-			(at 0 0 50)
+			(at 0 0 230)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0aa54529-66cd-4a07-8e84-84db37d647f2")
@@ -6465,7 +6482,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 50)
+			(at 0 0 230)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "23fe8111-f17e-4330-9f39-3265f4daafae")
@@ -6476,13 +6493,14 @@
 			)
 		)
 		(property "LCSC Part" "C41361293"
-			(at 0 0 50)
+			(at 0 0 230)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "256bc77c-790d-493a-b00a-3962f24ec4e1")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -6491,7 +6509,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9e3f372d-0716-43ca-82a8-5573f3e6286a")
+			(uuid "59808be9-2a47-4f21-af31-bf9d204739a5")
 			(effects
 				(font
 					(size 1 1)
@@ -6504,7 +6522,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "3eae3a07-0879-42ac-9e7c-92db2adba659")
+			(uuid "095ad1e3-4766-4dc4-a042-fee9d913e965")
 			(effects
 				(font
 					(size 1 1)
@@ -6517,7 +6535,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "3b612fc4-a7b9-460a-ab80-afa89cd6083b")
+			(uuid "4d3a1cf1-3a38-4bd2-a7ea-1a6c1683cf6a")
 			(effects
 				(font
 					(size 1 1)
@@ -6530,7 +6548,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "f2714039-7244-489d-9c15-851066dbae41")
+			(uuid "dc6fd098-ef2a-4221-a6c4-1c47ac5f1242")
 			(effects
 				(font
 					(size 1 1)
@@ -6543,7 +6561,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "30e3d77f-15cf-4ab8-92cc-7f4f30c773f4")
+			(uuid "060513ee-90e6-4582-8266-4f7f12ab8997")
 			(effects
 				(font
 					(size 1 1)
@@ -6733,7 +6751,7 @@
 			(uuid "e5d0f637-4bda-479b-8d53-79009a957e49")
 		)
 		(fp_text user "S"
-			(at 7.32 0.76 50)
+			(at 7.32 0.76 230)
 			(layer "F.SilkS")
 			(uuid "f0ae3e16-f868-4917-be65-13094c354bc2")
 			(effects
@@ -6741,11 +6759,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 		(fp_text user "N"
-			(at -8.33 0.76 50)
+			(at -8.33 0.76 230)
 			(layer "F.SilkS")
 			(uuid "a4c6c4e8-fc2c-4266-a583-95ee22a37190")
 			(effects
@@ -6753,11 +6771,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right)
+				(justify left)
 			)
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 50)
+			(at 0 0 230)
 			(layer "F.Fab")
 			(uuid "739b8a7f-2d70-4487-b340-dd15c6369b16")
 			(effects
@@ -6823,7 +6841,7 @@
 			(uuid "09e1264f-e3de-402f-943a-5d70126902e9")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -6891,6 +6909,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -7635,13 +7654,24 @@
 			(uuid "53906a24-6390-4092-a59e-34d506c9a856")
 		)
 		(embedded_fonts no)
+		(model "${KICAD10_3DMODEL_DIR}/Package_DFN_QFN.3dshapes/QFN-64-1EP_8x8mm_P0.4mm_EP6.5x6.5mm.step"
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 0.9 0.9 1)
+			)
+			(rotate
+				(xyz -0 -0 -0)
+			)
+		)
 	)
 	(footprint "SpaghettiLAB:LED0603-RD"
 		(layer "F.Cu")
 		(uuid "55344346-a213-435f-bd8f-9f9df83eb59d")
 		(at 85.8 56.6 -90)
 		(property "Reference" "D1"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "12017d9c-ff5c-4a70-8bad-d226b0524744")
 			(effects
@@ -7652,7 +7682,7 @@
 			)
 		)
 		(property "Value" "LED"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "43298857-3c7d-4512-b247-8a4525667419")
 			(effects
@@ -7663,7 +7693,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f7aa6064-8094-4d8a-8b56-8e9de096ca5e")
@@ -7674,7 +7704,7 @@
 			)
 		)
 		(property "Description" "Light emitting diode"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "bca64c25-a43f-4148-9fed-d57c13a5b206")
@@ -7685,13 +7715,14 @@
 			)
 		)
 		(property "LCSC Part" "C19273150"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a82bb53b-5161-47d9-be11-bc4768ce052d")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -7700,7 +7731,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "91e1e487-5fda-4654-89f0-5ad626992dc4")
+			(uuid "1ca4315a-e564-462f-b468-5395d5575a93")
 			(effects
 				(font
 					(size 1 1)
@@ -7932,7 +7963,7 @@
 			(uuid "6ac0e8dd-c73e-48a6-b462-5c471bdc7c44")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "43915fb6-b4b9-46d3-badb-092a94755cb0")
 			(effects
@@ -7961,7 +7992,7 @@
 			(uuid "83f32ba4-6ec4-48e7-8d6b-a388d8308e6f")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/LED0603-RD.wrl"
+		(model "../SpaghettiLAB.3dshapes/LED0603-RD.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -7979,7 +8010,7 @@
 		(at 74.4 69.4 90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C6"
-			(at -0.085 -1.985 90)
+			(at 0 -4 90)
 			(layer "F.SilkS")
 			(uuid "a5a47b23-2a6c-42b8-bfea-b9d71f7ad1a1")
 			(effects
@@ -8030,6 +8061,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -8038,7 +8070,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e4892b1b-b2e8-4b25-80fd-bfd1d1d2821e")
+			(uuid "acd29422-c07d-4732-8e59-b98bd38a0f9d")
 			(effects
 				(font
 					(size 1 1)
@@ -8051,7 +8083,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "076dc786-a8f3-42c2-9a5c-14b41eff6704")
+			(uuid "36865b99-2122-456d-8328-e0ab711dfadb")
 			(effects
 				(font
 					(size 1 1)
@@ -8254,7 +8286,7 @@
 			(uuid "7a24138b-87a2-4694-8e9f-8573888100df")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -8272,7 +8304,7 @@
 		(at 76.7 66.4)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C5"
-			(at 1.9 -4 0)
+			(at 0 -4 0)
 			(layer "F.SilkS")
 			(uuid "d27c3da1-8a43-448d-9933-e2192edff481")
 			(effects
@@ -8323,6 +8355,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -8331,7 +8364,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "cffd9511-8659-4589-b61f-79d02ba7b419")
+			(uuid "2d57205b-6618-4bc6-bfbe-81b59ba6745e")
 			(effects
 				(font
 					(size 1 1)
@@ -8344,7 +8377,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "edf30613-007b-4464-aebe-6af917fc72bd")
+			(uuid "ed21af14-d0b2-43cc-9a08-a737c2e1669d")
 			(effects
 				(font
 					(size 1 1)
@@ -8547,7 +8580,7 @@
 			(uuid "9563345c-784f-4d96-8665-dd9720421267")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -8565,7 +8598,7 @@
 		(at 92.1 67.7 180)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C34"
-			(at -1.6 -4.2 0)
+			(at 0 -4 180)
 			(layer "F.SilkS")
 			(uuid "45c4cdf7-1e7c-4042-bad3-b6adb31a1da7")
 			(effects
@@ -8576,7 +8609,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 4 0)
+			(at 0 4 180)
 			(layer "F.Fab")
 			(uuid "86d74e6f-24c2-4357-bd9b-ade8e4cfffd3")
 			(effects
@@ -8587,7 +8620,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "be5219ec-349d-4b46-a890-855da454f0c2")
@@ -8598,7 +8631,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d29042ba-bbf4-43bb-a9dd-79249035f816")
@@ -8609,13 +8642,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a87286ea-17b7-4b74-a1e5-4177e331460b")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -8624,7 +8658,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "91a16580-6b49-4ac3-8c70-1adfedae1645")
+			(uuid "f389bc69-df44-4d10-b745-ba9695d1a23d")
 			(effects
 				(font
 					(size 1 1)
@@ -8637,7 +8671,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "995e16e4-7afa-401b-a941-be935fd2ecd1")
+			(uuid "91fa1fa7-9f45-444e-9858-12953715986a")
 			(effects
 				(font
 					(size 1 1)
@@ -8813,7 +8847,7 @@
 			(uuid "b6ed622e-4f17-4b37-b115-378dd83aa41c")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "2020699d-63e2-4bab-8954-396a89af101a")
 			(effects
@@ -8840,7 +8874,7 @@
 			(uuid "b6ec9adb-6064-419c-8c86-9a8059d266c8")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -8858,7 +8892,7 @@
 		(at 89.695 84.7 -90)
 		(descr "2N7002 7002")
 		(property "Reference" "Q3"
-			(at 0 -4.95 90)
+			(at 0 -4.95 270)
 			(layer "F.SilkS")
 			(uuid "562c9e2c-7edb-45c7-9a01-99bb5c118de6")
 			(effects
@@ -8869,7 +8903,7 @@
 			)
 		)
 		(property "Value" "2N7002"
-			(at 0 4.95 90)
+			(at 0 4.95 270)
 			(layer "F.Fab")
 			(uuid "45c9b159-530c-4422-b5da-edb70636341e")
 			(effects
@@ -8880,7 +8914,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/NDS7002A-D.PDF"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "7bc41f88-6fc7-45a8-9885-480978ecca17")
@@ -8891,7 +8925,7 @@
 			)
 		)
 		(property "Description" "0.115A Id, 60V Vds, N-Channel MOSFET, SOT-23"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9aefed96-68d5-49b1-9890-87d098db0576")
@@ -8902,13 +8936,14 @@
 			)
 		)
 		(property "LCSC Part" "C8545"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a215b427-f3e3-4968-a5ce-e967e24ea0d9")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -9037,7 +9072,7 @@
 			(uuid "0f3ba960-eff2-4973-ac71-979567ddd125")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "482c65b3-3b36-4410-9164-d04510fb5fa1")
 			(effects
@@ -9075,7 +9110,7 @@
 			(uuid "bc8d31d2-6df9-466c-b9d0-3a294e1e4e26")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95.wrl"
+		(model "../SpaghettiLAB.3dshapes/SOT-23-3P_L2.9-W1.3-H1.0-LS2.4-P0.95.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -9208,7 +9243,7 @@
 		(uuid "5e96ac39-1091-495c-bc9a-eed7b686bd2e")
 		(at 113.562538 59.226361 110)
 		(property "Reference" "U37"
-			(at -0.000001 -4 110)
+			(at -0.000002 -4 110)
 			(layer "F.SilkS")
 			(uuid "976c6a26-a4a9-47d5-83d7-88c2fea00dc6")
 			(effects
@@ -9219,7 +9254,7 @@
 			)
 		)
 		(property "Value" "PR5L5015-5P-C-H"
-			(at 0.000001 4 110)
+			(at 0.000002 4 110)
 			(layer "F.Fab")
 			(uuid "dafe32d0-9966-4ff2-9d30-b569e6ac75de")
 			(effects
@@ -9259,6 +9294,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -9267,7 +9303,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "f5a3c5bb-6be5-4668-8a59-fdb44cff12d2")
+			(uuid "0e5120d1-7814-45a2-8b7c-ee992b366f9d")
 			(effects
 				(font
 					(size 1 1)
@@ -9280,7 +9316,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "20d96247-e391-4f45-8f27-aec6ae0c5437")
+			(uuid "d2c2e577-6089-466c-84f5-b00b4a09b80c")
 			(effects
 				(font
 					(size 1 1)
@@ -9293,7 +9329,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "31837542-18bb-40fa-ad32-6843c58b71c6")
+			(uuid "c852e5e6-ce49-40ee-b71e-892a6abd8fd1")
 			(effects
 				(font
 					(size 1 1)
@@ -9306,7 +9342,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e7268d06-bd6f-4cd2-a16e-01ab62b75ec3")
+			(uuid "bcacc81d-a9e2-4459-a25f-d123a8833625")
 			(effects
 				(font
 					(size 1 1)
@@ -9319,7 +9355,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e0674f29-07dc-4003-942d-22a1f6cd1afe")
+			(uuid "fb63e3f0-bec3-46ae-b8fc-589795334578")
 			(effects
 				(font
 					(size 1 1)
@@ -9599,7 +9635,7 @@
 			(uuid "f780fb13-e8f3-47a4-b1e0-1376a722bb25")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -9776,6 +9812,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -9784,7 +9821,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e64f137a-0180-4efe-91b7-5ffb61039916")
+			(uuid "8f7a2450-0dec-46d5-9ddf-8383579638f5")
 			(effects
 				(font
 					(size 1 1)
@@ -9797,7 +9834,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "a843d9d7-01a2-407a-8c3d-5b15c2f24ac5")
+			(uuid "ea54793f-a787-4cb6-9245-8763228389dd")
 			(effects
 				(font
 					(size 1 1)
@@ -10272,7 +10309,7 @@
 			(uuid "cea63f5e-5395-4c08-a9f9-1cfcb1201702")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/USB-C-SMD_TYPEC-324G-BCP24.wrl"
+		(model "../SpaghettiLAB.3dshapes/USB-C-SMD_TYPEC-324G-BCP24.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -10290,7 +10327,7 @@
 		(at 96.75 84.9 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C2"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "22d33f11-883d-45ec-a296-b7be6e0dce26")
 			(effects
@@ -10301,7 +10338,7 @@
 			)
 		)
 		(property "Value" "1uF"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "3e18df28-2ff5-4c73-81f5-b4f3190245bf")
 			(effects
@@ -10312,7 +10349,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0fc11a73-3736-4229-a90f-672eee43f563")
@@ -10323,7 +10360,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "026ee02a-d805-4abe-8221-f48b6360353f")
@@ -10334,13 +10371,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "685b13b6-dade-4d49-8df3-94c4f8998ad6")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -10349,7 +10387,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d0d6f997-945a-4a6f-8dce-b5c3950edd28")
+			(uuid "a36624fe-95f9-430a-9fb4-6fef3caa851f")
 			(effects
 				(font
 					(size 1 1)
@@ -10362,7 +10400,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "74b16ba4-a6e2-44c0-be07-41b47012550f")
+			(uuid "b29528d5-bd8a-4391-bef2-182283ed3d09")
 			(effects
 				(font
 					(size 1 1)
@@ -10538,7 +10576,7 @@
 			(uuid "b54b32be-c132-4b6a-8b9f-0d4262524c80")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "6e1d9418-da9b-4e85-bf5a-bf3714c69541")
 			(effects
@@ -10565,7 +10603,7 @@
 			(uuid "594be0dc-dd39-48ac-9eb8-80b45aa199e3")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -10743,6 +10781,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -10751,7 +10790,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "fb959529-bcad-4137-851e-d1bba5e1e3da")
+			(uuid "dbb83218-005d-41ba-82aa-d792371a2a78")
 			(effects
 				(font
 					(size 1 1)
@@ -10764,7 +10803,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9567b7cf-a907-4f2a-bc22-b759088448e8")
+			(uuid "7aca34ec-ccda-4ecd-95f6-2cfcbbe85875")
 			(effects
 				(font
 					(size 1 1)
@@ -10967,7 +11006,7 @@
 			(uuid "2be91ac8-1a3b-4483-9274-179d4a6cbe4a")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -11035,6 +11074,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -11043,7 +11083,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "1cef0e04-a60d-4a4f-961c-4f231f154473")
+			(uuid "37d0bd0b-2a59-4136-81f7-baaea75d32d0")
 			(effects
 				(font
 					(size 1 1)
@@ -11056,7 +11096,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7c2627d0-bb48-4952-be54-4989262d816b")
+			(uuid "10e5f829-8fce-4060-b78b-8c8effc05891")
 			(effects
 				(font
 					(size 1 1)
@@ -11215,7 +11255,7 @@
 			(uuid "3ed79681-b038-4cc6-a9a5-52a1a289e0bc")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -11341,7 +11381,7 @@
 		(uuid "725b7017-cf7b-4559-94b5-83b85542f166")
 		(at 89.55 81.905 180)
 		(property "Reference" "R55"
-			(at 0 -4 0)
+			(at 0 -4 180)
 			(layer "F.SilkS")
 			(uuid "7014a6ea-1386-4a29-97bb-6bc88e1e3537")
 			(effects
@@ -11352,7 +11392,7 @@
 			)
 		)
 		(property "Value" "10k"
-			(at -28.13 10.22 90)
+			(at 0 4 180)
 			(layer "F.Fab")
 			(uuid "0df04acc-b960-4213-bcfa-9b46074e782b")
 			(effects
@@ -11363,7 +11403,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f82b0f63-06c1-4433-8d1e-6ac08b1119e0")
@@ -11374,7 +11414,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0fdafd25-80f0-40da-9412-2108b8613cbc")
@@ -11385,13 +11425,14 @@
 			)
 		)
 		(property "LCSC Part" "C2930027"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0c2f9ec8-9af9-4e66-8775-af4aaaaa5558")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -11400,7 +11441,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "24a09365-9f3d-4932-841f-6e90c0910fbb")
+			(uuid "e7e9260b-f4ad-4bf1-8972-94648c6a1b50")
 			(effects
 				(font
 					(size 1 1)
@@ -11413,7 +11454,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "84d2c7c1-eac3-4075-b1ae-3bd447903b8a")
+			(uuid "da7da9f6-85e1-41dc-b1a8-078c2d223b53")
 			(effects
 				(font
 					(size 1 1)
@@ -11545,7 +11586,7 @@
 			(uuid "5383067b-cb3b-4e65-a815-8c459c862259")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "a6fa198a-6e4a-4122-b8f7-633320f0eac0")
 			(effects
@@ -11572,7 +11613,7 @@
 			(uuid "afe9e039-bbe0-4210-9c61-6bb28cfbd37e")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -11590,7 +11631,7 @@
 		(at 90.3 78.8 180)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C35"
-			(at 0 -4 0)
+			(at 0 -4 180)
 			(layer "F.SilkS")
 			(uuid "4e2feb4b-4a62-4918-b4b8-47207aa7a594")
 			(effects
@@ -11601,7 +11642,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 4 0)
+			(at 0 4 180)
 			(layer "F.Fab")
 			(uuid "2a9ad4fb-62c8-4d7a-b34d-c46d030138b5")
 			(effects
@@ -11612,7 +11653,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "10d81634-eaa4-4cdd-b2eb-621572823bc2")
@@ -11623,7 +11664,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2be9597f-37bb-49e1-864d-198688c8144a")
@@ -11634,13 +11675,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "dfa8e11d-b704-49e9-805c-5a1e54fedb03")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -11649,7 +11691,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "bdcba17e-2e56-4492-b36e-6702e06b34bd")
+			(uuid "bd2dda72-6fbf-471d-a3a8-14ae8b9d1689")
 			(effects
 				(font
 					(size 1 1)
@@ -11662,7 +11704,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ce6562e8-24dc-444d-8045-9f41546cdbd6")
+			(uuid "c7e15437-b58c-4b62-b168-da1a5d107a2e")
 			(effects
 				(font
 					(size 1 1)
@@ -11838,7 +11880,7 @@
 			(uuid "e1c7e787-6fb5-453b-bcb6-6d27941e8594")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "90fcc202-9450-49ad-8379-8c2ebdb6724b")
 			(effects
@@ -11865,7 +11907,7 @@
 			(uuid "a49bde0f-57c2-4b6e-80fe-da572049c001")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -11934,6 +11976,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -11942,7 +11985,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "a9c137b7-23a6-4c2f-938f-32b1f9605841")
+			(uuid "e6cfa7b5-21bb-46ae-9aff-9b4b79355526")
 			(effects
 				(font
 					(size 1 1)
@@ -11955,7 +11998,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "96d313e3-52cb-4140-a7c8-9d5242b21d52")
+			(uuid "20db8ecd-e751-47c7-87b8-e6a49d052937")
 			(effects
 				(font
 					(size 1 1)
@@ -12158,7 +12201,7 @@
 			(uuid "4a1e872e-3709-4fe4-87c3-3eb2a5b5b77d")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -12510,7 +12553,7 @@
 		(at 101 67 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C58"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "db665136-01d0-4d04-9b37-a87514bb3c60")
 			(effects
@@ -12521,7 +12564,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "5aa86ab6-6a56-4d10-b949-c97c9d41b975")
 			(effects
@@ -12532,7 +12575,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/1206B104K500CT/94389.html"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "524209c7-5159-4448-874f-546715a827c5")
@@ -12543,7 +12586,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "bbe50ec6-8e89-4275-9629-45285c55030c")
@@ -12554,13 +12597,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "88476662-d8d3-4407-b7ae-f61b438a8b22")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -12569,7 +12613,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c8166632-13c0-4052-a7ee-343071fa8ff8")
+			(uuid "f369f60b-eb7d-4aca-8b9d-7625d95aafb3")
 			(effects
 				(font
 					(size 1 1)
@@ -12582,7 +12626,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "38bba82e-2f07-4aa6-9c0f-c4830590cc94")
+			(uuid "2844dff6-4d7a-4769-9e11-7bce7f7d584b")
 			(effects
 				(font
 					(size 1 1)
@@ -12595,7 +12639,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5e94ed46-8989-4c65-939b-0e7a3afa77a7")
+			(uuid "68d12645-850d-4cbe-aee1-7037d9aa7b40")
 			(effects
 				(font
 					(size 1 1)
@@ -12608,7 +12652,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "eda4ab95-42f8-48c9-8ff9-f4ff77fdd8ae")
+			(uuid "53e1d6de-e59a-4630-b18e-a5b74aa5f692")
 			(effects
 				(font
 					(size 1 1)
@@ -12621,7 +12665,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "47f37690-904f-4549-9b77-0b68f27758f3")
+			(uuid "a46a9d69-e2d0-4d35-84ab-34209fe1c6b4")
 			(effects
 				(font
 					(size 1 1)
@@ -12634,7 +12678,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4f3c4e40-175e-4d48-bf52-a63c067791d5")
+			(uuid "21431d11-3624-4f1b-825f-6dbadaab553c")
 			(effects
 				(font
 					(size 1 1)
@@ -12809,7 +12853,7 @@
 			(uuid "eca1616b-9ac9-4e83-a0f7-5cc9d11bff75")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "c913c55f-0b57-480b-9203-287f1c3b8004")
 			(effects
@@ -12838,7 +12882,7 @@
 			(uuid "b60652d9-1e23-4487-a141-48ea69db3e5d")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -12906,6 +12950,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -12914,7 +12959,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "f77b7c15-6b90-4b7b-a3e0-384a9306e3ce")
+			(uuid "2e9b75fb-fe01-4aed-b748-23eae32074b6")
 			(effects
 				(font
 					(size 1 1)
@@ -12927,7 +12972,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ef6317e0-5965-466e-b8e5-57514443b080")
+			(uuid "66c2783f-215e-47b7-911e-4cb122893a3a")
 			(effects
 				(font
 					(size 1 1)
@@ -12940,7 +12985,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5c5bdfaf-5c70-451e-aecc-09cf831ff3b2")
+			(uuid "4bf57caf-4abb-487e-8cdc-6a6aa8cb2157")
 			(effects
 				(font
 					(size 1 1)
@@ -12953,7 +12998,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e4edd0f6-4fc0-4f69-920b-a4191565cf6d")
+			(uuid "cb6d09eb-9b54-460c-8b22-3c1d5988fd12")
 			(effects
 				(font
 					(size 1 1)
@@ -12966,7 +13011,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "51b3a620-8a13-4d50-8b05-b9aacdb91e45")
+			(uuid "1b9a2270-af62-4876-a35a-c8f6a4218c3f")
 			(effects
 				(font
 					(size 1 1)
@@ -12979,7 +13024,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e1b9c806-bc19-4288-bbd7-dd985eb18006")
+			(uuid "b5a8bdfe-b65f-49d6-943c-1f720faac5ae")
 			(effects
 				(font
 					(size 1 1)
@@ -13139,7 +13184,7 @@
 			(uuid "f06170ac-36b2-4001-922a-38d5ab89895d")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -13759,6 +13804,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -13767,7 +13813,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "160c23f5-0f04-4f8d-bad3-3c16a50f0949")
+			(uuid "6619e04f-b72e-4947-9f29-841678846c93")
 			(effects
 				(font
 					(size 1 1)
@@ -13780,7 +13826,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4cf06293-f058-468d-8d8d-f5cd01979400")
+			(uuid "c56c8e04-04ca-4611-ae84-7c9c77196915")
 			(effects
 				(font
 					(size 1 1)
@@ -13939,7 +13985,7 @@
 			(uuid "5b838d1b-393b-4fe7-9bf2-168ad94c5ba1")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -14008,6 +14054,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -14016,7 +14063,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c4654929-68a8-4e85-acc1-d46f7974c77f")
+			(uuid "d21e7b32-6853-44a8-82ff-4153384680b1")
 			(effects
 				(font
 					(size 1 1)
@@ -14029,7 +14076,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c6eb6faf-55c1-4586-9f3f-d75c12cc31bc")
+			(uuid "1da47fec-801a-4dfb-b626-16f2ef1a3c12")
 			(effects
 				(font
 					(size 1 1)
@@ -14232,7 +14279,7 @@
 			(uuid "1908d398-9d82-4056-add2-37b198dc4295")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -14409,6 +14456,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -14417,7 +14465,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "22974885-a592-46e1-bde4-f0400470b7d4")
+			(uuid "d9c4f3c1-edf4-4ffb-9c4f-929a1b62a469")
 			(effects
 				(font
 					(size 1 1)
@@ -14430,7 +14478,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "496c7e5d-bd29-465b-bafd-91451ddd0268")
+			(uuid "2d01524a-8077-4deb-af6e-b17a6d64aaa4")
 			(effects
 				(font
 					(size 1 1)
@@ -14443,7 +14491,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e0cbf8ed-ae5e-41a2-87db-f3680b81d2d4")
+			(uuid "3f98b0ec-4af3-4d5e-a5f1-8d8da4429e39")
 			(effects
 				(font
 					(size 1 1)
@@ -14456,7 +14504,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d3d4423d-657a-4940-84c5-ea15cc6eeb4d")
+			(uuid "b1e562d1-21a0-43b1-bff7-a85a51e77cfb")
 			(effects
 				(font
 					(size 1 1)
@@ -14469,7 +14517,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "92561501-1225-4983-a3ce-80eeb84754f6")
+			(uuid "9ff19f63-1684-4724-a39f-6b1722111a4b")
 			(effects
 				(font
 					(size 1 1)
@@ -14482,7 +14530,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "3e78fe72-40c9-4ebe-b57b-8e733462b1cc")
+			(uuid "94014b03-b84d-449a-8473-52e3611efb80")
 			(effects
 				(font
 					(size 1 1)
@@ -14642,7 +14690,7 @@
 			(uuid "0a7337b2-c8e8-4693-adc5-45cb0487e6af")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -14972,7 +15020,7 @@
 		(uuid "b1fdbfda-b9b3-4445-ab15-28aad55af649")
 		(at 93.95 85 180)
 		(property "Reference" "U2"
-			(at 0 -5.3 0)
+			(at 0 -5.3 180)
 			(layer "F.SilkS")
 			(uuid "e6c262d4-1851-4b54-a75f-67e5d7d18ecd")
 			(effects
@@ -14983,7 +15031,7 @@
 			)
 		)
 		(property "Value" "AP2112K-3.3"
-			(at 0 5.3 0)
+			(at 0 5.3 180)
 			(layer "F.Fab")
 			(uuid "360ea5fa-cf72-46f1-8085-86aa45f3ea02")
 			(effects
@@ -14994,7 +15042,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.diodes.com/assets/Datasheets/AP2112.pdf"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b6736833-41d5-4fa7-8eb4-95091e555189")
@@ -15005,7 +15053,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d053f1c9-335c-4c61-802c-345fa87a65ed")
@@ -15016,13 +15064,14 @@
 			)
 		)
 		(property "LCSC Part" "C51118"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "81ca49e0-538b-4a66-b997-cdc854c4a7f9")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -15031,7 +15080,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "72046689-f07c-4004-abc9-620455cd213a")
+			(uuid "5801ddb6-4452-4e6a-b013-8ef5c4de030e")
 			(effects
 				(font
 					(size 1 1)
@@ -15044,7 +15093,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "79aa0bd3-917b-4398-b688-ff0a1f8b877b")
+			(uuid "4fb1b854-bddc-4098-bfcb-d0176d0b7c31")
 			(effects
 				(font
 					(size 1 1)
@@ -15178,7 +15227,7 @@
 			(uuid "c6a004b4-4211-487b-a824-d3349396759f")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "4473263d-fa4b-4a28-b4fd-08f23ed60bb1")
 			(effects
@@ -15234,7 +15283,7 @@
 			(uuid "50ecba6e-7c7d-42f4-92bb-f43f9d895cd1")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SOT-25-5_L2.9-W1.6-P0.95-LS2.8-BL.wrl"
+		(model "../SpaghettiLAB.3dshapes/SOT-25-5_L2.9-W1.6-P0.95-LS2.8-BL.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -15303,6 +15352,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -15311,7 +15361,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "cd0b39fc-c9b3-498e-9512-a87abffe53a9")
+			(uuid "2c277971-1fdd-4cfb-a528-d281eb2402ce")
 			(effects
 				(font
 					(size 1 1)
@@ -15324,7 +15374,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c297c241-31a8-4812-bbc8-f16bd8294503")
+			(uuid "8e1fe821-4292-4e7b-9fc0-f74c87e09202")
 			(effects
 				(font
 					(size 1 1)
@@ -15527,7 +15577,7 @@
 			(uuid "a8d8169c-0b39-41e5-980b-fc4b1fe3c3da")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -15596,6 +15646,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -15604,7 +15655,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "62e5f7f0-bfcc-49e7-b023-942cc65dcbf9")
+			(uuid "eeff02f5-5e36-4581-964f-8607381e8a31")
 			(effects
 				(font
 					(size 1 1)
@@ -15617,7 +15668,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7c3d6484-5423-4656-9451-c7039949acbc")
+			(uuid "20b0205c-1867-40a6-9027-6d4016717f9b")
 			(effects
 				(font
 					(size 1 1)
@@ -15820,7 +15871,7 @@
 			(uuid "b0132af6-850a-420f-9817-436bc447a1a2")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -15848,7 +15899,7 @@
 			)
 		)
 		(property "Value" "1k"
-			(at -0.1 4.6 90)
+			(at 0 4 90)
 			(layer "F.Fab")
 			(uuid "d0c059f6-b9b9-4555-af70-0a026483d991")
 			(effects
@@ -15888,6 +15939,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -15896,7 +15948,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9eeb0eda-0214-4f20-b56d-53e1d392878a")
+			(uuid "d91962c2-f72d-4cba-a07f-2dedacd0b03b")
 			(effects
 				(font
 					(size 1 1)
@@ -15909,7 +15961,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5125e1d1-18de-4038-b1ca-d69348b4d6ab")
+			(uuid "5a52e0d3-c854-49af-9ade-a95524d41583")
 			(effects
 				(font
 					(size 1 1)
@@ -16068,7 +16120,7 @@
 			(uuid "a328c816-88fd-477e-b309-152e82ec1d72")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -16194,7 +16246,7 @@
 		(uuid "c21fa22b-6c23-4a58-84d1-893129d1597a")
 		(at 76.75 71.8 180)
 		(property "Reference" "R49"
-			(at 0 -4 0)
+			(at 0 -4 180)
 			(layer "F.SilkS")
 			(uuid "d4dc7d9c-2a16-44c3-9800-388fa1396849")
 			(effects
@@ -16205,7 +16257,7 @@
 			)
 		)
 		(property "Value" "1k"
-			(at 0 4 0)
+			(at 0 4 180)
 			(layer "F.Fab")
 			(uuid "24230b13-7fad-42da-9e2a-016fc6cc3bb2")
 			(effects
@@ -16216,7 +16268,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f0fdc2ac-7fbc-4c21-9904-1ab518a89f26")
@@ -16227,7 +16279,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "985e5c8a-00b1-43cd-a4fc-fb3ba18f0e67")
@@ -16238,13 +16290,14 @@
 			)
 		)
 		(property "LCSC Part" "C2930027"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "1f8c1041-9762-48eb-8914-fc8a6c0630ea")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -16253,7 +16306,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "63864dcb-c83c-4b64-b8ff-9e0f8722a4dd")
+			(uuid "18f78cd9-d2b8-462f-a336-41eb59671f77")
 			(effects
 				(font
 					(size 1 1)
@@ -16266,7 +16319,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8cf183b6-2702-46bf-9f2e-5bc1ddfc9ce1")
+			(uuid "1b4df650-70e8-4c6c-9ad1-a1a950edf086")
 			(effects
 				(font
 					(size 1 1)
@@ -16398,7 +16451,7 @@
 			(uuid "70511261-ca64-4872-942d-27fb7f0ea3dc")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "f735fa4a-3f8f-4c23-8b82-e5e2b3103abc")
 			(effects
@@ -16425,7 +16478,7 @@
 			(uuid "4f8d9dd7-daa4-4e89-8714-4b2d207b3ed9")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -16453,7 +16506,7 @@
 			)
 		)
 		(property "Value" "5.1k"
-			(at 6.2 10.7 270)
+			(at 0 4 90)
 			(layer "F.Fab")
 			(uuid "fbe478e3-ad63-4cf3-b10b-1d71b92bf573")
 			(effects
@@ -16493,6 +16546,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -16501,7 +16555,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d2828e67-c543-4e71-8d0c-e8a4a981e84c")
+			(uuid "7376d851-ab68-4c4b-b5fd-9e73164699c5")
 			(effects
 				(font
 					(size 1 1)
@@ -16514,7 +16568,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ed22fd45-0509-4fe0-8ce1-577fa7ab15ef")
+			(uuid "3945a98d-b68f-47c9-9448-730897c21c7c")
 			(effects
 				(font
 					(size 1 1)
@@ -16673,7 +16727,7 @@
 			(uuid "fc2d4a06-ddf3-4f5b-8d70-6e0214312221")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -16741,6 +16795,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -16749,7 +16804,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8f3ac633-8b0c-4938-bcb0-fb6bd1bda406")
+			(uuid "ab811e4a-c10c-4daa-a6a0-e0f44d2d1dcc")
 			(effects
 				(font
 					(size 1 1)
@@ -16762,7 +16817,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "da9ec81f-08b2-4088-9a68-b11eb52ede27")
+			(uuid "3c13ebfd-a806-4858-bff5-d7887972426a")
 			(effects
 				(font
 					(size 1 1)
@@ -16775,7 +16830,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "a6b21927-20ea-40cf-b131-a494210e7543")
+			(uuid "d6dbab53-02fc-4230-a1f5-aa4665bb18c7")
 			(effects
 				(font
 					(size 1 1)
@@ -16788,7 +16843,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "45d74793-a04e-449f-9a34-e7dcade1a504")
+			(uuid "2d5d19ab-9239-4704-8c5e-e76629fae7d4")
 			(effects
 				(font
 					(size 1 1)
@@ -16801,7 +16856,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "be3ca7b2-94d0-4821-90ad-0ffa0023b9e1")
+			(uuid "3ec8f216-1dbe-47d7-8e52-dab5bac6e4d5")
 			(effects
 				(font
 					(size 1 1)
@@ -16814,7 +16869,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5d9ea554-6e94-4ebe-b24d-e7e5e9d7b9e5")
+			(uuid "e94e2961-7d61-4250-9a70-2a7c7c5d157d")
 			(effects
 				(font
 					(size 1 1)
@@ -16974,7 +17029,7 @@
 			(uuid "a9a006a4-4e2f-4b29-8dd3-30bde994152c")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -17210,7 +17265,7 @@
 		(at 96 73.3 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C25"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "d3962050-0985-42ba-ba7f-7f70918612a6")
 			(effects
@@ -17221,7 +17276,7 @@
 			)
 		)
 		(property "Value" "4.7μF"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "8af9e3bb-ac7f-4da5-b36c-98a1612233a6")
 			(effects
@@ -17232,7 +17287,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "bcf5fefe-36e3-43f3-88e1-395e04f076fc")
@@ -17243,7 +17298,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "eb8f907b-fba0-4812-a5be-c9e85835fb9f")
@@ -17254,13 +17309,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "3b57f912-0f95-4c6d-a61d-f914de6d208d")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -17269,7 +17325,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4f994302-a57b-4236-9dec-edc57242de8f")
+			(uuid "d615234c-92d4-4093-9001-38429394d335")
 			(effects
 				(font
 					(size 1 1)
@@ -17282,7 +17338,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "56c2e506-45c4-4e2c-a1ae-6994b9030479")
+			(uuid "e49bfd8b-2c6d-4084-b9c1-930e149c4433")
 			(effects
 				(font
 					(size 1 1)
@@ -17458,7 +17514,7 @@
 			(uuid "c1f73d18-3e1e-45f9-9b81-e3258ca112ab")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "bb142068-25e0-4bde-a054-2e0621bc6355")
 			(effects
@@ -17485,7 +17541,7 @@
 			(uuid "fe69a329-73de-4120-a381-9b7e3d1569ad")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -17503,7 +17559,7 @@
 		(at 85.7 62.1 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C28"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "f8ab00fe-9fe0-4eab-8e1d-9f9e5e28fe9c")
 			(effects
@@ -17514,7 +17570,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "3a87a9a8-c103-422b-8a06-20aeb32fb130")
 			(effects
@@ -17525,7 +17581,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "3552d52e-cd72-4054-b88e-fc0fe1fcc8d4")
@@ -17536,7 +17592,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "98dda8bf-a945-42d3-a590-af33be574758")
@@ -17547,13 +17603,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "14d9bb3a-1c0d-480c-9f59-f63b129c2495")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -17562,7 +17619,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "38419126-60e7-4b1b-b638-477623b44a78")
+			(uuid "a2a0d9d6-cf6f-4dbc-b20e-5910a65a7f54")
 			(effects
 				(font
 					(size 1 1)
@@ -17575,7 +17632,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5204c04f-a877-4753-ac70-21033d3a774f")
+			(uuid "a37cd698-1c7b-4914-a2b0-e2c9b4a9c89e")
 			(effects
 				(font
 					(size 1 1)
@@ -17751,7 +17808,7 @@
 			(uuid "23fda8b6-6777-49e7-9fe3-a460eb02a0d2")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "10d3b197-1a6f-46a3-b350-cbd72c305c75")
 			(effects
@@ -17778,7 +17835,7 @@
 			(uuid "9934a2a3-e969-4ec1-bcd8-548e85700f22")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -18014,7 +18071,7 @@
 		(at 83.7 62.1 -90)
 		(descr "15pF (150) ±5% 50V")
 		(property "Reference" "C41"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "2aa5b707-4921-433c-b419-d008fd2eccf0")
 			(effects
@@ -18025,7 +18082,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "4c6f1709-624b-48b8-9b98-3e1ec8583251")
 			(effects
@@ -18036,7 +18093,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "273817aa-0a35-4154-9be5-24ef5d0d4f3b")
@@ -18047,7 +18104,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2c3ab4c2-e04a-4113-bef3-0552df3d2275")
@@ -18058,13 +18115,14 @@
 			)
 		)
 		(property "LCSC Part" "C1644"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "61f50089-dc0b-40f7-9b9b-6cad021177de")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -18073,7 +18131,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "6012e845-7a92-42a6-b5a6-770835fd237b")
+			(uuid "f4a1d471-e0d8-40cd-916b-bfe3034c1266")
 			(effects
 				(font
 					(size 1 1)
@@ -18086,7 +18144,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "17a741df-adff-444c-9b68-aed2d61e1c54")
+			(uuid "593c9311-74de-4ee9-8d3a-ce18dbf13bf5")
 			(effects
 				(font
 					(size 1 1)
@@ -18262,7 +18320,7 @@
 			(uuid "28fbb48e-690a-4ece-8863-c0b32155c011")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "2921bde7-87e4-4cb2-a755-990b06a5c80b")
 			(effects
@@ -18289,7 +18347,7 @@
 			(uuid "d98e3a7a-4990-49ed-a197-c10eb1c94cb6")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -18306,7 +18364,7 @@
 		(uuid "e9d482e3-afed-411c-aded-7e670085326f")
 		(at 89.7 87.905 180)
 		(property "Reference" "R56"
-			(at 0 -4 0)
+			(at 0 -4 180)
 			(layer "F.SilkS")
 			(uuid "65866337-8259-4afb-b7a4-3d035719cc4b")
 			(effects
@@ -18317,7 +18375,7 @@
 			)
 		)
 		(property "Value" "10k"
-			(at 0 4 0)
+			(at 0 4 180)
 			(layer "F.Fab")
 			(uuid "8450d9f4-6963-4e9f-aa62-03d86a35fb30")
 			(effects
@@ -18328,7 +18386,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "132f97ac-73c7-4e2f-aa67-62658285157a")
@@ -18339,7 +18397,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "bdd8b3cb-15db-4841-819a-e4cdf7c539cc")
@@ -18350,13 +18408,14 @@
 			)
 		)
 		(property "LCSC Part" "C2930027"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "7db54ab4-313c-4235-b620-cc48d5dc7efe")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -18365,7 +18424,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "5d9cfa6c-4d14-44de-913e-1b1c549287dc")
+			(uuid "a303fe8f-ad9e-4387-a98d-aae5504658ab")
 			(effects
 				(font
 					(size 1 1)
@@ -18378,7 +18437,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "18a87379-8b1a-4c61-8a65-83edb914c5fa")
+			(uuid "b7853a3a-e48f-420f-b4f5-62387a49abc4")
 			(effects
 				(font
 					(size 1 1)
@@ -18510,7 +18569,7 @@
 			(uuid "a3214462-4681-43f3-8622-35e83a2a278b")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "b14b3e83-5fa4-4e88-a8d7-590c974c28a5")
 			(effects
@@ -18537,7 +18596,7 @@
 			(uuid "570920c6-2b87-4451-9d47-17ad2d2db594")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -18554,7 +18613,7 @@
 		(uuid "ebb792f4-9bdd-4ca7-a92a-baa4942731c2")
 		(at 96.7 58.6 180)
 		(property "Reference" "SW1"
-			(at 0 -5.85 0)
+			(at 0 -5.85 180)
 			(layer "F.SilkS")
 			(uuid "b1d77025-434f-48ac-8c8a-8e9130d80e4b")
 			(effects
@@ -18565,7 +18624,7 @@
 			)
 		)
 		(property "Value" "TS-1187A-B-A-B"
-			(at 0 5.85 0)
+			(at 0 5.85 180)
 			(layer "F.Fab")
 			(uuid "da572f70-920e-4508-ae12-d9640e6f277e")
 			(effects
@@ -18576,7 +18635,7 @@
 			)
 		)
 		(property "Datasheet" "https://lcsc.com/product-detail/Tactile-Switches_XKB-Enterprise-TS-1187-B-A-A_C318884.html"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0a466ad5-be2b-4c16-ab2e-f3fda4e91327")
@@ -18587,7 +18646,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "16cdcfda-7bea-4ca1-93cb-48eaea367b75")
@@ -18598,13 +18657,14 @@
 			)
 		)
 		(property "LCSC Part" "C318884"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2872e989-297e-4850-8807-2577f9216ce3")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -18613,7 +18673,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "9b44ea5e-e5b1-47cd-827e-889f15f1c63e")
+			(uuid "96e1a7d0-0686-4f02-b89f-ce5b367708af")
 			(effects
 				(font
 					(size 1 1)
@@ -18626,7 +18686,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "6dac6d29-8f71-4c97-8cb3-b7c04f410e52")
+			(uuid "ec4829e3-5f99-45f4-8371-223098f5fbdd")
 			(effects
 				(font
 					(size 1 1)
@@ -18908,7 +18968,7 @@
 			(uuid "a1980abf-2fca-4c20-b7ad-ec8a7ab0600c")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "2982e677-ef73-49bd-951d-7e9a0443e73a")
 			(effects
@@ -18955,7 +19015,7 @@
 			(uuid "31655379-2a9f-46fe-b9b7-0350c5abb505")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5.wrl"
+		(model "../SpaghettiLAB.3dshapes/SW-SMD_4P-L5.1-W5.1-P3.70-LS6.5-TL_H1.5.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -18972,7 +19032,7 @@
 		(uuid "ee5de717-37c5-403a-8a56-42f736e4a1f9")
 		(at 97.2 67.02 180)
 		(property "Reference" "U19"
-			(at 0 -6.682 0)
+			(at 0 -6.682 180)
 			(layer "F.SilkS")
 			(uuid "606f761e-4bae-4df2-adae-1e4577fdf69e")
 			(effects
@@ -18983,7 +19043,7 @@
 			)
 		)
 		(property "Value" "W25Q16JVSNIQ"
-			(at 0 6.682 0)
+			(at 0 6.682 180)
 			(layer "F.Fab")
 			(uuid "46d509ce-de5e-4bf4-a7a7-29b350aee070")
 			(effects
@@ -18994,7 +19054,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/W25Q16JVSNIQ/2548069.html"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "b7985830-11d9-4e2c-a391-9f32c49acc2f")
@@ -19005,7 +19065,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0d2eb783-e8cb-4df7-aec3-eb6b4f5f2326")
@@ -19016,13 +19076,14 @@
 			)
 		)
 		(property "LCSC Part" "C2456211"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2c564e12-ddc4-4cf2-91f1-37b58d9379de")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -19031,7 +19092,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "e05403e6-05f8-4c08-b237-d2f67e063354")
+			(uuid "14055bb7-7c6a-4d43-97a6-1346d8d5d551")
 			(effects
 				(font
 					(size 1 1)
@@ -19044,7 +19105,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "1a2307a7-9774-4589-970e-69dab3404001")
+			(uuid "93d98d4d-8483-4162-bf84-c88e447ed916")
 			(effects
 				(font
 					(size 1 1)
@@ -19057,7 +19118,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "23dc423e-e25b-4a51-895c-f57692567a8d")
+			(uuid "fc03d9e6-3e06-4e07-8251-a963a944c3d3")
 			(effects
 				(font
 					(size 1 1)
@@ -19070,7 +19131,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "66927c17-817f-48e7-be23-b62ef23ff43b")
+			(uuid "92a1cdf2-a98e-447a-b636-d6da633378da")
 			(effects
 				(font
 					(size 1 1)
@@ -19083,7 +19144,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "3027e9df-c198-45bc-ad3c-8e1e21c5f8b2")
+			(uuid "b3e4c1d2-b9f9-42a5-8b85-a99053cdb22b")
 			(effects
 				(font
 					(size 1 1)
@@ -19227,7 +19288,7 @@
 			(uuid "79ffaa8e-9603-4620-b636-d767101ebfad")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 180)
 			(layer "F.Fab")
 			(uuid "63e61400-97e1-441c-a4c5-44ba02ba9521")
 			(effects
@@ -19310,7 +19371,7 @@
 			(uuid "51e5c972-8635-4af6-8e2a-dfbd156e9bf5")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/SOP-8_L4.9-W3.9-P1.27-LS6.0-BL-1.wrl"
+		(model "../SpaghettiLAB.3dshapes/SOP-8_L4.9-W3.9-P1.27-LS6.0-BL-1.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -19436,7 +19497,7 @@
 		(uuid "f0b22250-eddd-4779-b248-29a093c859f7")
 		(at 84.8 91.65 -90)
 		(property "Reference" "R53"
-			(at 0 -4 90)
+			(at 0 -4 270)
 			(layer "F.SilkS")
 			(uuid "362e61d9-76a4-4cb4-95c9-003da0a45ba3")
 			(effects
@@ -19447,7 +19508,7 @@
 			)
 		)
 		(property "Value" "5.1k"
-			(at 0 4 90)
+			(at 0 4 270)
 			(layer "F.Fab")
 			(uuid "7b9f8304-435b-4fa8-86f8-b7ddebe6522d")
 			(effects
@@ -19458,7 +19519,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "5094c4ad-f573-4b3f-925d-92936808b5b0")
@@ -19469,7 +19530,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "572cc3d6-1265-4c50-8d42-cf5af4712d86")
@@ -19480,13 +19541,14 @@
 			)
 		)
 		(property "LCSC Part" "C2930027"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "98f132ca-63a4-47d3-9b72-67d50a3fde88")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -19495,7 +19557,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "0fe76967-cb63-4627-b998-dcd6e3b5c4bb")
+			(uuid "d2fea828-09ee-4938-acc6-49ba369c7a02")
 			(effects
 				(font
 					(size 1 1)
@@ -19508,7 +19570,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d15be0ab-5676-4e13-898d-2c1fc84ab5e7")
+			(uuid "7f01c8e0-9660-40a3-a551-886938f74ca4")
 			(effects
 				(font
 					(size 1 1)
@@ -19640,7 +19702,7 @@
 			(uuid "ba285689-4924-4439-bc47-fb8cbe5e4ea0")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 90)
+			(at 0 0 270)
 			(layer "F.Fab")
 			(uuid "26bd131a-8dd4-4771-8dd3-fd2a7a462bf9")
 			(effects
@@ -19667,7 +19729,7 @@
 			(uuid "aaa0ef7f-c3f8-4f2b-99a0-6a66ed1bd53f")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/R0603.wrl"
+		(model "../SpaghettiLAB.3dshapes/R0603.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -19736,6 +19798,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -19744,7 +19807,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "46e35878-08a5-4b96-8197-c34be6f84ff4")
+			(uuid "4d2cfd38-2f26-4f1f-88fd-1a37182b5d32")
 			(effects
 				(font
 					(size 1 1)
@@ -19757,7 +19820,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4f5dc9ab-89ab-40a0-9348-5bb59773a774")
+			(uuid "56bb0003-15d9-476e-ad73-cda82c56f8ef")
 			(effects
 				(font
 					(size 1 1)
@@ -19960,7 +20023,7 @@
 			(uuid "3c0c9b68-3d28-4644-84a9-188691c22405")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
+		(model "../SpaghettiLAB.3dshapes/C0603_L1.6-W0.8-H0.8.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -19988,7 +20051,7 @@
 			)
 		)
 		(property "Value" "PR5L5015-5P-C-H"
-			(at -1.8918 7.038683 134)
+			(at 0 4 134)
 			(layer "F.Fab")
 			(uuid "cfdb0ee6-bfb4-4e1d-9a5c-925c9e5f0fb7")
 			(effects
@@ -20028,6 +20091,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -20036,7 +20100,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "2ab296d8-7105-4000-9a5c-f2ff5f20a167")
+			(uuid "f6ac9d11-1b0a-47a4-8378-555cb45e3ac6")
 			(effects
 				(font
 					(size 1 1)
@@ -20049,7 +20113,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8a2009b6-7911-4345-952f-8296afb229d0")
+			(uuid "8e4272dc-823b-4c21-9843-df7ae5b37e61")
 			(effects
 				(font
 					(size 1 1)
@@ -20062,7 +20126,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "f4db85e9-f1e5-4b9d-aecc-0704a0872fb6")
+			(uuid "deb428b1-9b03-4c6c-8904-eb91171f7850")
 			(effects
 				(font
 					(size 1 1)
@@ -20075,7 +20139,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "18fc0faf-aaea-4afc-96df-9ad8c1511032")
+			(uuid "966a2046-0ca1-4f1e-8514-86543f08b2b3")
 			(effects
 				(font
 					(size 1 1)
@@ -20088,7 +20152,7 @@
 			(unlocked yes)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "bc71e18e-823d-4ce0-a50d-327838b27862")
+			(uuid "fceea9c7-e035-4e36-810d-433b8f1515c9")
 			(effects
 				(font
 					(size 1 1)
@@ -20108,8 +20172,8 @@
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
-			(start -9.029999 -2.01)
-			(end 9.04 -2.009999)
+			(start -9.03 -2.01)
+			(end 9.04 -2.010001)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20128,7 +20192,7 @@
 			(uuid "5cd2a600-aced-442b-85fe-48b30c71f992")
 		)
 		(fp_arc
-			(start 9.057194 -2.010013)
+			(start 9.057193 -2.010012)
 			(mid 11.060007 0.008597)
 			(end 9.04 2.01)
 			(stroke
@@ -20141,7 +20205,7 @@
 		(fp_arc
 			(start -9.03 2.01)
 			(mid -11.039999 0)
-			(end -9.029999 -2.01)
+			(end -9.03 -2.01)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20162,7 +20226,7 @@
 		)
 		(fp_circle
 			(center -7.83 0)
-			(end -6.480001 0)
+			(end -6.48 0)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20184,7 +20248,7 @@
 		)
 		(fp_line
 			(start 11.04 -2)
-			(end 11.039999 2)
+			(end 11.04 2)
 			(stroke
 				(width 0.05)
 				(type solid)
@@ -20193,7 +20257,7 @@
 			(uuid "655085f7-0c48-467d-a10b-e4e2513c4758")
 		)
 		(fp_line
-			(start 11.039999 2)
+			(start 11.04 2)
 			(end -11.04 2)
 			(stroke
 				(width 0.05)
@@ -20203,7 +20267,7 @@
 			(uuid "e2f5311b-818d-4245-af25-c484f8cb2954")
 		)
 		(fp_line
-			(start -11.039999 -2)
+			(start -11.04 -2)
 			(end 11.04 -2)
 			(stroke
 				(width 0.05)
@@ -20214,7 +20278,7 @@
 		)
 		(fp_line
 			(start -11.04 2)
-			(end -11.039999 -2)
+			(end -11.04 -2)
 			(stroke
 				(width 0.05)
 				(type solid)
@@ -20234,8 +20298,8 @@
 			(uuid "04fd7699-3bd0-4df4-8a8e-6c2502b26973")
 		)
 		(fp_circle
-			(center 2.54 -0.000001)
-			(end 2.719999 0)
+			(center 2.54 0)
+			(end 2.72 0)
 			(stroke
 				(width 0.35)
 				(type solid)
@@ -20256,7 +20320,7 @@
 			(uuid "dfc9695f-5579-463f-9656-ace5a0c3a875")
 		)
 		(fp_circle
-			(center -2.54 0.000001)
+			(center -2.54 0)
 			(end -2.36 0)
 			(stroke
 				(width 0.35)
@@ -20278,7 +20342,7 @@
 			(uuid "c492accc-2683-46bc-b8f1-341c7bef366d")
 		)
 		(fp_text user "S"
-			(at 7.320001 0.76 134)
+			(at 7.32 0.76 134)
 			(layer "F.SilkS")
 			(uuid "c29e8908-b17b-4729-a33b-4e5a976c0d3c")
 			(effects
@@ -20290,7 +20354,7 @@
 			)
 		)
 		(fp_text user "N"
-			(at -8.330001 0.76 134)
+			(at -8.33 0.76 134)
 			(layer "F.SilkS")
 			(uuid "f8b695f9-5051-4680-a028-5d1291f5c022")
 			(effects
@@ -20324,7 +20388,7 @@
 			(uuid "dd47e961-6a4b-4f0f-933b-5e219574c215")
 		)
 		(pad "2" thru_hole circle
-			(at -2.54 0.000001 134)
+			(at -2.54 0 134)
 			(size 1.3 1.3)
 			(drill 0.849986)
 			(layers "*.Cu" "*.Mask")
@@ -20346,7 +20410,7 @@
 			(uuid "cc926197-4650-466f-9ec1-c060412ea758")
 		)
 		(pad "4" thru_hole circle
-			(at 2.54 -0.000001 134)
+			(at 2.54 0 134)
 			(size 1.3 1.3)
 			(drill 0.849986)
 			(layers "*.Cu" "*.Mask")
@@ -20368,7 +20432,7 @@
 			(uuid "a99b2e21-e26c-47d1-bbe9-8c1285d95c86")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L5015-5P-C-H.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -20767,16 +20831,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
 		)
 		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 50)
+			(at 0 0 230)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "7ab6da8c-f5ea-41f2-aac2-0a5e17a7300a")
+			(uuid "c0e8dcae-f1da-41c1-829d-f886be4a78d6")
 			(effects
 				(font
 					(size 1 1)
@@ -20786,11 +20851,11 @@
 			)
 		)
 		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 50)
+			(at 0 0 230)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "79c779a6-e5f0-482c-b1fd-50aecbda4137")
+			(uuid "eb79fa9d-4bdb-4189-8f26-c080faf57a66")
 			(effects
 				(font
 					(size 1 1)
@@ -20800,11 +20865,11 @@
 			)
 		)
 		(property "Supplier Part" "C41361292"
-			(at 0 0 50)
+			(at 0 0 230)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "7ab29222-42ec-4d85-a986-41c0b83e0bdd")
+			(uuid "2303c908-97ee-4cb6-9469-a404369d95b1")
 			(effects
 				(font
 					(size 1 1)
@@ -20814,11 +20879,11 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 0 0 50)
+			(at 0 0 230)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e596ccfd-63bc-440b-aef4-312a8bbd9d71")
+			(uuid "1bceb9ba-bbd9-403c-9690-268845ba2c58")
 			(effects
 				(font
 					(size 1 1)
@@ -20828,11 +20893,11 @@
 			)
 		)
 		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 50)
+			(at 0 0 230)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "2492ee59-3808-4d77-a835-bfa7c90db7e1")
+			(uuid "ee3e4083-da67-4985-acb4-0885d44bd506")
 			(effects
 				(font
 					(size 1 1)
@@ -20854,7 +20919,7 @@
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
 			(start 6.5 2)
-			(end 8.999999 2)
+			(end 9 2)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20874,7 +20939,7 @@
 		)
 		(fp_line
 			(start -9 2)
-			(end 8.999999 2)
+			(end 9 2)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20883,7 +20948,7 @@
 			(uuid "19b068ce-75a9-4298-9e75-0df3d1a62cfc")
 		)
 		(fp_line
-			(start -8.999999 -2)
+			(start -9 -2)
 			(end 9 -2)
 			(stroke
 				(width 0.25)
@@ -20895,7 +20960,7 @@
 		(fp_arc
 			(start 9 -2)
 			(mid 10.999999 0)
-			(end 8.999999 2)
+			(end 9 2)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20906,7 +20971,7 @@
 		(fp_arc
 			(start 8 -2)
 			(mid 10 0)
-			(end 8.000001 2)
+			(end 8 2)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20915,9 +20980,9 @@
 			(uuid "bfece56a-28cd-429c-8c24-6f4a4c0c3449")
 		)
 		(fp_arc
-			(start -8.010001 2)
-			(mid -10.010001 -0.000001)
-			(end -8.01 -1.999999)
+			(start -8.01 2)
+			(mid -10.01 0)
+			(end -8.01 -2)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20928,7 +20993,7 @@
 		(fp_arc
 			(start -9 2)
 			(mid -10.999999 0)
-			(end -8.999999 -2)
+			(end -9 -2)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20949,7 +21014,7 @@
 		)
 		(fp_circle
 			(center -7.75 0)
-			(end -6.400001 0)
+			(end -6.4 -0.000001)
 			(stroke
 				(width 0.25)
 				(type solid)
@@ -20971,7 +21036,7 @@
 		)
 		(fp_line
 			(start 11.04 2)
-			(end 11.040001 -2)
+			(end 11.04 -2)
 			(stroke
 				(width 0.05)
 				(type solid)
@@ -20980,7 +21045,7 @@
 			(uuid "a414f2ce-56b0-4782-a447-89d441099f43")
 		)
 		(fp_line
-			(start 11.040001 -2)
+			(start 11.04 -2)
 			(end -11.04 -2)
 			(stroke
 				(width 0.05)
@@ -20990,7 +21055,7 @@
 			(uuid "b4f1845b-6d1c-4840-ade3-b28714dae421")
 		)
 		(fp_line
-			(start -11.040001 2)
+			(start -11.04 2)
 			(end 11.04 2)
 			(stroke
 				(width 0.05)
@@ -21001,7 +21066,7 @@
 		)
 		(fp_line
 			(start -11.04 -2)
-			(end -11.040001 2)
+			(end -11.04 2)
 			(stroke
 				(width 0.05)
 				(type solid)
@@ -21011,7 +21076,7 @@
 		)
 		(fp_circle
 			(center 5 0)
-			(end 5.179999 0)
+			(end 5.18 0)
 			(stroke
 				(width 0.35)
 				(type solid)
@@ -21021,8 +21086,8 @@
 			(uuid "b0e5ace5-2d03-413f-a572-a0a5eedbcdb2")
 		)
 		(fp_circle
-			(center 2.500001 -0.000001)
-			(end 2.679999 -0.000001)
+			(center 2.5 0)
+			(end 2.68 0)
 			(stroke
 				(width 0.35)
 				(type solid)
@@ -21043,7 +21108,7 @@
 			(uuid "67a53636-7da3-4aae-aa03-b15b90ef0051")
 		)
 		(fp_circle
-			(center -2.500001 0.000001)
+			(center -2.5 0)
 			(end -2.33 0)
 			(stroke
 				(width 0.35)
@@ -21055,7 +21120,7 @@
 		)
 		(fp_circle
 			(center -5 0)
-			(end -4.829999 0)
+			(end -4.83 0)
 			(stroke
 				(width 0.35)
 				(type solid)
@@ -21065,7 +21130,7 @@
 			(uuid "a7ad543c-98b7-4a44-b781-afced9fc2b9d")
 		)
 		(fp_text user "S"
-			(at 7.24 -0.760001 50)
+			(at 7.24 -0.759999 50)
 			(layer "B.SilkS")
 			(uuid "c06249a0-6659-4bf4-9f9d-836075117da2")
 			(effects
@@ -21112,7 +21177,7 @@
 			(uuid "2adc3cbd-6417-40b4-8ecd-1e7d62a608a4")
 		)
 		(pad "2" thru_hole circle
-			(at -2.500001 0.000001 230)
+			(at -2.5 0 230)
 			(size 1.3 1.3)
 			(drill 0.849986)
 			(layers "*.Cu" "*.Mask")
@@ -21134,7 +21199,7 @@
 			(uuid "f76954db-e659-4093-92d3-b69961d21886")
 		)
 		(pad "4" thru_hole circle
-			(at 2.500001 -0.000001 230)
+			(at 2.5 0 230)
 			(size 1.3 1.3)
 			(drill 0.849986)
 			(layers "*.Cu" "*.Mask")
@@ -21156,7 +21221,7 @@
 			(uuid "bf720658-32cf-4801-85b6-860fe8191c93")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -21173,7 +21238,7 @@
 		(uuid "2c9fc539-f6cc-4d5d-b209-874cf7401dfc")
 		(at 57.089899 58.998463 -110)
 		(property "Reference" "CN8"
-			(at -0.000001 4 70)
+			(at -0.000002 4 70)
 			(layer "B.SilkS")
 			(uuid "7a3f6ce0-1651-417e-970d-8ecfb223598b")
 			(effects
@@ -21185,7 +21250,7 @@
 			)
 		)
 		(property "Value" "PR5L4015-5P-C-F"
-			(at 0.000001 -4 70)
+			(at 0.000002 -4 70)
 			(layer "B.Fab")
 			(uuid "4c261de3-e60a-4bb7-a10c-84693801796d")
 			(effects
@@ -21228,16 +21293,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
 		)
 		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 70)
+			(at 0 0 250)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e410e176-e32c-44d6-9db7-ad53991c09af")
+			(uuid "6cacafb6-8d6e-4019-9824-e038d9880c38")
 			(effects
 				(font
 					(size 1 1)
@@ -21247,11 +21313,11 @@
 			)
 		)
 		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 70)
+			(at 0 0 250)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0d3d3199-6c4d-488f-8f41-c6f72da6ab2e")
+			(uuid "af825523-7124-4870-a209-e9b5e9d9e510")
 			(effects
 				(font
 					(size 1 1)
@@ -21261,11 +21327,11 @@
 			)
 		)
 		(property "Supplier Part" "C41361292"
-			(at 0 0 70)
+			(at 0 0 250)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8fd6b25b-3275-4124-80ac-4b6f433088ce")
+			(uuid "afb6e64c-2f77-44fd-b9fa-c326a2faa875")
 			(effects
 				(font
 					(size 1 1)
@@ -21275,11 +21341,11 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 0 0 70)
+			(at 0 0 250)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "2b534faf-1841-467f-a7e7-a48940f1924c")
+			(uuid "a32f273b-8dd9-48ec-9ddf-8efcd8e64a9d")
 			(effects
 				(font
 					(size 1 1)
@@ -21289,11 +21355,11 @@
 			)
 		)
 		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 70)
+			(at 0 0 250)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e041538e-a3b0-4b02-8814-ff741ec211ba")
+			(uuid "8b30eaa1-942f-4e4a-9ad6-c916799ebfa7")
 			(effects
 				(font
 					(size 1 1)
@@ -21617,7 +21683,7 @@
 			(uuid "1d84064a-0bf3-4c86-907d-a2e9b052b48f")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -21689,16 +21755,17 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
 		)
 		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 0)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8bf84432-c331-4f1a-8e83-1f7550fe20ce")
+			(uuid "239a7c28-1f76-4d2d-bead-78fa816e9bd3")
 			(effects
 				(font
 					(size 1 1)
@@ -21708,11 +21775,11 @@
 			)
 		)
 		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 0)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "2688d2a5-5208-4445-ae85-bebea22caa14")
+			(uuid "536a83fe-322e-4d8c-8ec3-8723c4279d16")
 			(effects
 				(font
 					(size 1 1)
@@ -21722,11 +21789,11 @@
 			)
 		)
 		(property "Supplier Part" "C41361292"
-			(at 0 0 0)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a0cf2c19-f4bf-4398-9fdd-87f4bd58bac3")
+			(uuid "eb250c6e-81b0-43e6-93b6-0d6793f3736e")
 			(effects
 				(font
 					(size 1 1)
@@ -21736,11 +21803,11 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 0 0 0)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b7259efb-740a-4c16-a4c2-b4b8e50aac88")
+			(uuid "25e196f0-b60e-4f8f-ac3b-1906a38c1b0c")
 			(effects
 				(font
 					(size 1 1)
@@ -21750,11 +21817,11 @@
 			)
 		)
 		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 0)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "bd2c2731-bfff-43d8-a842-c74fa1408a01")
+			(uuid "05c32cd9-d0ae-4c7a-8c06-b1f395bdc537")
 			(effects
 				(font
 					(size 1 1)
@@ -22078,7 +22145,7 @@
 			(uuid "9e717659-09e6-45c9-8db8-5d57791d633c")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -22095,7 +22162,7 @@
 		(uuid "6fe10b07-6644-4dec-8f1a-6f2ba405791d")
 		(at 113.589899 59.301537 110)
 		(property "Reference" "CN10"
-			(at 0.000001 4 110)
+			(at 0.000002 4 290)
 			(layer "B.SilkS")
 			(uuid "c246a257-173a-4f1e-811c-dc0c2771e756")
 			(effects
@@ -22107,7 +22174,7 @@
 			)
 		)
 		(property "Value" "PR5L4015-5P-C-F"
-			(at -0.000001 -4 110)
+			(at -0.000002 -4 290)
 			(layer "B.Fab")
 			(uuid "649f4a37-0f4f-44a3-a760-53bfe07f4fc9")
 			(effects
@@ -22119,7 +22186,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L4015-5P-C-F/43105443.html"
-			(at 0 0 110)
+			(at 0 0 290)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "a0039ccb-a9e2-42e0-a3d2-8033c7f471d7")
@@ -22131,7 +22198,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 110)
+			(at 0 0 290)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "5af141ea-4e55-49d5-86cb-594165582849")
@@ -22143,23 +22210,24 @@
 			)
 		)
 		(property "LCSC Part" "C41361292"
-			(at 0 0 110)
+			(at 0 0 290)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "26fbe7fe-f62a-4328-b5fe-cb7dc1121b60")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
 		)
 		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 290)
+			(at 0 0 110)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "9343954b-5e2d-4228-9ba3-62aa7c766499")
+			(uuid "ed3f903e-c20f-49c9-bf22-edd2c836d0f0")
 			(effects
 				(font
 					(size 1 1)
@@ -22169,11 +22237,11 @@
 			)
 		)
 		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 290)
+			(at 0 0 110)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "075339ec-6b48-4c5b-8dbf-04354b54ff20")
+			(uuid "886a7bcd-c6d7-4eeb-83dd-2cb5f9d1392a")
 			(effects
 				(font
 					(size 1 1)
@@ -22183,11 +22251,11 @@
 			)
 		)
 		(property "Supplier Part" "C41361292"
-			(at 0 0 290)
+			(at 0 0 110)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "5bc307ab-53ae-4809-9bf7-e6dff738ae00")
+			(uuid "f3d57aa1-ddf8-4c0d-be55-cef8ef91123c")
 			(effects
 				(font
 					(size 1 1)
@@ -22197,11 +22265,11 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 0 0 290)
+			(at 0 0 110)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a1eab956-e232-4ddd-a2a3-796f70e106ae")
+			(uuid "1bfa3b8c-3509-4f34-9edc-56ec83cc188b")
 			(effects
 				(font
 					(size 1 1)
@@ -22211,11 +22279,11 @@
 			)
 		)
 		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 290)
+			(at 0 0 110)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "ed05dea2-dac0-490d-ad3f-a02333fb6fed")
+			(uuid "83ab6d4c-d1a7-4a58-b1cd-c91b8150adc5")
 			(effects
 				(font
 					(size 1 1)
@@ -22448,7 +22516,7 @@
 			(uuid "4289bef3-5719-47c9-a0bf-e6ed12a004fb")
 		)
 		(fp_text user "S"
-			(at 7.24 -0.76 110)
+			(at 7.24 -0.76 290)
 			(layer "B.SilkS")
 			(uuid "bab5e99b-a52e-4cdc-918e-e4505fb92884")
 			(effects
@@ -22456,11 +22524,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right mirror)
+				(justify left mirror)
 			)
 		)
 		(fp_text user "N"
-			(at -8.25 -0.76 110)
+			(at -8.25 -0.76 290)
 			(layer "B.SilkS")
 			(uuid "b80efc2b-ab28-43c7-8b01-456f51d2b9a8")
 			(effects
@@ -22468,11 +22536,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right mirror)
+				(justify left mirror)
 			)
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 110)
+			(at 0 0 290)
 			(layer "B.Fab")
 			(uuid "dae4307c-36b3-4690-bf65-b5a1ccd8f29f")
 			(effects
@@ -22539,7 +22607,7 @@
 			(uuid "86210513-85d5-4b7d-b546-d72413152a62")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -22556,7 +22624,7 @@
 		(uuid "f8fb1ebf-1b0a-4131-8c4a-871ac1fa3528")
 		(at 64.055937 90.099996 134)
 		(property "Reference" "CN7"
-			(at 0 4 134)
+			(at 0 4 314)
 			(layer "B.SilkS")
 			(uuid "68298bb5-1bc7-4b21-9b25-95f9a3f27b2c")
 			(effects
@@ -22568,7 +22636,7 @@
 			)
 		)
 		(property "Value" "PR5L4015-5P-C-F"
-			(at 0 -4 134)
+			(at 0 -4 314)
 			(layer "B.Fab")
 			(uuid "ef48d0b4-6ec9-42af-bf8a-8dde9fca797e")
 			(effects
@@ -22580,7 +22648,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L4015-5P-C-F/43105443.html"
-			(at 0 0 134)
+			(at 0 0 314)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "e02af49b-148e-49c7-92d4-292c3b9a699f")
@@ -22592,7 +22660,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 134)
+			(at 0 0 314)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "82998d07-7e3b-42f6-9ea4-06b6035e571c")
@@ -22604,23 +22672,24 @@
 			)
 		)
 		(property "LCSC Part" "C41361292"
-			(at 0 0 134)
+			(at 0 0 314)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "1fc2f658-628c-46b3-9468-69288706a86f")
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
 		)
 		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 314)
+			(at 0 0 134)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "41b2d3f4-2a26-4e32-809e-96dd23c7a32c")
+			(uuid "af56d12a-213c-41db-a5ce-f0217e843d96")
 			(effects
 				(font
 					(size 1 1)
@@ -22630,11 +22699,11 @@
 			)
 		)
 		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 314)
+			(at 0 0 134)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b4632caf-3488-4ffe-9711-951cb3fc5df4")
+			(uuid "3565bc01-8478-4234-a9d0-a744c5f7d1b9")
 			(effects
 				(font
 					(size 1 1)
@@ -22644,11 +22713,11 @@
 			)
 		)
 		(property "Supplier Part" "C41361292"
-			(at 0 0 314)
+			(at 0 0 134)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "44be72d7-e545-42ec-9f0a-39ce57958fc5")
+			(uuid "9c332f31-0f1c-499a-873a-e048a1522bd7")
 			(effects
 				(font
 					(size 1 1)
@@ -22658,11 +22727,11 @@
 			)
 		)
 		(property "Supplier" "LCSC"
-			(at 0 0 314)
+			(at 0 0 134)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0990dd2c-971f-4080-b9db-0a49d01ac16b")
+			(uuid "c5e08214-a6c0-468e-af94-a6a55ff20688")
 			(effects
 				(font
 					(size 1 1)
@@ -22672,11 +22741,11 @@
 			)
 		)
 		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 314)
+			(at 0 0 134)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "1cd97428-cd3c-43af-8d9f-e338dc5e3e16")
+			(uuid "7e2a86d3-beb1-4270-833c-91c338b2cf77")
 			(effects
 				(font
 					(size 1 1)
@@ -22909,7 +22978,7 @@
 			(uuid "5f342d51-cad5-42f6-8a99-514605e80701")
 		)
 		(fp_text user "S"
-			(at 7.24 -0.76 134)
+			(at 7.24 -0.76 314)
 			(layer "B.SilkS")
 			(uuid "427aec34-3cfa-4e4d-8614-7a44b528f236")
 			(effects
@@ -22917,11 +22986,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right mirror)
+				(justify left mirror)
 			)
 		)
 		(fp_text user "N"
-			(at -8.25 -0.76 134)
+			(at -8.25 -0.76 314)
 			(layer "B.SilkS")
 			(uuid "a97faa13-556c-4d5f-ba8e-0eb78c917186")
 			(effects
@@ -22929,11 +22998,11 @@
 					(size 1.5 1.5)
 					(thickness 0.2)
 				)
-				(justify right mirror)
+				(justify left mirror)
 			)
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 134)
+			(at 0 0 314)
 			(layer "B.Fab")
 			(uuid "76e0cc46-df2d-4330-be39-06f211348fe9")
 			(effects
@@ -23000,7 +23069,7 @@
 			(uuid "b7a23da9-2aaf-4ab7-b5f2-1beec5bb9384")
 		)
 		(embedded_fonts no)
-		(model "${KICAD_3RD_PARTY}/SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
+		(model "../SpaghettiLAB.3dshapes/CONN-TH_PR5L4015-5P-C-F.wrl"
 			(offset
 				(xyz 0 0 0)
 			)

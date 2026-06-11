@@ -643,8 +643,8 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "RP2350-Core.kicad_sch",
-        "name": "Blocks",
+        "filename": "RP2354-Core.kicad_sch",
+        "name": "RP2354-Core",
         "uuid": "8bfb0932-e2fe-4425-80ff-903dfd664561"
       }
     ],
