@@ -8969,16 +8969,6 @@
 		)
 		(uuid "d2015ceb-a36b-468f-839a-3e20ac25d1e1")
 	)
-	(label "~{RESET}"
-		(at 163.83 102.87 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "d575692a-443d-47fb-b116-624f8c823eee")
-	)
 	(label "VREG_LX"
 		(at 132.08 73.66 90)
 		(effects
