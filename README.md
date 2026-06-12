@@ -2,6 +2,11 @@
   <img src="spaghetti-logo-blu.png" width="500">
 </p>
 
+<p align="center">
+  <a href="https://spaghetti-lab.my.canva.site/">Website</a> •
+  <a href="https://spaghetti-lab.my.canva.site/">Newsletter</a>
+</p>
+
 From prototype to product.
 
 SpaghettiLAB is an open ecosystem of stackable hardware modules, firmware, and software designed to accelerate embedded and IoT development.
