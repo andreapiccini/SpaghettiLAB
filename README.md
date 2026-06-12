@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://spaghetti-lab.my.canva.site/">Website</a> •
-  <a href="https://spaghetti-lab.my.canva.site/">Newsletter</a>
+  <a href="https://spaghetti-lab.my.canva.site/join-newsletter">Newsletter</a>
 </p>
 
 From prototype to product.
