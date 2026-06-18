@@ -146,9 +146,9 @@
 			(subtractmaskfromsilk no)
 			(outputformat 1)
 			(mirror no)
-			(drillshape 1)
+			(drillshape 0)
 			(scaleselection 1)
-			(outputdirectory "")
+			(outputdirectory "../../../../../grb/")
 		)
 	)
 	(footprint "Connector_PinSocket_2.54mm:PinSocket_2x05_P2.54mm_Vertical"
@@ -6466,7 +6466,7 @@
 			(uuid "e5d0f637-4bda-479b-8d53-79009a957e49")
 		)
 		(fp_text user "S"
-			(at 7.32 0.76 230)
+			(at 7.32 0.11 230)
 			(layer "F.SilkS")
 			(uuid "f0ae3e16-f868-4917-be65-13094c354bc2")
 			(effects
@@ -6478,7 +6478,7 @@
 			)
 		)
 		(fp_text user "N"
-			(at -8.33 0.76 230)
+			(at -8.47 0.000001 230)
 			(layer "F.SilkS")
 			(uuid "a4c6c4e8-fc2c-4266-a583-95ee22a37190")
 			(effects

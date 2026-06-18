@@ -1226,7 +1226,7 @@
     "last_paths": {
       "idf": "",
       "netlist": "",
-      "plot": "",
+      "plot": "../../../../../grb/",
       "specctra_dsn": "",
       "vrml": ""
     },
