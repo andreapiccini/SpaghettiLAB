@@ -113,7 +113,6 @@
 		)
 		(capping no)
 		(filling no)
-		(zone_defaults)
 		(pcbplotparams
 			(layerselection 0x00000000_00000000_55555555_5755f5ff)
 			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
@@ -2312,7 +2311,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
+		(property "Datasheet" ""
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
@@ -2342,84 +2341,12 @@
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Manufacturer Part" "PR5L5015-5P-C-H"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "4f98e8c7-0013-423e-ae44-b8b29e622b5b")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "7db17f78-aa90-4a16-ac4a-8a1e0b2ade2b")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier Part" "C41361293"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "d108f576-a420-448f-b658-b5130ff1e5ae")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "0e038f7f-eb2f-4349-bb0f-d5e1cbdc82d9")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器公头POGOPIN适配PR5L4015-5P-C-F"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "b01336a2-2132-4da6-92c6-fe1dc7ec07d1")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
 				)
 			)
 		)
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/ffb6719e-9e2e-429d-b76b-e4b2835ae2cb")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2591,30 +2518,6 @@
 			(fill no)
 			(layer "F.Fab")
 			(uuid "baf57f70-03ba-4b2a-9abb-282d6b3d381d")
-		)
-		(fp_text user "S"
-			(at 7.32 0.76 180)
-			(layer "F.SilkS")
-			(uuid "aeed5a4d-c9f4-46f4-8bed-cc1be1502352")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
-		)
-		(fp_text user "N"
-			(at -8.33 0.76 180)
-			(layer "F.SilkS")
-			(uuid "1e9d7918-a8aa-4efa-b359-d8bb9485cb08")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
 		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 180)
@@ -4414,7 +4317,7 @@
 		(uuid "361b3d7a-8bfd-43de-a3de-b3467cab9787")
 		(at 57.131269 58.986819 -110)
 		(property "Reference" "U35"
-			(at 0.000002 -4 250)
+			(at 0.000002 -4 70)
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "587b9592-ac56-43d4-b654-fd986b66cd6a")
@@ -4426,7 +4329,7 @@
 			)
 		)
 		(property "Value" "PR5L5015-5P-C-H"
-			(at -0.000002 4 250)
+			(at -0.000002 4 70)
 			(layer "F.Fab")
 			(uuid "921fecd5-6a99-41e5-b177-054c3f50c9a5")
 			(effects
@@ -4437,7 +4340,7 @@
 			)
 		)
 		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
-			(at 0 0 250)
+			(at 0 0 70)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a97410ef-33ff-49d3-8546-7a04b817f5db")
@@ -4448,7 +4351,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 250)
+			(at 0 0 70)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "90ae3750-08d9-4cd5-b199-6c43206d2e60")
@@ -4459,7 +4362,7 @@
 			)
 		)
 		(property "LCSC Part" "C41361293"
-			(at 0 0 250)
+			(at 0 0 70)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "fe908012-fafd-4a38-abff-b4761d84ac69")
@@ -4538,12 +4441,6 @@
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/130683b0-172d-49d6-91fb-4a0d62d6f6a0")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4716,32 +4613,8 @@
 			(layer "F.Fab")
 			(uuid "5a543149-b2b8-4822-a959-c0bc6ed1cf59")
 		)
-		(fp_text user "S"
-			(at 7.32 0.76 250)
-			(layer "F.SilkS")
-			(uuid "ca042cfa-7913-41ed-ad6c-76b4213c970b")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
-		)
-		(fp_text user "N"
-			(at -8.33 0.76 250)
-			(layer "F.SilkS")
-			(uuid "ad594a08-e443-4c44-9f3e-985ba543d99d")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
-		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 250)
+			(at 0 0 70)
 			(layer "F.Fab")
 			(uuid "0277546b-39ba-4e36-be63-50f0e553d4c7")
 			(effects
@@ -6185,7 +6058,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
+		(property "Datasheet" ""
 			(at 0 0 230)
 			(layer "F.Fab")
 			(hide yes)
@@ -6215,84 +6088,12 @@
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Manufacturer Part" "PR5L5015-5P-C-H"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "59808be9-2a47-4f21-af31-bf9d204739a5")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "095ad1e3-4766-4dc4-a042-fee9d913e965")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier Part" "C41361293"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "4d3a1cf1-3a38-4bd2-a7ea-1a6c1683cf6a")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "dc6fd098-ef2a-4221-a6c4-1c47ac5f1242")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器公头POGOPIN适配PR5L4015-5P-C-F"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "060513ee-90e6-4582-8266-4f7f12ab8997")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
 				)
 			)
 		)
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/1ce0c38b-b6a8-4b5c-a39d-795abcf20882")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6328,7 +6129,7 @@
 		)
 		(fp_arc
 			(start -9.03 2.01)
-			(mid -11.039999 0)
+			(mid -11.04 0)
 			(end -9.03 -2.01)
 			(stroke
 				(width 0.25)
@@ -6464,30 +6265,6 @@
 			(fill no)
 			(layer "F.Fab")
 			(uuid "e5d0f637-4bda-479b-8d53-79009a957e49")
-		)
-		(fp_text user "S"
-			(at 7.32 0.11 230)
-			(layer "F.SilkS")
-			(uuid "f0ae3e16-f868-4917-be65-13094c354bc2")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
-		)
-		(fp_text user "N"
-			(at -8.47 0.000001 230)
-			(layer "F.SilkS")
-			(uuid "a4c6c4e8-fc2c-4266-a583-95ee22a37190")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
 		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 230)
@@ -8987,7 +8764,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
+		(property "Datasheet" ""
 			(at 0 0 110)
 			(layer "F.Fab")
 			(hide yes)
@@ -9017,84 +8794,12 @@
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Manufacturer Part" "PR5L5015-5P-C-H"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "0e5120d1-7814-45a2-8b7c-ee992b366f9d")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "d2c2e577-6089-466c-84f5-b00b4a09b80c")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier Part" "C41361293"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "c852e5e6-ce49-40ee-b71e-892a6abd8fd1")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "bcacc81d-a9e2-4459-a25f-d123a8833625")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器公头POGOPIN适配PR5L4015-5P-C-F"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "fb63e3f0-bec3-46ae-b8fc-589795334578")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
 				)
 			)
 		)
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/0812b105-dd19-412f-a2d8-e76b8ca80694")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9130,7 +8835,7 @@
 		)
 		(fp_arc
 			(start -9.03 2.01)
-			(mid -11.039999 0)
+			(mid -11.04 -0.000001)
 			(end -9.03 -2.01)
 			(stroke
 				(width 0.25)
@@ -9266,30 +8971,6 @@
 			(fill no)
 			(layer "F.Fab")
 			(uuid "b0897c1c-cf07-4b5a-a27c-a411e4367c2a")
-		)
-		(fp_text user "S"
-			(at 7.32 0.76 110)
-			(layer "F.SilkS")
-			(uuid "f29a42f8-aad6-4f7c-89c3-2ff615804d6b")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
-		)
-		(fp_text user "N"
-			(at -8.33 0.76 110)
-			(layer "F.SilkS")
-			(uuid "9a3af3a5-5283-4298-bf63-5b99c97e4d8e")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
 		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 110)
@@ -18660,7 +18341,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L5015-5P-C-H/43105444.html"
+		(property "Datasheet" ""
 			(at 0 0 134)
 			(layer "F.Fab")
 			(hide yes)
@@ -18694,80 +18375,9 @@
 				)
 			)
 		)
-		(property "Manufacturer Part" "PR5L5015-5P-C-H"
-			(at 0 0 134)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "f6ac9d11-1b0a-47a4-8378-555cb45e3ac6")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 134)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "8e4272dc-823b-4c21-9843-df7ae5b37e61")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier Part" "C41361293"
-			(at 0 0 134)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "deb428b1-9b03-4c6c-8904-eb91171f7850")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 134)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "966a2046-0ca1-4f1e-8514-86543f08b2b3")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器公头POGOPIN适配PR5L4015-5P-C-F"
-			(at 0 0 134)
-			(unlocked yes)
-			(layer "F.Fab")
-			(hide yes)
-			(uuid "fceea9c7-e035-4e36-810d-433b8f1515c9")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-			)
-		)
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/2de90a4c-071f-4ca5-8a80-e31ffbc4290c")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -18939,30 +18549,6 @@
 			(fill no)
 			(layer "F.Fab")
 			(uuid "c492accc-2683-46bc-b8f1-341c7bef366d")
-		)
-		(fp_text user "S"
-			(at 7.32 0.76 134)
-			(layer "F.SilkS")
-			(uuid "c29e8908-b17b-4729-a33b-4e5a976c0d3c")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
-		)
-		(fp_text user "N"
-			(at -8.33 0.76 134)
-			(layer "F.SilkS")
-			(uuid "f8b695f9-5051-4680-a028-5d1291f5c022")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left)
-			)
 		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 134)
@@ -19314,7 +18900,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L4015-5P-C-F/43105443.html"
+		(property "Datasheet" ""
 			(at 0 0 50)
 			(layer "B.Fab")
 			(hide yes)
@@ -19346,77 +18932,6 @@
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "c0e8dcae-f1da-41c1-829d-f886be4a78d6")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "eb79fa9d-4bdb-4189-8f26-c080faf57a66")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier Part" "C41361292"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "2303c908-97ee-4cb6-9469-a404369d95b1")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "1bceb9ba-bbd9-403c-9690-268845ba2c58")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 230)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "ee3e4083-da67-4985-acb4-0885d44bd506")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -19424,12 +18939,6 @@
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/58119e37-6afe-4e5a-9c9d-18bfb44f3807")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19644,30 +19153,6 @@
 			(layer "B.Fab")
 			(uuid "a7ad543c-98b7-4a44-b781-afced9fc2b9d")
 		)
-		(fp_text user "S"
-			(at 7.24 -0.759999 50)
-			(layer "B.SilkS")
-			(uuid "c06249a0-6659-4bf4-9f9d-836075117da2")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
-		(fp_text user "N"
-			(at -8.25 -0.76 50)
-			(layer "B.SilkS")
-			(uuid "d34dae1b-bce2-4883-a6b6-46374787fba2")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 50)
 			(layer "B.Fab")
@@ -19777,7 +19262,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L4015-5P-C-F/43105443.html"
+		(property "Datasheet" ""
 			(at 0 0 70)
 			(layer "B.Fab")
 			(hide yes)
@@ -19809,77 +19294,6 @@
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 250)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "6cacafb6-8d6e-4019-9824-e038d9880c38")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 250)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "af825523-7124-4870-a209-e9b5e9d9e510")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier Part" "C41361292"
-			(at 0 0 250)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "afb6e64c-2f77-44fd-b9fa-c326a2faa875")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 250)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "a32f273b-8dd9-48ec-9ddf-8efcd8e64a9d")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 250)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "8b30eaa1-942f-4e4a-9ad6-c916799ebfa7")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -19887,12 +19301,6 @@
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/8769952a-dbf0-4971-b820-fb9238eac77c")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20107,30 +19515,6 @@
 			(layer "B.Fab")
 			(uuid "26094880-30dc-4939-accc-87e8a3a61e86")
 		)
-		(fp_text user "S"
-			(at 7.24 -0.76 70)
-			(layer "B.SilkS")
-			(uuid "40cf33a3-605f-4f81-8bbd-221e54a10d4c")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
-		(fp_text user "N"
-			(at -8.25 -0.76 70)
-			(layer "B.SilkS")
-			(uuid "43b9dbda-323d-46f8-90ef-ddfd5e72c436")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 70)
 			(layer "B.Fab")
@@ -20240,7 +19624,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L4015-5P-C-F/43105443.html"
+		(property "Datasheet" ""
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
@@ -20272,77 +19656,6 @@
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "239a7c28-1f76-4d2d-bead-78fa816e9bd3")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "536a83fe-322e-4d8c-8ec3-8723c4279d16")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier Part" "C41361292"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "eb250c6e-81b0-43e6-93b6-0d6793f3736e")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "25e196f0-b60e-4f8f-ac3b-1906a38c1b0c")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 180)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "05c32cd9-d0ae-4c7a-8c06-b1f395bdc537")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -20350,12 +19663,6 @@
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/fde0fe05-7a5c-4fd4-9198-78fb9a727bbb")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20570,30 +19877,6 @@
 			(layer "B.Fab")
 			(uuid "ed426d48-7a25-4eb9-bf22-ac77acc23f07")
 		)
-		(fp_text user "S"
-			(at 7.24 -0.76 0)
-			(layer "B.SilkS")
-			(uuid "937ab93c-9012-49d3-9e25-6eb403a3fa4a")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
-		(fp_text user "N"
-			(at -8.25 -0.76 0)
-			(layer "B.SilkS")
-			(uuid "197761e1-32ba-4297-8435-5677cebea535")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 0)
 			(layer "B.Fab")
@@ -20703,7 +19986,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/datasheet/PR5L4015-5P-C-F/43105443.html"
+		(property "Datasheet" ""
 			(at 0 0 290)
 			(layer "B.Fab")
 			(hide yes)
@@ -20735,77 +20018,6 @@
 			(effects
 				(font
 					(size 1.27 1.27)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer Part" "PR5L4015-5P-C-F"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "ed3f903e-c20f-49c9-bf22-edd2c836d0f0")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Manufacturer" "SAMZO(三佐)"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "886a7bcd-c6d7-4eeb-83dd-2cb5f9d1392a")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier Part" "C41361292"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "f3d57aa1-ddf8-4c0d-be55-cef8ef91123c")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "Supplier" "LCSC"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "1bfa3b8c-3509-4f34-9edc-56ec83cc188b")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
-				)
-				(justify mirror)
-			)
-		)
-		(property "LCSC Part Name" "2.54-5P磁吸弹簧探针连接器母座POGOPIN适配PR5L5015-5P-C-H"
-			(at 0 0 110)
-			(unlocked yes)
-			(layer "B.Fab")
-			(hide yes)
-			(uuid "83ab6d4c-d1a7-4a58-b1cd-c91b8150adc5")
-			(effects
-				(font
-					(size 1 1)
-					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -20813,12 +20025,6 @@
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/79f2c9c6-aee6-4b77-87cb-364570cb3772")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -21032,30 +20238,6 @@
 			(fill no)
 			(layer "B.Fab")
 			(uuid "4289bef3-5719-47c9-a0bf-e6ed12a004fb")
-		)
-		(fp_text user "S"
-			(at 7.24 -0.76 290)
-			(layer "B.SilkS")
-			(uuid "bab5e99b-a52e-4cdc-918e-e4505fb92884")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
-		(fp_text user "N"
-			(at -8.25 -0.76 290)
-			(layer "B.SilkS")
-			(uuid "b80efc2b-ab28-43c7-8b01-456f51d2b9a8")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
 		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 290)
@@ -21276,12 +20458,6 @@
 		(path "/27bbabe4-82c1-4236-a6b4-4cbf33a3dca0/c1745dfe-0e77-4051-906e-af8d301b063e")
 		(sheetname "/InOut (page 4)/")
 		(sheetfile "InOut.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -21495,30 +20671,6 @@
 			(fill no)
 			(layer "B.Fab")
 			(uuid "5f342d51-cad5-42f6-8a99-514605e80701")
-		)
-		(fp_text user "S"
-			(at 7.24 -0.76 314)
-			(layer "B.SilkS")
-			(uuid "427aec34-3cfa-4e4d-8614-7a44b528f236")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
-		)
-		(fp_text user "N"
-			(at -8.25 -0.76 314)
-			(layer "B.SilkS")
-			(uuid "a97faa13-556c-4d5f-ba8e-0eb78c917186")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.2)
-				)
-				(justify left mirror)
-			)
 		)
 		(fp_text user "${REFERENCE}"
 			(at 0 0 314)
