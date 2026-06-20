@@ -8587,7 +8587,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 209.55 261.62 0)
 			(hide yes)
 			(show_name no)
@@ -8897,7 +8897,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 111.76 141.9352 0)
 			(hide yes)
 			(show_name no)
@@ -9214,7 +9214,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 45.212 167.64 90)
 			(hide yes)
 			(show_name no)
@@ -9293,7 +9293,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 177.8 140.6652 0)
 			(hide yes)
 			(show_name no)
@@ -9760,7 +9760,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TestPoint:TestPoint_THTPad_2.5x2.5mm_Drill1.2mm"
 			(at 100.33 142.24 0)
 			(hide yes)
 			(show_name no)
@@ -9914,7 +9914,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 96.52 63.8048 0)
 			(hide yes)
 			(show_name no)
@@ -10345,7 +10345,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 55.5752 86.36 0)
 			(hide yes)
 			(show_name no)
@@ -10579,7 +10579,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 177.8 89.408 90)
 			(hide yes)
 			(show_name no)
@@ -10811,7 +10811,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 173.99 264.16 0)
 			(hide yes)
 			(show_name no)
@@ -11038,7 +11038,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:RES-SMD_L6.4-W3.2-R2512"
 			(at 159.512 149.86 90)
 			(hide yes)
 			(show_name no)
@@ -11117,7 +11117,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 181.3052 172.72 0)
 			(hide yes)
 			(show_name no)
@@ -11196,7 +11196,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 177.8 84.328 90)
 			(hide yes)
 			(show_name no)
@@ -11720,7 +11720,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 48.26 265.43 0)
 			(hide yes)
 			(show_name no)
@@ -11944,7 +11944,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 115.2652 173.99 0)
 			(hide yes)
 			(show_name no)
@@ -12024,7 +12024,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 48.26 267.97 0)
 			(hide yes)
 			(show_name no)
@@ -12258,7 +12258,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 250.19 140.6652 0)
 			(hide yes)
 			(show_name no)
@@ -13220,7 +13220,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 173.99 274.32 0)
 			(hide yes)
 			(show_name no)
@@ -13299,7 +13299,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 253.6952 171.45 0)
 			(hide yes)
 			(show_name no)
@@ -13459,7 +13459,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TestPoint:TestPoint_THTPad_2.5x2.5mm_Drill1.2mm"
 			(at 238.76 140.97 0)
 			(hide yes)
 			(show_name no)
@@ -13535,7 +13535,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 173.99 279.4 0)
 			(hide yes)
 			(show_name no)
@@ -13615,7 +13615,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 121.92 56.1848 0)
 			(hide yes)
 			(show_name no)
@@ -14007,7 +14007,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 193.3448 93.98 0)
 			(hide yes)
 			(show_name no)
@@ -14242,7 +14242,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 104.14 83.5152 0)
 			(hide yes)
 			(show_name no)
@@ -14324,7 +14324,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_1.27mm:PinSocket_1x04_P1.27mm_Vertical"
 			(at 90.17 241.3 0)
 			(hide yes)
 			(show_name no)
@@ -14412,7 +14412,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_JST:JST_GH_SM03B-GHS-TB_1x03-1MP_P1.25mm_Horizontal"
 			(at 224.79 275.59 0)
 			(hide yes)
 			(show_name no)
@@ -14728,7 +14728,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:RES-SMD_L6.4-W3.2-R2512"
 			(at 231.902 149.86 90)
 			(hide yes)
 			(show_name no)
@@ -14885,7 +14885,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 60.6552 175.26 0)
 			(hide yes)
 			(show_name no)
@@ -15042,7 +15042,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 256.54 261.62 0)
 			(hide yes)
 			(show_name no)
@@ -15121,7 +15121,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 173.99 269.24 0)
 			(hide yes)
 			(show_name no)
@@ -15345,7 +15345,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 177.8 86.868 90)
 			(hide yes)
 			(show_name no)
@@ -15661,7 +15661,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 54.61 167.64 0)
 			(hide yes)
 			(show_name no)
@@ -15936,7 +15936,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 138.938 241.3 90)
 			(hide yes)
 			(show_name no)
@@ -16096,7 +16096,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 45.212 154.94 90)
 			(hide yes)
 			(show_name no)
@@ -16331,7 +16331,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 96.52 198.12 0)
 			(hide yes)
 			(show_name no)
@@ -16853,7 +16853,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 173.99 69.088 90)
 			(hide yes)
 			(show_name no)
@@ -16973,94 +16973,6 @@
 			(project "DRV8313"
 				(path "/e5d6139c-9aca-456b-814f-0648ddbeda45"
 					(reference "#PWR049")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:Conn_01x04_Socket")
-		(at 90.17 264.16 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "b70b1d86-b9f1-4dcc-8f00-9c1dd3332ae1")
-		(property "Reference" "J2"
-			(at 91.44 264.1599 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Conn_01x04_Socket"
-			(at 91.44 266.6999 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" ""
-			(at 90.17 264.16 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 90.17 264.16 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x04, script generated"
-			(at 90.17 264.16 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "e9acdf06-cecc-4f6b-a9a2-7b837e140d1b")
-		)
-		(pin "3"
-			(uuid "eade5d73-7c3c-4421-9840-044b4e61711a")
-		)
-		(pin "4"
-			(uuid "8c18e611-defe-4505-a81f-482d0819a5b8")
-		)
-		(pin "1"
-			(uuid "74d2f2a4-30f2-44cb-9a1e-8b1d872627da")
-		)
-		(instances
-			(project "DRV8313"
-				(path "/e5d6139c-9aca-456b-814f-0648ddbeda45"
-					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -17583,7 +17495,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:C0603"
 			(at 118.11 61.2648 0)
 			(hide yes)
 			(show_name no)
@@ -18305,7 +18217,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TestPoint:TestPoint_THTPad_2.5x2.5mm_Drill1.2mm"
 			(at 166.37 140.97 0)
 			(hide yes)
 			(show_name no)
@@ -18382,7 +18294,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm"
 			(at 48.26 270.51 0)
 			(hide yes)
 			(show_name no)
@@ -19019,7 +18931,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "SpaghettiLAB:RES-SMD_L6.4-W3.2-R2512"
 			(at 93.472 151.13 90)
 			(hide yes)
 			(show_name no)
@@ -19101,7 +19013,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_1.27mm:PinSocket_1x02_P1.27mm_Vertical_SMD_Pin1Right"
 			(at 41.91 238.76 0)
 			(hide yes)
 			(show_name no)
