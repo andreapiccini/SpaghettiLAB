@@ -1644,7 +1644,6 @@
 			(size 1 2.7)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
-			(net "GND")
 			(uuid "c457a0bb-54cf-4f1b-ba93-18c409f5f29b")
 		)
 		(pad "MP" smd roundrect
@@ -1652,7 +1651,6 @@
 			(size 1 2.7)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
-			(net "GND")
 			(uuid "a2e28ee8-bfe2-4124-b505-77f1700bde72")
 		)
 		(embedded_fonts no)
