@@ -19013,7 +19013,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_PinSocket_1.27mm:PinSocket_1x02_P1.27mm_Vertical_SMD_Pin1Right"
+		(property "Footprint" "Connector_PinSocket_1.27mm:PinSocket_1x03_P1.27mm_Vertical"
 			(at 41.91 238.76 0)
 			(hide yes)
 			(show_name no)
