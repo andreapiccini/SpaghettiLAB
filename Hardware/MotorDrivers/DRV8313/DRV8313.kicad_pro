@@ -579,7 +579,7 @@
     "last_paths": {
       "idf": "",
       "netlist": "",
-      "plot": "",
+      "plot": "../../../../../../Desktop/FOC_CTRL_BOARD/",
       "specctra_dsn": "",
       "vrml": ""
     },
