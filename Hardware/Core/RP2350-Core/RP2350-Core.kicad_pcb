@@ -2341,6 +2341,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -6039,7 +6040,7 @@
 			(at 0 -4 230)
 			(layer "F.SilkS")
 			(hide yes)
-			(uuid "8a8c381c-4b0a-4288-b73f-4a1cbb58b5d2")
+			(uuid "5063fd99-9888-48ea-accd-d416f68e8ba0")
 			(effects
 				(font
 					(size 1 1)
@@ -6050,7 +6051,7 @@
 		(property "Value" "PR5L5015-5P-C-H"
 			(at 0 4 230)
 			(layer "F.Fab")
-			(uuid "da202c53-e07a-41df-828a-cad3d2f0b84d")
+			(uuid "e112a700-260f-4dc3-987c-e999f7374fc1")
 			(effects
 				(font
 					(size 1 1)
@@ -6062,7 +6063,7 @@
 			(at 0 0 230)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "b249cc8c-e6d5-43a7-8c8d-7b1042bb487a")
+			(uuid "3580715e-1239-4c3b-9c7f-d4c604ceaf04")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6073,7 +6074,7 @@
 			(at 0 0 230)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "b2f05c0a-b041-421f-9292-a5ad497cb204")
+			(uuid "97da3e72-e259-43db-a2eb-6d8758b8d4d7")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6088,6 +6089,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -8794,6 +8796,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -12316,7 +12319,7 @@
 			(at 0 -3.15 0)
 			(layer "F.SilkS")
 			(hide yes)
-			(uuid "7c061711-7865-479d-a32d-93eedb8b0d29")
+			(uuid "be0abc8e-8cf2-48e0-9d1d-a570ed4322c6")
 			(effects
 				(font
 					(size 1 1)
@@ -12327,7 +12330,7 @@
 		(property "Value" "MountingHole"
 			(at 0 3.15 0)
 			(layer "F.Fab")
-			(uuid "06d79eb7-745d-44b0-b0ac-808403857a73")
+			(uuid "ef3bd4f3-0884-406d-b420-5f85066015fc")
 			(effects
 				(font
 					(size 1 1)
@@ -12339,7 +12342,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "fd5da61d-32f1-4b47-aa11-b65d1e07a72f")
+			(uuid "2b7a9071-78a5-4fe0-8ea4-df7a06f5961b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12350,7 +12353,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "d80e3bfb-4247-4b9e-aa0d-5abf09350ee3")
+			(uuid "aea347fa-b2ca-4d9e-b5e6-8d10974ec20b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18333,6 +18336,7 @@
 		(property "Value" "PR5L5015-5P-C-H"
 			(at 0 4 134)
 			(layer "F.Fab")
+			(hide yes)
 			(uuid "cfdb0ee6-bfb4-4e1d-9a5c-925c9e5f0fb7")
 			(effects
 				(font
@@ -18932,6 +18936,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -19294,6 +19299,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -19656,6 +19662,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -20018,6 +20025,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 				(justify mirror)
 			)
@@ -22349,7 +22357,7 @@
 			(justify left bottom mirror)
 		)
 	)
-	(gr_text "FLEX5"
+	(gr_text "FLEX3"
 		(at 72.78 91.05 0)
 		(layer "B.SilkS")
 		(uuid "8e095179-484c-4096-9fdd-ca34b38cceee")
