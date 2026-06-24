@@ -5,6 +5,273 @@
 	(uuid "91da7299-f913-4e9e-81dc-0364bfc80456")
 	(paper "A3")
 	(lib_symbols
+		(symbol "Connector:Conn_01x04_Socket"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x04_Socket"
+				(at 0 -7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x04, script generated"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_locked" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Conn_01x04_Socket_1_1"
+				(polyline
+					(pts
+						(xy -1.27 2.54) (xy -0.508 2.54)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy -0.508 0)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -2.54) (xy -0.508 -2.54)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -5.08) (xy -0.508 -5.08)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 2.032)
+					(mid -0.5058 2.54)
+					(end 0 3.048)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -0.508)
+					(mid -0.5058 0)
+					(end 0 0.508)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -3.048)
+					(mid -0.5058 -2.54)
+					(end 0 -2.032)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -5.588)
+					(mid -0.5058 -5.08)
+					(end 0 -4.572)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -5.08 0)
+					(length 3.81)
+					(name "Pin_4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Device:C"
 			(pin_numbers
 				(hide yes)
@@ -1882,6 +2149,16 @@
 	)
 	(wire
 		(pts
+			(xy 267.97 60.96) (xy 280.67 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "127e3ec7-bf7e-458c-9a5c-efc9ac9a097b")
+	)
+	(wire
+		(pts
 			(xy 31.75 143.51) (xy 31.75 140.97)
 		)
 		(stroke
@@ -2172,6 +2449,16 @@
 	)
 	(wire
 		(pts
+			(xy 267.97 63.5) (xy 267.97 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "46bc7a8b-f760-4585-bb1d-9799a451e625")
+	)
+	(wire
+		(pts
 			(xy 52.07 74.93) (xy 52.07 72.39)
 		)
 		(stroke
@@ -2342,6 +2629,16 @@
 	)
 	(wire
 		(pts
+			(xy 276.86 55.88) (xy 280.67 55.88)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "77c43ed0-652f-4d9d-be40-34a46c9a5171")
+	)
+	(wire
+		(pts
 			(xy 110.49 196.85) (xy 110.49 201.93)
 		)
 		(stroke
@@ -2372,6 +2669,26 @@
 	)
 	(wire
 		(pts
+			(xy 275.59 78.74) (xy 275.59 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "84cd6f55-8f4d-4b45-948b-6ec399a8e545")
+	)
+	(wire
+		(pts
+			(xy 267.97 58.42) (xy 280.67 58.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "85254ae7-d5f2-4f58-80f2-8cea97e67fb2")
+	)
+	(wire
+		(pts
 			(xy 58.42 146.05) (xy 63.5 146.05)
 		)
 		(stroke
@@ -2379,6 +2696,16 @@
 			(type default)
 		)
 		(uuid "86f542fe-b4de-4234-a4c2-961dbd51f30f")
+	)
+	(wire
+		(pts
+			(xy 276.86 86.36) (xy 280.67 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8da5ecc2-d790-49b1-a33a-fa5adf2b3428")
 	)
 	(wire
 		(pts
@@ -2452,6 +2779,16 @@
 	)
 	(wire
 		(pts
+			(xy 267.97 81.28) (xy 267.97 91.44)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9b8db043-e4b6-4949-a233-66befc222b12")
+	)
+	(wire
+		(pts
 			(xy 110.49 204.47) (xy 110.49 209.55)
 		)
 		(stroke
@@ -2459,6 +2796,16 @@
 			(type default)
 		)
 		(uuid "9be66556-c3c2-4bd3-bb11-a4fd9bd5c246")
+	)
+	(wire
+		(pts
+			(xy 276.86 53.34) (xy 280.67 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9d1538c4-f919-4c2d-b3ef-be322fcca73e")
 	)
 	(wire
 		(pts
@@ -2652,6 +2999,16 @@
 	)
 	(wire
 		(pts
+			(xy 275.59 83.82) (xy 280.67 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cbe3af96-e7bb-48d6-a459-5d8d9216785b")
+	)
+	(wire
+		(pts
 			(xy 110.49 260.35) (xy 110.49 255.27)
 		)
 		(stroke
@@ -2699,6 +3056,16 @@
 			(type default)
 		)
 		(uuid "d16757fe-40c2-4eff-ba7a-a20627c1b7c5")
+	)
+	(wire
+		(pts
+			(xy 276.86 88.9) (xy 280.67 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d406149f-81ad-4b69-afd3-e8d826ef80b1")
 	)
 	(wire
 		(pts
@@ -2772,6 +3139,16 @@
 	)
 	(wire
 		(pts
+			(xy 267.97 81.28) (xy 280.67 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ebc8e458-9963-429a-a661-abc719310967")
+	)
+	(wire
+		(pts
 			(xy 142.24 201.93) (xy 110.49 201.93)
 		)
 		(stroke
@@ -2829,6 +3206,16 @@
 			(type default)
 		)
 		(uuid "f5a25ed4-fd93-406f-bcd8-e1a39a91d983")
+	)
+	(wire
+		(pts
+			(xy 267.97 50.8) (xy 267.97 58.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f6f728ab-8298-4cd5-991e-7cc379d4cdb2")
 	)
 	(wire
 		(pts
@@ -2994,6 +3381,17 @@
 			)
 		)
 	)
+	(hierarchical_label "ID"
+		(shape input)
+		(at 276.86 86.36 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "080b0498-45f9-4d8e-a167-5b05bbdbff08")
+	)
 	(hierarchical_label "SDA_AUX"
 		(shape input)
 		(at 236.22 96.52 0)
@@ -3060,6 +3458,17 @@
 		)
 		(uuid "3a9cbaa1-316e-4f00-a979-48bef405b217")
 	)
+	(hierarchical_label "~{RESET}"
+		(shape input)
+		(at 276.86 88.9 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "45119297-783d-4b0a-87b7-58b1580eeb68")
+	)
 	(hierarchical_label "FLEX0"
 		(shape input)
 		(at 45.72 195.58 180)
@@ -3081,6 +3490,17 @@
 			(justify right)
 		)
 		(uuid "4becf7ff-101c-4a28-9301-d043cfe2fd01")
+	)
+	(hierarchical_label "ID"
+		(shape input)
+		(at 276.86 55.88 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "5c2df0c4-fe7c-4e6d-8666-706139e5c61d")
 	)
 	(hierarchical_label "~{RESET}"
 		(shape input)
@@ -3158,6 +3578,17 @@
 			(justify right)
 		)
 		(uuid "9275b928-38c2-4ae4-98d6-43fbd86d6685")
+	)
+	(hierarchical_label "~{RESET}"
+		(shape input)
+		(at 276.86 53.34 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "933d81ed-4190-4a4d-acbb-796c261cd223")
 	)
 	(hierarchical_label "SCL_AUX"
 		(shape input)
@@ -3439,6 +3870,94 @@
 			(project "bldc_as5600"
 				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
 					(reference "H1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x04_Socket")
+		(at 285.75 83.82 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "08b93fb1-17b7-4836-a07a-ef14697a2d7b")
+		(property "Reference" "J2"
+			(at 287.02 83.8199 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x04_Socket"
+			(at 287.02 86.3599 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 285.75 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 285.75 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated"
+			(at 285.75 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "567af9f9-3fa3-4a2b-89db-abcecb30ff37")
+		)
+		(pin "1"
+			(uuid "88c0f1e7-9180-403f-941c-d856c937e0f4")
+		)
+		(pin "2"
+			(uuid "9b51596d-61be-487e-b79b-84ae7dc93376")
+		)
+		(pin "3"
+			(uuid "a21e4b8c-47dc-4fb1-b97d-bb1f0544f47c")
+		)
+		(instances
+			(project "bldc_as5600"
+				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
+					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -4719,6 +5238,83 @@
 		)
 	)
 	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
+		(at 267.97 50.8 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "2fc9004a-e5fe-4a3a-868b-1126451abe3a")
+		(property "Reference" "#PWR068"
+			(at 267.97 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VLOGIC"
+			(at 267.97 46.99 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 267.97 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 267.97 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 267.97 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "71bbdad9-4bb7-4109-ae84-af0ec876b871")
+		)
+		(instances
+			(project "bldc_as5600"
+				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
+					(reference "#PWR068")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "USBC_PD_mo-easyedapro:PR5L5015-5P-C-H")
 		(at 147.32 144.78 0)
 		(unit 1)
@@ -4936,6 +5532,83 @@
 			(project "bldc_as5600"
 				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
 					(reference "#PWR06")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
+		(at 275.59 78.74 0)
+		(unit 1)
+		(body_style 0)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "63ac2e57-598d-4cb5-b5ea-ee067b8097f6")
+		(property "Reference" "#PWR069"
+			(at 275.59 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VLOGIC"
+			(at 275.59 74.93 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.5748 1.5748)
+				)
+			)
+		)
+		(property "Footprint" "USBC_PD_mo-easyedapro:"
+			(at 275.59 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 275.59 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 275.59 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9baf8f9c-85f8-4b6a-9cdc-1137dde9691a")
+		)
+		(instances
+			(project "bldc_as5600"
+				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
+					(reference "#PWR069")
 					(unit 1)
 				)
 			)
@@ -6519,6 +7192,84 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 267.97 91.44 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "b2d284e2-3da3-4a03-95a5-c64a00013307")
+		(property "Reference" "#PWR09"
+			(at 267.97 97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 267.97 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 267.97 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 267.97 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 267.97 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e7c3ef13-2a51-4516-ab4d-a1b5d593b35a")
+		)
+		(instances
+			(project "bldc_as5600"
+				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
+					(reference "#PWR09")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "USBC_PD_mo-easyedapro:PR5L5015-5P-C-H")
 		(at 148.59 257.81 0)
 		(unit 1)
@@ -7194,6 +7945,84 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 267.97 63.5 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d09e38d7-f167-4410-924a-d7e8328b75fd")
+		(property "Reference" "#PWR08"
+			(at 267.97 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 267.97 68.58 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 267.97 63.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 267.97 63.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 267.97 63.5 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "dbd7cbdf-acdb-4e5f-8b9d-61cd6309f1ae")
+		)
+		(instances
+			(project "bldc_as5600"
+				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
+					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
 		(at 36.83 260.35 0)
 		(unit 1)
@@ -7573,6 +8402,94 @@
 			(project "bldc_as5600"
 				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
 					(reference "#PWR054")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:Conn_01x04_Socket")
+		(at 285.75 55.88 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "e5b6a5e3-11bc-4617-b3f2-9e246f581ce7")
+		(property "Reference" "J1"
+			(at 287.02 55.8799 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x04_Socket"
+			(at 287.02 58.4199 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 285.75 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 285.75 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated"
+			(at 285.75 55.88 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "795ff51b-5359-489e-ad30-490f3bbcaa1b")
+		)
+		(pin "1"
+			(uuid "180ef390-a2a8-4469-b8c1-6f2ccb8006f6")
+		)
+		(pin "2"
+			(uuid "4a0d3884-ac27-4f1c-930b-eb1ef11eb090")
+		)
+		(pin "3"
+			(uuid "fa7d2426-ab80-4892-880c-fe260a521518")
+		)
+		(instances
+			(project "bldc_as5600"
+				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
+					(reference "J1")
 					(unit 1)
 				)
 			)
