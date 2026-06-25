@@ -2001,6 +2001,16 @@
 		)
 		(uuid "227fc05f-91d2-4253-9c57-2548129bea26")
 	)
+	(text "UART"
+		(exclude_from_sim no)
+		(at 285.75 58.42 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "451234b3-8ae9-4212-b4f4-066415559946")
+	)
 	(text "For battery charging"
 		(exclude_from_sim no)
 		(at 41.91 243.84 0)
@@ -2149,7 +2159,7 @@
 	)
 	(wire
 		(pts
-			(xy 267.97 60.96) (xy 280.67 60.96)
+			(xy 269.24 69.85) (xy 281.94 69.85)
 		)
 		(stroke
 			(width 0)
@@ -2449,7 +2459,7 @@
 	)
 	(wire
 		(pts
-			(xy 267.97 63.5) (xy 267.97 60.96)
+			(xy 269.24 72.39) (xy 269.24 69.85)
 		)
 		(stroke
 			(width 0)
@@ -2629,7 +2639,7 @@
 	)
 	(wire
 		(pts
-			(xy 276.86 55.88) (xy 280.67 55.88)
+			(xy 278.13 64.77) (xy 281.94 64.77)
 		)
 		(stroke
 			(width 0)
@@ -2669,17 +2679,7 @@
 	)
 	(wire
 		(pts
-			(xy 275.59 78.74) (xy 275.59 83.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "84cd6f55-8f4d-4b45-948b-6ec399a8e545")
-	)
-	(wire
-		(pts
-			(xy 267.97 58.42) (xy 280.67 58.42)
+			(xy 269.24 67.31) (xy 281.94 67.31)
 		)
 		(stroke
 			(width 0)
@@ -2696,16 +2696,6 @@
 			(type default)
 		)
 		(uuid "86f542fe-b4de-4234-a4c2-961dbd51f30f")
-	)
-	(wire
-		(pts
-			(xy 276.86 86.36) (xy 280.67 86.36)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8da5ecc2-d790-49b1-a33a-fa5adf2b3428")
 	)
 	(wire
 		(pts
@@ -2779,16 +2769,6 @@
 	)
 	(wire
 		(pts
-			(xy 267.97 81.28) (xy 267.97 91.44)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "9b8db043-e4b6-4949-a233-66befc222b12")
-	)
-	(wire
-		(pts
 			(xy 110.49 204.47) (xy 110.49 209.55)
 		)
 		(stroke
@@ -2799,7 +2779,7 @@
 	)
 	(wire
 		(pts
-			(xy 276.86 53.34) (xy 280.67 53.34)
+			(xy 278.13 62.23) (xy 281.94 62.23)
 		)
 		(stroke
 			(width 0)
@@ -2999,16 +2979,6 @@
 	)
 	(wire
 		(pts
-			(xy 275.59 83.82) (xy 280.67 83.82)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cbe3af96-e7bb-48d6-a459-5d8d9216785b")
-	)
-	(wire
-		(pts
 			(xy 110.49 260.35) (xy 110.49 255.27)
 		)
 		(stroke
@@ -3056,16 +3026,6 @@
 			(type default)
 		)
 		(uuid "d16757fe-40c2-4eff-ba7a-a20627c1b7c5")
-	)
-	(wire
-		(pts
-			(xy 276.86 88.9) (xy 280.67 88.9)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d406149f-81ad-4b69-afd3-e8d826ef80b1")
 	)
 	(wire
 		(pts
@@ -3139,16 +3099,6 @@
 	)
 	(wire
 		(pts
-			(xy 267.97 81.28) (xy 280.67 81.28)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ebc8e458-9963-429a-a661-abc719310967")
-	)
-	(wire
-		(pts
 			(xy 142.24 201.93) (xy 110.49 201.93)
 		)
 		(stroke
@@ -3209,7 +3159,7 @@
 	)
 	(wire
 		(pts
-			(xy 267.97 50.8) (xy 267.97 58.42)
+			(xy 269.24 59.69) (xy 269.24 67.31)
 		)
 		(stroke
 			(width 0)
@@ -3381,17 +3331,6 @@
 			)
 		)
 	)
-	(hierarchical_label "ID"
-		(shape input)
-		(at 276.86 86.36 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "080b0498-45f9-4d8e-a167-5b05bbdbff08")
-	)
 	(hierarchical_label "SDA_AUX"
 		(shape input)
 		(at 236.22 96.52 0)
@@ -3458,17 +3397,6 @@
 		)
 		(uuid "3a9cbaa1-316e-4f00-a979-48bef405b217")
 	)
-	(hierarchical_label "~{RESET}"
-		(shape input)
-		(at 276.86 88.9 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "45119297-783d-4b0a-87b7-58b1580eeb68")
-	)
 	(hierarchical_label "FLEX0"
 		(shape input)
 		(at 45.72 195.58 180)
@@ -3493,7 +3421,7 @@
 	)
 	(hierarchical_label "ID"
 		(shape input)
-		(at 276.86 55.88 180)
+		(at 278.13 64.77 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3581,7 +3509,7 @@
 	)
 	(hierarchical_label "~{RESET}"
 		(shape input)
-		(at 276.86 53.34 180)
+		(at 278.13 62.23 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3870,94 +3798,6 @@
 			(project "bldc_as5600"
 				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
 					(reference "H1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:Conn_01x04_Socket")
-		(at 285.75 83.82 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "08b93fb1-17b7-4836-a07a-ef14697a2d7b")
-		(property "Reference" "J2"
-			(at 287.02 83.8199 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Conn_01x04_Socket"
-			(at 287.02 86.3599 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" ""
-			(at 285.75 83.82 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 285.75 83.82 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x04, script generated"
-			(at 285.75 83.82 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "4"
-			(uuid "567af9f9-3fa3-4a2b-89db-abcecb30ff37")
-		)
-		(pin "1"
-			(uuid "88c0f1e7-9180-403f-941c-d856c937e0f4")
-		)
-		(pin "2"
-			(uuid "9b51596d-61be-487e-b79b-84ae7dc93376")
-		)
-		(pin "3"
-			(uuid "a21e4b8c-47dc-4fb1-b97d-bb1f0544f47c")
-		)
-		(instances
-			(project "bldc_as5600"
-				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
-					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -5239,7 +5079,7 @@
 	)
 	(symbol
 		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
-		(at 267.97 50.8 0)
+		(at 269.24 59.69 0)
 		(unit 1)
 		(body_style 0)
 		(exclude_from_sim no)
@@ -5249,7 +5089,7 @@
 		(dnp no)
 		(uuid "2fc9004a-e5fe-4a3a-868b-1126451abe3a")
 		(property "Reference" "#PWR068"
-			(at 267.97 50.8 0)
+			(at 269.24 59.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5260,7 +5100,7 @@
 			)
 		)
 		(property "Value" "VLOGIC"
-			(at 267.97 46.99 0)
+			(at 269.24 55.88 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -5270,7 +5110,7 @@
 			)
 		)
 		(property "Footprint" "USBC_PD_mo-easyedapro:"
-			(at 267.97 50.8 0)
+			(at 269.24 59.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5281,7 +5121,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 267.97 50.8 0)
+			(at 269.24 59.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5292,7 +5132,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 267.97 50.8 0)
+			(at 269.24 59.69 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5532,83 +5372,6 @@
 			(project "bldc_as5600"
 				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
 					(reference "#PWR06")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "USBC_PD_mo-easyedapro:Power-VCC")
-		(at 275.59 78.74 0)
-		(unit 1)
-		(body_style 0)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "63ac2e57-598d-4cb5-b5ea-ee067b8097f6")
-		(property "Reference" "#PWR069"
-			(at 275.59 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "VLOGIC"
-			(at 275.59 74.93 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.5748 1.5748)
-				)
-			)
-		)
-		(property "Footprint" "USBC_PD_mo-easyedapro:"
-			(at 275.59 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 275.59 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" ""
-			(at 275.59 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "9baf8f9c-85f8-4b6a-9cdc-1137dde9691a")
-		)
-		(instances
-			(project "bldc_as5600"
-				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
-					(reference "#PWR069")
 					(unit 1)
 				)
 			)
@@ -7192,84 +6955,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GND")
-		(at 267.97 91.44 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "b2d284e2-3da3-4a03-95a5-c64a00013307")
-		(property "Reference" "#PWR09"
-			(at 267.97 97.79 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 267.97 96.52 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 267.97 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 267.97 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 267.97 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "e7c3ef13-2a51-4516-ab4d-a1b5d593b35a")
-		)
-		(instances
-			(project "bldc_as5600"
-				(path "/91da7299-f913-4e9e-81dc-0364bfc80456"
-					(reference "#PWR09")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "USBC_PD_mo-easyedapro:PR5L5015-5P-C-H")
 		(at 148.59 257.81 0)
 		(unit 1)
@@ -7946,7 +7631,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 267.97 63.5 0)
+		(at 269.24 72.39 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -7957,7 +7642,7 @@
 		(fields_autoplaced yes)
 		(uuid "d09e38d7-f167-4410-924a-d7e8328b75fd")
 		(property "Reference" "#PWR08"
-			(at 267.97 69.85 0)
+			(at 269.24 78.74 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7968,7 +7653,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 267.97 68.58 0)
+			(at 269.24 77.47 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -7978,7 +7663,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 267.97 63.5 0)
+			(at 269.24 72.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7989,7 +7674,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 267.97 63.5 0)
+			(at 269.24 72.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8000,7 +7685,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 267.97 63.5 0)
+			(at 269.24 72.39 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8409,7 +8094,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x04_Socket")
-		(at 285.75 55.88 0)
+		(at 287.02 64.77 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -8420,7 +8105,7 @@
 		(fields_autoplaced yes)
 		(uuid "e5b6a5e3-11bc-4617-b3f2-9e246f581ce7")
 		(property "Reference" "J1"
-			(at 287.02 55.8799 0)
+			(at 288.29 64.7699 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8431,7 +8116,7 @@
 			)
 		)
 		(property "Value" "Conn_01x04_Socket"
-			(at 287.02 58.4199 0)
+			(at 288.29 67.3099 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8441,8 +8126,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
-			(at 285.75 55.88 0)
+		(property "Footprint" "Connector_JST:JST_GH_SM04B-GHS-TB_1x04-1MP_P1.25mm_Horizontal"
+			(at 287.02 64.77 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8453,7 +8138,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 285.75 55.88 0)
+			(at 287.02 64.77 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8464,7 +8149,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x04, script generated"
-			(at 285.75 55.88 0)
+			(at 287.02 64.77 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
