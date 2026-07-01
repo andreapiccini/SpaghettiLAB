@@ -13,8 +13,16 @@ add_executable(pd100w_dish
     src/main.cpp
 )
 
+# Generate PIO header from ws2812.pio
+pico_generate_pio_header(pd100w_dish ${CMAKE_CURRENT_LIST_DIR}/src/ws2812.pio)
+
+target_include_directories(pd100w_dish PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 target_link_libraries(pd100w_dish
     pico_stdlib
+    hardware_pio
 )
 
 pico_enable_stdio_usb(pd100w_dish 1)

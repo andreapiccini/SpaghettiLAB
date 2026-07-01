@@ -488,7 +488,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "bldc_as5600.kicad_pro",
+    "filename": "as5600.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -643,18 +643,18 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "bldc_as5600.kicad_sch",
-        "name": "Root",
+        "filename": "as5600.kicad_sch",
+        "name": "as5600",
         "uuid": "91da7299-f913-4e9e-81dc-0364bfc80456"
       }
     ],
-    "used_designators": "U1,U35-39,#PWR1-9,#PWR40-69,#PWR75,#PWR95,#PWR109-110,C1-2,H1-4,JP1-4,CN7-11,J1-2,J4-5",
+    "used_designators": "#PWR9,#PWR69,J2-3",
     "variants": []
   },
   "sheets": [
     [
       "91da7299-f913-4e9e-81dc-0364bfc80456",
-      "Root"
+      "as5600"
     ]
   ],
   "text_variables": {},

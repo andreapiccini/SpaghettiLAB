@@ -1,0 +1,64 @@
+;
+; Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+;
+; SPDX-License-Identifier: BSD-3-Clause
+;
+.pio_version 0
+
+; WS2812 / SK6812 PIO driver for an INVERTING Schmitt trigger in the signal path.
+;
+; The signal on the GPIO pin is inverted before reaching the LEDs, so the PIO
+; must produce the complement of the normal WS2812 waveform.
+;
+; At 8 MHz PIO clock (= 800 kHz × 10 cycles/bit), 1 cycle = 125 ns.
+;
+; bit = 1 (T1H ≈ 600 ns):
+;   PIO LOW = 5 cycles (625 ns)  → after inverter: HIGH = 625 ns  ✓ T1H
+;   PIO HIGH= 5 cycles (625 ns)  → after inverter: LOW  = 625 ns  ✓ T1L
+;
+; bit = 0 (T0H ≈ 300 ns):
+;   PIO LOW = 3 cycles (375 ns)  → after inverter: HIGH = 375 ns  ✓ T0H
+;   PIO HIGH= 7 cycles (875 ns)  → after inverter: LOW  = 875 ns  ✓ T0L
+;
+; Total per bit = 10 cycles in both cases.
+
+.program ws2812_inverted
+.side_set 1
+
+.lang_opt python sideset_init = pico.PIO.OUT_LOW
+.lang_opt python out_init     = pico.PIO.OUT_LOW
+.lang_opt python out_shiftdir = 1
+
+.wrap_target
+bitloop:
+    out x, 1       side 0 [1]   ; 2 cyc LOW (both bits share this start)
+    jmp !x do_zero side 0 [0]   ; 1 cyc LOW → 3 cyc LOW total so far; branch if bit=0
+do_one:
+    nop            side 0 [1]   ; 2 cyc LOW → 5 cyc LOW total (625 ns = T1H ✓)
+    nop            side 1 [4]   ; 5 cyc HIGH (625 ns = T1L ✓)
+.wrap
+
+do_zero:                         ; arrives here with 3 cyc LOW done (375 ns = T0H ✓)
+    nop            side 1 [5]   ; 6 cyc HIGH
+    jmp bitloop    side 1 [0]   ; 1 cyc HIGH → 7 cyc HIGH total (875 ns = T0L ✓)
+
+% c-sdk {
+#include "hardware/clocks.h"
+
+static inline void ws2812_inverted_program_init(PIO pio, uint sm, uint offset, uint pin, float freq, bool rgbw) {
+    pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+
+    pio_sm_config c = ws2812_inverted_program_get_default_config(offset);
+    sm_config_set_sideset_pins(&c, pin);
+    sm_config_set_out_shift(&c, false, true, rgbw ? 32 : 24);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+
+    int cycles_per_bit = 10;
+    float div = clock_get_hz(clk_sys) / (freq * cycles_per_bit);
+    sm_config_set_clkdiv(&c, div);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
