@@ -1,0 +1,456 @@
+syntax = "proto3";
+
+package SenseDial.LowSide;
+
+import "nanopb.proto";
+
+/* ===================== BUS FRAME ===================== */
+
+/* Host -> Low-side */
+message FromHost {
+    uint32 protocol_version = 1 [(nanopb).int_size = IS_8];
+    uint32 nonce = 2 [(nanopb).int_size = IS_16];
+
+    oneof payload {
+        ProtocolInfo protocol_info = 3;
+        HostRequestState request_state = 4;
+        ForwardToHighSide forward_to_highside = 5;
+        HostFirmwareUpdateStart firmware_update_start = 6;
+        HostFirmwareUpdateChunk firmware_update_chunk = 7;
+        HostFirmwareUpdateFinish firmware_update_finish = 8;
+        HostCommand host_command = 9;
+        HostDialStateRequest dial_state_request = 10;
+        DialConfig dial_config = 11;
+    }
+}
+
+/* Low-side -> Host */
+message ToHost {
+    uint32 protocol_version = 1 [(nanopb).int_size = IS_8];
+    uint32 nonce = 2 [(nanopb).int_size = IS_16];
+
+    oneof payload {
+        RequestProtocolInfo request_protocol_info = 3;
+        HostAck ack = 4;
+        HostLog log = 5;
+        HostState host_state = 6;
+        ForwardedToHost forwarded_to_host = 7;
+        HostFirmwareUpdateStatus firmware_update_status = 8;
+        DialState dial_state = 9;
+    }
+}
+
+/* Low-side → High-side (state / event / response) */
+message ToHighSide {
+    uint32 protocol_version = 1 [(nanopb).int_size = IS_8];   // protocol version
+    uint32 nonce = 2 [(nanopb).int_size = IS_16];             // frame counter
+
+    oneof payload {
+        Ack ack = 3;
+        Log log = 4;
+        DialState dial_state = 5;
+        Fault fault = 6;
+        LowSideStatus low_side_status = 7;
+
+        /* OTA status */
+        FirmwareUpdateStatus fw_update_status = 8;
+
+        /* Optional protocol-info request for compatibility/debug flows */
+        RequestProtocolInfo request_protocol_info = 9;
+
+        /* Low-side forwarded OTA stream for the high-side processor. */
+        FirmwareUpdateStart firmware_update_start = 10;
+        FirmwareUpdateChunk firmware_update_chunk = 11;
+        FirmwareUpdateFinish firmware_update_finish = 12;
+    }
+}
+
+/* High-side → Low-side (commands / config) */
+message FromHighSide {
+    uint32 protocol_version = 1 [(nanopb).int_size = IS_8];
+    uint32 nonce = 2 [(nanopb).int_size = IS_16]; // used for Ack correlation
+
+    oneof payload {
+        RequestState request_state = 3;
+        DialConfig dial_config = 4;
+        CalibrationCommand calibration_command = 5;
+        HighSideCommand high_side_command = 6;
+
+        /* OTA commands */
+        FirmwareUpdateStart fw_update_start = 7;
+        FirmwareUpdateChunk fw_update_chunk = 8;
+        FirmwareUpdateFinish fw_update_finish = 9;
+
+        /* High-side-driven protocol announcement sent when the high-side is ready */
+        ProtocolInfo protocol_info = 10;
+    }
+}
+
+/* ===================== GENERIC ===================== */
+
+message HostAck {
+    uint32 nonce = 1 [(nanopb).int_size = IS_16];
+}
+
+message HostLog {
+    string msg = 1 [(nanopb).max_length = 160];
+}
+
+message Ack {
+    uint32 nonce = 1 [(nanopb).int_size = IS_16];
+}
+
+message Log {
+    string msg = 1 [(nanopb).max_length = 128];
+}
+
+/* ===================== DIAL ===================== */
+
+message HostDialStateRequest {}
+
+
+message HostRequestState {
+    bool include_highside_status = 1;
+    bool include_lowside_status = 2;
+    bool include_fw_update_status = 3;
+}
+
+message HostState {
+    HighSideStatus highside = 1;
+    LowSideStatus lowside = 2;
+    HostFirmwareUpdateStatus firmware = 3;
+}
+
+message HighSideStatus {
+    bool ready = 1;
+    bool bridge_ready = 2;
+    bool connected = 3;
+    uint32 uptime_ms = 4;
+}
+
+message ForwardToHighSide {
+    ToHighSide message = 1;
+}
+
+message ForwardedToHost {
+    FromHighSide message = 1;
+}
+
+message DialState {
+    int32 current_position = 1;
+    float sub_position_unit = 2;
+    DialConfig config = 3;
+
+    repeated InputChannelState input_states = 4 [(nanopb).max_count = 8];
+}
+
+message DialConfig {
+    int32 position = 1;
+    float sub_position_unit = 2;
+    uint32 position_nonce = 3;
+
+    int32 min_position = 4;
+    int32 max_position = 5;
+
+    float position_width_radians = 6;
+    float detent_strength_unit = 7;
+    float endstop_strength_unit = 8;
+    float snap_point = 9;
+
+    string text = 10 [(nanopb).max_length = 50];
+
+    repeated int32 detent_positions = 11 [(nanopb).max_count = 5];
+    float snap_point_bias = 12;
+    int32 led_hue = 13 [(nanopb).int_size = IS_16];
+
+    repeated OverrideDetent override_detents = 14 [(nanopb).max_count = 8];
+
+    repeated InputChannelConfig input_channels = 15 [(nanopb).max_count = 8];
+
+    /* High-level motor control parameters consumed by the low-side motor core.
+     * Board-local wiring such as PWM pins, ADC pins, or sensor buses is not
+     * exposed here. */
+    MotorControlConfig motor_control = 16;
+}
+
+message OverrideDetent {
+    int32 position = 1;
+    float strength = 2;
+}
+
+message MotorControlConfig {
+    uint32 pole_pairs = 1 [(nanopb).int_size = IS_8];
+    MotorSensorType sensor_type = 2;
+    MotorSensorDirection sensor_direction = 3;
+    MotorMotionType motion_type = 4;
+
+    float voltage_limit = 5;
+    float velocity_limit = 6;
+    float current_limit = 7;
+
+    PIDConfig velocity_pid = 8;
+    LowPassFilterConfig velocity_lpf = 9;
+    PIDConfig current_pid = 10;
+    LowPassFilterConfig current_lpf = 11;
+    HapticTuningConfig haptic_tuning = 12;
+}
+
+message PIDConfig {
+    float p = 1;
+    float i = 2;
+    float d = 3;
+    float output_ramp = 4;
+}
+
+message LowPassFilterConfig {
+    float time_constant = 1;
+}
+
+message HapticTuningConfig {
+    float detent_gain = 1;
+    float endstop_gain = 2;
+    float deadband_fraction = 3;
+    float torque_filter_time_constant = 4;
+    float torque_slew_rate = 5;
+    float detent_settle_fraction = 6;
+    float endstop_settle_fraction = 7;
+    float idle_release_ms = 8;
+}
+
+/* ===================== INPUT SYSTEM ===================== */
+
+message InputChannelConfig {
+    uint32 channel_id = 1 [(nanopb).int_size = IS_8];
+    InputSourceType source_type = 2;
+    InputMode mode = 3;
+
+    int32 baseline = 4;
+    repeated int32 thresholds = 5 [(nanopb).max_count = 4];
+
+    uint32 debounce_ms = 6 [(nanopb).int_size = IS_16];
+    bool inverted = 7;
+}
+
+message InputChannelState {
+    uint32 channel_id = 1 [(nanopb).int_size = IS_8];
+    bool active = 2;
+    uint32 stage = 3 [(nanopb).int_size = IS_8];
+    int32 raw_value = 4;
+    uint32 event_nonce = 5 [(nanopb).int_size = IS_16];
+}
+
+/* ===================== COMMANDS ===================== */
+
+message RequestState {}
+
+message CalibrationCommand {
+    CalibrationType type = 1;
+    uint32 channel_id = 2 [(nanopb).int_size = IS_8];
+    bool persist_result = 3;
+}
+
+message HighSideCommand {
+    HighSideCommandType command = 1;
+}
+
+message HostCommand {
+    HostCommandType command = 1;
+    FirmwareTarget target = 2;
+}
+
+/* ===================== STATUS ===================== */
+
+message LowSideStatus {
+    bool ready = 1;
+    bool calibrated = 2;
+    bool fault_active = 3;
+    uint32 uptime_ms = 4;
+    bool protocol_ok = 5;
+    uint32 applied_config_nonce = 6;
+}
+
+message Fault {
+    FaultCode code = 1;
+    FaultSeverity severity = 2;
+    bool active = 3;
+    string detail = 4 [(nanopb).max_length = 64];
+}
+
+/* ===================== OTA UPDATE ===================== */
+
+message HostFirmwareUpdateStart {
+    FirmwareTarget target = 1;
+    uint32 image_size = 2;
+    uint32 chunk_size = 3;
+    uint32 expected_crc32 = 4;
+}
+
+message HostFirmwareUpdateChunk {
+    FirmwareTarget target = 1;
+    uint32 offset = 2;
+    bytes data = 3 [(nanopb).max_size = 256];
+}
+
+message HostFirmwareUpdateFinish {
+    FirmwareTarget target = 1;
+}
+
+message HostFirmwareUpdateStatus {
+    FirmwareTarget target = 1;
+    FirmwareUpdatePhase phase = 2;
+    uint32 received_bytes = 3;
+    uint32 expected_bytes = 4;
+    string detail = 5 [(nanopb).max_length = 80];
+}
+
+message FirmwareUpdateStart {
+    uint32 image_size = 1;
+    uint32 chunk_size = 2;
+    uint32 expected_crc32 = 3;
+}
+
+message FirmwareUpdateChunk {
+    uint32 offset = 1;
+    bytes data = 2 [(nanopb).max_size = 256];
+}
+
+message FirmwareUpdateFinish {}
+
+message FirmwareUpdateStatus {
+    FirmwareUpdatePhase phase = 1;
+    uint32 received_bytes = 2;
+    uint32 expected_bytes = 3;
+    string detail = 4 [(nanopb).max_length = 64];
+}
+
+/* ===================== PERSISTENCE ===================== */
+
+message PersistentConfiguration {
+    uint32 version = 1;
+    MotorCalibration motor = 2;
+    repeated InputChannelCalibration input_channels = 3 [(nanopb).max_count = 8];
+}
+
+message MotorCalibration {
+    bool calibrated = 1;
+    float zero_electrical_offset = 2;
+    bool direction_cw = 3;
+    uint32 pole_pairs = 4 [(nanopb).int_size = IS_8];
+}
+
+message InputChannelCalibration {
+    uint32 channel_id = 1 [(nanopb).int_size = IS_8];
+    int32 baseline = 2;
+    repeated int32 thresholds = 3 [(nanopb).max_count = 4];
+}
+
+/* ===================== PROTOCOL HANDSHAKE ===================== */
+
+/* Optional compatibility/debug request asking the peer to announce ProtocolInfo */
+message RequestProtocolInfo {}
+
+/* Sent by host/high-side when they want to establish protocol compatibility */
+message ProtocolInfo {
+    uint32 protocol_version = 1;
+    fixed64 protocol_hash = 2;
+}
+
+/* ===================== ENUMS ===================== */
+
+enum InputSourceType {
+    INPUT_SOURCE_TYPE_UNSPECIFIED = 0;
+    INPUT_SOURCE_TYPE_STRAIN = 1;
+    INPUT_SOURCE_TYPE_PRESSURE = 2;
+    INPUT_SOURCE_TYPE_GPIO_BUTTON = 3;
+    INPUT_SOURCE_TYPE_TOUCH = 4;
+    INPUT_SOURCE_TYPE_CUSTOM = 5;
+}
+
+enum InputMode {
+    INPUT_MODE_UNSPECIFIED = 0;
+    INPUT_MODE_DIGITAL = 1;
+    INPUT_MODE_STAGED = 2;
+}
+
+enum CalibrationType {
+    CALIBRATION_TYPE_UNSPECIFIED = 0;
+    CALIBRATION_TYPE_MOTOR = 1;
+    CALIBRATION_TYPE_INPUT_CHANNEL = 2;
+    CALIBRATION_TYPE_FULL = 3;
+}
+
+enum MotorSensorType {
+    MOTOR_SENSOR_TYPE_UNSPECIFIED = 0;
+    MOTOR_SENSOR_TYPE_NONE = 1;
+    MOTOR_SENSOR_TYPE_MAGNETIC_ENCODER = 2;
+    MOTOR_SENSOR_TYPE_HALL = 3;
+}
+
+enum MotorSensorDirection {
+    MOTOR_SENSOR_DIRECTION_UNSPECIFIED = 0;
+    MOTOR_SENSOR_DIRECTION_AUTO = 1;
+    MOTOR_SENSOR_DIRECTION_CW = 2;
+    MOTOR_SENSOR_DIRECTION_CCW = 3;
+}
+
+enum MotorMotionType {
+    MOTOR_MOTION_TYPE_UNSPECIFIED = 0;
+    MOTOR_MOTION_TYPE_POSITION = 1;
+    MOTOR_MOTION_TYPE_VELOCITY = 2;
+    MOTOR_MOTION_TYPE_TORQUE = 3;
+    MOTOR_MOTION_TYPE_POSITION_OPEN_LOOP = 4;
+    MOTOR_MOTION_TYPE_VELOCITY_OPEN_LOOP = 5;
+}
+
+enum HighSideCommandType {
+    HIGHSIDE_COMMAND_TYPE_UNSPECIFIED = 0;
+    HIGHSIDE_COMMAND_SAVE_CONFIGURATION = 1;
+    HIGHSIDE_COMMAND_LOAD_CONFIGURATION = 2;
+    HIGHSIDE_COMMAND_CLEAR_FAULTS = 3;
+    HIGHSIDE_COMMAND_REBOOT = 4;
+}
+
+enum FirmwareTarget {
+    FIRMWARE_TARGET_UNSPECIFIED = 0;
+    FIRMWARE_TARGET_HIGHSIDE = 1;
+    FIRMWARE_TARGET_LOWSIDE = 2;
+}
+
+enum FirmwareUpdatePhase {
+    FIRMWARE_UPDATE_PHASE_UNSPECIFIED = 0;
+    FIRMWARE_UPDATE_PHASE_IDLE = 1;
+    FIRMWARE_UPDATE_PHASE_STARTED = 2;
+    FIRMWARE_UPDATE_PHASE_RECEIVING = 3;
+    FIRMWARE_UPDATE_PHASE_VERIFYING = 4;
+    FIRMWARE_UPDATE_PHASE_COMPLETED = 5;
+    FIRMWARE_UPDATE_PHASE_FAILED = 6;
+}
+
+enum HostCommandType {
+    HOST_COMMAND_TYPE_UNSPECIFIED = 0;
+    HOST_COMMAND_REBOOT = 1;
+    HOST_COMMAND_ENTER_BOOTLOADER = 2;
+    HOST_COMMAND_CLEAR_FAULTS = 3;
+    HOST_COMMAND_SAVE_CONFIGURATION = 4;
+    HOST_COMMAND_RESTORE_DEFAULTS = 5;
+}
+
+enum FaultCode {
+    FAULT_CODE_UNSPECIFIED = 0;
+    FAULT_CODE_OVERCURRENT = 1;
+    FAULT_CODE_OVERVOLTAGE = 2;
+    FAULT_CODE_UNDERVOLTAGE = 3;
+    FAULT_CODE_OVERTEMPERATURE = 4;
+    FAULT_CODE_SENSOR = 5;
+    FAULT_CODE_COMMUNICATION = 6;
+    FAULT_CODE_CALIBRATION = 7;
+    FAULT_CODE_INTERNAL = 8;
+}
+
+enum FaultSeverity {
+    FAULT_SEVERITY_UNSPECIFIED = 0;
+    FAULT_SEVERITY_INFO = 1;
+    FAULT_SEVERITY_WARNING = 2;
+    FAULT_SEVERITY_ERROR = 3;
+    FAULT_SEVERITY_FATAL = 4;
+}
