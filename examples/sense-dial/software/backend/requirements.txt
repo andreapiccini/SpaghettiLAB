@@ -1,0 +1,5 @@
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pyserial>=3.5,<4
+protobuf>=5,<7
+cobs>=1.2,<2
