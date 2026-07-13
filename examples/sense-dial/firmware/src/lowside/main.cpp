@@ -86,7 +86,7 @@ static constexpr float STARTUP_VOLTAGE_LIMIT = 5.0f;
 static constexpr float STARTUP_VELOCITY_LIMIT = 1.0f;
 static constexpr float MAX_SAFE_TEST_VOLTAGE = 9.0f;
 static constexpr uint32_t CALIBRATION_MAGIC = 0x53444341; // "SDCA"
-static constexpr uint16_t CALIBRATION_VERSION = 1;
+static constexpr uint16_t CALIBRATION_VERSION = 2;
 static constexpr uint32_t FACTORY_SETTINGS_MAGIC = 0x53444641; // "SDFA"
 static constexpr uint32_t USER_SETTINGS_MAGIC = 0x53445553; // "SDUS"
 static constexpr uint16_t SETTINGS_VERSION = 3;
@@ -151,9 +151,14 @@ static uint32_t idle_since_ms = 0;
 static float filtered_torque_command = 0.0f;
 static uint32_t last_torque_filter_us = 0;
 static uint32_t config_persist_due_ms = 0;
+static uint32_t detent_click_started_us = 0;
+static float detent_click_direction = 0.0f;
 static constexpr uint32_t CONFIG_PERSIST_DEBOUNCE_MS = 2000;
 static constexpr float IDLE_CENTER_CORRECTION_MAX_ANGLE_RAD = 5.0f * _PI / 180.0f;
 static constexpr float IDLE_CENTER_CORRECTION_ALPHA = 0.0005f;
+static constexpr uint32_t DETENT_CLICK_ATTACK_US = 2200;
+static constexpr uint32_t DETENT_CLICK_RELEASE_US = 3200;
+static constexpr float DETENT_CLICK_VOLTAGE = 0.18f;
 
 static uint32_t calibrationChecksum(const PersistedMotorCalibration &calibration)
 {
@@ -466,12 +471,17 @@ static float hapticTorque(const MotorSharedConfig &config)
     float center_angle = zero_angle + static_cast<float>(detent_center_position) * width;
     float offset_unit = (motor.shaft_angle - center_angle) / width;
 
+    const int32_t previous_detent_position = detent_center_position;
     if (offset_unit > constrain(snap + bias, 0.08f, 0.49f) &&
         detent_center_position < max_position) {
         ++detent_center_position;
     } else if (offset_unit < -constrain(snap - bias, 0.08f, 0.49f) &&
                detent_center_position > min_position) {
         --detent_center_position;
+    }
+    if (detent_center_position != previous_detent_position) {
+        detent_click_direction = detent_center_position > previous_detent_position ? 1.0f : -1.0f;
+        detent_click_started_us = micros();
     }
 
     center_angle = zero_angle + static_cast<float>(detent_center_position) * width;
@@ -517,6 +527,24 @@ static float hapticTorque(const MotorSharedConfig &config)
     return constrain(torque, -motor.voltage_limit, motor.voltage_limit);
 }
 
+static float detentClickTorque(const MotorSharedConfig &config)
+{
+    if (detent_click_started_us == 0) return 0.0f;
+    const uint32_t elapsed = micros() - detent_click_started_us;
+    const uint32_t total = DETENT_CLICK_ATTACK_US + DETENT_CLICK_RELEASE_US;
+    if (elapsed >= total) {
+        detent_click_started_us = 0;
+        return 0.0f;
+    }
+    const float strength_scale = constrain(config.detent_strength_unit, 0.0f, 5.0f);
+    const float amplitude = constrain(
+        DETENT_CLICK_VOLTAGE * strength_scale,
+        0.0f,
+        motor.voltage_limit * 0.25f);
+    return detent_click_direction * amplitude *
+        (elapsed < DETENT_CLICK_ATTACK_US ? 1.0f : -0.65f);
+}
+
 static float quietTorqueCommand(float target, const MotorSharedConfig &config)
 {
     const uint32_t now = micros();
@@ -546,6 +574,51 @@ static float quietTorqueCommand(float target, const MotorSharedConfig &config)
     return filtered_torque_command;
 }
 
+static bool refineElectricalCalibrationMultipoint()
+{
+    // Sweep seven electrical revolutions: with a seven-pole-pair motor this is
+    // one complete mechanical turn. Average the phase offset as a circular
+    // quantity so the 0/2pi boundary cannot bias the result.
+    constexpr uint16_t samples = 28;
+    constexpr float start_angle = _3PI_2;
+    const float sweep_angle = _2PI * static_cast<float>(motor.pole_pairs);
+    const float sample_step = sweep_angle / static_cast<float>(samples);
+    const float drive_step = 0.04f;
+    float sum_x = 0.0f;
+    float sum_y = 0.0f;
+    uint16_t collected = 0;
+    float next_sample = start_angle;
+
+    for (float command_angle = start_angle;
+         command_angle <= start_angle + sweep_angle + drive_step * 0.5f;
+         command_angle += drive_step) {
+        motor.setPhaseVoltage(motor.voltage_sensor_align, 0.0f, command_angle);
+        sensor.update();
+        delay(2);
+        if (command_angle + drive_step * 0.5f < next_sample || collected >= samples) continue;
+
+        for (uint8_t settle = 0; settle < 12; ++settle) {
+            sensor.update();
+            delay(1);
+        }
+        const float measured_electrical = _normalizeAngle(
+            static_cast<float>(motor.sensor_direction * motor.pole_pairs) *
+            sensor.getMechanicalAngle());
+        const float offset = _normalizeAngle(
+            measured_electrical - _normalizeAngle(command_angle) + _3PI_2);
+        sum_x += cosf(offset);
+        sum_y += sinf(offset);
+        ++collected;
+        next_sample += sample_step;
+    }
+    motor.setPhaseVoltage(0.0f, 0.0f, 0.0f);
+    delay(50);
+    if (collected < samples / 2 || hypotf(sum_x, sum_y) < 0.25f * collected) return false;
+
+    motor.zero_electric_angle = _normalizeAngle(atan2f(sum_y, sum_x));
+    return true;
+}
+
 static bool tryInitializeFoc()
 {
     ++foc_attempt_count;
@@ -572,8 +645,9 @@ static bool tryInitializeFoc()
     status.alignment_angle_after = sensor.getAngle();
     zero_angle = motor.shaft_angle;
     status.foc_initialized = true;
-    if (!status.calibration_loaded && saveCalibration()) {
-        status.calibration_loaded = true;
+    if (!status.calibration_loaded) {
+        refineElectricalCalibrationMultipoint();
+        if (saveCalibration()) status.calibration_loaded = true;
     }
     ready = true;
     motor.disable();
@@ -726,7 +800,11 @@ void loop1()
             // move() still refreshes shaft angle/velocity while disabled.
             motor.move(0.0f);
         }
-        const float torque = quietTorqueCommand(hapticTorque(active_config), active_config);
+        const float base_torque = quietTorqueCommand(hapticTorque(active_config), active_config);
+        const float torque = constrain(
+            base_torque + detentClickTorque(active_config),
+            -motor.voltage_limit,
+            motor.voltage_limit);
         const float wake_width = active_config.position_width_radians > 0.0f
             ? active_config.position_width_radians : _2PI;
         // While asleep, residual centering error must not immediately wake the
