@@ -31,6 +31,7 @@ export type DialConfig = {
       detent_settle_fraction: number
       endstop_settle_fraction: number
       idle_release_ms: number
+      idle_centering_delay_ms: number
     }
   }
 }

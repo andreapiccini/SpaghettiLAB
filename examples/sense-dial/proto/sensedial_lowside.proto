@@ -215,6 +215,7 @@ message HapticTuningConfig {
     float detent_settle_fraction = 6;
     float endstop_settle_fraction = 7;
     float idle_release_ms = 8;
+    float idle_centering_delay_ms = 9;
 }
 
 /* ===================== INPUT SYSTEM ===================== */

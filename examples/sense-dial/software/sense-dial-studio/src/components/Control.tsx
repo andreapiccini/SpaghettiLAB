@@ -42,6 +42,7 @@ const CONTROL_INFO: Record<string, string> = {
   'Detent settle zone': 'Zone considered settled at a detent. Increasing it releases the motor sooner but reduces precision; decreasing it centers more accurately.',
   'Endstop settle zone': 'Zone considered settled at an endstop. Increasing it calms the motor sooner; decreasing it holds the boundary more precisely.',
   'Idle release': 'Delay before disabling a quiet motor. Increasing it holds force longer; decreasing it reduces noise and power but releases sooner.',
+  'Idle centering delay': 'Time the knob must remain still before its detent center slowly follows the resting angle. Increasing it preserves exact centering longer but may leave residual buzz; decreasing it quiets the motor sooner but allows more resting-position drift.',
 }
 
 export default function Control({ label, value, min, max, step = 1, unit, hint, info, onChange }: Props) {

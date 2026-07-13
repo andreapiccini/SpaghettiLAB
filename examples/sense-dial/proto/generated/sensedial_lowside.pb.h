@@ -167,6 +167,7 @@ typedef struct _SenseDial_LowSide_HapticTuningConfig {
     float detent_settle_fraction;
     float endstop_settle_fraction;
     float idle_release_ms;
+    float idle_centering_delay_ms;
 } SenseDial_LowSide_HapticTuningConfig;
 
 typedef struct _SenseDial_LowSide_MotorControlConfig {
@@ -589,7 +590,7 @@ extern "C" {
 #define SenseDial_LowSide_MotorControlConfig_init_default {0, _SenseDial_LowSide_MotorSensorType_MIN, _SenseDial_LowSide_MotorSensorDirection_MIN, _SenseDial_LowSide_MotorMotionType_MIN, 0, 0, 0, false, SenseDial_LowSide_PIDConfig_init_default, false, SenseDial_LowSide_LowPassFilterConfig_init_default, false, SenseDial_LowSide_PIDConfig_init_default, false, SenseDial_LowSide_LowPassFilterConfig_init_default, false, SenseDial_LowSide_HapticTuningConfig_init_default}
 #define SenseDial_LowSide_PIDConfig_init_default {0, 0, 0, 0}
 #define SenseDial_LowSide_LowPassFilterConfig_init_default {0}
-#define SenseDial_LowSide_HapticTuningConfig_init_default {0, 0, 0, 0, 0, 0, 0, 0}
+#define SenseDial_LowSide_HapticTuningConfig_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define SenseDial_LowSide_InputChannelConfig_init_default {0, _SenseDial_LowSide_InputSourceType_MIN, _SenseDial_LowSide_InputMode_MIN, 0, 0, {0, 0, 0, 0}, 0, 0}
 #define SenseDial_LowSide_InputChannelState_init_default {0, 0, 0, 0, 0}
 #define SenseDial_LowSide_RequestState_init_default {0}
@@ -631,7 +632,7 @@ extern "C" {
 #define SenseDial_LowSide_MotorControlConfig_init_zero {0, _SenseDial_LowSide_MotorSensorType_MIN, _SenseDial_LowSide_MotorSensorDirection_MIN, _SenseDial_LowSide_MotorMotionType_MIN, 0, 0, 0, false, SenseDial_LowSide_PIDConfig_init_zero, false, SenseDial_LowSide_LowPassFilterConfig_init_zero, false, SenseDial_LowSide_PIDConfig_init_zero, false, SenseDial_LowSide_LowPassFilterConfig_init_zero, false, SenseDial_LowSide_HapticTuningConfig_init_zero}
 #define SenseDial_LowSide_PIDConfig_init_zero    {0, 0, 0, 0}
 #define SenseDial_LowSide_LowPassFilterConfig_init_zero {0}
-#define SenseDial_LowSide_HapticTuningConfig_init_zero {0, 0, 0, 0, 0, 0, 0, 0}
+#define SenseDial_LowSide_HapticTuningConfig_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define SenseDial_LowSide_InputChannelConfig_init_zero {0, _SenseDial_LowSide_InputSourceType_MIN, _SenseDial_LowSide_InputMode_MIN, 0, 0, {0, 0, 0, 0}, 0, 0}
 #define SenseDial_LowSide_InputChannelState_init_zero {0, 0, 0, 0, 0}
 #define SenseDial_LowSide_RequestState_init_zero {0}
@@ -681,6 +682,7 @@ extern "C" {
 #define SenseDial_LowSide_HapticTuningConfig_detent_settle_fraction_tag 6
 #define SenseDial_LowSide_HapticTuningConfig_endstop_settle_fraction_tag 7
 #define SenseDial_LowSide_HapticTuningConfig_idle_release_ms_tag 8
+#define SenseDial_LowSide_HapticTuningConfig_idle_centering_delay_ms_tag 9
 #define SenseDial_LowSide_MotorControlConfig_pole_pairs_tag 1
 #define SenseDial_LowSide_MotorControlConfig_sensor_type_tag 2
 #define SenseDial_LowSide_MotorControlConfig_sensor_direction_tag 3
@@ -1059,7 +1061,8 @@ X(a, STATIC,   SINGULAR, FLOAT,    torque_filter_time_constant,   4) \
 X(a, STATIC,   SINGULAR, FLOAT,    torque_slew_rate,   5) \
 X(a, STATIC,   SINGULAR, FLOAT,    detent_settle_fraction,   6) \
 X(a, STATIC,   SINGULAR, FLOAT,    endstop_settle_fraction,   7) \
-X(a, STATIC,   SINGULAR, FLOAT,    idle_release_ms,   8)
+X(a, STATIC,   SINGULAR, FLOAT,    idle_release_ms,   8) \
+X(a, STATIC,   SINGULAR, FLOAT,    idle_centering_delay_ms,   9)
 #define SenseDial_LowSide_HapticTuningConfig_CALLBACK NULL
 #define SenseDial_LowSide_HapticTuningConfig_DEFAULT NULL
 
@@ -1305,18 +1308,18 @@ extern const pb_msgdesc_t SenseDial_LowSide_ProtocolInfo_msg;
 #define SENSEDIAL_LOWSIDE_SENSEDIAL_LOWSIDE_PB_H_MAX_SIZE SenseDial_LowSide_FromHost_size
 #define SenseDial_LowSide_Ack_size               4
 #define SenseDial_LowSide_CalibrationCommand_size 7
-#define SenseDial_LowSide_DialConfig_size        1018
-#define SenseDial_LowSide_DialState_size         1237
+#define SenseDial_LowSide_DialConfig_size        1024
+#define SenseDial_LowSide_DialState_size         1243
 #define SenseDial_LowSide_Fault_size             72
 #define SenseDial_LowSide_FirmwareUpdateChunk_size 265
 #define SenseDial_LowSide_FirmwareUpdateFinish_size 0
 #define SenseDial_LowSide_FirmwareUpdateStart_size 18
 #define SenseDial_LowSide_FirmwareUpdateStatus_size 80
-#define SenseDial_LowSide_ForwardToHighSide_size 1250
-#define SenseDial_LowSide_ForwardedToHost_size   1031
-#define SenseDial_LowSide_FromHighSide_size      1028
-#define SenseDial_LowSide_FromHost_size          1260
-#define SenseDial_LowSide_HapticTuningConfig_size 40
+#define SenseDial_LowSide_ForwardToHighSide_size 1256
+#define SenseDial_LowSide_ForwardedToHost_size   1037
+#define SenseDial_LowSide_FromHighSide_size      1034
+#define SenseDial_LowSide_FromHost_size          1266
+#define SenseDial_LowSide_HapticTuningConfig_size 45
 #define SenseDial_LowSide_HighSideCommand_size   2
 #define SenseDial_LowSide_HighSideStatus_size    12
 #define SenseDial_LowSide_HostAck_size           4
@@ -1336,15 +1339,15 @@ extern const pb_msgdesc_t SenseDial_LowSide_ProtocolInfo_msg;
 #define SenseDial_LowSide_LowPassFilterConfig_size 5
 #define SenseDial_LowSide_LowSideStatus_size     20
 #define SenseDial_LowSide_MotorCalibration_size  12
-#define SenseDial_LowSide_MotorControlConfig_size 124
+#define SenseDial_LowSide_MotorControlConfig_size 129
 #define SenseDial_LowSide_OverrideDetent_size    16
 #define SenseDial_LowSide_PIDConfig_size         20
 #define SenseDial_LowSide_PersistentConfiguration_size 500
 #define SenseDial_LowSide_ProtocolInfo_size      15
 #define SenseDial_LowSide_RequestProtocolInfo_size 0
 #define SenseDial_LowSide_RequestState_size      0
-#define SenseDial_LowSide_ToHighSide_size        1247
-#define SenseDial_LowSide_ToHost_size            1247
+#define SenseDial_LowSide_ToHighSide_size        1253
+#define SenseDial_LowSide_ToHost_size            1253
 
 #ifdef __cplusplus
 } /* extern "C" */

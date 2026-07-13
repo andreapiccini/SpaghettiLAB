@@ -89,7 +89,7 @@ static constexpr uint32_t CALIBRATION_MAGIC = 0x53444341; // "SDCA"
 static constexpr uint16_t CALIBRATION_VERSION = 1;
 static constexpr uint32_t FACTORY_SETTINGS_MAGIC = 0x53444641; // "SDFA"
 static constexpr uint32_t USER_SETTINGS_MAGIC = 0x53445553; // "SDUS"
-static constexpr uint16_t SETTINGS_VERSION = 2;
+static constexpr uint16_t SETTINGS_VERSION = 3;
 static constexpr int FACTORY_SETTINGS_EEPROM_ADDRESS = 128;
 static constexpr int USER_SETTINGS_EEPROM_ADDRESS = 512;
 static constexpr size_t EEPROM_SIZE = 1024;
@@ -152,7 +152,6 @@ static float filtered_torque_command = 0.0f;
 static uint32_t last_torque_filter_us = 0;
 static uint32_t config_persist_due_ms = 0;
 static constexpr uint32_t CONFIG_PERSIST_DEBOUNCE_MS = 2000;
-static constexpr uint32_t IDLE_CENTER_CORRECTION_DELAY_MS = 500;
 static constexpr float IDLE_CENTER_CORRECTION_MAX_ANGLE_RAD = 5.0f * _PI / 180.0f;
 static constexpr float IDLE_CENTER_CORRECTION_ALPHA = 0.0005f;
 
@@ -762,8 +761,13 @@ void loop1()
             } else {
                 idle_since_ms = 0;
             }
+            const uint32_t idle_centering_delay_ms = static_cast<uint32_t>(constrain(
+                active_config.haptic_tuning.idle_centering_delay_ms > 0.0f
+                    ? active_config.haptic_tuning.idle_centering_delay_ms : 500.0f,
+                50.0f,
+                5000.0f));
             if (!at_endstop && idle_since_ms != 0 &&
-                millis() - idle_since_ms >= IDLE_CENTER_CORRECTION_DELAY_MS &&
+                millis() - idle_since_ms >= idle_centering_delay_ms &&
                 fabsf(offset) < IDLE_CENTER_CORRECTION_MAX_ANGLE_RAD) {
                 zero_angle += offset * IDLE_CENTER_CORRECTION_ALPHA;
                 center_angle = zero_angle +
