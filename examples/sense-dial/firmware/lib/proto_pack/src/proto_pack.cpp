@@ -114,6 +114,8 @@ MotorSharedConfig dial_config(const SenseDial_LowSide_DialConfig &src)
     cfg.haptic_tuning.endstop_settle_fraction =
         src.motor_control.haptic_tuning.endstop_settle_fraction;
     cfg.haptic_tuning.idle_release_ms = src.motor_control.haptic_tuning.idle_release_ms;
+    cfg.haptic_tuning.idle_centering_delay_ms =
+        src.motor_control.haptic_tuning.idle_centering_delay_ms;
     return cfg;
 }
 
@@ -270,6 +272,8 @@ SenseDial_LowSide_ToHost dial_state(uint16_t nonce, const LowSideSharedState &sn
         snap.motor_config.haptic_tuning.endstop_settle_fraction;
     msg.payload.dial_state.config.motor_control.haptic_tuning.idle_release_ms =
         snap.motor_config.haptic_tuning.idle_release_ms;
+    msg.payload.dial_state.config.motor_control.haptic_tuning.idle_centering_delay_ms =
+        snap.motor_config.haptic_tuning.idle_centering_delay_ms;
     return msg;
 }
 

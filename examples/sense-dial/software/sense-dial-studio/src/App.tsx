@@ -26,6 +26,7 @@ const stableMotorTuning: DialConfig['motor_control'] = {
     detent_settle_fraction: 0.035,
     endstop_settle_fraction: 0.035,
     idle_release_ms: 180,
+    idle_centering_delay_ms: 500,
   },
 }
 
@@ -375,6 +376,7 @@ export default function App() {
             <Control label="Detent settle zone" value={config.motor_control.haptic_tuning.detent_settle_fraction} min={0} max={0.25} step={0.001} onChange={(v) => updateMotor('haptic_tuning', { ...config.motor_control.haptic_tuning, detent_settle_fraction: v })} />
             <Control label="Endstop settle zone" value={config.motor_control.haptic_tuning.endstop_settle_fraction} min={0} max={0.25} step={0.001} onChange={(v) => updateMotor('haptic_tuning', { ...config.motor_control.haptic_tuning, endstop_settle_fraction: v })} />
             <Control label="Idle release" value={config.motor_control.haptic_tuning.idle_release_ms} min={10} max={2000} step={10} unit=" ms" onChange={(v) => updateMotor('haptic_tuning', { ...config.motor_control.haptic_tuning, idle_release_ms: v })} />
+            <Control label="Idle centering delay" value={config.motor_control.haptic_tuning.idle_centering_delay_ms} min={50} max={5000} step={50} unit=" ms" onChange={(v) => updateMotor('haptic_tuning', { ...config.motor_control.haptic_tuning, idle_centering_delay_ms: v })} />
           </>}
         </div>
       </aside>

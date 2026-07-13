@@ -545,6 +545,9 @@ def build_host_dial_config(pb2, nonce: int, protocol_version: int, config: dict,
         haptic.get("endstop_settle_fraction", 0.035)
     )
     dial.motor_control.haptic_tuning.idle_release_ms = float(haptic.get("idle_release_ms", 85.0))
+    dial.motor_control.haptic_tuning.idle_centering_delay_ms = float(
+        haptic.get("idle_centering_delay_ms", 500.0)
+    )
     return msg
 
 def send_message(ser: serial.Serial, msg) -> None:

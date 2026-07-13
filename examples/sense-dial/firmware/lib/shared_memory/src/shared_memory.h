@@ -66,6 +66,7 @@ struct MotorHapticTuningConfig
     float detent_settle_fraction = 0.035f;
     float endstop_settle_fraction = 0.035f;
     float idle_release_ms = 180.0f;
+    float idle_centering_delay_ms = 500.0f;
 };
 
 struct MotorOverrideDetent
