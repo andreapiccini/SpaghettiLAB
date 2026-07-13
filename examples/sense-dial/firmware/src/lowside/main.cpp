@@ -147,10 +147,14 @@ static bool motor_initialized = false;
 static uint32_t last_foc_retry_ms = 0;
 static uint8_t foc_attempt_count = 0;
 static uint32_t quiet_since_ms = 0;
+static uint32_t idle_since_ms = 0;
 static float filtered_torque_command = 0.0f;
 static uint32_t last_torque_filter_us = 0;
 static uint32_t config_persist_due_ms = 0;
 static constexpr uint32_t CONFIG_PERSIST_DEBOUNCE_MS = 2000;
+static constexpr uint32_t IDLE_CENTER_CORRECTION_DELAY_MS = 500;
+static constexpr float IDLE_CENTER_CORRECTION_MAX_ANGLE_RAD = 5.0f * _PI / 180.0f;
+static constexpr float IDLE_CENTER_CORRECTION_ALPHA = 0.0005f;
 
 static uint32_t calibrationChecksum(const PersistedMotorCalibration &calibration)
 {
@@ -444,6 +448,7 @@ static void applyConfig(const MotorSharedConfig &config)
     filtered_torque_command = 0.0f;
     last_torque_filter_us = 0;
     quiet_since_ms = 0;
+    idle_since_ms = 0;
     control_enabled = true;
     publishStatus();
 }
@@ -734,17 +739,37 @@ void loop1()
             motor.enable();
             motor_awake = true;
             quiet_since_ms = 0;
+            idle_since_ms = 0;
         }
         if (motor_awake) {
             motor.move(torque);
             const float width = active_config.position_width_radians > 0.0f
                 ? active_config.position_width_radians : _2PI;
-            const float center_angle = zero_angle +
+            float center_angle = zero_angle +
                 static_cast<float>(detent_center_position) * width;
-            const float offset = motor.shaft_angle - center_angle;
+            float offset = motor.shaft_angle - center_angle;
             const bool at_endstop =
                 (detent_center_position == active_config.min_position && offset < 0.0f) ||
                 (detent_center_position == active_config.max_position && offset > 0.0f);
+
+            // Sensor quantisation can leave a tiny, continuously corrected
+            // error at rest. After the hand has been still for 500 ms, let the
+            // active detent center follow that resting angle very slowly. This
+            // removes the residual phase excitation without changing detents
+            // while the user is turning the knob or pushing an endstop.
+            if (fabsf(motor.shaft_velocity) < 0.05f) {
+                if (idle_since_ms == 0) idle_since_ms = millis();
+            } else {
+                idle_since_ms = 0;
+            }
+            if (!at_endstop && idle_since_ms != 0 &&
+                millis() - idle_since_ms >= IDLE_CENTER_CORRECTION_DELAY_MS &&
+                fabsf(offset) < IDLE_CENTER_CORRECTION_MAX_ANGLE_RAD) {
+                zero_angle += offset * IDLE_CENTER_CORRECTION_ALPHA;
+                center_angle = zero_angle +
+                    static_cast<float>(detent_center_position) * width;
+                offset = motor.shaft_angle - center_angle;
+            }
             const float settle_fraction = at_endstop
                 ? active_config.haptic_tuning.endstop_settle_fraction
                 : active_config.haptic_tuning.detent_settle_fraction;
@@ -767,6 +792,7 @@ void loop1()
                     motor_awake = false;
                     motor_sleep_reference_angle = motor.shaft_angle;
                     quiet_since_ms = 0;
+                    idle_since_ms = 0;
                 }
             } else {
                 quiet_since_ms = 0;
