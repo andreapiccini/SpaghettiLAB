@@ -2,126 +2,153 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Driver Registry maps a stable module type identifier to an immutable driver descriptor compiled into the firmware. It is a catalog, not a module-instance owner.
 
-## Purpose
+## What this component owns
 
-Driver Registry maps a stable module type such as `sht40` to the immutable
-module-driver implementation compiled into the firmware.
+- The read-only collection of available driver descriptors.
+- Type-ID validation, duplicate detection, and lookup.
 
-## Responsibility
+## What this component does not own
 
-Own the searchable collection, validate descriptors/duplicates, and enumerate
-supported module types.
-
-## Non-responsibility
-
-It creates no module instance, touches no port, performs no discovery, and calls
-no driver lifecycle operation.
+- Module instances or driver-private context.
+- Dynamic loading, Port assignment, or lifecycle transitions.
 
 ## Files
 
-- Public API: `include/spaghetti/driver_registry.h`.
-- Implementation: `subsys/driver_registry/driver_registry.c`.
-- Driver descriptors originate in `spaghetti_modules/<module>/`.
+| File | Role |
+|---|---|
+| `include/spaghetti/driver_registry.h` | Lookup and enumeration declarations. |
+| `subsys/driver_registry/driver_registry.c` | Descriptor table and validation. |
+| Concrete module headers | Export immutable descriptors referenced by the table. |
 
-## Data structures to implement
+## Data model
 
-- registry table/index: created during boot, owned by Registry for firmware
-  lifetime, modified only during initialization, read by Manager/Communication.
-- driver descriptor references: objects remain owned by concrete drivers and
-  must have static lifetime.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Descriptor pointer table | Registry | Fixed collection valid for firmware lifetime. |
+| Type ID | Concrete descriptor | Bounded stable string such as `sht40` or `relay`. |
+| Registry count | Registry | Number of validated descriptors. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_driver_registry_init()`
+### `int spaghetti_driver_registry_init(void)`
 
-- **Purpose:** construct/validate the known-driver collection.
-- **Called by:** Core before Module Manager becomes usable.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** explicit descriptor array initially.
-- **Outputs:** status.
-- **State modified:** Registry index.
-- **Failure cases:** duplicate/empty ID, invalid operation table, capacity limit.
-- **Called next:** validation only; no driver init.
+**Purpose:** Validate every descriptor and reject duplicate type IDs.
 
-### `spaghetti_driver_registry_find()`
+**Parameters**
 
-- **Purpose:** resolve module type to descriptor.
-- **Called by:** Module Manager; Communication for capability queries.
-- **Trigger/mechanism/context:** configure/query; DIRECT CALL; caller thread.
-- **Inputs:** stable type identifier.
-- **Outputs:** const descriptor or not-found error.
-- **State modified:** none.
-- **Failure cases:** invalid ID, registry unavailable, unknown type.
-- **Called next:** none; caller decides whether to invoke driver.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_driver_registry_count()` / `_get()`
+**Returns:** `0` when the catalog is coherent.
 
-- **Purpose:** enumerate firmware-supported module types.
-- **Called by:** Communication and tests.
-- **Trigger/mechanism/context:** query; DIRECT CALL; caller thread.
-- **Inputs:** index for `_get`.
-- **Outputs:** count/const descriptor.
-- **State modified:** none.
-- **Failure cases:** invalid index.
-- **Called next:** none.
+**Errors:** Null descriptor, empty/duplicate ID, missing operation table, or invalid capability declaration.
 
-## Interaction diagram
+**Execution context:** Main thread during boot.
 
-```text
-Module implementation --BOOT REGISTRATION--> Registry
-Manager --DIRECT CALL find("sht40")--> Registry --const pointer--> Manager
+**Calls:** No hardware APIs.
+
+### `const struct spaghetti_module_driver *spaghetti_driver_registry_find(const char *type_id)`
+
+**Purpose:** Resolve an exact type ID.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `type_id` | NUL-terminated caller-owned ID valid during the call. |
+
+**Returns:** Immutable descriptor or `NULL`.
+
+**Errors:** Null/empty/unknown ID returns `NULL`.
+
+**Execution context:** Any calling thread after initialization.
+
+**Calls:** Bounded string comparison.
+
+### `size_t spaghetti_driver_registry_count(void)`
+
+**Purpose:** Return descriptor count for diagnostics.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
+
+**Returns:** Fixed validated count.
+
+**Errors:** None after initialization.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+### `const struct spaghetti_module_driver *spaghetti_driver_registry_get(size_t index)`
+
+**Purpose:** Enumerate one descriptor by index.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `index` | Zero-based index below count. |
+
+**Returns:** Immutable descriptor or `NULL`.
+
+**Errors:** Out-of-range index returns `NULL`.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+## How it works
+
+```mermaid
+flowchart LR
+    SHT["sht40 descriptor"] --> TABLE["Fixed Registry"]
+    RELAY["relay descriptor"] --> TABLE
+    MANAGER["Module Manager"] -->|"find type_id"| TABLE
+    TABLE -->|"immutable descriptor"| MANAGER
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-EMPTY -> INITIALIZING -> FROZEN/READY
-                    +-> INVALID
+Manager receives type ID `sht40`, calls `find()`, and gets the SHT40 operation table. `does-not-exist` returns `NULL`; Registry does not create an instance or touch hardware.
+
+## Zephyr integration
+
+- A plain const pointer array is deterministic and sufficient.
+- Zephyr iterable sections may replace table assembly only if they preserve the same public contract.
+- Kconfig may decide which concrete driver source files are compiled.
+
+## Configuration templates
+
+### Fixed registry table
+
+```c
+static const struct spaghetti_module_driver *const drivers[] = {
+    &spaghetti_sht40_driver,
+    &spaghetti_relay_driver,
+};
 ```
 
-## Concurrency considerations
+### Conditional source selection in CMake
 
-Freeze after boot so lookup needs no mutex. OPTION A: explicit descriptor array,
-simple and debuggable. OPTION B: Zephyr iterable sections, convenient at scale
-but more link-time magic. RECOMMENDATION: explicit array first.
+```cmake
+target_sources_ifdef(CONFIG_SPAGHETTI_MODULE_SHT40 app PRIVATE
+  spaghetti_modules/sht40/sht40.c
+)
+```
 
-## Zephyr concepts involved
+## Ownership and concurrency
 
-No kernel primitive is needed for an immutable registry. Iterable sections are
-a future Zephyr linker feature, not a requirement. Kconfig will later determine
-which drivers are compiled.
+After successful initialization the Registry is immutable, so lookup requires no lock. Returned descriptors remain valid for firmware lifetime.
 
-## Implementation steps
+## Contract guarantees
 
-1. Define stable type-ID rules.
-2. Validate one fake descriptor.
-3. Implement linear lookup.
-4. Detect duplicates.
-5. Add enumeration.
-6. Optimize only after measurement.
-
-## Expected result
-
-Known IDs resolve predictably; unknown and duplicate IDs fail explicitly.
-
-## Minimal test
-
-Register two fake descriptors and test find, unknown, enumeration, duplicate.
-
-## Dependencies
-
-`module_driver.h` contract.
-
-## Not yet
-
-No dynamic loading, hash table, driver initialization, or runtime registration.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_driver_registry_init` | Core | boot | DIRECT CALL | main thread | descriptor validation |
-| `spaghetti_driver_registry_find` | Manager | module configuration | DIRECT CALL | caller thread | none |
-| `spaghetti_driver_registry_count` | Communication | capability query | DIRECT CALL | caller thread | none |
-| `spaghetti_driver_registry_get` | Communication/tests | enumeration | DIRECT CALL | caller thread | none |
+- Type IDs are unique.
+- Lookup never transfers ownership.
+- Registry contains no live or mutable module state.

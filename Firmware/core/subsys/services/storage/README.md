@@ -1,143 +1,199 @@
-# Storage Service
+# Storage service
 
 [← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Storage is an optional persistence adapter for small bounded records such as Config snapshots. Its API is independent of the selected flash backend and never exposes Zephyr Settings/NVS internals to callers.
 
-## Purpose
+## What this component owns
 
-Storage hides the selected persistent backend so Config owns schema/meaning while
-Storage owns reliable byte/key operations and backend errors.
+- Record namespace, version envelope, size limits, and backend serialization.
+- Atomic write/replace behavior and corruption diagnostics.
+- Private Zephyr Settings or other backend context.
 
-## Responsibility
+## What this component does not own
 
-Backend initialization, bounded read/write/delete, integrity/commit semantics,
-serialization, capacity/error reporting, and flash-partition access.
-
-## Non-responsibility
-
-No Spaghetti configuration schema, module lifecycle, measurement retention policy,
-or board partition invention.
+- Config semantics, module instances, measurement history, credentials policy, or flash partition placement.
+- Writes from ISR or unbounded blobs.
 
 ## Files
 
-Only this design README exists. Future source/header and Kconfig integration are
-added with the Config milestone. Static storage partition belongs to board DTS.
+| File | Role |
+|---|---|
+| `storage.h` | Bounded read/write/delete/status contract. |
+| `storage.c` | Backend adapter, version envelope, and synchronization. |
+| Board partition DTS | Real non-overlapping storage region. |
+| `prj.conf` | Selected Zephyr Settings backend options. |
 
-## Data structures to implement
+## Data model
 
-- storage key/blob view: caller-owned for synchronous call; Storage copies when
-  asynchronous.
-- backend context: created/owned/destroyed by Storage for firmware lifetime.
-- status/capacity statistics: Storage-owned, read as snapshots.
-- commit metadata/version/checksum only where the selected backend requires it.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Record key | Caller/Storage contract | Bounded stable namespace key. |
+| Record envelope | Storage | Magic/schema version, payload length, generation, checksum when used. |
+| Backend state | Storage | Initialized/mounted/error state and private handler context. |
+| Storage status | Storage | Read/write/delete/corruption counters and last error. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_storage_init()`
+### `int spaghetti_storage_init(void)`
 
-- **Purpose:** initialize selected backend and verify partition/readiness.
-- **Called by:** Core before Config load.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** build-time backend and static partition.
-- **Outputs:** status/capacity.
-- **State modified:** backend context.
-- **Failure cases:** missing partition, corrupt backend, flash device unavailable.
-- **Called next:** Zephyr Settings/NVS/ZMS initialization.
+**Purpose:** Initialize the selected backend and load its metadata/handlers.
 
-### `spaghetti_storage_read()`
+**Parameters**
 
-- **Purpose:** retrieve a bounded record without exposing backend API.
-- **Called by:** Config.
-- **Trigger/mechanism/context:** boot/query; DIRECT CALL; caller thread.
-- **Inputs:** key, destination, capacity.
-- **Outputs:** length/status.
-- **State modified:** statistics only.
-- **Failure cases:** absent, corrupt, destination too small, backend I/O.
-- **Called next:** Settings/backend read.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_storage_write()`
+**Returns:** `0` when reads/writes are available.
 
-- **Purpose:** commit one bounded record with documented atomicity.
-- **Called by:** Config.
-- **Trigger/mechanism/context:** validated config update; DIRECT CALL; thread;
-  serialization by Storage mutex or owner thread is DECISION REQUIRED.
-- **Inputs:** key, bytes, length/version.
-- **Outputs:** committed/error result.
-- **State modified:** persistent store/statistics.
-- **Failure cases:** full/wear/I/O/invalid key/power-loss recovery.
-- **Called next:** Settings/backend save.
+**Errors:** Missing/overlapping partition, backend mount/init failure, or invalid static limits.
 
-### `spaghetti_storage_delete()` / `_get_status()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** explicit removal and diagnostics.
-- **Called by:** Config/reset and Communication/tests.
-- **Trigger/mechanism/context:** reset/query; DIRECT CALL; caller thread.
-- **Inputs:** key or output snapshot.
-- **Outputs:** status.
-- **State modified:** persistent record for delete; none for status.
-- **Failure cases:** absent key, I/O, invalid output.
-- **Called next:** backend delete/status.
+**Calls:** Zephyr Settings/backend initialization and load.
 
-## Interaction diagram
+### `int spaghetti_storage_read(const char *key, void *buffer, size_t capacity, size_t *out_size)`
 
-```text
-Board DTS --build-time--> flash partition
-Core --DIRECT CALL--> Storage init --> Zephyr Settings/backend
-Config --DIRECT CALL read/write--> Storage --> Settings/NVS/ZMS/flash
+**Purpose:** Read one complete bounded record into caller storage.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `key` | NUL-terminated key below maximum length. |
+| `buffer` | Caller-owned destination. |
+| `capacity` | Destination capacity. |
+| `out_size` | Actual decoded payload size. |
+
+**Returns:** `0` on a valid record.
+
+**Errors:** Invalid args/key, not found, insufficient capacity, corruption, unsupported version, or backend I/O error.
+
+**Execution context:** Calling thread.
+
+**Calls:** Selected backend read.
+
+### `int spaghetti_storage_write(const char *key, const void *data, size_t size)`
+
+**Purpose:** Atomically replace one bounded versioned record.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `key` | Bounded key. |
+| `data` | Caller-owned payload copied during the call. |
+| `size` | Payload bytes up to configured maximum. |
+
+**Returns:** `0` only after durable backend acceptance.
+
+**Errors:** Invalid args/size, no space, wear/backend failure, or serialization conflict.
+
+**Execution context:** Calling thread; may block on flash.
+
+**Calls:** Selected backend save/write.
+
+### `int spaghetti_storage_delete(const char *key)`
+
+**Purpose:** Remove one record idempotently according to the documented policy.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `key` | Bounded record key. |
+
+**Returns:** `0` when absent after the call.
+
+**Errors:** Invalid key or backend delete failure.
+
+**Execution context:** Calling thread.
+
+**Calls:** Selected backend delete.
+
+### `int spaghetti_storage_get_status(struct spaghetti_storage_status *out)`
+
+**Purpose:** Copy backend state and diagnostics.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with coherent status.
+
+**Errors:** Invalid output or uninitialized Storage.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Config
+    participant Storage
+    participant Settings as Zephyr Settings
+    participant Flash
+    Config->>Storage: write("config", encoded record)
+    Storage->>Storage: add version envelope
+    Storage->>Settings: save_one(...)
+    Settings->>Flash: bounded persistent write
+    Flash-->>Storage: status
+    Storage-->>Config: durable success or error
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-UNINITIALIZED -> MOUNTING -> READY <-> WRITING
-                       +-> RECOVERY/ERROR
+Config encodes generation 12 into a bounded record and writes key `config`. At boot, Storage reads and validates the envelope; Config then validates semantics before applying it. A corrupt record yields an error and safe default path.
+
+## Zephyr integration
+
+- Zephyr Settings is the key/value facade; NVS is one possible non-filesystem flash backend.
+- Settings load callbacks provide bytes in the loading thread; copy/decode them into bounded Storage state.
+- Flash partition layout is static Devicetree and must be verified against firmware regions.
+
+## Configuration templates
+
+### `prj.conf` using Settings + NVS
+
+```ini
+CONFIG_FLASH=y
+CONFIG_FLASH_MAP=y
+CONFIG_NVS=y
+CONFIG_SETTINGS=y
+CONFIG_SETTINGS_NVS=y
 ```
 
-## Concurrency considerations
+### Fixed partition example
 
-Start with synchronous serialized calls because configuration writes are rare.
-Use a mutex if multiple callers are later allowed. Do not write flash from ISR or
-timer callback. A storage thread is justified only if measured write latency must
-not block its caller.
+```dts
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
 
-## Zephyr concepts involved
+        storage_partition: partition@f8000 {
+            label = "storage";
+            reg = <0x000f8000 0x00008000>;
+        };
+    };
+};
+```
 
-Settings is Zephyr's persistent key/value facade; NVS/ZMS are flash backends;
-flash map exposes fixed partitions described in Devicetree. Kconfig selects the
-compiled backend. Settings load can invoke registered callbacks.
+The numeric address and size are an example, not portable defaults. Replace
+them with values checked against the selected board's generated flash layout.
 
-## Implementation steps
+## Ownership and concurrency
 
-1. Define key/size/error contract.
-2. Add a real static storage partition only from known hardware layout.
-3. Initialize one Zephyr backend.
-4. Implement read/write/delete.
-5. Test reboot and power-loss/corruption behavior supported by backend.
-6. Add capacity/wear diagnostics.
+Storage serializes backend operations in thread context. Callers retain input ownership until a synchronous write returns. No flash call occurs from ISR or timer callback.
 
-## Expected result
+## Contract guarantees
 
-A versioned record survives reboot; absence/corruption/full storage are distinct
-observable failures.
-
-## Minimal test
-
-Write a counter, reboot, read/increment; test missing key and undersized buffer.
-
-## Dependencies
-
-Known board flash layout and chosen Zephyr storage backend; Config consumes it.
-
-## Not yet
-
-No invented partition, database, measurement history, filesystem, or OTA image.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_storage_init` | Core | boot | DIRECT CALL | main thread | Settings/backend init |
-| `spaghetti_storage_read` | Config | load/query | DIRECT CALL | caller thread | backend read |
-| `spaghetti_storage_write` | Config | validated update | DIRECT CALL | caller thread | backend save |
-| `spaghetti_storage_delete` | Config | reset | DIRECT CALL | caller thread | backend delete |
-| `spaghetti_storage_get_status` | Communication | diagnostics | DIRECT CALL | caller thread | backend status |
+- A successful read returns one complete, version-compatible record.
+- A failed/corrupt record is never presented as valid Config.
+- Record sizes and keys are bounded.

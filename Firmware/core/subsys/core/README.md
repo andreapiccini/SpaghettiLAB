@@ -2,136 +2,179 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Core is the firmware startup coordinator. It initializes required components in dependency order and exposes one board-independent view of overall readiness.
 
-## Purpose
+## What this component owns
 
-Core is the boot coordinator and hardware-platform abstraction. It prevents the
-rest of the firmware from branching on ESP32-C3, ESP32-S3, or future MCU names.
+- Overall boot state and immutable firmware/Core information.
+- Initialization and start ordering.
+- Propagation of mandatory dependency failures.
 
-## Responsibility
+## What this component does not own
 
-- Own overall boot/readiness state and immutable Core information.
-- Initialize common subsystems in dependency order.
-- Expose capabilities, firmware identity, and degraded/failure state.
-
-## Non-responsibility
-
-- No sensor protocols, module instances, runtime rules, or MQTT state machine.
-- No hard-coded board pin mappings.
-- No ownership of Port or Module Manager internal objects.
+- Ports, module instances, sensor protocols, product rules, or transport state.
+- Board-specific pins or MCU-name branches.
 
 ## Files
 
-- Public API: `include/spaghetti/core.h`; stable contract visible to `main` and
-  diagnostics.
-- Implementation: `subsys/core/core.c`; boot ordering and private Core state.
+| File | Role |
+|---|---|
+| `include/spaghetti/core.h` | Public Core state, info, and function declarations. |
+| `subsys/core/core.c` | Private state and startup sequence. |
+| `src/main.c` | Calls Core and handles its final boot result. |
 
-## Data structures to implement
+## Data model
 
-- `spaghetti_core_info`: immutable identity/version/capabilities; created and
-  owned by Core for firmware lifetime; read by Communication and diagnostics.
-- `spaghetti_core_state`: booting, ready, degraded, failed; owned and modified
-  only by Core; others read snapshots. Add only states with observable meaning.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| `spaghetti_core_state` | Core | UNINITIALIZED, INITIALIZING, READY, RUNNING, DEGRADED, or FAILED. |
+| `spaghetti_core_info` | Core | Immutable firmware identity and capability summary. |
+| Initialization flags | Core | Private record preventing invalid repeated transitions. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_core_init()`
+### `int spaghetti_core_init(void)`
 
-- **Purpose:** initialize mandatory architecture layers in a known order.
-- **Called by:** `main`.
-- **Trigger:** firmware boot.
-- **Invocation mechanism:** BOOT INIT, then DIRECT CALL.
-- **Execution context:** main thread; may block for bounded initialization.
-- **Inputs:** none or a future immutable startup configuration.
-- **Outputs:** success or negative error; Core state becomes ready/degraded/error.
-- **State modified:** Core state and private initialization flags.
-- **Failure cases:** invalid static hardware, mandatory dependency unavailable.
-- **Called next:** Port, Storage, Config, Manager, Communication initialization by
-  DIRECT CALL in documented order.
+**Purpose:** Initialize every mandatory component in documented dependency order.
 
-### `spaghetti_core_start()`
+**Parameters**
 
-- **Purpose:** start asynchronous services after construction succeeds.
-- **Called by:** `main` after `init`.
-- **Trigger/mechanism:** boot; DIRECT CALL in main thread.
-- **Inputs/outputs:** no mutable input; status result.
-- **State modified:** running flag.
-- **Failure cases:** service start or dependency failure.
-- **Called next:** Runtime/Communication/service start APIs by DIRECT CALL.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_core_get_info()` / `spaghetti_core_get_state()`
+**Returns:** `0` when Core reaches READY; first negative dependency error otherwise.
 
-- **Purpose:** return read-only diagnostics and capability state.
-- **Called by:** Communication, shell/diagnostics, tests.
-- **Trigger/mechanism:** request; DIRECT CALL in caller thread.
-- **Inputs:** output snapshot or returned const view.
-- **Outputs:** stable data or not-initialized error.
-- **State modified:** none.
-- **Failure cases:** called before initialization, invalid output pointer.
-- **Called next:** no lower dependency.
+**Errors:** Invalid static hardware, unavailable mandatory dependency, or repeated invalid initialization.
 
-## Interaction diagram
+**Execution context:** Zephyr main thread; bounded blocking is allowed.
 
-```text
-Zephyr -> main --BOOT INIT / DIRECT CALL--> Core
-                                             |
-                  DIRECT CALL                +--> Port
-                                             +--> Storage -> Config
-                                             +--> Module Manager
-                                             +--> Communication/Runtime
+**Calls:** Port, Registry, Manager, Config/Data/Runtime initialization as selected by the application.
+
+### `int spaghetti_core_start(void)`
+
+**Purpose:** Start asynchronous components after construction is complete.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
+
+**Returns:** `0` when Core reaches RUNNING; negative start error otherwise.
+
+**Errors:** Called before READY or an asynchronous component fails to start.
+
+**Execution context:** Zephyr main thread.
+
+**Calls:** Only selected components that have a distinct start operation.
+
+### `enum spaghetti_core_state spaghetti_core_get_state(void)`
+
+**Purpose:** Return the current overall state without changing it.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
+
+**Returns:** Current enum value.
+
+**Errors:** None.
+
+**Execution context:** Any documented thread context; implementation must provide a coherent read.
+
+**Calls:** None.
+
+### `int spaghetti_core_get_info(struct spaghetti_core_info *out)`
+
+**Purpose:** Copy immutable identity/capability information for diagnostics.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with a complete snapshot.
+
+**Errors:** `-EINVAL` for null output; `-EAGAIN` before initialization if info is unavailable.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Main as main()
+    participant Core
+    participant Port
+    participant Registry
+    participant Manager
+    Main->>Core: init()
+    Core->>Port: init_all()
+    Port-->>Core: status
+    Core->>Registry: init()
+    Registry-->>Core: status
+    Core->>Manager: init()
+    Manager-->>Core: status
+    Core-->>Main: READY or first error
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-UNINITIALIZED -> INITIALIZING -> READY -> RUNNING
-                       +------> DEGRADED / FAILED
+If Port initialization returns `-ENODEV`, Core stops the sequence, enters FAILED, returns that error to `main`, and never reports READY. It does not hide the failure and continue with invalid hardware.
+
+## Zephyr integration
+
+- `main()` already runs in a Zephyr thread.
+- Use one Zephyr logging module for structured boot diagnostics.
+- Kconfig controls which optional components are compiled; Core coordinates only those present.
+
+## Configuration templates
+
+### `CMakeLists.txt`
+
+```cmake
+target_include_directories(app PRIVATE include)
+
+target_sources(app PRIVATE
+  src/main.c
+  subsys/core/core.c
+)
 ```
 
-## Concurrency considerations
+### `prj.conf`
 
-Initialization is single-threaded. State reads may later need an atomic value or
-short mutex. Core should not own a thread. Never call blocking boot logic from an
-ISR. zbus is unnecessary for ordinary getters; it may later publish rare Core
-state changes.
+```ini
+CONFIG_LOG=y
+CONFIG_SERIAL=y
+CONFIG_CONSOLE=y
+```
 
-## Zephyr concepts involved
+### Minimal `main.c` usage
 
-- `main` is a Zephyr thread after kernel/device initialization.
-- Logging provides per-module levels and structured diagnostics; needed early.
-- Devicetree supplies static hardware indirectly through Port; Core does not
-  parse board-specific GPIOs.
-- Kconfig will later compile optional capabilities; it is not runtime config.
+```c
+int main(void)
+{
+    int err = spaghetti_core_init();
+    if (err < 0) {
+        return err;
+    }
 
-## Implementation steps
+    return spaghetti_core_start();
+}
+```
 
-1. Define minimal info/state types.
-2. Implement state getters.
-3. Implement ordered initialization with one dependency.
-4. Add structured logging and explicit error propagation.
-5. Add start separation only when an asynchronous service exists.
+## Ownership and concurrency
 
-## Expected result
+Initialization and start transitions are serialized in the main thread. Getters return copied or atomically coherent state. Core owns no worker thread solely for coordination.
 
-Boot reports a board-independent Core identity and a clear ready/failure result.
+## Contract guarantees
 
-## Minimal test
-
-Run successful init, then inject one dependency failure and verify state/error.
-
-## Dependencies
-
-Logging first; Port becomes the first architecture dependency.
-
-## Not yet
-
-Do not add networking, OTA, discovery provider logic, or board-specific branches.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_core_init` | main | boot | BOOT INIT / DIRECT CALL | main thread | subsystem init APIs |
-| `spaghetti_core_start` | main | init complete | DIRECT CALL | main thread | service start APIs |
-| `spaghetti_core_get_info` | Communication/tests | query | DIRECT CALL | caller thread | none |
-| `spaghetti_core_get_state` | diagnostics/tests | query | DIRECT CALL | caller thread | none |
+- READY means every mandatory initialized dependency succeeded.
+- The first meaningful error is preserved for diagnostics.
+- No higher component must branch on a concrete MCU or board name.

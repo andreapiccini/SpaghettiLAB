@@ -1,147 +1,195 @@
-# Communication
+# Communication adapters
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Communication separates transport-specific bytes from generic firmware requests, responses, and events. USB, UART, Bluetooth, HTTP, or MQTT can be adapters around the same internal command contract.
 
-## Purpose
+## What this component owns
 
-Communication is the transport-independent protocol boundary between the Core
-and PC/backend/frontend.
+- Bounded request/response/event envelopes and request dispatch.
+- Correlation IDs, protocol version, payload-size validation, and status mapping.
+- Adapter registration and transport-independent diagnostics.
 
-## Responsibility
+## What this component does not own
 
-Frame validation, protocol versioning, request correlation, command routing,
-response/event encoding, sessions, and transport adapters.
-
-## Non-responsibility
-
-No module lifecycle ownership, runtime evaluation, raw sensor access, persistent
-storage, or direct coupling of the protocol to C struct layout.
+- Module instances, Config internals, product rules, or network client state.
+- Unbounded transport buffers or borrowed RX memory after callback return.
 
 ## Files
 
-- Public API: `include/spaghetti/communication.h`.
-- Implementation: `subsys/communication/communication.c`.
-- Future transport adapters should remain separate from protocol handling.
+| File | Role |
+|---|---|
+| `include/spaghetti/communication.h` | Generic request/response/event API. |
+| `subsys/communication/communication.c` | Validation and command dispatch. |
+| `communication_<transport>.c` | Framing/parsing/output for one optional transport. |
+| Component APIs | Core/Config/Data/Discovery operations called by dispatch. |
 
-## Data structures to implement
+## Data model
 
-- protocol message: bounded value object with version/type/request ID/payload.
-- session: created/owned/destroyed by Communication on connect/disconnect.
-- transport descriptor: immutable callbacks owned by adapter; registered/read by
-  Communication.
-- RX/TX buffers and request table: Communication-owned, bounded lifetime.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Request | Adapter until copied/handled | Version, correlation ID, command, bounded payload. |
+| Response | Communication then adapter | Correlation ID, status, bounded payload. |
+| Event | Producer/Communication | Unsolicited bounded notification. |
+| Communication status | Communication | Adapter readiness, malformed/oversize/drop counters. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_communication_init()` / `_start()`
+### `int spaghetti_communication_init(void)`
 
-- **Purpose:** initialize protocol state, adapters, queues, and begin reception.
-- **Called by:** Core.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** transport/config dependencies.
-- **Outputs:** status.
-- **State modified:** sessions/queues/running state.
-- **Failure cases:** no required transport, allocation/configuration failure.
-- **Called next:** adapter init/start by DIRECT CALL.
+**Purpose:** Initialize dispatch tables, status, and registered adapters.
 
-### `spaghetti_communication_receive()`
+**Parameters**
 
-- **Purpose:** accept bytes/frame from an adapter and route a validated request.
-- **Called by:** UART/USB/network adapter.
-- **Trigger:** incoming transport data.
-- **Invocation mechanism:** CALLBACK or POLL; copy then WORKQUEUE/THREAD for parse.
-- **Execution context:** callback may be constrained; parsing/routing in
-  communication worker, never ISR.
-- **Inputs:** session, bounded byte span.
-- **Outputs:** accepted/full/protocol error.
-- **State modified:** RX buffer/request state.
-- **Failure cases:** overflow, malformed frame, unsupported version, duplicate ID.
-- **Called next:** Config/Discovery/Manager/Runtime by DIRECT CALL from worker.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_communication_send_response()` / `_send_event()`
+**Returns:** `0` when request handling is available.
 
-- **Purpose:** serialize responses or unsolicited observations.
-- **Called by:** command router and Data subscriber adapter.
-- **Trigger/mechanism:** completed request or Data event; DIRECT CALL then TX
-  MESSAGE QUEUE to avoid blocking producer.
-- **Execution context:** caller copies; communication/TX thread performs I/O.
-- **Inputs:** session/request ID or event payload.
-- **Outputs:** queued/full/disconnected status.
-- **State modified:** TX queue/statistics.
-- **Failure cases:** no session, queue full, encoding/transport failure.
-- **Called next:** transport send callback/API.
+**Errors:** Invalid static command table or adapter initialization failure.
 
-### `spaghetti_communication_get_status()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** expose connection/protocol statistics.
-- **Called by:** diagnostics/tests.
-- **Trigger/mechanism/context:** query; DIRECT CALL; caller thread.
-- **Inputs/outputs:** snapshot.
-- **State modified:** none.
-- **Failure cases:** invalid output/not initialized.
-- **Called next:** none.
+**Calls:** Selected adapter initialization.
 
-## Interaction diagram
+### `int spaghetti_communication_handle_request(const struct spaghetti_request *request, struct spaghetti_response *response)`
 
-```text
-PC --COMMUNICATION RX--> adapter --CALLBACK--> RX queue
-RX queue --THREAD--> Communication router --DIRECT CALL--> Config/Discovery
-Data --ZBUS SUBSCRIBER?--> Communication --TX MSGQ--> adapter --> PC
+**Purpose:** Validate and synchronously dispatch one complete generic request.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `request` | Caller-owned request valid during the call. |
+| `response` | Caller-owned destination populated for every accepted request. |
+
+**Returns:** `0` when a response was produced; negative framing/dispatch error otherwise.
+
+**Errors:** Unsupported version/command, invalid length/payload, unauthorized state, or component error.
+
+**Execution context:** Communication/shell thread, never raw ISR.
+
+**Calls:** Core query, Config apply, Discovery submit, or other explicit component API.
+
+### `int spaghetti_communication_receive(const uint8_t *bytes, size_t length, enum spaghetti_transport_id transport)`
+
+**Purpose:** Copy and decode one bounded transport frame before dispatch.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `bytes` | Transport-owned bytes valid only during the call. |
+| `length` | Exact frame length below configured maximum. |
+| `transport` | Registered source adapter ID. |
+
+**Returns:** `0` after response handoff or negative decode/dispatch error.
+
+**Errors:** Null/empty/oversized frame, malformed encoding, unknown transport, or queue full.
+
+**Execution context:** Thread/workqueue; callback must defer before calling if it cannot block.
+
+**Calls:** Codec, `handle_request()`, and adapter response send.
+
+### `int spaghetti_communication_send_event(const struct spaghetti_event *event)`
+
+**Purpose:** Fan one generic event out to interested ready adapters.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `event` | Bounded event copied before return. |
+
+**Returns:** `0` when accepted by policy.
+
+**Errors:** Invalid/oversized event, no ready adapter, or adapter queue full.
+
+**Execution context:** Calling thread or Data subscriber adapter.
+
+**Calls:** Registered adapter enqueue functions.
+
+### `int spaghetti_communication_get_status(struct spaghetti_communication_status *out)`
+
+**Purpose:** Copy adapter and protocol counters.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with coherent status.
+
+**Errors:** Invalid output or uninitialized component.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+## How it works
+
+```mermaid
+flowchart LR
+    USB["USB frame"] --> UA["USB adapter"]
+    NET["Network frame"] --> NA["Network adapter"]
+    UA --> REQUEST["Generic request"]
+    NA --> REQUEST
+    REQUEST --> DISPATCH["Communication dispatch"]
+    DISPATCH --> CONFIG["Config / query APIs"]
+    CONFIG --> RESPONSE["Generic response"]
+    RESPONSE --> UA
+    RESPONSE --> NA
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-STOPPED -> LISTENING -> CONNECTED -> CLOSING -> LISTENING
-                         +-------> PROTOCOL_ERROR/DISCONNECTED
+`spaghetti status` from a USB shell and an HTTP `GET /status` request both become `GET_STATUS`. Dispatch calls the same Core getter and returns the same response model; only framing differs.
+
+## Zephyr integration
+
+- A Zephyr shell command runs in shell thread context and may make bounded direct calls.
+- UART/USB/network receive callbacks copy and defer work when parsing or dispatch can block.
+- Use fixed frame/payload limits and bounded adapter queues.
+
+## Configuration templates
+
+### Generic envelope
+
+```c
+struct spaghetti_request {
+    uint16_t version;
+    uint32_t correlation_id;
+    enum spaghetti_command_id command;
+    uint8_t payload[SPAGHETTI_REQUEST_PAYLOAD_MAX];
+    size_t payload_size;
+};
 ```
 
-## Concurrency considerations
+### Shell adapter `prj.conf`
 
-Transport callbacks must copy bounded data and return. One worker can serialize
-parsing/routing; one TX queue prevents slow I/O from blocking Data. Mutex only
-protects session/request tables. zbus is optional for PC event streaming, not
-for request/response correlation.
+```ini
+CONFIG_SHELL=y
+CONFIG_SHELL_BACKEND_SERIAL=y
+```
 
-## Zephyr concepts involved
+### Shell registration shape
 
-UART/USB/network callbacks report I/O; ring buffers accumulate byte streams;
-`k_poll` can wait on multiple signals; `k_msgq` bounds RX/TX work; shell commands
-are a useful diagnostic adapter but not the product protocol.
+```c
+SHELL_STATIC_SUBCMD_SET_CREATE(spaghetti_commands,
+    SHELL_CMD(status, NULL, "Show Core status", cmd_status),
+    SHELL_CMD(apply, NULL, "Apply bounded encoded config", cmd_apply),
+    SHELL_SUBCMD_SET_END
+);
+```
 
-## Implementation steps
+## Ownership and concurrency
 
-1. Define framing limits and versioned message model.
-2. Build pure encode/decode tests.
-3. Add loopback adapter.
-4. Add RX worker and one read-only command.
-5. Add manual assignment through Discovery.
-6. Add bounded TX event path and statistics.
+Dispatch is synchronous unless a command explicitly returns accepted/pending. Transport callbacks never retain caller buffers. Each adapter owns its outbound queue and full policy.
 
-## Expected result
+## Contract guarantees
 
-A PC can query Core/ports, submit manual configuration, receive correlated
-errors/responses, and optionally observe Data without blocking acquisition.
-
-## Minimal test
-
-Loopback valid request, malformed/oversized frame, duplicate ID, disconnected TX.
-
-## Dependencies
-
-Core/Port query contracts; Config/Discovery for first mutating command; Data later.
-
-## Not yet
-
-No OTA, custom encryption, unbounded JSON, or hardware-specific protocol fields.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_communication_init/start` | Core | boot | DIRECT CALL | main thread | transport adapter |
-| `spaghetti_communication_receive` | adapter | incoming bytes | CALLBACK + WORKQUEUE/THREAD | callback then comm worker | command targets |
-| `spaghetti_communication_send_response` | router | command complete | DIRECT CALL + TX MSGQ | comm/TX thread | transport send |
-| `spaghetti_communication_send_event` | Data adapter | data event | subscriber + TX MSGQ | subscriber/TX thread | transport send |
-| `spaghetti_communication_get_status` | diagnostics | query | DIRECT CALL | caller thread | none |
+- A transport cannot bypass validation or mutate component internals.
+- Every retained request/event byte is copied into bounded storage.
+- Adding or removing an adapter does not alter Manager, Config, Data, or Runtime contracts.

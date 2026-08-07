@@ -1,138 +1,121 @@
-# Spaghetti LAB Devicetree Bindings
+# Spaghetti LAB Devicetree bindings
 
 [← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+A Devicetree binding is a YAML schema for static hardware. The Spaghetti Port binding validates that every board describes a physical connector in the same machine-readable form.
 
-## Purpose
+## What this component owns
 
-A Zephyr Devicetree binding is a YAML schema giving meaning and validation rules
-to DTS nodes with a matching `compatible`. These future bindings will define the
-static hardware representation of Spaghetti Core ports.
+- The meaning and type of each `spaghettilab,port` property.
+- Required/optional property rules.
+- Build-time validation of Port nodes.
 
-## Responsibility
+## What this component does not own
 
-Describe valid node structure, required/optional hardware properties, property
-types, inherited GPIO/bus conventions, and generated metadata semantics.
-
-## Non-responsibility
-
-Bindings do not identify a removable module, execute code, select runtime policy,
-or contain actual board GPIO values.
+- Concrete GPIO numbers or controller choices for a board.
+- Runtime module identity.
+- C lifecycle behavior or discovery policy.
 
 ## Files
 
-Only this README exists. Future YAML names must follow their actual `compatible`
-and Zephyr binding conventions. Board DTS nodes consume the binding; `port.c`
-consumes generated macros.
+| File | Role |
+|---|---|
+| `spaghettilab,port.yaml` | Schema for one physical Port node. |
+| Board `.dts` files | Concrete instances validated against the schema. |
+| `build/zephyr/zephyr.dts` | Generated result used to verify the final topology; never edit it. |
 
-## Data structures to implement
+## Data model
 
-No C runtime object is owned here. YAML schemas validate DTS properties; build
-tools generate node/property macros from valid board descriptions.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| `reg` | Board DTS | Stable logical Port index. |
+| `capabilities` | Board DTS | Operations physically supported by the connector. |
+| Bus phandle | Board DTS | Reference to a real static Zephyr controller. |
+| Optional GPIO specifier | Board DTS | Presence, enable, or interrupt line only when physically present. |
 
-## Functions to implement
+## API contract
 
-There are no runtime functions.
+This component has no runtime C API. Its contract is processed at build time.
 
-### Binding validation/generation
+## How it works
 
-- **Purpose:** validate matching nodes and define property semantics.
-- **Called by:** Zephyr Devicetree build tools.
-- **Trigger/mechanism/context:** build configuration; BUILD-TIME PROCESSING; host.
-- **Inputs:** YAML binding plus board DTS.
-- **Outputs:** validation result and generated Devicetree macros.
-- **State modified:** generated build artifacts only.
-- **Failure cases:** missing required property, wrong type, invalid reference.
-- **Called next:** generated headers consumed by `port.c` at compile time.
-
-## Interaction diagram
-
-```text
-YAML binding
-     |
-     | validates/describes at BUILD TIME
-     v
-Devicetree node
-     |
-     | Zephyr generates macros/specifiers
-     v
-port.c compiled descriptors
+```mermaid
+flowchart LR
+    YAML["Binding YAML<br/>defines valid properties"]
+    DTS["Board DTS<br/>supplies real values"]
+    VALIDATE["Devicetree validation"]
+    MACROS["Generated C macros"]
+    PORT["Port initialization"]
+    YAML --> VALIDATE
+    DTS --> VALIDATE
+    VALIDATE --> MACROS --> PORT
 ```
 
-## State / lifecycle
+## Practical example
 
-Bindings are evaluated at build time and have no runtime lifecycle.
+A board declares Port 0 with I2C capability and an `i2c-bus` phandle. The binding rejects the build if the Port has no `reg`, uses an invalid capability string, or references a nonexistent controller.
 
-## Concurrency considerations
+## Zephyr integration
 
-None. Concurrency belongs to Port objects created from generated information.
+- Bindings validate at configure time, before C compilation.
+- A phandle references another Devicetree node; Port converts the generated reference into a Zephyr device.
+- `status = "okay"` enables an instance; disabled nodes are not exposed as usable Ports.
 
-## Zephyr concepts involved
+## Configuration templates
 
-`compatible` selects a binding. `properties` validates node fields. Phandles and
-specifier arrays reference controllers such as GPIO. Generated macros allow C to
-consume hardware without parsing DTS at runtime. Binding YAML is Zephyr-specific,
-not an implementation of a driver.
-
-## Implementation steps
-
-1. Define the minimum physical meaning of a Spaghetti Port from real hardware.
-2. Check whether existing standard bindings/specifiers can be reused.
-3. Choose vendor-compatible naming and property semantics.
-4. Create the smallest binding and one valid DTS node.
-5. Add build tests for missing/wrong properties.
-6. Consume generated values in Port, not in higher layers.
-
-## Expected result
-
-Valid static ports compile into descriptors; invalid hardware descriptions fail
-at build time with useful errors.
-
-## Minimal test
-
-Build one valid sample and one DTS fixture missing a required example property.
-
-## Dependencies
-
-A stable physical Port model and actual board schematic.
-
-## Not yet
-
-No production YAML, final property list, GPIO values, SHT40/Relay assignment, or
-EEPROM discovery property until requirements are real.
-
-## Conceptual YAML template
-
-This is intentionally incomplete. Ellipses and uppercase identifiers are
-placeholders, not proposed final properties.
+### Binding template
 
 ```yaml
 description: Spaghetti LAB external module port
 
 compatible: "spaghettilab,port"
 
+include: base.yaml
+
 properties:
   reg:
     type: int
     required: true
-    description: Conceptual logical port index
+    description: Stable logical Port index
 
-  # EXAMPLE ONLY. Add real properties after the physical contract is defined.
-  # power-gpios:
-  #   type: phandle-array
-  #   description: Optional physical power control for this Core port
+  capabilities:
+    type: string-array
+    required: true
+    description: >
+      Operations physically supported by this connector. Project-defined
+      values are i2c, spi, and gpio.
 
-  # ... future bus/capability representation: DECISION REQUIRED ...
+  i2c-bus:
+    type: phandle
+    description: I2C controller wired to the Port
+
+  power-gpios:
+    type: phandle-array
+    description: Optional real power-enable control
 ```
 
-The binding specifies what a property means; the board DTS supplies its real
-value; generated macros feed Port. It must never say that a port currently holds
-an SHT40.
+### Matching DTS instance
 
-| Build element | Called by | Trigger | Mechanism | Execution context | Calls/produces |
-|---|---|---|---|---|---|
-| binding match | Zephyr DT tools | configure | BUILD-TIME | host | schema validation |
-| macro generation | Zephyr DT tools | valid DTS | BUILD-TIME | host | generated C macros |
-| generated access | Port compile | C compilation | COMPILE-TIME | host compiler | static descriptor |
+```dts
+port0: port@0 {
+    compatible = "spaghettilab,port";
+    reg = <0>;
+    capabilities = "i2c";
+    i2c-bus = <&i2c0>;
+    status = "okay";
+};
+```
+
+Property names and combinations must reflect the final binding. If, for
+example, every I2C-capable Port requires `i2c-bus`, encode that relationship
+in the schema rather than relying on a runtime failure.
+
+## Ownership and concurrency
+
+Bindings have no runtime state. Validation and macro generation happen in the single build pipeline.
+
+## Contract guarantees
+
+- Invalid static Port descriptions fail the build.
+- Bindings contain no board-specific numeric values.
+- Bindings describe connector hardware, never the removable module attached to it.

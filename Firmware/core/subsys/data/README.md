@@ -2,147 +2,171 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Data defines normalized measurements and events independently of the driver that produced them and the adapter that consumes them.
 
-## Purpose
+## What this component owns
 
-Data gives measurements, actuator state, and events a common contract so a
-producer does not know every consumer.
+- Bounded value/event schemas and validation.
+- Source identity, timestamp, sequence, validity, and delivery statistics.
+- The selected fan-out mechanism and its overflow policy.
 
-## Responsibility
+## What this component does not own
 
-Own message semantics, validation, timestamps, payload lifetime rules, delivery
-policy, and observable backpressure/drop behavior.
-
-## Non-responsibility
-
-No sensor acquisition, automation evaluation, MQTT serialization, persistence
-policy, or module lifecycle.
+- Sensor acquisition, product rules, long-term storage, or transport encoding.
+- Pointers to producer stack memory after publish returns.
 
 ## Files
 
-- Public API: `include/spaghetti/data.h`; types and publish/consumer contract.
-- Implementation: `subsys/data/data.c`; validation and selected transport.
+| File | Role |
+|---|---|
+| `include/spaghetti/data.h` | Value/event types and publish/query API. |
+| `subsys/data/data.c` | Validation, channels/queues, and statistics. |
+| Consumer adapters | Translate generic Data into logs, UI, or transport formats. |
 
-## Data structures to implement
+## Data model
 
-- `spaghetti_data`: value object created by producer or Data factory, copied into
-  bounded transport, then owned by consumer copy; contains source instance,
-  channel/type, value, unit, timestamp, quality, sequence.
-- `spaghetti_value`: tagged bounded payload; no borrowed stack pointers.
-- channel descriptors: immutable, owned by Data, read by all participants.
-- delivery statistics: Data-owned counters for drops/full queues.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| `spaghetti_data_message` | Publisher until copied; Data afterward | Tagged bounded value/event envelope. |
+| Temperature sample | Message payload | Source, fixed value, timestamp, sequence, validity. |
+| Channel/queue | Data | Bounded delivery resource with explicit full policy. |
+| `spaghetti_data_stats` | Data | Published, delivered, dropped, rejected counters. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_data_init()`
+### `int spaghetti_data_init(void)`
 
-- **Purpose:** initialize channels/queues and validate payload sizes.
-- **Called by:** Core.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** static channel configuration.
-- **Outputs:** status.
-- **State modified:** Data internals/statistics.
-- **Failure cases:** invalid size/capacity or transport setup.
-- **Called next:** zbus/channel or queue initialization as selected.
+**Purpose:** Initialize channels, subscribers, counters, and initial values.
 
-### `spaghetti_data_publish()`
+**Parameters**
 
-- **Purpose:** validate and distribute one normalized item.
-- **Called by:** module acquisition path, Manager, Power, Runtime-derived data.
-- **Trigger:** completed acquisition or state transition.
-- **Invocation mechanism:** DIRECT CALL into Data; downstream ZBUS PUBLISH or
-  MESSAGE QUEUE is DECISION REQUIRED.
-- **Execution context:** producer thread; not ISR initially; bounded wait only.
-- **Inputs:** complete value object and timeout policy.
-- **Outputs:** delivered/dropped/full/error result.
-- **State modified:** channel message/statistics.
-- **Failure cases:** invalid type/source, oversized payload, queue full, timeout.
-- **Called next:** zbus publish or queue put; never slow MQTT directly.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_data_validate()`
+**Returns:** `0` when Data is ready.
 
-- **Purpose:** enforce contract independently of transport.
-- **Called by:** publish, tests, Communication ingress for data commands.
-- **Trigger/mechanism/context:** message creation; DIRECT CALL; caller thread.
-- **Inputs:** data item.
-- **Outputs:** validation result.
-- **State modified:** none.
-- **Failure cases:** invalid tag/unit/source/size.
-- **Called next:** none.
+**Errors:** Invalid static channel configuration or subscriber capacity.
 
-### `spaghetti_data_get_stats()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** expose delivery/drop diagnostics.
-- **Called by:** Communication/shell/tests.
-- **Trigger/mechanism/context:** diagnostics; DIRECT CALL; caller thread.
-- **Inputs:** output snapshot.
-- **Outputs:** counters.
-- **State modified:** none or explicit reset only through separate future API.
-- **Failure cases:** invalid output/not initialized.
-- **Called next:** none.
+**Calls:** Selected Zephyr zbus/message-queue initialization.
 
-## Interaction diagram
+### `int spaghetti_data_validate(const struct spaghetti_data_message *message)`
 
-```text
-Driver/Manager --DIRECT CALL publish--> Data
-Data --ZBUS PUBLISH?--> Runtime subscriber
-     --ZBUS PUBLISH?--> MQTT subscriber -> MQTT queue/thread
-     --ZBUS PUBLISH?--> Communication subscriber
+**Purpose:** Validate type, bounds, source, timestamp, and flags without side effects.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `message` | Caller-owned complete message. |
+
+**Returns:** `0` when publishable.
+
+**Errors:** Null, unknown type, invalid source, malformed payload, or inconsistent validity flags.
+
+**Execution context:** Calling thread; pure validation.
+
+**Calls:** None.
+
+### `int spaghetti_data_publish(const struct spaghetti_data_message *message, k_timeout_t timeout)`
+
+**Purpose:** Copy one valid message into the selected bounded delivery path.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `message` | Caller-owned message copied before return. |
+| `timeout` | Maximum wait according to the channel policy. |
+
+**Returns:** `0` when accepted for delivery.
+
+**Errors:** Validation failure, timeout/full channel, or unavailable subscriber infrastructure.
+
+**Execution context:** Documented thread context; `K_NO_WAIT` for nonblocking producers.
+
+**Calls:** zbus publish or bounded queue API.
+
+### `int spaghetti_data_get_stats(struct spaghetti_data_stats *out)`
+
+**Purpose:** Copy delivery and rejection counters.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with coherent counters.
+
+**Errors:** Invalid output or uninitialized Data.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+## How it works
+
+```mermaid
+flowchart LR
+    PRODUCER["Module read result"] --> NORMALIZE["Data message"]
+    NORMALIZE --> VALIDATE["Validate + copy"]
+    VALIDATE --> LOGGER["Logger subscriber"]
+    VALIDATE --> RUNTIME["Runtime subscriber"]
+    VALIDATE --> ADAPTER["Optional output adapter"]
 ```
 
-## State / lifecycle
+## Practical example
 
-Initialize once; channels remain active for firmware lifetime. Individual values
-move conceptually through CREATED -> VALIDATED -> ENQUEUED/PUBLISHED -> CONSUMED
-or DROPPED.
+A sensor produces 24.6 °C. Data publishes one message containing module ID, timestamp, sequence, and fixed value. Logger prints it, Runtime evaluates it, and an optional adapter formats it—none includes the concrete sensor driver.
 
-## Concurrency considerations
+## Zephyr integration
 
-Multiple producers/consumers are expected. Direct callbacks are cheapest but can
-block and couple components. `k_msgq` gives strict bounded FIFO semantics but
-fan-out requires copies. zbus naturally fans out but observer type determines
-loss semantics. RECOMMENDATION: prototype both with representative sizes before
-freezing the contract; commands needing guaranteed delivery should not share a
-lossy measurement channel.
+- Use zbus when one value genuinely needs multiple independent observers.
+- Use a bounded `k_msgq` when one ordered stream and explicit backpressure are the real requirement.
+- Choose observer/queue sizes from message size and accepted loss/latency behavior.
 
-## Zephyr concepts involved
+## Configuration templates
 
-- zbus is a channel-based publish/subscribe service.
-- `k_msgq` copies fixed-size messages into a bounded ring and can block threads.
-- uptime is monotonic since boot; wall-clock time requires synchronization.
-- atomic counters or a short mutex can protect statistics.
+### Message shape
 
-## Implementation steps
+```c
+struct spaghetti_temperature_sample {
+    spaghetti_module_id_t source;
+    int32_t temperature_millicelsius;
+    int32_t humidity_millipercent;
+    int64_t uptime_ms;
+    uint32_t sequence;
+    uint32_t validity_flags;
+};
+```
 
-1. Define one bounded temperature value.
-2. Document ownership and timestamp source.
-3. Implement validation.
-4. Implement a one-consumer queue prototype.
-5. Compare with zbus for three consumers.
-6. Freeze drop/backpressure policy and expose statistics.
+### `prj.conf` for zbus fan-out
 
-## Expected result
+```ini
+CONFIG_ZBUS=y
+CONFIG_ZBUS_MSG_SUBSCRIBER=y
+```
 
-One temperature item reaches Runtime and external-publish consumers with tested,
-visible behavior when capacity is exhausted.
+### Channel shape
 
-## Minimal test
+```c
+ZBUS_CHAN_DEFINE(spaghetti_temperature_chan,
+                 struct spaghetti_temperature_sample,
+                 temperature_validator,
+                 NULL,
+                 ZBUS_OBSERVERS(logger_sub, runtime_sub),
+                 ZBUS_MSG_INIT(.source = 0));
+```
 
-Publish known values to two fake consumers, then fill capacity and verify policy.
+## Ownership and concurrency
 
-## Dependencies
+Publish copies the message before producer storage expires. Every consumer has a documented thread/context and full-queue policy. Statistics updates are atomic or protected by a short lock.
 
-Module identifiers and selected Zephyr transport configuration.
+## Contract guarantees
 
-## Not yet
-
-No unbounded strings, generic heap blobs, storage history, or network formatting.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_data_init` | Core | boot | DIRECT CALL | main thread | zbus/queue setup |
-| `spaghetti_data_publish` | driver/Manager/Runtime | new value/event | DIRECT CALL + ZBUS/MSGQ TBD | producer thread | selected transport |
-| `spaghetti_data_validate` | publisher/tests | message creation | DIRECT CALL | caller thread | none |
-| `spaghetti_data_get_stats` | Communication/tests | diagnostics | DIRECT CALL | caller thread | none |
+- Consumers never depend on a concrete driver type.
+- Delivery capacity and overflow behavior are bounded and documented.
+- A rejected message never appears as valid downstream data.

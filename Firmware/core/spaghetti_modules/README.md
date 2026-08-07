@@ -1,133 +1,185 @@
-# External Spaghetti Module Implementations
+# Spaghetti module drivers
 
 [← Project README](../README.md) · [Architecture](../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Each child directory implements one external module type through the common module-driver contract. The code executes on the Core; the external module is a peripheral, not another Zephyr application.
 
-## Purpose
+## What this component owns
 
-Each child directory implements one external module type using the common
-`spaghetti_module_driver` contract. The external hardware does not run Zephyr;
-its implementation executes on the Core.
+- The peripheral protocol for one module type.
+- One immutable driver descriptor.
+- Validation and mutation of per-instance private context through driver operations.
+- Translation between raw hardware results and generic values/commands.
 
-## Responsibility
+## What this component does not own
 
-- Translate generic lifecycle/read/command operations into module protocol.
-- Declare required Port capabilities and offered data/command channels.
-- Keep per-instance hardware state in Manager-provided context.
-
-## Non-responsibility
-
-No instance ownership, port assignment, discovery policy, periodic scheduling,
-Runtime rules, MQTT, or board pin mapping.
+- Module instance lifetime or Port assignment.
+- Sampling schedules and product rules.
+- Board pin mappings or transport protocols.
 
 ## Files
 
-- [SHT40 module](sht40/README.md): conceptual environmental-sensor plan.
-- [Relay module](relay/README.md): conceptual actuator plan.
-- Future implementation/header/build files are created only at their milestone.
-- Shared public contracts are documented in the
-  [public interfaces guide](../include/spaghetti/README.md).
+| File | Role |
+|---|---|
+| `<module>/<module>.h` | Descriptor declaration and module-specific bounded config. |
+| `<module>/<module>.c` | Protocol and operation-table implementation. |
+| `<module>/README.md` | Concrete API, data format, wiring expectations, and examples. |
+| `include/spaghetti/module_driver.h` | Common operation-table contract used by every driver. |
 
-## Data structures to implement
+## Data model
 
-- immutable driver descriptor: created by module implementation at build time,
-  owned by it for firmware lifetime, read by Registry/Manager.
-- per-instance context: storage created/owned by Manager, initialized and modified
-  through the driver, destroyed/released by Manager after driver deinit.
-- channel/command descriptors: immutable and driver-owned.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Driver descriptor | Concrete driver | Immutable type ID, required capabilities, and operations. |
+| Module instance | Module Manager | Port assignment, state, ID, and private context pointer. |
+| Private context | Manager-provided storage; driver-managed content | Address, calibration, cached state, or protocol state for one instance. |
+| Input/output values | Caller during direct call | Bounded generic read results or command payloads. |
 
-## Functions to implement
+## API contract
 
-### Driver `init` / `deinit`
+### `int init(struct spaghetti_module *module, const void *config, size_t config_size)`
 
-- **Purpose:** transition one Manager-owned instance into/out of usable state.
-- **Called by:** Module Manager on configure/remove/rollback.
-- **Trigger/mechanism/context:** lifecycle; DIRECT CALL; Manager/caller thread.
-- **Inputs:** instance context, Port handle, validated module config.
-- **Outputs:** status.
-- **State modified:** per-instance context/hardware state.
-- **Failure cases:** incompatible port, device absent, bus/power timeout.
-- **Called next:** Port/Power by DIRECT CALL.
+**Purpose:** Validate the Port and initialize one instance.
 
-### Driver `read` / `command` / `configure`
+**Parameters**
 
-- **Purpose:** perform one supported operation without choosing when it runs.
-- **Called by:** Module Manager routing a Runtime/Communication request.
-- **Trigger/mechanism/context:** timer/user command/config update; DIRECT CALL;
-  thread context.
-- **Inputs:** instance, channel/command/config, timeout.
-- **Outputs:** normalized result/error; Data publication ownership is decided by
-  the Manager/Data contract.
-- **State modified:** private context/device state.
-- **Failure cases:** unsupported, not ready, invalid input, I/O/timeout.
-- **Called next:** Port API then Zephyr peripheral API.
+| Parameter | Meaning |
+|---|---|
+| `module` | Manager-owned instance with a valid Port and private context. |
+| `config` | Caller-owned bounded configuration. |
+| `config_size` | Exact configuration byte count. |
 
-## Interaction diagram
+**Returns:** `0` when READY; negative error otherwise.
 
-```text
-Runtime module instance
-        |
-        | DIRECT CALL through operation table
-        v
-spaghetti_module_driver
-        |
-        v
-specific implementation
-        |
-        | DIRECT CALL
-        v
-Port abstraction -> Zephyr peripheral API
+**Errors:** Invalid config, missing capability, device absent, or bus timeout.
+
+**Execution context:** Calling thread; may perform bounded bus I/O.
+
+**Calls:** Port API and the relevant Zephyr peripheral API.
+
+### `int read(struct spaghetti_module *module, struct spaghetti_sample *out)`
+
+**Purpose:** Acquire one value and populate generic output.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `module` | READY instance. |
+| `out` | Caller-owned destination written only on success. |
+
+**Returns:** `0` plus a valid sample; negative error otherwise.
+
+**Errors:** Not ready, invalid output, protocol/CRC error, or I/O timeout.
+
+**Execution context:** Calling thread, never ISR.
+
+**Calls:** Port and Zephyr bus APIs.
+
+### `int command(struct spaghetti_module *module, const struct spaghetti_command *command)`
+
+**Purpose:** Apply one supported actuator/configuration command.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `module` | READY instance. |
+| `command` | Validated bounded command value. |
+
+**Returns:** `0` on accepted hardware state; `-ENOTSUP` when unsupported.
+
+**Errors:** Invalid command/value, not ready, or hardware error.
+
+**Execution context:** Calling thread.
+
+**Calls:** Port and Zephyr peripheral APIs.
+
+### `int deinit(struct spaghetti_module *module)`
+
+**Purpose:** Place hardware in its defined safe state and release instance resources.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `module` | Initialized or error-state instance being removed. |
+
+**Returns:** `0` on a completed safe transition; negative error otherwise.
+
+**Errors:** Invalid state or hardware safe-state failure.
+
+**Execution context:** Calling thread.
+
+**Calls:** Port and optional shared-resource API.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Manager as Module Manager
+    participant Driver as Module driver
+    participant Port
+    participant Zephyr as Zephyr peripheral API
+    Manager->>Driver: init(instance, config)
+    Driver->>Port: request required capability
+    Port-->>Driver: stable device handle
+    Driver->>Zephyr: bounded hardware operation
+    Zephyr-->>Driver: result
+    Driver-->>Manager: generic value or error
 ```
 
-## State / lifecycle
+## Practical example
 
-Driver observes Manager lifecycle: uninitialized -> initialized/ready -> error or
-deinitialized. Manager owns authoritative state.
+A temperature driver receives an instance configured for address `0x44`. It requests the I2C device from the assigned Port, validates the sensor response, and returns a generic temperature sample. Runtime never calls the concrete driver directly.
 
-## Concurrency considerations
+## Zephyr integration
 
-No per-module thread by default. Manager/Port must define serialization. Driver
-operations remain synchronous initially. Interrupt-driven modules may use an ISR
-that only captures/signals, then WORKQUEUE/THREAD processing. Never publish a
-borrowed stack buffer asynchronously.
+- Devicetree describes the Core controller and Port wiring, not a removable module instance.
+- Drivers use synchronous I2C/SPI/GPIO calls from thread context unless their documented hardware requires deferred interrupt processing.
+- Register one Zephyr log module per concrete driver.
 
-## Zephyr concepts involved
+## Configuration templates
 
-I2C/SPI/GPIO APIs operate through static Zephyr devices selected by Port.
-Devicetree describes Core wiring, not removable identity. Kconfig later selects
-which module implementations are compiled. Logging gets a per-driver module.
+### Descriptor template
 
-## Implementation steps
+```c
+static const struct spaghetti_module_driver_ops example_ops = {
+    .init = example_init,
+    .read = example_read,
+    .command = example_command,
+    .deinit = example_deinit,
+};
 
-1. Start with a fake driver and freeze minimal operation contract.
-2. Declare exact Port capability requirements.
-3. Implement synchronous init/read or command.
-4. Normalize errors and data.
-5. Test absent/malformed hardware.
-6. Add asynchronous behavior only when hardware requires it.
+const struct spaghetti_module_driver spaghetti_example_driver = {
+    .type_id = "example",
+    .required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+    .ops = &example_ops,
+};
+```
 
-## Expected result
+### Application `CMakeLists.txt` fragment
 
-Adding one module type does not modify Runtime, Manager, Discovery, or Port API.
+```cmake
+target_sources(app PRIVATE
+  spaghetti_modules/example/example.c
+)
+```
 
-## Minimal test
+### Application `prj.conf` fragment
 
-Invoke a fake driver through the same operation table used by the real driver.
+```ini
+# Enable the Core-side bus API used by the driver.
+CONFIG_I2C=y
+CONFIG_LOG=y
+```
 
-## Dependencies
+## Ownership and concurrency
 
-Module/Module Driver contracts and Port; Manager integration follows.
+Drivers do not create a thread by default. Module Manager owns lifecycle serialization; Port owns shared-bus serialization. An ISR may only capture/signal and must defer blocking protocol work.
 
-## Not yet
+## Contract guarantees
 
-No top-level Zephyr `modules/` directory, dynamic plugins, or one thread per driver.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| driver `init` | Module Manager | configure | DIRECT CALL | Manager/caller thread | Port/Power |
-| driver `deinit` | Module Manager | remove/rollback | DIRECT CALL | Manager/caller thread | Port/Power |
-| driver `read` | Module Manager | acquisition request | DIRECT CALL | Runtime/Manager thread | Port/peripheral API |
-| driver `command` | Module Manager | actuator action | DIRECT CALL | Runtime/Manager thread | Port/peripheral API |
-| driver `configure` | Module Manager | config update | DIRECT CALL | Manager thread | Port/peripheral API |
+- Every operation is bounded and reports a precise status.
+- A driver contains no board-name or physical-pin branch.
+- Per-instance mutable state is never stored in the immutable descriptor.

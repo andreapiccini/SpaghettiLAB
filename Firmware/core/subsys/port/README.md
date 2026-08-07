@@ -2,147 +2,221 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Port converts the static board description into stable runtime objects that concrete module drivers can use without knowing controllers, pins, or Core variants.
 
-## Purpose
+## What this component owns
 
-Port represents one physical Spaghetti connector while hiding the board-specific
-controller, pin routing, and optional power/presence hardware beneath it.
+- The catalog of physical Ports generated from Devicetree.
+- Per-Port capabilities and stable Zephyr device/specifier handles.
+- Shared access serialization for a Port resource.
 
-## Responsibility
+## What this component does not own
 
-- Own runtime Port objects and their static descriptors.
-- Enumerate ports generated from Devicetree and expose capabilities.
-- Validate underlying Zephyr devices and coordinate shared access.
-
-## Non-responsibility
-
-- Never identify a connected module or implement its protocol.
-- Never store `Port 0 = SHT40` in static state.
-- Never expose MCU-specific conditionals to higher layers.
+- Runtime module identity or lifecycle.
+- Sensor/actuator protocols.
+- Board-name policy or user configuration.
 
 ## Files
 
-- Public API: `include/spaghetti/port.h`; opaque handles, IDs, capabilities.
-- Implementation: `subsys/port/port.c`; Devicetree translation, Zephyr device
-  references, locks, and private Port state.
+| File | Role |
+|---|---|
+| `include/spaghetti/port.h` | Opaque Port handle, capability flags, access APIs. |
+| `subsys/port/port.c` | Devicetree enumeration and private descriptors. |
+| Board DTS | Concrete controller/GPIO references validated by bindings. |
+| `spaghettilab,port.yaml` | Static Port schema. |
 
-## Data structures to implement
+## Data model
 
-- `spaghetti_port_id`: stable logical identifier; value semantics.
-- `spaghetti_port_capabilities`: immutable flags/parameters created from DT,
-  owned by Port, read by Manager/Discovery/drivers.
-- `spaghetti_port`: created at boot, owned and modified by Port for firmware
-  lifetime; other layers receive an opaque or const reference.
-- `spaghetti_port_state`: available/claimed/fault where each state is needed.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| `spaghetti_port_id_t` | Board description | Stable logical Port index. |
+| `spaghetti_port_capability` | Port | Bit flags for real supported operations. |
+| Opaque `spaghetti_port` | Port | Private descriptor containing device/specifier handles and synchronization. |
+| Port snapshot | Caller after query | Copied ID, capabilities, and readiness diagnostics. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_port_init_all()`
+### `int spaghetti_port_init_all(void)`
 
-- **Purpose:** create the runtime catalog from static board data.
-- **Called by:** Core.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** generated Devicetree description.
-- **Outputs:** status and populated catalog.
-- **State modified:** all Port-owned objects.
-- **Failure cases:** malformed descriptor, required controller not ready.
-- **Called next:** Zephyr `device_is_ready` and GPIO/I2C/SPI setup by DIRECT CALL.
+**Purpose:** Create/validate the fixed Port catalog from enabled Devicetree instances.
 
-### `spaghetti_port_get()` / `spaghetti_port_count()`
+**Parameters**
 
-- **Purpose:** enumerate or retrieve a stable Port handle.
-- **Called by:** Core, Manager, Discovery, diagnostics.
-- **Trigger/mechanism/context:** lookup; DIRECT CALL; caller thread.
-- **Inputs:** port ID/index.
-- **Outputs:** read-only handle/count or not-found error.
-- **State modified:** none.
-- **Failure cases:** invalid ID or subsystem not initialized.
-- **Called next:** none.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_port_get_capabilities()`
+**Returns:** `0` when every mandatory Port resource is valid.
 
-- **Purpose:** let policy verify compatibility without knowing the board.
-- **Called by:** Module Manager, Discovery provider, Communication.
-- **Trigger/mechanism/context:** configuration/probe; DIRECT CALL; caller thread.
-- **Inputs:** Port handle.
-- **Outputs:** immutable capability snapshot.
-- **State modified:** none.
-- **Failure cases:** stale/invalid handle.
-- **Called next:** none.
+**Errors:** Invalid generated description, duplicate ID, unavailable controller, or capacity overflow.
 
-### `spaghetti_port_acquire()` / `spaghetti_port_release()`
+**Execution context:** Main thread during Core initialization.
 
-- **Purpose:** serialize ownership when a physical resource cannot be shared.
-- **Called by:** Module Manager or driver through the agreed Port contract.
-- **Trigger/mechanism/context:** lifecycle/transaction; DIRECT CALL; thread only.
-- **Inputs:** Port handle, owner token, bounded timeout.
-- **Outputs:** acquisition status.
-- **State modified:** owner/lock state.
-- **Failure cases:** busy, timeout, wrong owner on release.
-- **Called next:** `k_mutex_lock/unlock` if a mutex is selected.
+**Calls:** Devicetree-generated accessors, `DEVICE_DT_GET()`, and `device_is_ready()`.
 
-## Interaction diagram
+### `size_t spaghetti_port_count(void)`
 
-```text
-Core --DIRECT CALL--> Port init --DIRECT CALL--> Zephyr Device Model
-Manager/driver --DIRECT CALL--> Port API --DIRECT CALL--> I2C/GPIO/SPI
+**Purpose:** Return the number of enabled physical Ports.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
+
+**Returns:** Fixed catalog size.
+
+**Errors:** None after initialization.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+### `const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)`
+
+**Purpose:** Resolve one stable Port handle.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Logical Port index. |
+
+**Returns:** Provider-owned immutable handle, or `NULL` when unknown.
+
+**Errors:** Unknown ID is represented by `NULL`.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+### `uint32_t spaghetti_port_get_capabilities(const struct spaghetti_port *port)`
+
+**Purpose:** Return physical capability flags.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `port` | Valid provider-owned Port handle. |
+
+**Returns:** Capability bitmask; `0` for invalid input.
+
+**Errors:** Invalid/null handle.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+### `const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port)`
+
+**Purpose:** Expose the stable I2C controller for an I2C-capable Port.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `port` | Valid Port handle. |
+
+**Returns:** Ready Zephyr device pointer or `NULL`.
+
+**Errors:** Invalid Port, missing capability, or unavailable controller.
+
+**Execution context:** Calling thread.
+
+**Calls:** No transaction; returns the validated handle.
+
+### `int spaghetti_port_acquire(const struct spaghetti_port *port, k_timeout_t timeout)`
+
+**Purpose:** Serialize a multi-step operation on a shared Port resource.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `port` | Port to lock. |
+| `timeout` | Maximum wait; `K_NO_WAIT` is allowed. |
+
+**Returns:** `0` when acquired.
+
+**Errors:** Invalid Port, timeout, or forbidden execution context.
+
+**Execution context:** Thread only.
+
+**Calls:** Private `k_mutex_lock()`.
+
+### `int spaghetti_port_release(const struct spaghetti_port *port)`
+
+**Purpose:** Release a previously acquired Port resource.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `port` | Port acquired by the calling owner. |
+
+**Returns:** `0` on release.
+
+**Errors:** Invalid Port or unbalanced release.
+
+**Execution context:** Thread only.
+
+**Calls:** Private `k_mutex_unlock()`.
+
+## How it works
+
+```mermaid
+flowchart LR
+    DTS["Board Devicetree"] --> INIT["Port init"]
+    INIT --> P0["Port 0<br/>I2C"]
+    INIT --> P1["Port 1<br/>GPIO"]
+    DRIVER["Module driver"] -->|"query capability"| P0
+    P0 -->|"stable handle"| BUS["Zephyr I2C device"]
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-UNINITIALIZED -> AVAILABLE <-> CLAIMED
-                       +----> FAULT
+A sensor driver receives Port 0. It checks the I2C capability, acquires the Port for its command/read sequence, obtains the ready controller, performs the transaction, and releases the Port.
+
+## Zephyr integration
+
+- Devicetree macros create the catalog at build time; Port validates device readiness at boot.
+- Use `gpio_dt_spec`, `i2c_dt_spec`, or stable `struct device` handles privately where they match the binding.
+- A mutex is for thread context and must not be acquired from ISR.
+
+## Configuration templates
+
+### `prj.conf` capability examples
+
+```ini
+# Enable only the bus classes present in the selected board/Port catalog.
+CONFIG_I2C=y
+CONFIG_SPI=y
+CONFIG_GPIO=y
 ```
 
-## Concurrency considerations
+### Devicetree iteration shape
 
-Lookups should remain non-blocking. Protect only mutable claim/bus state, using a
-mutex in thread context. ISR access is not part of the initial contract. Shared
-I2C serialization may already occur in the controller driver, but Port ownership
-and multi-step transactions can still require a higher-level lock: DECISION
-REQUIRED after real transaction boundaries are known.
+```c
+#define SPAGHETTI_PORT_DEFINE(node_id) \
+    { \
+        .id = DT_REG_ADDR(node_id), \
+        /* Populate capability and bus fields from validated properties. */ \
+    }
 
-## Zephyr concepts involved
+static struct spaghetti_port ports[] = {
+    DT_FOREACH_STATUS_OKAY(spaghettilab_port, SPAGHETTI_PORT_DEFINE)
+};
+```
 
-- Devicetree is compiled static hardware description.
-- Device Model supplies initialized controller objects.
-- DT spec structures bind controllers and GPIOs without hard-coded pin numbers.
-- Mutex suspends a contending thread; it must not be used from ISR.
+The exact macro shape must follow the final binding properties.
 
-## Implementation steps
+## Ownership and concurrency
 
-1. Define ID and minimum capability enum.
-2. Define opaque runtime object and descriptor.
-3. Implement static lookup with fake descriptors.
-4. Define/validate the future Port DT binding.
-5. Obtain and validate one real controller.
-6. Add locking only for a demonstrated shared resource.
+Port handles remain valid for firmware lifetime. Catalog data is read-only after initialization. Each shared bus/Port transaction uses one short, documented lock policy.
 
-## Expected result
+## Contract guarantees
 
-The firmware enumerates physical ports and reports capabilities identically on
-different boards, despite different underlying mappings.
-
-## Minimal test
-
-Enumerate one port; verify valid lookup, invalid lookup, and expected capability.
-
-## Dependencies
-
-Board/Devicetree description and relevant Zephyr peripheral drivers.
-
-## Not yet
-
-No module identity, universal bus API, EEPROM discovery, or actual board pins.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_port_init_all` | Core | boot | DIRECT CALL | main thread | Device Model/peripheral setup |
-| `spaghetti_port_get` | Manager/Discovery | lookup | DIRECT CALL | caller thread | none |
-| `spaghetti_port_count` | Core/Communication | query | DIRECT CALL | caller thread | none |
-| `spaghetti_port_get_capabilities` | Manager/driver | compatibility check | DIRECT CALL | caller thread | none |
-| `spaghetti_port_acquire` | Manager/driver | operation | DIRECT CALL | caller thread | optional mutex |
-| `spaghetti_port_release` | Manager/driver | operation complete | DIRECT CALL | caller thread | optional mutex |
+- Unknown IDs and unsupported capabilities fail safely.
+- No caller above Port needs a controller label or pin number.
+- Generated catalog size is bounded at compile time.

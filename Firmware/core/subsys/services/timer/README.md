@@ -1,142 +1,178 @@
-# Timer Service
+# Timer service
 
 [← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Timer provides bounded one-shot or periodic wake-up events. It controls when work becomes eligible; it never performs the consumer's blocking work inside a timer callback.
 
-## Purpose
+## What this component owns
 
-Timer gives Runtime stable named/identified schedules without embedding Zephyr
-timer objects inside user-program data.
+- Fixed-capacity timer slots and stable timer IDs.
+- Period/deadline state, generation, and missed-expiry diagnostics.
+- Minimal callback-to-consumer signalling.
 
-## Responsibility
+## What this component does not own
 
-Own bounded timer slots, start/stop/restart, one-shot/periodic semantics,
-generation handling, and deferred expiry delivery.
-
-## Non-responsibility
-
-No rule evaluation, sensor read, actuator command, wall-clock scheduler, or long
-work inside timer expiry callbacks.
+- Runtime rules, sensor reads, module IDs beyond opaque callback data, or wall-clock time synchronization.
+- Blocking work in expiry context.
 
 ## Files
 
-Only this design README exists. Introduce service files with the Runtime
-milestone after timer IDs, capacity, and delivery semantics are fixed.
+| File | Role |
+|---|---|
+| `timer.h` | Timer IDs, modes, callback/event contract, lifecycle API. |
+| `timer.c` | `k_timer` wrappers, slots, and expiry signalling. |
+| Consumer subsystem | Owns semaphore/queue/work item and performs real work. |
 
-## Data structures to implement
+## Data model
 
-- timer handle/ID: created and destroyed by Timer, referenced by Runtime.
-- timer slot: Timer-owned `k_timer`, period, generation, destination metadata.
-- expiry event: bounded value copied to Runtime queue; owned by queue/consumer.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Timer slot | Timer service | ID, mode, period, generation, callback/signal target. |
+| `k_timer` | Timer service | Private Zephyr timer object. |
+| Expiry event | Consumer after copied/queued | Timer ID, generation, and timestamp. |
+| Timer status | Timer service | Running flag and expiry/drop counters. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_timer_init()`
+### `int spaghetti_timer_init(void)`
 
-- **Purpose:** initialize fixed timer pool.
-- **Called by:** Core or Runtime init.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** capacity and expiry sink.
-- **Outputs:** status.
-- **State modified:** timer pool.
-- **Failure cases:** invalid capacity/sink.
-- **Called next:** `k_timer_init` for slots.
+**Purpose:** Initialize an empty fixed timer pool.
 
-### `spaghetti_timer_create()`
+**Parameters**
 
-- **Purpose:** allocate one timer identity and metadata.
-- **Called by:** Runtime while loading a program.
-- **Trigger/mechanism/context:** program deployment; DIRECT CALL; Runtime thread.
-- **Inputs:** one-shot/periodic mode, interval, user correlation/generation.
-- **Outputs:** handle or capacity/validation error.
-- **State modified:** pool slot.
-- **Failure cases:** no slot, zero/unsupported interval, stale program.
-- **Called next:** no start unless explicitly requested.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_timer_start()` / `_stop()` / `_destroy()`
+**Returns:** `0` when timers can be created.
 
-- **Purpose:** control slot lifecycle explicitly.
-- **Called by:** Runtime.
-- **Trigger/mechanism/context:** runtime start/stop/program replacement; DIRECT
-  CALL; Runtime thread.
-- **Inputs:** handle and timing parameters where relevant.
-- **Outputs:** status.
-- **State modified:** active flag/generation/slot.
-- **Failure cases:** invalid/stale handle, already destroyed.
-- **Called next:** Zephyr `k_timer_start/stop`.
+**Errors:** Invalid configured capacity.
 
-### Internal expiry callback
+**Execution context:** Main thread during boot.
 
-- **Purpose:** turn kernel expiry into a bounded Runtime event.
-- **Called by:** Zephyr timer subsystem.
-- **Trigger/mechanism/context:** TIMER; timer expiry context; must not block.
-- **Inputs:** timer slot reference.
-- **Outputs:** `k_msgq` put with `K_NO_WAIT` or submitted work.
-- **State modified:** expiry/drop counters only.
-- **Failure cases:** full queue/stale generation.
-- **Called next:** Runtime MESSAGE QUEUE; never Module Manager directly.
+**Calls:** Zephyr timer object initialization.
 
-## Interaction diagram
+### `int spaghetti_timer_create(const struct spaghetti_timer_config *config, spaghetti_timer_id_t *out_id)`
 
-```text
-Runtime --DIRECT CALL--> Timer service --DIRECT CALL--> k_timer
-k_timer --TIMER callback--> K_NO_WAIT MESSAGE QUEUE --> Runtime THREAD
+**Purpose:** Allocate one timer slot and copy its bounded delivery config.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `config` | Mode, period, and nonblocking delivery target. |
+| `out_id` | Caller-owned new ID destination. |
+
+**Returns:** `0` with stopped timer ID.
+
+**Errors:** Invalid period/mode/target, no slot, or invalid output.
+
+**Execution context:** Calling thread.
+
+**Calls:** `k_timer_init()`.
+
+### `int spaghetti_timer_start(spaghetti_timer_id_t id, k_timeout_t delay, k_timeout_t period)`
+
+**Purpose:** Arm one stopped timer.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Valid timer ID. |
+| `delay` | Initial delay. |
+| `period` | Repeat interval or `K_NO_WAIT` for one-shot. |
+
+**Returns:** `0` when armed.
+
+**Errors:** Unknown/stale ID, invalid timing, or already running.
+
+**Execution context:** Calling thread.
+
+**Calls:** `k_timer_start()`.
+
+### `int spaghetti_timer_stop(spaghetti_timer_id_t id)`
+
+**Purpose:** Disarm one timer and invalidate pending generation where required.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Valid running/stopped ID. |
+
+**Returns:** `0` when stopped.
+
+**Errors:** Unknown/stale ID.
+
+**Execution context:** Calling thread.
+
+**Calls:** `k_timer_stop()`.
+
+### `int spaghetti_timer_destroy(spaghetti_timer_id_t id)`
+
+**Purpose:** Stop and free one timer slot.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Valid timer ID. |
+
+**Returns:** `0` when ID is no longer usable.
+
+**Errors:** Unknown/stale ID or busy delivery contract.
+
+**Execution context:** Calling thread.
+
+**Calls:** Timer stop and slot cleanup.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Consumer
+    participant Timer as Timer service
+    participant Callback as k_timer callback
+    participant Worker
+    Consumer->>Timer: create + start
+    Timer->>Callback: expiry
+    Callback-->>Worker: semaphore / nonblocking queue event
+    Callback-->>Callback: return immediately
+    Worker->>Worker: perform blocking application work
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-FREE -> CREATED -> RUNNING <-> STOPPED -> DESTROYED/FREE
-                    |
-                    +--expiry--> RUNNING or STOPPED(one-shot)
+Runtime creates a periodic 1000 ms timer. Each expiry gives a semaphore. Runtime's thread wakes and reads a module; the timer callback never touches I2C.
+
+## Zephyr integration
+
+- `k_timer` expiry executes in a restricted context and must not block.
+- Use `k_sem_give`, `k_work_submit`, or `k_msgq_put(..., K_NO_WAIT)` for delivery.
+- Generation values prevent a queued expiry from acting on a destroyed/reused timer ID.
+
+## Configuration templates
+
+### Simple semaphore delivery
+
+```c
+static void timer_expiry(struct k_timer *timer)
+{
+    struct k_sem *target = k_timer_user_data_get(timer);
+    k_sem_give(target);
+}
 ```
 
-## Concurrency considerations
+The callback performs no logging that can block, allocation, bus access, or
+product rule evaluation.
 
-Runtime should own create/start/stop calls initially, avoiding a mutex. Expiry
-can race with stop/replacement, so generation IDs are required. Callback cannot
-block; queue overflow must increment diagnostics. A dedicated Timer thread is not
-needed.
+## Ownership and concurrency
 
-## Zephyr concepts involved
+Timer slot mutation is serialized in thread context. Expiry uses only ISR-safe/nonblocking primitives. Destroy/stop defines how already queued generation events are rejected.
 
-`k_timer` schedules kernel timeouts; its expiry function has restricted context.
-`k_msgq` with `K_NO_WAIT` safely defers bounded events. Delayable work is an
-alternative for one-shot internal tasks but can execute on shared workqueue.
+## Contract guarantees
 
-## Implementation steps
-
-1. Define handle/generation and fixed capacity.
-2. Wrap one one-shot `k_timer`.
-3. Deliver expiry into fake queue consumer.
-4. Add periodic mode.
-5. Test stop/replace race and queue full.
-6. Integrate Runtime.
-
-## Expected result
-
-A one-second periodic timer produces ordered Runtime events without executing
-Runtime or I/O inside expiry context.
-
-## Minimal test
-
-Count ten expiries, verify interval tolerance, stop behavior, and stale generation.
-
-## Dependencies
-
-Zephyr kernel timing; Runtime event contract for final integration.
-
-## Not yet
-
-No cron/time-zone calendar, sensor work, dynamic heap timer count, or busy waiting.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_timer_init` | Core/Runtime | boot | DIRECT CALL | main thread | `k_timer_init` |
-| `spaghetti_timer_create` | Runtime | program load | DIRECT CALL | Runtime thread | pool allocation |
-| `spaghetti_timer_start` | Runtime | runtime start | DIRECT CALL | Runtime thread | `k_timer_start` |
-| `spaghetti_timer_stop` | Runtime | stop/replace | DIRECT CALL | Runtime thread | `k_timer_stop` |
-| `spaghetti_timer_destroy` | Runtime | program removal | DIRECT CALL | Runtime thread | pool release |
-| expiry callback | Zephyr | deadline | TIMER + MESSAGE QUEUE | timer context | `k_msgq_put(K_NO_WAIT)` |
+- No blocking consumer work runs in timer callback context.
+- Timer IDs become detectably stale after destroy/reuse.
+- Capacity and missed-event behavior are bounded.

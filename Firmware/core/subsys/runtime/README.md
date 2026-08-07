@@ -2,159 +2,208 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Runtime executes autonomous product behavior using generic module IDs, Data values, schedules, and commands. It decides when to act; drivers decide how hardware operations work.
 
-## Purpose
+## What this component owns
 
-Runtime executes user-defined scheduling, processing, conditions, and actions
-without direct knowledge of sensor registers, GPIOs, or Core variant.
+- Validated runtime tasks/rules and their execution state.
+- The Runtime worker context and wake-up/event queue.
+- Rule evaluation, schedule state, and Runtime diagnostics.
 
-## Responsibility
+## What this component does not own
 
-Own loaded program and execution state; consume timer/data events; validate
-references/types; evaluate rules; route commands through Module Manager.
-
-## Non-responsibility
-
-No hardware access, driver lifecycle, discovery, persistence backend, or MQTT
-connection management.
+- Module instances, bus transactions, persistent Config, or transport protocols.
+- Concrete SHT40/Relay implementation types.
 
 ## Files
 
-- Public API: `include/spaghetti/runtime.h`.
-- Implementation: `subsys/runtime/runtime.c`; program validation and executor.
+| File | Role |
+|---|---|
+| `include/spaghetti/runtime.h` | Task/rule schemas and lifecycle API. |
+| `subsys/runtime/runtime.c` | Worker loop, evaluation, and Manager/Data integration. |
+| Timer service | Produces wake-up signals without executing rules in callback context. |
+| Config | Supplies validated tasks/rules by value. |
 
-## Data structures to implement
+## Data model
 
-- runtime program/config: created by parser/Config, copied/owned by Runtime while
-  loaded, destroyed/replaced by Runtime.
-- rule/trigger/condition/action: bounded representation, Runtime-modified only.
-- execution context: Runtime-owned state/counters; diagnostics receive snapshots.
-- event/command: copied value objects using stable module IDs, not raw pointers.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Sampling task | Runtime | Source module ID, period, enabled flag, and next execution state. |
+| Threshold rule | Runtime | Source value selector, comparison, target module, and command. |
+| Runtime event | Queue then Runtime | Bounded timer/data/control event. |
+| Runtime status | Runtime | Running state, last error, counters, and queue depth. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_runtime_init()`
+### `int spaghetti_runtime_init(void)`
 
-- **Purpose:** initialize executor resources without running user logic.
-- **Called by:** Core.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** Manager/Data/Timer dependencies and fixed limits.
-- **Outputs:** status.
-- **State modified:** Runtime internals.
-- **Failure cases:** invalid limits or queue/thread creation failure.
-- **Called next:** Zephyr queue/thread initialization if selected.
+**Purpose:** Initialize empty rule/task storage, worker synchronization, and diagnostics.
 
-### `spaghetti_runtime_load()`
+**Parameters**
 
-- **Purpose:** validate and atomically replace the active program.
-- **Called by:** Config/Communication deployment path.
-- **Trigger/mechanism/context:** backend deployment; DIRECT CALL or Runtime command
-  MESSAGE QUEUE; caller/Runtime worker, DECISION REQUIRED before concurrency.
-- **Inputs:** versioned program snapshot.
-- **Outputs:** accepted/rejected result with diagnostic.
-- **State modified:** active program and timer registrations.
-- **Failure cases:** invalid graph/type/reference/resources/version.
-- **Called next:** Timer service by DIRECT CALL.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_runtime_start()` / `_stop()`
+**Returns:** `0` when Runtime can accept a load.
 
-- **Purpose:** control execution independently from loaded configuration.
-- **Called by:** Core, Communication, Config reconciliation.
-- **Trigger/mechanism/context:** boot/user command; DIRECT CALL or command queue;
-  thread context.
-- **Inputs:** optional generation/reason.
-- **Outputs:** status.
-- **State modified:** running state and timers.
-- **Failure cases:** no valid program, already running/stopped, timer failure.
-- **Called next:** Timer start/stop.
+**Errors:** Invalid static capacities or worker resource initialization failure.
 
-### `spaghetti_runtime_submit_event()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** enqueue Data/timer events for serialized evaluation.
-- **Called by:** Data subscriber and Timer service adapter.
-- **Trigger:** ZBUS SUBSCRIBER or TIMER deferred notification.
-- **Invocation mechanism:** MESSAGE QUEUE into dedicated Runtime THREAD is the
-  recommendation for ordered, bounded execution.
-- **Execution context:** producer context only copies; evaluation in Runtime
-  preemptive thread.
-- **Inputs:** bounded event copy.
-- **Outputs:** queued/full result.
-- **State modified:** queue and later execution state.
-- **Failure cases:** queue full, stale program generation, invalid event.
-- **Called next:** Runtime thread evaluates, then Manager command by DIRECT CALL.
+**Calls:** Semaphore/message-queue/thread initialization.
 
-### `spaghetti_runtime_get_status()`
+### `int spaghetti_runtime_load(const struct spaghetti_runtime_program *program)`
 
-- **Purpose:** expose immutable diagnostics.
-- **Called by:** Communication/tests.
-- **Trigger/mechanism/context:** query; DIRECT CALL; caller thread.
-- **Inputs/outputs:** status snapshot.
-- **State modified:** none.
-- **Failure cases:** invalid output/not initialized.
-- **Called next:** none.
+**Purpose:** Validate and copy the complete bounded program while stopped.
 
-## Interaction diagram
+**Parameters**
 
-```text
-Timer --TIMER then MSGQ--> Runtime THREAD
-Data --ZBUS SUBSCRIBER then MSGQ--> Runtime THREAD
-Runtime --DIRECT CALL--> Module Manager --DIRECT CALL--> driver
+| Parameter | Meaning |
+|---|---|
+| `program` | Caller-owned tasks/rules copied on success. |
+
+**Returns:** `0` when loaded.
+
+**Errors:** Invalid count, zero period, unknown/stale module IDs, invalid rule references, or called while running.
+
+**Execution context:** Calling thread.
+
+**Calls:** Module Manager snapshot queries for reference validation.
+
+### `int spaghetti_runtime_start(void)`
+
+**Purpose:** Start schedules and enter RUNNING state.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
+
+**Returns:** `0` when wake-up sources and worker are active.
+
+**Errors:** No valid program, already running, or Timer start failure.
+
+**Execution context:** Calling thread; worker executes separately.
+
+**Calls:** Timer service start.
+
+### `int spaghetti_runtime_stop(k_timeout_t timeout)`
+
+**Purpose:** Stop new schedules and wait for bounded worker quiescence.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `timeout` | Maximum wait for current work to finish. |
+
+**Returns:** `0` when STOPPED.
+
+**Errors:** Timeout or Timer/worker stop error.
+
+**Execution context:** Calling thread, never Runtime worker itself.
+
+**Calls:** Timer stop and worker signalling.
+
+### `int spaghetti_runtime_submit_event(const struct spaghetti_runtime_event *event)`
+
+**Purpose:** Copy one bounded external/Data event to the worker.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `event` | Validated event copied before return. |
+
+**Returns:** `0` when queued.
+
+**Errors:** Invalid event, not running, or full queue.
+
+**Execution context:** Thread or explicitly supported nonblocking callback context.
+
+**Calls:** `k_msgq_put(..., K_NO_WAIT)` or equivalent.
+
+### `int spaghetti_runtime_get_status(struct spaghetti_runtime_status *out)`
+
+**Purpose:** Copy worker state and counters.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with coherent status.
+
+**Errors:** Invalid output or uninitialized Runtime.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Timer
+    participant Runtime as Runtime thread
+    participant Manager as Module Manager
+    participant Data
+    Timer-->>Runtime: semaphore/event
+    Runtime->>Manager: read(source module)
+    Manager-->>Runtime: generic sample
+    Runtime->>Data: publish(sample)
+    Runtime->>Runtime: evaluate rules
+    Runtime->>Manager: command(target module)
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-EMPTY -> LOADED -> RUNNING <-> PAUSED -> STOPPED
-             |         +-------------> ERROR
-             +-----------------------> REPLACED
+A 1000 ms task reads module 3. A rule compares its generic temperature value with 25 °C and commands module 7 ON. Runtime references IDs and value types; it never includes sensor or relay headers.
+
+## Zephyr integration
+
+- `k_timer` expiry only signals Runtime; it never performs bus I/O.
+- One dedicated thread is appropriate when Runtime blocks on events and performs bounded synchronous Manager calls.
+- Use a bounded event queue and document behavior when it is full.
+
+## Configuration templates
+
+### Program shape
+
+```c
+struct spaghetti_runtime_sampling_task {
+    spaghetti_module_id_t module_id;
+    uint32_t period_ms;
+    bool enabled;
+};
+
+struct spaghetti_runtime_threshold_rule {
+    spaghetti_module_id_t source_id;
+    int32_t threshold;
+    spaghetti_module_id_t target_id;
+    bool target_state;
+};
 ```
 
-## Concurrency considerations
+### Thread configuration shape
 
-Use one worker thread initially so event ordering and program replacement are
-deterministic. Producers must never execute user logic in zbus/timer callback
-context. Queue capacity and overflow policy must be explicit. Synchronous Manager
-commands are appropriate from the worker.
+```c
+K_SEM_DEFINE(runtime_wakeup, 0, 1);
+K_THREAD_STACK_DEFINE(runtime_stack, CONFIG_SPAGHETTI_RUNTIME_STACK_SIZE);
+```
 
-## Zephyr concepts involved
+Define stack size and priority through bounded application Kconfig symbols or
+constants justified by measurement.
 
-`k_thread` owns a stack and scheduled execution context; `k_msgq` serializes
-bounded events; `k_timer` callback only signals; zbus may fan Data into the queue.
+## Ownership and concurrency
 
-## Implementation steps
+Only the Runtime worker mutates execution state. Load/start/stop serialize lifecycle. Events are copied; no producer-owned pointer survives queue insertion.
 
-1. Define minimal one-rule program model.
-2. Validate stable module/channel references.
-3. Create bounded input queue and one worker.
-4. Handle synthetic Data event.
-5. Add timer event.
-6. Route one relay command.
-7. Add atomic program replacement and diagnostics.
+## Contract guarantees
 
-## Expected result
-
-Every second, a synthetic/real temperature event is evaluated and a threshold
-crossing issues a relay command in deterministic thread context.
-
-## Minimal test
-
-Feed below/equal/above-threshold values and verify exact fake Manager calls.
-
-## Dependencies
-
-Module Manager, Data contract, Timer service; Config for persisted deployment.
-
-## Not yet
-
-No general language VM, parallel rules, unbounded graph, cloud execution, or OTA.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_runtime_init` | Core | boot | DIRECT CALL | main thread | queue/thread setup |
-| `spaghetti_runtime_load` | Config/Communication | deployment | DIRECT CALL / MSGQ TBD | caller/Runtime thread | Timer service |
-| `spaghetti_runtime_start` | Core/Communication | start | DIRECT CALL / MSGQ | thread context | Timer service |
-| `spaghetti_runtime_stop` | Core/Communication | stop | DIRECT CALL / MSGQ | thread context | Timer service |
-| `spaghetti_runtime_submit_event` | Data/Timer adapters | value/expiry | MESSAGE QUEUE | producer -> Runtime thread | rule evaluator, Manager |
-| `spaghetti_runtime_get_status` | Communication | query | DIRECT CALL | caller thread | none |
+- Blocking module operations never run in timer callback or ISR context.
+- Rules depend only on generic values and Manager operations.
+- Stopping has a bounded, observable completion result.

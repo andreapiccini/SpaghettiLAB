@@ -1,98 +1,149 @@
-# Services
+# Optional services
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+A service wraps a reusable Zephyr or platform capability behind a small product-level contract. Services are optional: include one only when a consumer needs timing, persistence, networking, or another concrete capability.
 
-## Purpose
+## What this component owns
 
-Services contains reusable software capabilities used by architecture layers but
-not responsible for product policy: MQTT transport, timing, and persistence.
+- The lifecycle and private backend state of one reusable capability.
+- Bounded resources, error mapping, and service-specific diagnostics.
+- A stable API that hides the selected Zephyr backend.
 
-## Responsibility
+## What this component does not own
 
-Define narrow lifecycle/operation contracts, hide Zephyr backend details, expose
-bounded resource/error behavior, and remain independently testable.
-
-## Non-responsibility
-
-Services do not own module instances, user logic, discovery policy, or the global
-boot sequence. A service must not become a miscellaneous utility collection.
+- Product policy, module instances, Runtime rules, or the global startup sequence.
+- A generic service locator or miscellaneous utility collection.
 
 ## Files
 
-- [MQTT](mqtt/README.md): networked publish/subscribe capability.
-- [Timer](timer/README.md): named one-shot/periodic scheduling capability.
-- [Storage](storage/README.md): persistent key/blob capability.
-- Future service source/header files are intentionally not defined yet.
+| File | Role |
+|---|---|
+| `timer/` | Bounded scheduling and deferred wake-up capability. |
+| `storage/` | Versioned bounded persistence capability. |
+| `mqtt/` | Optional MQTT transport adapter when selected by a product. |
+| Each service header/source | Public product contract and private Zephyr integration. |
 
-## Data structures to implement
+## Data model
 
-Each service owns its private context for firmware lifetime and exposes opaque
-handles or copied snapshots. Cross-service global state is forbidden; Core owns
-startup order.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Service config | Config then service after copy | Bounded backend-independent settings. |
+| Private context | Service | Backend handles, buffers, worker state, and diagnostics. |
+| Status snapshot | Caller after query | Copied state and counters. |
+| Operation payload | Caller until copied/completed | Bounded service-specific input/output. |
 
-## Functions to implement
+## API contract
 
-### Service-specific `init` and `start/stop`
+### `int spaghetti_<service>_init(const struct spaghetti_<service>_config *config)`
 
-- **Purpose:** separate construction from asynchronous execution.
-- **Called by:** Core or the direct owning subsystem.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs/outputs:** validated config/dependencies; status.
-- **State modified:** private service state.
-- **Failure cases:** unavailable dependency/resource.
-- **Called next:** documented Zephyr backend for that service.
+**Purpose:** Validate copied config and construct private bounded resources.
 
-## Interaction diagram
+**Parameters**
 
-```text
-Core --DIRECT CALL--> Service init/start --> Zephyr backend
-Owning subsystem --DIRECT CALL / bounded queue--> Service operation
+| Parameter | Meaning |
+|---|---|
+| `config` | Complete service config copied when retained. |
+
+**Returns:** `0` when READY.
+
+**Errors:** Invalid config, unavailable backend, or resource creation failure.
+
+**Execution context:** Main thread during boot.
+
+**Calls:** Selected Zephyr backend initialization.
+
+### `int spaghetti_<service>_start(void)`
+
+**Purpose:** Start asynchronous behavior only when the service needs it.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
+
+**Returns:** `0` when RUNNING.
+
+**Errors:** Not initialized, already running, or backend start failure.
+
+**Execution context:** Calling thread; service worker owns blocking state machines.
+
+**Calls:** Backend-specific start.
+
+### `int spaghetti_<service>_stop(k_timeout_t timeout)`
+
+**Purpose:** Stop new work and reach a defined quiescent state.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `timeout` | Maximum wait for bounded completion. |
+
+**Returns:** `0` when STOPPED.
+
+**Errors:** Timeout or backend stop failure.
+
+**Execution context:** Calling thread.
+
+**Calls:** Backend-specific stop.
+
+## How it works
+
+```mermaid
+flowchart LR
+    OWNER["Core or owning subsystem"] -->|"small service API"| SERVICE["Optional service"]
+    SERVICE --> BACKEND["Zephyr backend"]
+    TIMER["Timer"] --> SERVICE
+    STORAGE["Storage"] --> SERVICE
+    NETWORK["Network transport"] --> SERVICE
 ```
 
-## State / lifecycle
+## Practical example
 
-Common model: UNINITIALIZED -> READY -> RUNNING -> STOPPED/ERROR. A service may
-omit states that add no useful behavior.
+Runtime uses Timer to receive a wake-up signal; Config uses Storage to persist a snapshot; an output adapter may use MQTT. None of these services owns Runtime rules or module instances.
 
-## Concurrency considerations
+## Zephyr integration
 
-Do not create one thread per service automatically. MQTT likely needs a blocking
-state-machine context; Storage may be synchronous/serialized; Timer uses kernel
-timers plus deferred delivery. Each child README owns the final decision.
+- Wrap Zephyr subsystems rather than duplicating them.
+- Do not create a dedicated thread for a service unless it owns a blocking state machine.
+- Kconfig enables only services/backends selected by the application.
 
-## Zephyr concepts involved
+## Configuration templates
 
-Services wrap, rather than duplicate, Zephyr subsystems. Kconfig will later
-select required software. Logging and explicit bounded resources apply to all.
+### CMake selection shape
 
-## Implementation steps
+```cmake
+target_sources_ifdef(CONFIG_SPAGHETTI_TIMER app PRIVATE
+  subsys/services/timer/timer.c
+)
 
-1. Implement a service only when a consumer milestone needs it.
-2. Define ownership/error/timeout contract.
-3. Test with a fake backend.
-4. Integrate the smallest Zephyr backend.
-5. Measure RAM, stack, and queue capacity.
+target_sources_ifdef(CONFIG_SPAGHETTI_STORAGE app PRIVATE
+  subsys/services/storage/storage.c
+)
+```
 
-## Expected result
+### Application Kconfig shape
 
-Consumers use a stable product-level capability without knowing backend details.
+```kconfig
+menu "Spaghetti LAB services"
 
-## Minimal test
+config SPAGHETTI_TIMER
+    bool "Timer service"
 
-Each child service supplies its own single-capability test.
+config SPAGHETTI_STORAGE
+    bool "Storage service"
 
-## Dependencies
+endmenu
+```
 
-Core for orchestration; service-specific Zephyr features and Kconfig later.
+## Ownership and concurrency
 
-## Not yet
+Each service documents its caller and worker contexts. Inputs retained beyond a direct call are copied. Queue sizes and stop behavior are bounded.
 
-No generic service locator, dependency injection framework, or speculative service.
+## Contract guarantees
 
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| service `init` | Core | boot | DIRECT CALL | main thread | Zephyr backend init |
-| service `start/stop` | Core/owner | lifecycle | DIRECT CALL | caller thread | backend lifecycle |
+- Removing an optional service does not change central architecture contracts.
+- Backend types remain private.
+- Every asynchronous service defines start, stop, capacity, and failure behavior.

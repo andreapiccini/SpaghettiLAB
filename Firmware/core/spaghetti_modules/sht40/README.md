@@ -1,139 +1,152 @@
-# SHT40 Module
+# SHT40 module driver
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+The SHT40 driver is a concrete example of a removable input module. It performs the SHT4x measurement protocol through the I2C controller exposed by the assigned Port and returns generic temperature/humidity values.
 
-## Purpose
+## What this component owns
 
-This future implementation controls an external SHT40-class environmental module
-through a compatible Spaghetti Port and exposes temperature and humidity.
+- SHT40 runtime address and per-instance protocol state.
+- Measurement command, response parsing, CRC validation, and conversion formulas.
+- The immutable `sht40` driver descriptor.
 
-## Responsibility
+## What this component does not own
 
-Validate required bus capability, initialize per-instance context, perform the
-documented sensor transaction, validate/convert response, and produce normalized
-temperature/humidity values.
-
-## Non-responsibility
-
-No port assignment, discovery claim, periodic scheduling, threshold automation,
-MQTT publish, real GPIO mapping, or assumption that the device is always present.
+- The physical I2C controller or pins.
+- Module lifetime, periodic scheduling, Data delivery, or output transports.
+- A permanent SHT40 Devicetree device node.
 
 ## Files
 
-Only this implementation plan exists. Future source/header files remain local;
-the public generic contract stays in `include/spaghetti/module_driver.h`.
+| File | Role |
+|---|---|
+| `sht40.h` | Runtime config and exported descriptor declaration. |
+| `sht40.c` | SHT40 operation callbacks and protocol implementation. |
+| `include/spaghetti/module_driver.h` | Common driver operation signatures. |
+| `include/spaghetti/data.h` | Generic measurement output contract. |
 
-## Data structures to implement
+## Data model
 
-- immutable SHT40 driver descriptor: static lifetime, owned here, read by Registry.
-- per-instance SHT40 context: Manager-provided storage; contains only protocol
-  state/configuration required by the real datasheet; modified by this driver.
-- channel descriptors for temperature and humidity: immutable, driver-owned.
-- sample result: caller/Data-owned value with both channels or explicit partial
-  validity, depending on the final Data contract.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| `spaghetti_sht40_config` | Config copied into instance context | Validated 7-bit I2C address and selected bounded measurement mode. |
+| SHT40 private context | Module instance | Address and last diagnostic state. |
+| Temperature/humidity sample | Caller after successful read | Converted fixed representation with source and validity. |
 
-## Functions to implement
+## API contract
 
-### SHT40 `init`
+### `int sht40_init(struct spaghetti_module *module, const void *config, size_t config_size)`
 
-- **Purpose:** verify compatible Port/bus and establish a ready context.
-- **Called by:** Module Manager.
-- **Trigger/mechanism/context:** accepted `Port = SHT40`; DIRECT CALL; Manager
-  thread/caller, never ISR.
-- **Inputs:** instance context, Port handle, validated options.
-- **Outputs:** ready/error.
-- **State modified:** SHT40 private context.
-- **Failure cases:** no I2C capability, bus unavailable, absent/invalid response.
-- **Called next:** Port acquire/I2C operation by DIRECT CALL if verification is
-  part of init.
+**Purpose:** Validate config, resolve the Port I2C device, and verify the instance can be used.
 
-### SHT40 `read`
+**Parameters**
 
-- **Purpose:** acquire temperature and humidity on demand.
-- **Called by:** Module Manager for Runtime/diagnostic request.
-- **Trigger/mechanism/context:** periodic timer reaches Runtime, then DIRECT CALL;
-  executes in Runtime/Manager thread and may block only for bounded sensor timing.
-- **Inputs:** instance/context, requested channel(s), timeout.
-- **Outputs:** normalized sample or precise error.
-- **State modified:** last diagnostic/sequence, not global Data ownership.
-- **Failure cases:** bus timeout/NACK, checksum/protocol error, not ready.
-- **Called next:** Port -> Zephyr I2C by DIRECT CALL; result then Data publish by
-  Manager/acquisition layer.
+| Parameter | Meaning |
+|---|---|
+| `module` | Manager-owned instance assigned to an I2C-capable Port. |
+| `config` | Pointer to `spaghetti_sht40_config`. |
+| `config_size` | Must equal the config structure size. |
 
-### SHT40 `deinit`
+**Returns:** `0` and READY state on success.
 
-- **Purpose:** cancel/clear instance state before removal.
-- **Called by:** Module Manager.
-- **Trigger/mechanism/context:** remove/replace/rollback; DIRECT CALL; thread.
-- **Inputs/outputs:** context; status.
-- **State modified:** context becomes inactive.
-- **Failure cases:** operation in progress or bus cleanup failure if applicable.
-- **Called next:** Port/Power release.
+**Errors:** `-EINVAL` for malformed config, `-ENOTSUP` for a non-I2C Port, `-ENODEV` for unavailable controller/device.
 
-## Interaction diagram
+**Execution context:** Calling thread.
 
-```text
-Timer --deferred event--> Runtime
-Runtime --DIRECT CALL--> Manager --DIRECT CALL--> SHT40 read
-SHT40 --DIRECT CALL--> Port --DIRECT CALL--> Zephyr I2C
-SHT40 result --DIRECT CALL--> Data publish
-Data --ZBUS/MSGQ TBD--> Runtime + MQTT + Communication
+**Calls:** `spaghetti_port_i2c_device()` and optional bounded probe transaction.
+
+### `int sht40_read(struct spaghetti_module *module, struct spaghetti_sample *out)`
+
+**Purpose:** Trigger one measurement, validate the response, and return converted values.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `module` | READY SHT40 instance. |
+| `out` | Caller-owned sample destination. |
+
+**Returns:** `0` with temperature/humidity populated.
+
+**Errors:** Invalid pointer/state, I2C error, timeout, short response, or CRC mismatch.
+
+**Execution context:** Calling thread; the conversion and bus wait are bounded.
+
+**Calls:** Zephyr `i2c_write()`/`i2c_read()` through Port.
+
+### `int sht40_deinit(struct spaghetti_module *module)`
+
+**Purpose:** Clear instance protocol state; no global driver state is changed.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `module` | Initialized SHT40 instance. |
+
+**Returns:** `0` after the context is no longer usable.
+
+**Errors:** `-EINVAL` for an invalid instance.
+
+**Execution context:** Calling thread.
+
+**Calls:** No bus call unless the selected operating mode requires an explicit stop.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Runtime
+    participant Manager as Module Manager
+    participant SHT as SHT40 driver
+    participant Port
+    participant I2C as Zephyr I2C API
+    Runtime->>Manager: read(module_id)
+    Manager->>SHT: read(instance, out)
+    SHT->>Port: get I2C device
+    SHT->>I2C: write measurement command
+    SHT->>I2C: read 6 response bytes
+    SHT->>SHT: validate CRC and convert
+    SHT-->>Manager: temperature + humidity
+    Manager-->>Runtime: generic sample
 ```
 
-## State / lifecycle
+## Practical example
 
-Manager authoritative state: allocated -> initializing -> ready -> reading ->
-ready/error -> deinitializing -> removed.
+A module instance on Port 0 carries address `0x44`. One read sends the selected measurement command, receives two raw values plus CRC bytes, converts them, and returns them. Disconnecting the sensor produces a bus error instead of fabricated data.
 
-## Concurrency considerations
+## Zephyr integration
 
-Start with synchronous direct reads because the sensor transaction is bounded and
-one caller is simpler. Do not add a driver thread. Port/Manager serializes reads
-and removal. zbus is useful only after the completed sample reaches Data and has
-multiple consumers; using zbus inside the driver would blur ownership.
+- Enable the generic I2C API with `CONFIG_I2C=y`.
+- Use the Port-provided `struct device`; do not instantiate the removable SHT40 permanently in Devicetree.
+- Sleep/wait only in thread context and use datasheet-defined measurement timing.
 
-## Zephyr concepts involved
+## Configuration templates
 
-Zephyr I2C controller API performs bus transfers through a static controller
-device. A mutex may protect a multi-step transaction. `k_sleep` in a driver call
-blocks its thread, so use only bounded datasheet-required delays; delayed work is
-an alternative if latency later proves harmful.
+### Runtime configuration
 
-## Implementation steps
+```c
+struct spaghetti_sht40_config {
+    uint16_t i2c_address; /* Valid 7-bit address, for example 0x44. */
+};
+```
 
-1. Read the exact module schematic and SHT40 datasheet.
-2. State I2C Port capability requirement without pin/address invention.
-3. Implement and test protocol conversion as pure functions.
-4. Implement synchronous transaction through fake Port.
-5. Test real init/read with temperature and humidity.
-6. Test absent device, bad response, timeout, removal.
-7. Connect completed sample to Data.
+### `prj.conf`
 
-## Expected result
+```ini
+CONFIG_I2C=y
+CONFIG_LOG=y
+```
 
-An assigned SHT40 returns valid temperature/humidity on request and reports
-deterministic errors when missing or faulty.
+The standard Zephyr Sensor API is not required for the removable runtime
+model; the driver talks to the Port's I2C controller directly.
 
-## Minimal test
+## Ownership and concurrency
 
-One explicit read on known hardware; log both channels, then disconnect and verify
-the expected error without crash or stuck bus.
+Reads are synchronous. Module Manager prevents removal during an operation and Port serializes shared I2C transactions. The driver owns no thread and exposes no global mutable address.
 
-## Dependencies
+## Contract guarantees
 
-Module Driver contract, Port I2C capability, Registry/Manager for runtime use,
-Data for distribution.
-
-## Not yet
-
-No guessed address/pins/timing, periodic thread, zbus channel owned by driver,
-MQTT formatting, or auto-discovery claim.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| SHT40 `init` | Module Manager | assignment | DIRECT CALL | Manager/caller thread | Port/I2C |
-| SHT40 `read` | Module Manager | Runtime timer/user read | DIRECT CALL | Runtime/Manager thread | Port/I2C, then Data path |
-| SHT40 `deinit` | Module Manager | remove/rollback | DIRECT CALL | Manager/caller thread | Port/Power release |
+- CRC failure never produces a valid sample.
+- Every protocol constant is traceable to the SHT4x datasheet.
+- Two instances may use different Ports or addresses without sharing mutable state.

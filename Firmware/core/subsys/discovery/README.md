@@ -2,150 +2,157 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Discovery is an optional normalization boundary for proposed module identity. Manual configuration, identity memory, or a verified hardware probe can all produce the same result without changing Module Manager.
 
-## Purpose
+## What this component owns
 
-Discovery answers or receives the answer to “which module is connected to this
-port?” independently from module lifecycle management.
+- Discovery mode/policy and provider registration.
+- Validation, generation, source, confidence, and invalidation of proposals.
+- Delivery of accepted normalized results.
 
-## Responsibility
+## What this component does not own
 
-- Normalize identification proposals from interchangeable providers.
-- Apply MANUAL/AUTO/HYBRID policy without equating AUTO with EEPROM.
-- Track source, validity, confidence, and generation of a result.
-
-## Non-responsibility
-
-No module allocation, driver lookup, hardware lifecycle, or persistent storage
-implementation. A provider may probe; Discovery remains provider-independent.
+- Module instances or driver lifecycle.
+- A universal assumption that modules contain EEPROM.
+- Port bus access outside a provider's explicit capability contract.
 
 ## Files
 
-- Public API: `include/spaghetti/discovery.h`; provider/result/policy contracts.
-- Implementation: `subsys/discovery/discovery.c`; provider coordination/policy.
+| File | Role |
+|---|---|
+| `include/spaghetti/discovery.h` | Result/provider/policy types and API. |
+| `subsys/discovery/discovery.c` | Validation, generation, and accepted-result routing. |
+| Provider adapter | Manual, memory, or hardware-specific identity source. |
+| Module Manager | Consumes accepted proposals and owns live instances. |
 
-## Data structures to implement
+## Data model
 
-- `spaghetti_discovery_result`: value object created by provider/Discovery,
-  transferred to Manager, containing port, type, source, confidence/generation.
-- `spaghetti_discovery_provider`: immutable operation descriptor owned by its
-  provider; Registry-like lifetime.
-- `spaghetti_discovery_policy`: owned and modified by Discovery from validated
-  Config; read by Communication.
-- per-port discovery state: owned solely by Discovery.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Discovery result | Discovery after copy | Port, bounded type/config, source, confidence, generation. |
+| Provider descriptor | Provider | Immutable operations and capability requirements. |
+| Per-Port generation | Discovery | Rejects stale asynchronous results. |
+| Policy mode | Config/Discovery | MANUAL, AUTO, or HYBRID selection rules. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_discovery_init()`
+### `int spaghetti_discovery_init(spaghetti_discovery_sink_t sink, void *user_data)`
 
-- **Purpose:** initialize policy/provider catalog and per-port state.
-- **Called by:** Core.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** validated policy and available providers.
-- **Outputs:** status.
-- **State modified:** Discovery-owned state.
-- **Failure cases:** invalid mode/provider configuration.
-- **Called next:** provider init by DIRECT CALL if required.
+**Purpose:** Initialize empty per-Port state and register the accepted-result sink.
 
-### `spaghetti_discovery_submit_manual()`
+**Parameters**
 
-- **Purpose:** normalize an authoritative external assignment.
-- **Called by:** Communication or Config reconciliation.
-- **Trigger:** backend/frontend command or restored config.
-- **Invocation mechanism:** COMMUNICATION RX followed by DIRECT CALL.
-- **Execution context:** communication worker/caller thread; never ISR.
-- **Inputs:** port ID, module type, revision.
-- **Outputs:** validation/application status.
-- **State modified:** latest result for that port.
-- **Failure cases:** invalid port/type, stale revision, policy rejects manual input.
-- **Called next:** Module Manager configure by DIRECT CALL initially.
+| Parameter | Meaning |
+|---|---|
+| `sink` | Callback receiving copied accepted results. |
+| `user_data` | Opaque caller context returned to the sink. |
 
-### `spaghetti_discovery_run()`
+**Returns:** `0` when ready.
 
-- **Purpose:** ask eligible automatic providers for a result.
-- **Called by:** Core, Communication command, or delayed-work coordinator.
-- **Trigger/mechanism:** boot/rescan; DIRECT CALL or WORKQUEUE.
-- **Execution context:** thread/workqueue, never ISR; may be asynchronous.
-- **Inputs:** port ID and timeout/cancellation token.
-- **Outputs:** accepted/no-result/ambiguous status, possibly later callback.
-- **State modified:** scan state and generation.
-- **Failure cases:** timeout, unsupported port, provider error, conflict.
-- **Called next:** provider callback/API, then Manager only after policy accepts.
+**Errors:** Null sink or invalid Port capacity.
 
-### `spaghetti_discovery_invalidate()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** mark a prior observation stale after removal/config change.
-- **Called by:** presence handling, Communication, Config.
-- **Trigger/mechanism/context:** event/command; DIRECT CALL in thread context.
-- **Inputs:** port and generation/reason.
-- **Outputs:** status.
-- **State modified:** per-port result.
-- **Failure cases:** stale generation or unknown port.
-- **Called next:** Manager remove by DIRECT CALL or command queue.
+**Calls:** No provider operation.
 
-## Interaction diagram
+### `int spaghetti_discovery_submit_manual(const struct spaghetti_discovery_result *result)`
 
-```text
-Backend --COMMUNICATION RX--> Communication --DIRECT CALL--> Discovery(manual)
-Future provider --CALLBACK/WORKQUEUE--> Discovery policy
-Discovery --DIRECT CALL initially / DECISION REQUIRED queue--> Module Manager
+**Purpose:** Validate and submit one manual proposal through the common policy path.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `result` | Complete caller-owned proposal copied during the call. |
+
+**Returns:** `0` when accepted and delivered.
+
+**Errors:** Invalid Port/type/config/source, stale generation, or sink rejection.
+
+**Execution context:** Calling thread.
+
+**Calls:** Registered sink, commonly Config/Module Manager reconciliation.
+
+### `int spaghetti_discovery_run(spaghetti_port_id_t port_id, k_timeout_t timeout)`
+
+**Purpose:** Ask the selected automatic provider to produce a proposal for one Port.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `port_id` | Physical Port to inspect. |
+| `timeout` | Bounded provider completion policy. |
+
+**Returns:** `0` with accepted result, or precise no-result/error status.
+
+**Errors:** Unsupported mode/provider, busy Port, timeout, ambiguous/invalid identity.
+
+**Execution context:** Thread or provider worker; never ISR.
+
+**Calls:** Selected provider and accepted-result sink.
+
+### `int spaghetti_discovery_invalidate(spaghetti_port_id_t port_id, uint32_t generation)`
+
+**Purpose:** Invalidate an exact current proposal when hardware/config changes.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `port_id` | Affected Port. |
+| `generation` | Expected generation to reject stale invalidation. |
+
+**Returns:** `0` when invalidated.
+
+**Errors:** Unknown Port, stale generation, or no current result.
+
+**Execution context:** Calling thread.
+
+**Calls:** Sink removal/reconciliation path.
+
+## How it works
+
+```mermaid
+flowchart LR
+    MANUAL["Manual config"] --> NORMALIZE["Discovery result"]
+    MEMORY["Identity memory provider"] --> NORMALIZE
+    PROBE["Verified probe provider"] --> NORMALIZE
+    NORMALIZE --> VALIDATE["Policy + generation validation"]
+    VALIDATE --> SINK["Manager reconciliation sink"]
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-UNKNOWN -> SEARCHING -> PROPOSED -> ACCEPTED
-              |             +----> CONFLICT
-              +------------------> NO_RESULT
-ACCEPTED -> STALE/UNKNOWN
+Manual input proposes `Port 0 = temperature-sensor`, generation 4. Discovery validates and forwards it. A delayed provider response for generation 3 is rejected and cannot replace the current assignment.
+
+## Zephyr integration
+
+- Providers that wait or access buses run in thread/workqueue context.
+- Delayed work is appropriate for debounce/retry; cancellation and generation checks prevent stale completion.
+- A presence ISR only signals provider work.
+
+## Configuration templates
+
+### Normalized result shape
+
+```c
+struct spaghetti_discovery_result {
+    spaghetti_port_id_t port_id;
+    char type_id[SPAGHETTI_TYPE_ID_MAX];
+    uint8_t driver_config[SPAGHETTI_DRIVER_CONFIG_MAX];
+    size_t driver_config_size;
+    enum spaghetti_discovery_source source;
+    uint32_t generation;
+};
 ```
 
-## Concurrency considerations
+## Ownership and concurrency
 
-Provider results can arrive late. Use generation tokens and serialize per-port
-policy updates. Manual submission can remain synchronous. Automatic probing may
-use delayable work. DECISION REQUIRED: use a Manager `k_msgq` once concurrent
-reconfiguration exists; a direct call is simpler beforehand.
+Discovery serializes state per Port. Every asynchronous completion carries the generation captured at start. Results are copied before provider storage can expire.
 
-## Zephyr concepts involved
+## Contract guarantees
 
-- `k_work_delayable` schedules deferred probing without a dedicated thread.
-- Callback returns an asynchronous provider result; callback must not do long
-  lifecycle work.
-- `k_msgq` may serialize commands and retain bounded ordering.
-- zbus is suitable for observing discovery status, not necessarily for commands.
-
-## Implementation steps
-
-1. Define normalized result/source/policy types.
-2. Implement MANUAL-only submission.
-3. Add generation and invalidation.
-4. Connect to Manager with a direct call.
-5. Define provider interface using a fake provider.
-6. Add AUTO/HYBRID only with concrete conflict rules.
-
-## Expected result
-
-Manual and future automatic sources yield the same result contract; Manager does
-not change when a provider is added.
-
-## Minimal test
-
-Submit manual `Port 0 -> fake`, then test stale revision and invalidation.
-
-## Dependencies
-
-Port identifiers, Config policy, Module Manager configure/remove contract.
-
-## Not yet
-
-No EEPROM-specific API, invented probe method, or assumption that AUTO succeeds.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_discovery_init` | Core | boot | DIRECT CALL | main thread | provider init |
-| `spaghetti_discovery_submit_manual` | Communication/Config | assignment | COMMUNICATION RX + DIRECT CALL | communication/caller thread | Manager configure |
-| `spaghetti_discovery_run` | Core/Communication | scan | DIRECT CALL / WORKQUEUE | worker thread | provider operation |
-| `spaghetti_discovery_invalidate` | presence/Communication | stale result | DIRECT CALL | caller thread | Manager remove |
+- Manager receives the same result shape from every strategy.
+- A provider never creates or owns a live module.
+- Stale results and invalidations cannot overwrite current state.

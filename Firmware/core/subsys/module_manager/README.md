@@ -2,175 +2,228 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Module Manager is the sole owner of live module instances. It turns a validated assignment into a transactional lifecycle: resolve Port, resolve driver, initialize, expose operations, and remove safely.
 
-## Purpose
+## What this component owns
 
-Module Manager turns a normalized assignment into a live module instance and is
-the single owner of instance lifecycle.
+- The fixed module pool and Port-to-instance mapping.
+- Every live instance ID, state, Port reference, driver descriptor, and private context.
+- Lifecycle serialization and rollback.
 
-## Responsibility
+## What this component does not own
 
-Create, configure, initialize, replace, query, and remove instances; associate
-port and driver; perform validation and rollback; publish lifecycle status.
-
-## Non-responsibility
-
-It does not identify modules, implement drivers, own persistent Config, or encode
-PC/MQTT protocols.
+- How module identity was discovered.
+- Persistent desired configuration.
+- Concrete protocols, board wiring, product rules, or output transports.
 
 ## Files
 
-- Public API: `include/spaghetti/module_manager.h`.
-- Shared model: `include/spaghetti/module.h` and driver contract
-  `include/spaghetti/module_driver.h`.
-- Implementation: `subsys/module_manager/module_manager.c`.
+| File | Role |
+|---|---|
+| `include/spaghetti/module_manager.h` | Lifecycle/query/operation API. |
+| `include/spaghetti/module.h` | Instance IDs, states, and snapshots. |
+| `subsys/module_manager/module_manager.c` | Pool, mapping, transitions, and rollback. |
+| `include/spaghetti/module_driver.h` | Driver callbacks invoked by Manager. |
 
-## Data structures to implement
+## Data model
 
-- `spaghetti_module`: created/destroyed and exclusively modified by Manager;
-  drivers/Runtime/Communication get validated read-only references or IDs.
-- fixed module pool and port-to-instance mapping: Manager-owned for firmware
-  lifetime.
-- lifecycle request/result: value objects owned by caller during synchronous call
-  or copied into a future command queue.
-- per-instance private driver context: storage allocated by Manager under size and
-  alignment rules declared by driver; initialized by driver, released by Manager.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Module pool | Manager | Fixed-capacity storage for live/provisional instances. |
+| Port mapping | Manager | At most one active instance per exclusive Port. |
+| `spaghetti_module_snapshot` | Caller after query | Copied ID, Port, type, state, and diagnostics. |
+| Driver-private context | Manager storage; concrete driver content | Per-instance mutable protocol state. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_module_manager_init()`
+### `int spaghetti_module_manager_init(void)`
 
-- **Purpose:** initialize pool/mappings and validate dependencies.
-- **Called by:** Core.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** Port catalog and Driver Registry access.
-- **Outputs:** status.
-- **State modified:** all Manager-owned tables.
-- **Failure cases:** invalid capacity/dependency.
-- **Called next:** no driver lifecycle operation yet.
+**Purpose:** Initialize an empty pool and validate Port/Registry dependencies.
 
-### `spaghetti_module_manager_configure()`
+**Parameters**
 
-- **Purpose:** apply module type/configuration to one port transactionally.
-- **Called by:** Discovery; tests; possibly Config reconciliation.
-- **Trigger:** accepted assignment.
-- **Invocation mechanism:** DIRECT CALL initially; MESSAGE QUEUE is an option when
-  multiple asynchronous producers exist.
-- **Execution context:** caller thread initially; dedicated Manager worker if
-  command queue is adopted; never ISR.
-- **Inputs:** port ID, type ID, configuration, revision.
-- **Outputs:** instance ID/status.
-- **State modified:** pool, mapping, instance lifecycle.
-- **Failure cases:** missing port/driver, incompatible capability, busy, no slot,
-  driver init failure; rollback must leave a coherent prior/empty state.
-- **Called next:** Port capability query, Registry find, driver `init`, all DIRECT
-  CALLS.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_module_manager_remove()`
+**Returns:** `0` when Manager is ready.
 
-- **Purpose:** stop/deinitialize an instance and free its association.
-- **Called by:** Discovery invalidation, Communication, Config reconciliation.
-- **Trigger/mechanism/context:** removal/replacement; DIRECT CALL or same Manager
-  MESSAGE QUEUE; thread context.
-- **Inputs:** instance or port ID and expected revision.
-- **Outputs:** status.
-- **State modified:** state/mapping/pool.
-- **Failure cases:** unknown/stale/busy instance, deinit failure.
-- **Called next:** driver `deinit`, Port/Power release by DIRECT CALL.
+**Errors:** Invalid configured capacity or unavailable dependency.
 
-### `spaghetti_module_manager_get_by_id()` / `_get_by_port()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** obtain a safe snapshot/reference for query or command routing.
-- **Called by:** Runtime, Communication, tests.
-- **Trigger/mechanism/context:** query; DIRECT CALL; caller thread.
-- **Inputs:** ID.
-- **Outputs:** immutable snapshot/handle or not found.
-- **State modified:** none.
-- **Failure cases:** stale/unknown ID.
-- **Called next:** none.
+**Calls:** Port and Driver Registry query APIs.
 
-### `spaghetti_module_manager_read()` / `_command()`
+### `int spaghetti_module_manager_configure(const struct spaghetti_module_request *request, spaghetti_module_id_t *out_id)`
 
-- **Purpose:** validate state/capability and invoke the instance driver.
-- **Called by:** Runtime, Communication diagnostics.
-- **Trigger/mechanism/context:** user action/timer/request; DIRECT CALL; caller or
-  Manager worker thread, never ISR.
-- **Inputs:** instance ID, operation/channel/payload, timeout.
-- **Outputs:** result/data or error.
-- **State modified:** driver-private context and diagnostic status.
-- **Failure cases:** not ready, unsupported operation, I/O timeout, removal race.
-- **Called next:** driver operation -> Port API -> Zephyr peripheral API.
+**Purpose:** Create one instance transactionally from a validated request.
 
-## Interaction diagram
+**Parameters**
 
-```text
-Discovery --DIRECT CALL / future MSGQ--> Module Manager
-       Manager --DIRECT CALL--> Port capability
-       Manager --DIRECT CALL--> Driver Registry
-       Manager --DIRECT CALL--> driver init/read/command/deinit
-                                          |
-                                          +--DIRECT CALL--> Port -> Zephyr
+| Parameter | Meaning |
+|---|---|
+| `request` | Caller-owned Port ID, type ID, bounded driver config, and revision. |
+| `out_id` | Caller-owned destination set only on success. |
+
+**Returns:** `0` plus a READY instance ID.
+
+**Errors:** Invalid request, missing/busy Port, unknown driver, incompatible capability, no free slot, stale revision, or driver-init error.
+
+**Execution context:** Calling thread; never ISR.
+
+**Calls:** Port lookup/capability, Registry find, driver `init()`.
+
+### `int spaghetti_module_manager_remove(spaghetti_module_id_t id, uint32_t expected_revision)`
+
+**Purpose:** Deinitialize and free one exact instance.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Live instance ID. |
+| `expected_revision` | Revision used to reject stale removal. |
+
+**Returns:** `0` after the Port and pool slot are free.
+
+**Errors:** Unknown/stale/busy instance or driver deinit failure.
+
+**Execution context:** Calling thread.
+
+**Calls:** Driver `deinit()` and optional shared-resource release.
+
+### `int spaghetti_module_manager_get_by_id(spaghetti_module_id_t id, struct spaghetti_module_snapshot *out)`
+
+**Purpose:** Copy one safe diagnostic/query snapshot.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Instance ID. |
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with snapshot.
+
+**Errors:** Invalid output or unknown/stale ID.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+### `int spaghetti_module_manager_get_by_port(spaghetti_port_id_t port_id, struct spaghetti_module_snapshot *out)`
+
+**Purpose:** Copy the instance assigned to a Port.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `port_id` | Logical Port ID. |
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with snapshot.
+
+**Errors:** Invalid output, unknown Port, or no assigned instance.
+
+**Execution context:** Calling thread.
+
+**Calls:** Port mapping lookup.
+
+### `int spaghetti_module_manager_read(spaghetti_module_id_t id, struct spaghetti_sample *out)`
+
+**Purpose:** Route one read to a READY instance.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Source instance. |
+| `out` | Caller-owned result destination. |
+
+**Returns:** `0` with a valid sample.
+
+**Errors:** Unknown/not-ready instance, unsupported read, removal conflict, or driver I/O error.
+
+**Execution context:** Thread context.
+
+**Calls:** Driver `read()`; driver calls Port.
+
+### `int spaghetti_module_manager_command(spaghetti_module_id_t id, const struct spaghetti_command *command)`
+
+**Purpose:** Route one bounded command to a READY instance.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Target instance. |
+| `command` | Caller-owned validated command. |
+
+**Returns:** `0` after driver acceptance.
+
+**Errors:** Unknown/not-ready instance, unsupported command, removal conflict, or hardware error.
+
+**Execution context:** Thread context.
+
+**Calls:** Driver `command()`; driver calls Port.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant Manager
+    participant Port
+    participant Registry
+    participant Driver
+    Caller->>Manager: configure(request)
+    Manager->>Port: resolve + check capabilities
+    Manager->>Registry: find(type_id)
+    Registry-->>Manager: descriptor
+    Manager->>Driver: init(provisional instance)
+    alt success
+        Driver-->>Manager: 0
+        Manager-->>Caller: READY instance ID
+    else failure
+        Driver-->>Manager: error
+        Manager->>Manager: rollback slot and Port mapping
+        Manager-->>Caller: same error
+    end
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-ALLOCATED -> CONFIGURED -> INITIALIZING -> READY
-                               |           |
-                               v           v
-                              ERROR <-> REMOVING -> FREE
+Config requests a temperature sensor on Port 0. Manager verifies I2C capability and finds the driver. If driver initialization fails, no instance ID is published and Port 0 remains available for a corrected request.
+
+## Zephyr integration
+
+- A `k_mutex` may serialize short Manager-owned state changes in thread context.
+- Do not hold the Manager lock across callbacks that can re-enter Manager.
+- Use a command queue only when multiple asynchronous producers create a demonstrated need; the public contract remains unchanged.
+
+## Configuration templates
+
+### Request shape
+
+```c
+struct spaghetti_module_request {
+    spaghetti_port_id_t port_id;
+    char type_id[SPAGHETTI_TYPE_ID_MAX];
+    const void *driver_config;
+    size_t driver_config_size;
+    uint32_t revision;
+};
 ```
 
-## Concurrency considerations
+Manager must copy any config data retained after `configure()` returns.
 
-All lifecycle mutations must be serialized. OPTION A: one mutex and synchronous
-calls, simplest first. OPTION B: bounded command queue plus one Manager thread,
-better when Communication/Discovery/presence race. RECOMMENDATION: mutex first;
-move to a queue only when concurrency appears. Never hold the Manager mutex while
-publishing callbacks that may re-enter Manager.
+## Ownership and concurrency
 
-## Zephyr concepts involved
+All lifecycle mutations are serialized. Read/command operations hold a stable instance reference for the duration of the call, preventing concurrent removal from invalidating driver context.
 
-- `k_mutex` protects Manager-owned tables in thread context.
-- `k_msgq` can later serialize copied commands with bounded memory.
-- fixed pools make RAM and failure behavior predictable.
-- logging should include port, instance, driver, transition, and errno.
+## Contract guarantees
 
-## Implementation steps
-
-1. Define IDs, states, immutable snapshot.
-2. Implement fixed pool and lookups.
-3. Configure a fake driver transactionally.
-4. Add remove and replace with rollback.
-5. Route read/command.
-6. Add minimal locking and lifecycle event reporting.
-
-## Expected result
-
-`Port 0 = SHT40` creates exactly one READY instance; remove frees it; failed
-replacement leaves a defined state.
-
-## Minimal test
-
-Fake Port/Registry/driver: add, read, remove, occupied port, init failure rollback.
-
-## Dependencies
-
-Port, Module/Module Driver, Driver Registry; Data only for later status events.
-
-## Not yet
-
-No heap-first allocation, auto discovery, persistent schema, MQTT, or per-module
-thread.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_module_manager_init` | Core | boot | DIRECT CALL | main thread | Port/Registry validation |
-| `spaghetti_module_manager_configure` | Discovery/Config | assignment | DIRECT CALL; future MSGQ | caller/Manager worker | Port, Registry, driver init |
-| `spaghetti_module_manager_remove` | Discovery/Communication | removal | DIRECT CALL; future MSGQ | caller/Manager worker | driver deinit, Port/Power |
-| `spaghetti_module_manager_get_by_id` | Runtime/Communication | query | DIRECT CALL | caller thread | none |
-| `spaghetti_module_manager_get_by_port` | Runtime/Communication | query | DIRECT CALL | caller thread | none |
-| `spaghetti_module_manager_read` | Runtime | timer/user action | DIRECT CALL | Runtime/Manager thread | driver read -> Port |
-| `spaghetti_module_manager_command` | Runtime/Communication | actuator command | DIRECT CALL | caller/Manager thread | driver command -> Port |
+- Exactly one component owns and mutates each live instance.
+- Configure either commits a complete READY instance or leaves no partial assignment.
+- Public getters return snapshots rather than writable internal pointers.

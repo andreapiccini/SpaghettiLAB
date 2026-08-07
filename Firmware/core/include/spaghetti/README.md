@@ -1,127 +1,112 @@
-# Spaghetti LAB Public Interfaces
+# Spaghetti LAB public interfaces
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+This directory contains contracts shared between firmware components. Headers expose stable types and operations; ownership and implementation details remain in the component that provides the API.
 
-## Purpose
+## What this component owns
 
-This directory contains public contracts shared across architecture components.
-Headers should reveal what a subsystem guarantees, not its private storage or
-Zephyr backend details.
+- Public IDs, enums, immutable value objects, and function declarations.
+- Parameter ownership and lifetime rules.
+- Common error and timeout conventions.
 
-## Responsibility
+## What this component does not own
 
-- Stable names, opaque handles, value types, operation contracts, error semantics.
-- Clear ownership, lifetime, mutability, timeout, and execution-context rules.
-- Minimal includes and forward declarations where practical.
-
-## Non-responsibility
-
-No implementation, global mutable storage, board pin mappings, private Zephyr
-thread objects, or concrete module-driver internals.
+- Global mutable state.
+- Board pin mappings.
+- Private Zephyr thread, mutex, queue, or driver context objects.
 
 ## Files
 
-| Header | Contract | Detailed documentation |
+| File | Role |
+|---|---|
+| `core.h` | Boot and Core state contract. |
+| `port.h` | Physical Port access contract. |
+| `module.h` | Runtime module instance and identifiers. |
+| `module_driver.h` | Immutable driver descriptor and operation table. |
+| `module_manager.h` | Module lifecycle and operation routing. |
+| `config.h` | Validated desired-state model. |
+| `data.h` | Normalized values and events. |
+| `runtime.h` | Autonomous behavior contract. |
+| `communication.h` | Transport-independent request/response boundary. |
+| `discovery.h` | Optional normalized identification proposal. |
+| `power.h` | Optional shared-resource contract. |
+
+## Data model
+
+| Type / object | Owner | Meaning |
 |---|---|---|
-| `core.h` | Core boot/info/state | [Core](../../subsys/core/README.md) |
-| `port.h` | physical Port abstraction | [Port](../../subsys/port/README.md) |
-| `module.h` | runtime module instance model | this README and Manager docs |
-| `module_driver.h` | concrete module operation table | this README and module docs |
-| `module_manager.h` | instance lifecycle/query/operations | [Module Manager](../../subsys/module_manager/README.md) |
-| `discovery.h` | provider/policy/result contract | [Discovery](../../subsys/discovery/README.md) |
-| `driver_registry.h` | known-driver lookup | [Driver Registry](../../subsys/driver_registry/README.md) |
-| `data.h` | normalized value/event contract | [Data](../../subsys/data/README.md) |
-| `runtime.h` | user-program execution contract | [Runtime](../../subsys/runtime/README.md) |
-| `config.h` | desired-state snapshot/update | [Config](../../subsys/config/README.md) |
-| `communication.h` | external protocol boundary | [Communication](../../subsys/communication/README.md) |
-| `power.h` | power resource/transition contract | [Power](../../subsys/power/README.md) |
+| ID types | Declaring header | Small value types passed by copy. |
+| Configuration/value structs | Caller until accepted; provider after copy | Bounded objects with explicit sizes. |
+| Opaque handles | Providing subsystem | References whose internal layout stays private. |
+| Snapshots | Caller after successful getter | Copied read-only diagnostic state. |
 
-## Data structures to implement
+## API contract
 
-### `spaghetti_module`
+This component has no runtime C API. Its contract is processed at build time.
 
-Created, owned, modified, and destroyed by Module Manager. Runtime,
-Communication, and drivers receive a stable ID, snapshot, or controlled reference.
-It represents an instance, not a module type or implementation.
+## How it works
 
-### `spaghetti_module_driver`
-
-Created by a concrete implementation with static lifetime; owned there; registered
-and read by Registry/Manager; never modified after boot. It identifies a module
-type, requirements, context needs, and operation callbacks.
-
-### Public value objects
-
-IDs, capabilities, results, Config snapshots, and Data messages should be copied
-where bounded. Opaque objects hide private mutexes, queues, and Zephyr devices.
-
-## Functions to implement
-
-Functions are documented with caller, trigger, mechanism, context, state, errors,
-and downstream calls in their owning subsystem README. Headers should add concise
-API comments with those guarantees when implementation begins; they must not
-duplicate private algorithms.
-
-## Interaction diagram
-
-```text
-Caller --DIRECT CALL / documented async mechanism--> Public header contract
-                                                        |
-                                                        v
-                                                owning subsystem `.c`
+```mermaid
+flowchart TB
+    PUBLIC["include/spaghetti/*.h<br/>public contracts"]
+    CORE["Subsystem implementations"]
+    MODULES["Concrete module drivers"]
+    APP["main / tests / adapters"]
+    CORE --> PUBLIC
+    MODULES --> PUBLIC
+    APP --> PUBLIC
+    PUBLIC -. "does not include private internals" .-> PRIVATE["private structs, queues, pins"]
 ```
 
-## State / lifecycle
+## Practical example
 
-Opaque object lifecycle is owned by its subsystem. Public callers must not retain
-references beyond the documented generation/lifetime.
+`runtime.c` includes `module_manager.h` and calls the Manager with a module ID. It does not include `sht40.h`, access a Manager-owned struct directly, or know which I2C controller the Port uses.
 
-## Concurrency considerations
+## Zephyr integration
 
-Every API must state thread-only versus ISR-safe, blocking/timeout behavior, and
-whether it copies or borrows input. Default assumption: thread context, not ISR;
-normal DIRECT CALL; no hidden asynchronous execution.
+- Use Zephyr public types in signatures only when they are part of the intended cross-component contract, such as `k_timeout_t`.
+- Prefer negative errno-compatible returns for failures.
+- Forward-declare opaque structs to reduce include cycles.
 
-## Zephyr concepts involved
+## Configuration templates
 
-Zephyr APIs commonly return negative `errno` values. Kernel object types should
-remain private unless callers truly operate them. Kconfig gates optional APIs at
-build time; Devicetree-generated hardware belongs behind Core/Port.
+### Public header template
 
-## Implementation steps
+```c
+#ifndef SPAGHETTI_EXAMPLE_H_
+#define SPAGHETTI_EXAMPLE_H_
 
-1. Define ownership and failure semantics before fields.
-2. Add the smallest value/opaque types required by the current milestone.
-3. Add one function contract at a time.
-4. Keep implementation-only structures in `.c` or private headers.
-5. Compile/test all callers before extending the contract.
+#include <stddef.h>
+#include <stdint.h>
 
-## Expected result
+struct spaghetti_example;
 
-Subsystems can evolve internally without forcing unrelated callers to know
-Zephyr backend or board details.
+/**
+ * @brief Perform one bounded operation.
+ *
+ * @param example Provider-owned opaque object.
+ * @param input   Caller-owned input, valid for the duration of the call.
+ * @param output  Caller-owned destination populated only on success.
+ *
+ * @return 0 on success, or a negative errno-compatible value.
+ */
+int spaghetti_example_run(const struct spaghetti_example *example,
+                          const void *input,
+                          void *output);
 
-## Minimal test
+#endif /* SPAGHETTI_EXAMPLE_H_ */
+```
 
-Compile a fake consumer using only public headers and verify no private type is
-required for its supported operation.
+Public structures must use fixed capacities or explicit pointer/length pairs.
+Never expose a pointer to temporary stack storage.
 
-## Dependencies
+## Ownership and concurrency
 
-Each header should depend only on smaller shared contracts needed in declarations.
-Avoid cyclic includes through forward declarations and IDs.
+Each API documents its valid execution context. Public headers declare the contract but do not expose the mutex or queue used to satisfy it.
 
-## Not yet
+## Contract guarantees
 
-No speculative universal API, ABI promise, heap ownership ambiguity, or generated
-hardware contents.
-
-| Contract family | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| lifecycle APIs | Core/Manager | boot/config/remove | DIRECT CALL | thread | owning subsystem |
-| query APIs | Runtime/Communication/tests | query | DIRECT CALL | caller thread | snapshot only |
-| Data/event APIs | producers/consumers | value/event | ZBUS/MSGQ TBD | documented per API | Data transport |
-| callback/provider APIs | Zephyr/adapters | hardware/network result | CALLBACK then deferred work | callback/worker | owning subsystem |
+- A caller can determine ownership, lifetime, return value, and realistic errors from the header documentation.
+- Headers do not leak board or concrete-driver implementation details.
+- All payload sizes are bounded or explicitly supplied.

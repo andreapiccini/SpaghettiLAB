@@ -1,143 +1,170 @@
-# Power
+# Optional shared-resource coordination
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+This component is used only when a Core exposes a real controllable resource shared by multiple users, such as a switchable Port rail. It is not required for boards whose power is always on or fully owned by a single device.
 
-## Purpose
+## What this component owns
 
-Power coordinates Core and module power requirements above board-specific rails
-and Zephyr PM so shared resources are not disabled while still in use.
+- Reference count and state for each declared shared resource.
+- First-acquire activation and final-release deactivation.
+- Transition serialization, owner diagnostics, and hardware error reporting.
 
-## Responsibility
+## What this component does not own
 
-Capability checks, usage/reference tracking, port power requests, transition
-coordination, diagnostics, and later suspend/resume constraints.
-
-## Non-responsibility
-
-No invented power pins, application policy guesses, direct sensor protocol, or
-replacement of Zephyr's device/system PM implementations.
+- A speculative battery policy or generic system-wide power strategy.
+- Resources that do not physically exist in the board description.
+- Module lifecycle; Manager only calls this component at defined lifecycle points.
 
 ## Files
 
-- Public API: `include/spaghetti/power.h`.
-- Implementation: `subsys/power/power.c`.
-- Static rails/pins/domains belong to board Devicetree and Port.
+| File | Role |
+|---|---|
+| `include/spaghetti/power.h` | Optional resource IDs, states, and acquire/release API. |
+| `subsys/power/power.c` | Reference counts and real transition hooks. |
+| Board DTS / Port binding | Physical control reference and polarity. |
+| Module Manager | Acquires before driver init and releases after deinit/rollback. |
 
-## Data structures to implement
+## Data model
 
-- power resource/capability descriptor: derived from Port/static hardware, owned
-  by Power/Port for firmware lifetime, read by Manager/drivers.
-- lease/token: created on acquire, owned by caller but validated by Power,
-  destroyed on release.
-- resource state/reference count: Power-owned and modified only under lock.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| Resource descriptor | Board/Power | Immutable ID, hardware control, and safe state. |
+| Resource state | Power | OFF, STARTING, ON, STOPPING, or ERROR. |
+| Reference count | Power | Number of current successful owners. |
+| Owner diagnostics | Power | Bounded ownership/debug information. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_power_init()`
+### `int spaghetti_power_init(void)`
 
-- **Purpose:** build/validate known resource state.
-- **Called by:** Core after Port.
-- **Trigger/mechanism/context:** boot; DIRECT CALL; main thread.
-- **Inputs:** static Port/power capabilities.
-- **Outputs:** status.
-- **State modified:** resource table.
-- **Failure cases:** inconsistent dependency/unready control device.
-- **Called next:** Port/device readiness calls.
+**Purpose:** Validate every configured real resource and establish its safe initial state.
 
-### `spaghetti_power_acquire()` / `_release()`
+**Parameters**
 
-- **Purpose:** reference-count a required powered resource.
-- **Called by:** Manager lifecycle or driver operation.
-- **Trigger/mechanism/context:** init/operation/deinit; DIRECT CALL; thread only.
-- **Inputs:** resource/port, owner, timeout.
-- **Outputs:** lease/status.
-- **State modified:** count, state, owner records.
-- **Failure cases:** unsupported, transition failure, timeout, invalid/double release.
-- **Called next:** Port power control or Zephyr runtime PM by DIRECT CALL.
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
 
-### `spaghetti_power_prepare_suspend()` / `_resume()`
+**Returns:** `0` when resource states match hardware policy.
 
-- **Purpose:** coordinate future system transition with live modules.
-- **Called by:** Core/PM policy integration.
-- **Trigger/mechanism/context:** power state transition; CALLBACK/DIRECT CALL in
-  Zephyr-defined PM context, details DECISION REQUIRED.
-- **Inputs:** target state/reason.
-- **Outputs:** allowed/busy/error.
-- **State modified:** transition state.
-- **Failure cases:** busy resource, unsupported wake requirement, driver failure.
-- **Called next:** Manager/Port/Zephyr PM hooks with strict context rules.
+**Errors:** Invalid descriptor, unavailable control device, or safe-state write failure.
 
-### `spaghetti_power_get_status()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** diagnostics snapshot.
-- **Called by:** Communication/tests.
-- **Trigger/mechanism/context:** query; DIRECT CALL; caller thread.
-- **Inputs/outputs:** resource/status snapshot.
-- **State modified:** none.
-- **Failure cases:** invalid ID/output.
-- **Called next:** none.
+**Calls:** Port or Zephyr GPIO/runtime-PM API.
 
-## Interaction diagram
+### `int spaghetti_power_acquire(spaghetti_power_resource_id_t id, spaghetti_power_owner_id_t owner)`
 
-```text
-Manager/driver --DIRECT CALL acquire--> Power --DIRECT CALL--> Port/Zephyr PM
-Core/PM policy --CALLBACK/DIRECT CALL TBD--> Power transition coordinator
+**Purpose:** Add one owner and activate hardware only for the first successful owner.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Declared resource ID. |
+| `owner` | Stable owner used for balance/diagnostics. |
+
+**Returns:** `0` when the resource is ON and ownership recorded.
+
+**Errors:** Unknown resource/owner, duplicate/overflow, busy transition, or activation failure.
+
+**Execution context:** Thread only.
+
+**Calls:** Real hardware-on hook on count transition 0→1.
+
+### `int spaghetti_power_release(spaghetti_power_resource_id_t id, spaghetti_power_owner_id_t owner)`
+
+**Purpose:** Remove one owner and deactivate only after the final release.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Declared resource ID. |
+| `owner` | Previously acquired owner. |
+
+**Returns:** `0` when ownership/state are coherent.
+
+**Errors:** Unknown owner, underflow, busy transition, or deactivation failure.
+
+**Execution context:** Thread only.
+
+**Calls:** Real hardware-off hook on count transition 1→0.
+
+### `int spaghetti_power_get_status(spaghetti_power_resource_id_t id, struct spaghetti_power_status *out)`
+
+**Purpose:** Copy state, count, and last transition error.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `id` | Resource ID. |
+| `out` | Caller-owned destination. |
+
+**Returns:** `0` with coherent status.
+
+**Errors:** Unknown ID or invalid output.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant M0 as Module A
+    participant M1 as Module B
+    participant P as Shared resource
+    participant HW as Physical switch
+    M0->>P: acquire(A)
+    P->>HW: ON because count was 0
+    M1->>P: acquire(B)
+    Note over P: count = 2, no hardware toggle
+    M0->>P: release(A)
+    Note over P: count = 1, stays ON
+    M1->>P: release(B)
+    P->>HW: OFF because count becomes 0
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-OFF --first acquire--> STARTING -> ON --last release--> STOPPING -> OFF
-                            +----> FAULT <--------------+
+Two Ports share one switchable 3.3 V rail. Initializing the first module turns it on; initializing the second only increments ownership. Removing one module keeps the rail on. The final removal turns it off.
+
+## Zephyr integration
+
+- Devicetree describes the real GPIO/regulator reference and polarity.
+- A short `k_mutex` protects count/state in thread context.
+- Use Zephyr device runtime PM only when the controlled resource maps to that model; do not wrap it without a real requirement.
+
+## Configuration templates
+
+### Optional DTS property
+
+```dts
+port0: port@0 {
+    compatible = "spaghettilab,port";
+    reg = <0>;
+    power-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>; /* Real schematic value. */
+};
 ```
 
-## Concurrency considerations
+### Optional `prj.conf`
 
-Reference count/state require a short mutex; do not hold it across callbacks that
-can re-enter Power. No dedicated thread initially. PM callbacks have strict
-context and blocking rules that must be checked when integrating a specific
-Zephyr PM path.
+```ini
+CONFIG_GPIO=y
+# Enable CONFIG_PM / CONFIG_PM_DEVICE_RUNTIME only if the selected design
+# actually uses Zephyr system or device runtime power management.
+```
 
-## Zephyr concepts involved
+## Ownership and concurrency
 
-System PM chooses CPU/SoC states; device PM controls individual devices; runtime
-device PM uses get/put reference counts. GPIO-controlled external rails may remain
-a Spaghetti Port/Power concern rather than a generic Zephyr device initially.
+Acquire/release transitions are serialized. The count changes only after the corresponding hardware transition succeeds. Manager rollback always balances a successful acquire.
 
-## Implementation steps
+## Contract guarantees
 
-1. Wait for real power hardware requirements.
-2. Define one capability/resource ID.
-3. Implement reference count with fake backend.
-4. Integrate one real Port power control.
-5. Add fault/diagnostics.
-6. Consider Zephyr PM transitions only after measurement.
-
-## Expected result
-
-A shared resource powers on once, remains on for two users, and turns off only
-after both release it.
-
-## Minimal test
-
-Two fake consumers acquire/release in different orders; test double release/error.
-
-## Dependencies
-
-Port capability and Module Manager lifecycle; real board power description.
-
-## Not yet
-
-No speculative GPIO mappings, battery algorithm, deep sleep, or automatic policy.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_power_init` | Core | boot | DIRECT CALL | main thread | Port/device readiness |
-| `spaghetti_power_acquire` | Manager/driver | lifecycle/operation | DIRECT CALL | caller thread | Port/Zephyr PM |
-| `spaghetti_power_release` | Manager/driver | operation complete | DIRECT CALL | caller thread | Port/Zephyr PM |
-| `spaghetti_power_prepare_suspend` | Core/PM integration | state transition | CALLBACK/DIRECT CALL TBD | PM-defined context | Manager/Port/PM |
-| `spaghetti_power_resume` | Core/PM integration | resume | CALLBACK/DIRECT CALL TBD | PM-defined context | Port/Manager |
-| `spaghetti_power_get_status` | Communication | query | DIRECT CALL | caller thread | none |
+- No resource exists without a real board-side control contract.
+- Intermediate owners cannot switch off a resource still in use.
+- Underflow, duplicate ownership, and hardware failures are observable.

@@ -1,120 +1,162 @@
-# Relay Module
+# Relay module driver
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+The Relay driver is a concrete example of an output module. It translates a generic boolean command into a safe hardware state through capabilities exposed by the assigned Port.
 
-## Purpose
+## What this component owns
 
-This future implementation controls one external relay module through the Port
-capability actually defined by its hardware.
+- Relay polarity and safe-state configuration for one instance.
+- Boolean SET command validation.
+- Safe initialization, command, and deinitialization behavior.
+- The immutable `relay` driver descriptor.
 
-## Responsibility
+## What this component does not own
 
-Validate capability/config, initialize safe state, apply ON/OFF commands, expose
-known state/diagnostics, and leave the relay safe during deinit where hardware
-permits.
-
-## Non-responsibility
-
-No threshold rule, timer, discovery, port assignment, MQTT, or invented active
-level/GPIO mapping.
+- The physical GPIO number or board wiring.
+- Threshold decisions and automation rules.
+- Module lifetime, scheduling, or external command protocols.
 
 ## Files
 
-Only this design README exists. The implementation will use the generic public
-Module Driver contract; hardware-specific details remain local.
+| File | Role |
+|---|---|
+| `relay.h` | Relay config, command value, and descriptor declaration. |
+| `relay.c` | Lifecycle and SET implementation. |
+| `include/spaghetti/module_driver.h` | Common command operation contract. |
+| `include/spaghetti/port.h` | Stable output capability used by the driver. |
 
-## Data structures to implement
+## Data model
 
-- static relay driver descriptor owned here.
-- per-instance context owned by Manager and modified by relay operations.
-- command/state types describing logical ON/OFF independently of electrical level.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| `spaghetti_relay_config` | Config copied into instance context | Active polarity and safe logical state. |
+| Relay private context | Module instance | Current known logical state and Port resource. |
+| Boolean command | Caller during command | Requested OFF/ON state independent of electrical polarity. |
 
-## Functions to implement
+## API contract
 
-### Relay `init`
+### `int relay_init(struct spaghetti_module *module, const void *config, size_t config_size)`
 
-- **Purpose:** validate capability and enter documented safe logical state.
-- **Called by:** Module Manager on assignment.
-- **Trigger/mechanism/context:** configure; DIRECT CALL; thread.
-- **Inputs:** Port, context, validated safe-state config.
-- **Outputs:** status.
-- **State modified:** instance/hardware output.
-- **Failure cases:** unsupported capability, output unavailable, invalid config.
-- **Called next:** Port operation by DIRECT CALL.
+**Purpose:** Validate the output capability and drive the configured safe state.
 
-### Relay `command`
+**Parameters**
 
-- **Purpose:** atomically request logical ON or OFF.
-- **Called by:** Module Manager for Runtime/Communication.
-- **Trigger/mechanism/context:** user rule/manual command; DIRECT CALL; thread.
-- **Inputs:** instance and logical target state.
-- **Outputs:** applied/error and optional observed state.
-- **State modified:** relay private/current state.
-- **Failure cases:** not ready, invalid command, hardware/Port failure.
-- **Called next:** Port then Zephyr peripheral API.
+| Parameter | Meaning |
+|---|---|
+| `module` | Manager-owned instance assigned to a compatible Port. |
+| `config` | Pointer to relay polarity/safe-state config. |
+| `config_size` | Exact config size. |
 
-### Relay `deinit`
+**Returns:** `0` when the output is in the safe state.
 
-- **Purpose:** enter defined safe state and release resources.
-- **Called by:** Module Manager on remove/rollback.
-- **Trigger/mechanism/context:** lifecycle; DIRECT CALL; thread.
-- **Inputs/outputs:** context; status.
-- **State modified:** context/hardware state.
-- **Failure cases:** safe transition failure.
-- **Called next:** Port/Power release.
+**Errors:** Invalid config, missing output capability, unavailable device, or GPIO error.
 
-## Interaction diagram
+**Execution context:** Calling thread.
 
-```text
-Runtime --DIRECT CALL--> Manager --DIRECT CALL--> Relay command
-Relay --DIRECT CALL--> Port --DIRECT CALL--> Zephyr peripheral API
+**Calls:** Port output API and Zephyr GPIO API.
+
+### `int relay_command(struct spaghetti_module *module, const struct spaghetti_command *command)`
+
+**Purpose:** Apply one logical SET command.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `module` | READY relay instance. |
+| `command` | Command ID plus bounded boolean value. |
+
+**Returns:** `0` after hardware and cached logical state agree.
+
+**Errors:** Unsupported command, invalid value, not ready, or GPIO failure.
+
+**Execution context:** Calling thread.
+
+**Calls:** Port output API.
+
+### `int relay_deinit(struct spaghetti_module *module)`
+
+**Purpose:** Return the output to the configured safe state before removal.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `module` | Initialized relay instance. |
+
+**Returns:** `0` when safe state is confirmed.
+
+**Errors:** Invalid instance or safe-state write failure.
+
+**Execution context:** Calling thread.
+
+**Calls:** Port output API.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+    participant Runtime
+    participant Manager as Module Manager
+    participant Relay as Relay driver
+    participant Port
+    participant GPIO as Zephyr GPIO API
+    Runtime->>Manager: command(relay_id, SET, true)
+    Manager->>Relay: command(instance, true)
+    Relay->>Relay: map logical state to polarity
+    Relay->>Port: set output
+    Port->>GPIO: gpio_pin_set_dt(...)
+    GPIO-->>Relay: status
+    Relay-->>Runtime: success or error
 ```
 
-## State / lifecycle
+## Practical example
 
-UNINITIALIZED -> SAFE/READY -> ON/OFF -> SAFE -> REMOVED, with FAULT reachable
-from hardware operations.
+Runtime decides that an actuator must turn on. It sends logical `true`; a relay configured active-low converts that to the correct electrical level. On removal, the driver always attempts the configured safe state.
 
-## Concurrency considerations
+## Zephyr integration
 
-Commands remain synchronous and serialized by Manager/Port. No thread or zbus is
-needed in the driver. State-change publication may occur through Data after the
-command returns, outside any Port lock.
+- Enable GPIO support with `CONFIG_GPIO=y` when the Port uses a GPIO output.
+- Board DTS owns the physical GPIO specifier; the relay driver receives it through Port.
+- Use logical values in product code and isolate electrical polarity in config/driver code.
 
-## Zephyr concepts involved
+## Configuration templates
 
-GPIO or another peripheral API will be chosen only from the real module/port
-hardware. Devicetree describes Core wiring, not logical relay identity.
+### Runtime configuration
 
-## Implementation steps
+```c
+struct spaghetti_relay_config {
+    bool active_low;
+    bool safe_state;
+};
+```
 
-1. Confirm electrical interface and safe state from hardware documentation.
-2. Declare required Port capability.
-3. Test fake logical ON/OFF conversion.
-4. Implement init/command/deinit through Port.
-5. Test boot/removal/failure safety.
+### `prj.conf`
 
-## Expected result
+```ini
+CONFIG_GPIO=y
+CONFIG_LOG=y
+```
 
-A READY relay follows logical commands and transitions safely on removal/error.
+### Static board-side Port fragment
 
-## Minimal test
+```dts
+port1: port@1 {
+    compatible = "spaghettilab,port";
+    reg = <1>;
+    capabilities = "gpio";
+    output-gpios = <&gpio0 7 GPIO_ACTIVE_LOW>; /* Schematic-derived example. */
+    status = "okay";
+};
+```
 
-Fake Port records OFF, ON, OFF sequence and an injected hardware failure.
+## Ownership and concurrency
 
-## Dependencies
+Commands are serialized through Module Manager/Port. The driver owns no thread. A failed output write does not update the cached logical state as if it succeeded.
 
-Module Driver, Port, Manager; Data only for state publication.
+## Contract guarantees
 
-## Not yet
-
-No guessed active level, pin number, latching behavior, timing, or automation.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| Relay `init` | Manager | assignment | DIRECT CALL | Manager thread | Port |
-| Relay `command` | Manager | Runtime/manual action | DIRECT CALL | Runtime/Manager thread | Port/peripheral API |
-| Relay `deinit` | Manager | remove/rollback | DIRECT CALL | Manager thread | Port/Power |
+- Initialization and deinitialization define a safe physical state.
+- Runtime sees logical ON/OFF and never board polarity.
+- Unsupported commands return `-ENOTSUP` without changing the output.

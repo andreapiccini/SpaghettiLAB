@@ -2,148 +2,185 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-> [!NOTE]
-> This is a design contract. See the roadmap for current implementation status.
+Config is the validated desired-state model. It gives every input source and storage backend one common representation before anything changes in the live system.
 
-## Purpose
+## What this component owns
 
-Config owns the validated, versioned desired state of the product and separates
-that state from its live application by Module Manager/Runtime.
+- The current validated configuration snapshot and schema version.
+- Syntactic/semantic validation independent of transport.
+- Atomic replacement and reconciliation requests to owning components.
 
-## Responsibility
+## What this component does not own
 
-Defaults, schema version, validation, migration, snapshot/update, persistence
-coordination, and change notification.
-
-## Non-responsibility
-
-No flash driver details, live module lifecycle, discovery probing, or protocol
-frame parsing.
+- Transport parsing, flash layout, module instances, measurements, or product execution.
+- Secrets unless an explicit protected-storage contract is defined.
 
 ## Files
 
-- Public API: `include/spaghetti/config.h`.
-- Implementation: `subsys/config/config.c`.
-- Physical persistence is delegated to `subsys/services/storage/`.
+| File | Role |
+|---|---|
+| `include/spaghetti/config.h` | Bounded schema, snapshot, validation, and apply declarations. |
+| `subsys/config/config.c` | Validation and atomic snapshot management. |
+| Optional codec files | Translate CBOR/JSON/other bytes into the same internal model. |
+| Storage service | Persists an encoded/versioned snapshot when required. |
 
-## Data structures to implement
+## Data model
 
-- `spaghetti_config`: snapshot created from defaults/load/update, owned by Config,
-  immutable to readers, replaced atomically by Config.
-- schema version/revision: Config-owned monotonic metadata.
-- update request: caller-owned during synchronous validation or copied into a
-  queue if asynchronous commits are later selected.
-- validation error: value object returned to Communication.
+| Type / object | Owner | Meaning |
+|---|---|---|
+| `spaghetti_config` | Config | Complete validated desired-state snapshot. |
+| Module assignment | Config snapshot | Port ID, bounded type ID, and bounded driver config. |
+| Runtime rule/schedule | Config snapshot | Generic module IDs/channels and timing. |
+| Generation/version | Config | Detects stale updates and incompatible schemas. |
 
-## Functions to implement
+## API contract
 
-### `spaghetti_config_init()` / `_load()`
+### `int spaghetti_config_init(const struct spaghetti_config *defaults)`
 
-- **Purpose:** create defaults, load persistent records, validate/migrate, commit
-  one coherent snapshot.
-- **Called by:** Core.
-- **Trigger:** firmware boot.
-- **Invocation mechanism:** DIRECT CALL; Storage may invoke SETTINGS CALLBACKS.
-- **Execution context:** main thread during boot.
-- **Inputs:** storage backend/schema version.
-- **Outputs:** valid snapshot or controlled default/error.
-- **State modified:** active snapshot/revision.
-- **Failure cases:** corruption, unsupported version, storage unavailable.
-- **Called next:** Storage read, migration/validation by DIRECT CALL.
+**Purpose:** Validate and install the startup default snapshot.
 
-### `spaghetti_config_update()`
+**Parameters**
 
-- **Purpose:** validate and persist a new desired-state transaction.
-- **Called by:** Communication or local shell/tests.
-- **Trigger/mechanism/context:** backend command; COMMUNICATION RX then DIRECT CALL
-  in communication worker; asynchronous commit is DECISION REQUIRED.
-- **Inputs:** patch/full snapshot and expected revision.
-- **Outputs:** new revision or detailed rejection.
-- **State modified:** snapshot only after validation/persistence succeeds.
-- **Failure cases:** stale revision, schema/type error, storage failure.
-- **Called next:** Storage write; then notify Discovery/Runtime/Manager via DIRECT
-  reconciliation call or event, DECISION REQUIRED.
+| Parameter | Meaning |
+|---|---|
+| `defaults` | Complete caller-owned default configuration copied on success. |
 
-### `spaghetti_config_get_snapshot()`
+**Returns:** `0` with generation initialized.
 
-- **Purpose:** provide consistent read-only configuration.
-- **Called by:** Discovery, Runtime, MQTT, Communication.
-- **Trigger/mechanism/context:** query/reconciliation; DIRECT CALL; caller thread.
-- **Inputs:** destination or read guard.
-- **Outputs:** copied snapshot/revision.
-- **State modified:** none.
-- **Failure cases:** invalid destination/not initialized.
-- **Called next:** none.
+**Errors:** Null or semantically invalid defaults.
 
-### `spaghetti_config_reset_defaults()`
+**Execution context:** Main thread during boot.
 
-- **Purpose:** perform an explicit recoverable factory reset transaction.
-- **Called by:** authenticated Communication/shell command.
-- **Trigger/mechanism/context:** user command; COMMUNICATION RX + DIRECT CALL;
-  thread context.
-- **Inputs:** authorization/expected revision.
-- **Outputs:** status/new revision.
-- **State modified:** persistent and active configuration.
-- **Failure cases:** unauthorized, write failure.
-- **Called next:** Storage and reconciliation.
+**Calls:** Pure validation; no live apply required by this function.
 
-## Interaction diagram
+### `int spaghetti_config_validate(const struct spaghetti_config *candidate, struct spaghetti_config_error *error)`
 
-```text
-Core --DIRECT CALL--> Config --DIRECT CALL--> Storage
-                              <--SETTINGS CALLBACK-- Zephyr Settings
-Backend --COMMUNICATION RX--> Communication --DIRECT CALL--> Config update
-Config --DIRECT CALL/event TBD--> Discovery/Manager/Runtime reconciliation
+**Purpose:** Validate the entire candidate without side effects.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `candidate` | Complete caller-owned snapshot. |
+| `error` | Optional destination for field/index/reason diagnostics. |
+
+**Returns:** `0` when fully valid; negative semantic error otherwise.
+
+**Errors:** Unsupported version, invalid count/range/string, duplicates, inconsistent references.
+
+**Execution context:** Calling thread; pure function.
+
+**Calls:** Bounded schema checks only.
+
+### `int spaghetti_config_apply(const struct spaghetti_config *candidate, uint32_t expected_generation)`
+
+**Purpose:** Reconcile a valid candidate with live component owners and commit atomically.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `candidate` | Complete candidate copied before return. |
+| `expected_generation` | Current generation required to reject stale writers. |
+
+**Returns:** `0` plus incremented generation.
+
+**Errors:** Validation failure, stale generation, component apply error, or rollback error.
+
+**Execution context:** Calling thread; never ISR.
+
+**Calls:** Module Manager, Runtime, and selected service configuration APIs.
+
+### `int spaghetti_config_get_snapshot(struct spaghetti_config *out, uint32_t *generation)`
+
+**Purpose:** Copy the current desired state.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `out` | Caller-owned snapshot destination. |
+| `generation` | Optional generation destination. |
+
+**Returns:** `0` with a coherent copy.
+
+**Errors:** Invalid output or uninitialized Config.
+
+**Execution context:** Calling thread.
+
+**Calls:** None.
+
+### `int spaghetti_config_reset_defaults(void)`
+
+**Purpose:** Validate and apply the stored default snapshot through the same transactional path.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| None | No input parameters. |
+
+**Returns:** `0` after defaults are live and current.
+
+**Errors:** Apply/rollback failure.
+
+**Execution context:** Calling thread.
+
+**Calls:** `spaghetti_config_apply()`.
+
+## How it works
+
+```mermaid
+flowchart LR
+    INPUT["USB / network / file / defaults"] --> DECODE["Decode into temporary Config"]
+    DECODE --> VALIDATE["Validate complete snapshot"]
+    VALIDATE -->|"invalid"| REJECT["Reject, no live change"]
+    VALIDATE -->|"valid"| APPLY["Apply to component owners"]
+    APPLY -->|"success"| COMMIT["Commit snapshot + generation"]
+    APPLY -->|"failure"| ROLLBACK["Restore defined prior state"]
 ```
 
-## State / lifecycle
+## Practical example
 
-```text
-DEFAULTS -> LOADING -> VALIDATED -> ACTIVE -> UPDATING -> ACTIVE(new revision)
-                    +-> RECOVERED DEFAULTS     +-----> prior ACTIVE on failure
+A candidate assigns two modules but repeats Port 0. Validation rejects it before Manager is called. A valid candidate is applied completely; only after all owners accept it does Config publish the new generation.
+
+## Zephyr integration
+
+- Config is runtime state; Kconfig is unrelated build-time feature selection.
+- A short `k_mutex` can protect snapshot/generation copies.
+- Persistence uses a Storage adapter; Zephyr Settings callbacks must decode into a temporary candidate before apply.
+
+## Configuration templates
+
+### Bounded schema shape
+
+```c
+#define SPAGHETTI_CONFIG_MAX_MODULES 8
+#define SPAGHETTI_TYPE_ID_MAX 24
+
+struct spaghetti_module_config {
+    spaghetti_port_id_t port_id;
+    char type_id[SPAGHETTI_TYPE_ID_MAX];
+    uint8_t driver_config[SPAGHETTI_DRIVER_CONFIG_MAX];
+    size_t driver_config_size;
+};
+
+struct spaghetti_config {
+    uint32_t version;
+    size_t module_count;
+    struct spaghetti_module_config modules[SPAGHETTI_CONFIG_MAX_MODULES];
+};
 ```
 
-## Concurrency considerations
+The concrete schema may add bounded sections, but every retained string and
+payload must be owned by the snapshot.
 
-Readers need consistent snapshots; a short mutex plus copy is simplest. Do not
-hold it during flash writes or downstream callbacks. Serialize updates. zbus may
-announce “config revision changed,” but is not the persistence transaction.
+## Ownership and concurrency
 
-## Zephyr concepts involved
+Readers receive coherent copies. A single apply transaction serializes desired-state mutation and never exposes the partially reconciled candidate as current.
 
-Settings loads key/value records through registered handlers/callbacks. NVS/ZMS
-or another backend owns flash layout. A fixed partition belongs in Devicetree.
-Kconfig selects Settings/backend software.
+## Contract guarantees
 
-## Implementation steps
-
-1. Define one versioned assignment schema.
-2. Implement pure validation/defaults.
-3. Implement in-memory snapshot/revision.
-4. Integrate Storage load/save.
-5. Test corruption and stale revision.
-6. Add reconciliation notification without holding the Config lock.
-
-## Expected result
-
-Valid desired state survives reboot; invalid/corrupt state has a deterministic
-recovery path; failed update never exposes half-applied data.
-
-## Minimal test
-
-Save one port assignment, reboot/load, then inject corruption and stale revision.
-
-## Dependencies
-
-Storage service; stable identifiers/schemas from Port, Discovery, and Runtime.
-
-## Not yet
-
-No secret management, cloud schema, measurement history, or arbitrary blobs.
-
-| Function | Called by | Trigger | Mechanism | Execution context | Calls |
-|---|---|---|---|---|---|
-| `spaghetti_config_init/load` | Core | boot | DIRECT CALL + SETTINGS CALLBACK | main thread | Storage/Settings |
-| `spaghetti_config_update` | Communication | backend update | COMMUNICATION RX + DIRECT CALL | communication thread | validate, Storage, reconciliation |
-| `spaghetti_config_get_snapshot` | subsystems | query | DIRECT CALL | caller thread | none |
-| `spaghetti_config_reset_defaults` | Communication/shell | explicit reset | COMMUNICATION RX/SHELL + DIRECT CALL | caller thread | Storage, reconciliation |
+- Invalid input has no live side effect.
+- A committed snapshot owns all retained bytes.
+- Transport, encoding, and storage format do not change the internal Config contract.
