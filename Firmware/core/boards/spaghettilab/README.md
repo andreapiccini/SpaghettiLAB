@@ -1,23 +1,28 @@
 # Spaghetti LAB Board Support
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 This directory will contain out-of-tree Zephyr board definitions for physical
 Spaghetti LAB Core variants. Board support absorbs MCU and wiring differences so
 higher firmware remains common.
 
-## 2. Responsibility
+## Responsibility
 
 Describe MCU/SoC selection, physical peripherals, memory/flash, connectivity,
 console/debug, port count/capabilities, fixed power/presence hardware, and board
 defaults.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 Never describe which removable module is currently connected, user logic,
 backend assignments, MQTT endpoint, or runtime discovery result.
 
-## 4. Files
+## Files
 
 Expected future layout, following Zephyr's board model:
 
@@ -36,12 +41,12 @@ boards/spaghettilab/
 Exact required names/qualifiers must follow the Zephyr version used when the
 board is implemented. No production board files are created by this document.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 No runtime C object is owned here. Build-time metadata and Devicetree generate
 constants/specifiers consumed by Core and Port. Port then owns runtime objects.
 
-## 6. Functions to implement
+## Functions to implement
 
 There are no board runtime functions. Planned interaction is build-time:
 
@@ -58,7 +63,7 @@ There are no board runtime functions. Planned interaction is build-time:
 - **Failure cases:** invalid board metadata, unsupported SoC, invalid DTS/binding.
 - **Called next:** Devicetree compiler, Kconfig, CMake/link.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 board.yml + board DTS + defconfig
@@ -71,15 +76,15 @@ Zephyr generated DT/Kconfig
 Core/Port compiled descriptors -> common Manager/Runtime/Data
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 Board selection happens once per build. It has no runtime lifecycle.
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 None at board-definition level. Concurrency belongs to generated-device consumers.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 - A Zephyr board is a concrete hardware target built on a supported SoC.
 - Devicetree describes hardware instances and wiring.
@@ -88,7 +93,7 @@ None at board-definition level. Concurrency belongs to generated-device consumer
   appropriate.
 - board runner files configure flash/debug tooling, not firmware behavior.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Freeze a real Core schematic, MCU, flash, and revision strategy.
 2. Decide whether to extend an existing Zephyr board or define a full board.
@@ -98,20 +103,20 @@ None at board-definition level. Concurrency belongs to generated-device consumer
 6. Add additional ports/capabilities one at a time.
 7. Add the second Core variant and build the same application for both.
 
-## 12. Expected result
+## Expected result
 
 The same common firmware builds for C3/S3/future Cores and enumerates each
 variant's actual ports/capabilities without MCU conditionals above Port.
 
-## 13. Minimal test
+## Minimal test
 
 Build/boot one board, inspect `build/zephyr/zephyr.dts`, and enumerate one port.
 
-## 14. Dependencies
+## Dependencies
 
 Zephyr support for the selected SoC and a defined Spaghetti Port binding/model.
 
-## 15. Not yet
+## Not yet
 
 No custom board until hardware facts are known; no real GPIO values in examples;
 no removable module child nodes.

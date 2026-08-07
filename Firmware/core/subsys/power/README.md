@@ -1,27 +1,32 @@
 # Power
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Power coordinates Core and module power requirements above board-specific rails
 and Zephyr PM so shared resources are not disabled while still in use.
 
-## 2. Responsibility
+## Responsibility
 
 Capability checks, usage/reference tracking, port power requests, transition
 coordination, diagnostics, and later suspend/resume constraints.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No invented power pins, application policy guesses, direct sensor protocol, or
 replacement of Zephyr's device/system PM implementations.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/power.h`.
 - Implementation: `subsys/power/power.c`.
 - Static rails/pins/domains belong to board Devicetree and Port.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - power resource/capability descriptor: derived from Port/static hardware, owned
   by Power/Port for firmware lifetime, read by Manager/drivers.
@@ -29,7 +34,7 @@ replacement of Zephyr's device/system PM implementations.
   destroyed on release.
 - resource state/reference count: Power-owned and modified only under lock.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_power_init()`
 
@@ -75,34 +80,34 @@ replacement of Zephyr's device/system PM implementations.
 - **Failure cases:** invalid ID/output.
 - **Called next:** none.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Manager/driver --DIRECT CALL acquire--> Power --DIRECT CALL--> Port/Zephyr PM
 Core/PM policy --CALLBACK/DIRECT CALL TBD--> Power transition coordinator
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 OFF --first acquire--> STARTING -> ON --last release--> STOPPING -> OFF
                             +----> FAULT <--------------+
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Reference count/state require a short mutex; do not hold it across callbacks that
 can re-enter Power. No dedicated thread initially. PM callbacks have strict
 context and blocking rules that must be checked when integrating a specific
 Zephyr PM path.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 System PM chooses CPU/SoC states; device PM controls individual devices; runtime
 device PM uses get/put reference counts. GPIO-controlled external rails may remain
 a Spaghetti Port/Power concern rather than a generic Zephyr device initially.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Wait for real power hardware requirements.
 2. Define one capability/resource ID.
@@ -111,20 +116,20 @@ a Spaghetti Port/Power concern rather than a generic Zephyr device initially.
 5. Add fault/diagnostics.
 6. Consider Zephyr PM transitions only after measurement.
 
-## 12. Expected result
+## Expected result
 
 A shared resource powers on once, remains on for two users, and turns off only
 after both release it.
 
-## 13. Minimal test
+## Minimal test
 
 Two fake consumers acquire/release in different orders; test double release/error.
 
-## 14. Dependencies
+## Dependencies
 
 Port capability and Module Manager lifecycle; real board power description.
 
-## 15. Not yet
+## Not yet
 
 No speculative GPIO mappings, battery algorithm, deep sleep, or automatic policy.
 

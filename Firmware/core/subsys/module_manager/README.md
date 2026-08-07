@@ -1,28 +1,33 @@
 # Module Manager
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Module Manager turns a normalized assignment into a live module instance and is
 the single owner of instance lifecycle.
 
-## 2. Responsibility
+## Responsibility
 
 Create, configure, initialize, replace, query, and remove instances; associate
 port and driver; perform validation and rollback; publish lifecycle status.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 It does not identify modules, implement drivers, own persistent Config, or encode
 PC/MQTT protocols.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/module_manager.h`.
 - Shared model: `include/spaghetti/module.h` and driver contract
   `include/spaghetti/module_driver.h`.
 - Implementation: `subsys/module_manager/module_manager.c`.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - `spaghetti_module`: created/destroyed and exclusively modified by Manager;
   drivers/Runtime/Communication get validated read-only references or IDs.
@@ -33,7 +38,7 @@ PC/MQTT protocols.
 - per-instance private driver context: storage allocated by Manager under size and
   alignment rules declared by driver; initialized by driver, released by Manager.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_module_manager_init()`
 
@@ -98,7 +103,7 @@ PC/MQTT protocols.
 - **Failure cases:** not ready, unsupported operation, I/O timeout, removal race.
 - **Called next:** driver operation -> Port API -> Zephyr peripheral API.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Discovery --DIRECT CALL / future MSGQ--> Module Manager
@@ -109,7 +114,7 @@ Discovery --DIRECT CALL / future MSGQ--> Module Manager
                                           +--DIRECT CALL--> Port -> Zephyr
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 ALLOCATED -> CONFIGURED -> INITIALIZING -> READY
@@ -118,7 +123,7 @@ ALLOCATED -> CONFIGURED -> INITIALIZING -> READY
                               ERROR <-> REMOVING -> FREE
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 All lifecycle mutations must be serialized. OPTION A: one mutex and synchronous
 calls, simplest first. OPTION B: bounded command queue plus one Manager thread,
@@ -126,14 +131,14 @@ better when Communication/Discovery/presence race. RECOMMENDATION: mutex first;
 move to a queue only when concurrency appears. Never hold the Manager mutex while
 publishing callbacks that may re-enter Manager.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 - `k_mutex` protects Manager-owned tables in thread context.
 - `k_msgq` can later serialize copied commands with bounded memory.
 - fixed pools make RAM and failure behavior predictable.
 - logging should include port, instance, driver, transition, and errno.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define IDs, states, immutable snapshot.
 2. Implement fixed pool and lookups.
@@ -142,20 +147,20 @@ publishing callbacks that may re-enter Manager.
 5. Route read/command.
 6. Add minimal locking and lifecycle event reporting.
 
-## 12. Expected result
+## Expected result
 
 `Port 0 = SHT40` creates exactly one READY instance; remove frees it; failed
 replacement leaves a defined state.
 
-## 13. Minimal test
+## Minimal test
 
 Fake Port/Registry/driver: add, read, remove, occupied port, init failure rollback.
 
-## 14. Dependencies
+## Dependencies
 
 Port, Module/Module Driver, Driver Registry; Data only for later status events.
 
-## 15. Not yet
+## Not yet
 
 No heap-first allocation, auto discovery, persistent schema, MQTT, or per-module
 thread.

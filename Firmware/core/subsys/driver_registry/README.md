@@ -1,34 +1,39 @@
 # Driver Registry
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Driver Registry maps a stable module type such as `sht40` to the immutable
 module-driver implementation compiled into the firmware.
 
-## 2. Responsibility
+## Responsibility
 
 Own the searchable collection, validate descriptors/duplicates, and enumerate
 supported module types.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 It creates no module instance, touches no port, performs no discovery, and calls
 no driver lifecycle operation.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/driver_registry.h`.
 - Implementation: `subsys/driver_registry/driver_registry.c`.
 - Driver descriptors originate in `spaghetti_modules/<module>/`.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - registry table/index: created during boot, owned by Registry for firmware
   lifetime, modified only during initialization, read by Manager/Communication.
 - driver descriptor references: objects remain owned by concrete drivers and
   must have static lifetime.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_driver_registry_init()`
 
@@ -63,33 +68,33 @@ no driver lifecycle operation.
 - **Failure cases:** invalid index.
 - **Called next:** none.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Module implementation --BOOT REGISTRATION--> Registry
 Manager --DIRECT CALL find("sht40")--> Registry --const pointer--> Manager
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 EMPTY -> INITIALIZING -> FROZEN/READY
                     +-> INVALID
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Freeze after boot so lookup needs no mutex. OPTION A: explicit descriptor array,
 simple and debuggable. OPTION B: Zephyr iterable sections, convenient at scale
 but more link-time magic. RECOMMENDATION: explicit array first.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 No kernel primitive is needed for an immutable registry. Iterable sections are
 a future Zephyr linker feature, not a requirement. Kconfig will later determine
 which drivers are compiled.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define stable type-ID rules.
 2. Validate one fake descriptor.
@@ -98,19 +103,19 @@ which drivers are compiled.
 5. Add enumeration.
 6. Optimize only after measurement.
 
-## 12. Expected result
+## Expected result
 
 Known IDs resolve predictably; unknown and duplicate IDs fail explicitly.
 
-## 13. Minimal test
+## Minimal test
 
 Register two fake descriptors and test find, unknown, enumeration, duplicate.
 
-## 14. Dependencies
+## Dependencies
 
 `module_driver.h` contract.
 
-## 15. Not yet
+## Not yet
 
 No dynamic loading, hash table, driver initialization, or runtime registration.
 

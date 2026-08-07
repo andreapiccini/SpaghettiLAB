@@ -1,27 +1,32 @@
 # Config
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Config owns the validated, versioned desired state of the product and separates
 that state from its live application by Module Manager/Runtime.
 
-## 2. Responsibility
+## Responsibility
 
 Defaults, schema version, validation, migration, snapshot/update, persistence
 coordination, and change notification.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No flash driver details, live module lifecycle, discovery probing, or protocol
 frame parsing.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/config.h`.
 - Implementation: `subsys/config/config.c`.
 - Physical persistence is delegated to `subsys/services/storage/`.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - `spaghetti_config`: snapshot created from defaults/load/update, owned by Config,
   immutable to readers, replaced atomically by Config.
@@ -30,7 +35,7 @@ frame parsing.
   queue if asynchronous commits are later selected.
 - validation error: value object returned to Communication.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_config_init()` / `_load()`
 
@@ -82,7 +87,7 @@ frame parsing.
 - **Failure cases:** unauthorized, write failure.
 - **Called next:** Storage and reconciliation.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Core --DIRECT CALL--> Config --DIRECT CALL--> Storage
@@ -91,26 +96,26 @@ Backend --COMMUNICATION RX--> Communication --DIRECT CALL--> Config update
 Config --DIRECT CALL/event TBD--> Discovery/Manager/Runtime reconciliation
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 DEFAULTS -> LOADING -> VALIDATED -> ACTIVE -> UPDATING -> ACTIVE(new revision)
                     +-> RECOVERED DEFAULTS     +-----> prior ACTIVE on failure
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Readers need consistent snapshots; a short mutex plus copy is simplest. Do not
 hold it during flash writes or downstream callbacks. Serialize updates. zbus may
 announce “config revision changed,” but is not the persistence transaction.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 Settings loads key/value records through registered handlers/callbacks. NVS/ZMS
 or another backend owns flash layout. A fixed partition belongs in Devicetree.
 Kconfig selects Settings/backend software.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define one versioned assignment schema.
 2. Implement pure validation/defaults.
@@ -119,20 +124,20 @@ Kconfig selects Settings/backend software.
 5. Test corruption and stale revision.
 6. Add reconciliation notification without holding the Config lock.
 
-## 12. Expected result
+## Expected result
 
 Valid desired state survives reboot; invalid/corrupt state has a deterministic
 recovery path; failed update never exposes half-applied data.
 
-## 13. Minimal test
+## Minimal test
 
 Save one port assignment, reboot/load, then inject corruption and stale revision.
 
-## 14. Dependencies
+## Dependencies
 
 Storage service; stable identifiers/schemas from Port, Discovery, and Runtime.
 
-## 15. Not yet
+## Not yet
 
 No secret management, cloud schema, measurement history, or arbitrary blobs.
 

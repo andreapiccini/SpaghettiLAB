@@ -1,27 +1,32 @@
 # Discovery
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Discovery answers or receives the answer to “which module is connected to this
 port?” independently from module lifecycle management.
 
-## 2. Responsibility
+## Responsibility
 
 - Normalize identification proposals from interchangeable providers.
 - Apply MANUAL/AUTO/HYBRID policy without equating AUTO with EEPROM.
 - Track source, validity, confidence, and generation of a result.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No module allocation, driver lookup, hardware lifecycle, or persistent storage
 implementation. A provider may probe; Discovery remains provider-independent.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/discovery.h`; provider/result/policy contracts.
 - Implementation: `subsys/discovery/discovery.c`; provider coordination/policy.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - `spaghetti_discovery_result`: value object created by provider/Discovery,
   transferred to Manager, containing port, type, source, confidence/generation.
@@ -31,7 +36,7 @@ implementation. A provider may probe; Discovery remains provider-independent.
   Config; read by Communication.
 - per-port discovery state: owned solely by Discovery.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_discovery_init()`
 
@@ -80,7 +85,7 @@ implementation. A provider may probe; Discovery remains provider-independent.
 - **Failure cases:** stale generation or unknown port.
 - **Called next:** Manager remove by DIRECT CALL or command queue.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Backend --COMMUNICATION RX--> Communication --DIRECT CALL--> Discovery(manual)
@@ -88,7 +93,7 @@ Future provider --CALLBACK/WORKQUEUE--> Discovery policy
 Discovery --DIRECT CALL initially / DECISION REQUIRED queue--> Module Manager
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 UNKNOWN -> SEARCHING -> PROPOSED -> ACCEPTED
@@ -97,14 +102,14 @@ UNKNOWN -> SEARCHING -> PROPOSED -> ACCEPTED
 ACCEPTED -> STALE/UNKNOWN
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Provider results can arrive late. Use generation tokens and serialize per-port
 policy updates. Manual submission can remain synchronous. Automatic probing may
 use delayable work. DECISION REQUIRED: use a Manager `k_msgq` once concurrent
 reconfiguration exists; a direct call is simpler beforehand.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 - `k_work_delayable` schedules deferred probing without a dedicated thread.
 - Callback returns an asynchronous provider result; callback must not do long
@@ -112,7 +117,7 @@ reconfiguration exists; a direct call is simpler beforehand.
 - `k_msgq` may serialize commands and retain bounded ordering.
 - zbus is suitable for observing discovery status, not necessarily for commands.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define normalized result/source/policy types.
 2. Implement MANUAL-only submission.
@@ -121,20 +126,20 @@ reconfiguration exists; a direct call is simpler beforehand.
 5. Define provider interface using a fake provider.
 6. Add AUTO/HYBRID only with concrete conflict rules.
 
-## 12. Expected result
+## Expected result
 
 Manual and future automatic sources yield the same result contract; Manager does
 not change when a provider is added.
 
-## 13. Minimal test
+## Minimal test
 
 Submit manual `Port 0 -> fake`, then test stale revision and invalidation.
 
-## 14. Dependencies
+## Dependencies
 
 Port identifiers, Config policy, Module Manager configure/remove contract.
 
-## 15. Not yet
+## Not yet
 
 No EEPROM-specific API, invented probe method, or assumption that AUTO succeeds.
 

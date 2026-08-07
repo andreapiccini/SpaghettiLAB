@@ -1,33 +1,38 @@
 # Spaghetti LAB Devicetree Bindings
 
-## 1. Purpose
+[← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md) · [Roadmap](../../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 A Zephyr Devicetree binding is a YAML schema giving meaning and validation rules
 to DTS nodes with a matching `compatible`. These future bindings will define the
 static hardware representation of Spaghetti Core ports.
 
-## 2. Responsibility
+## Responsibility
 
 Describe valid node structure, required/optional hardware properties, property
 types, inherited GPIO/bus conventions, and generated metadata semantics.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 Bindings do not identify a removable module, execute code, select runtime policy,
 or contain actual board GPIO values.
 
-## 4. Files
+## Files
 
 Only this README exists. Future YAML names must follow their actual `compatible`
 and Zephyr binding conventions. Board DTS nodes consume the binding; `port.c`
 consumes generated macros.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 No C runtime object is owned here. YAML schemas validate DTS properties; build
 tools generate node/property macros from valid board descriptions.
 
-## 6. Functions to implement
+## Functions to implement
 
 There are no runtime functions.
 
@@ -42,7 +47,7 @@ There are no runtime functions.
 - **Failure cases:** missing required property, wrong type, invalid reference.
 - **Called next:** generated headers consumed by `port.c` at compile time.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 YAML binding
@@ -56,22 +61,22 @@ Devicetree node
 port.c compiled descriptors
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 Bindings are evaluated at build time and have no runtime lifecycle.
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 None. Concurrency belongs to Port objects created from generated information.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 `compatible` selects a binding. `properties` validates node fields. Phandles and
 specifier arrays reference controllers such as GPIO. Generated macros allow C to
 consume hardware without parsing DTS at runtime. Binding YAML is Zephyr-specific,
 not an implementation of a driver.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define the minimum physical meaning of a Spaghetti Port from real hardware.
 2. Check whether existing standard bindings/specifiers can be reused.
@@ -80,20 +85,20 @@ not an implementation of a driver.
 5. Add build tests for missing/wrong properties.
 6. Consume generated values in Port, not in higher layers.
 
-## 12. Expected result
+## Expected result
 
 Valid static ports compile into descriptors; invalid hardware descriptions fail
 at build time with useful errors.
 
-## 13. Minimal test
+## Minimal test
 
 Build one valid sample and one DTS fixture missing a required example property.
 
-## 14. Dependencies
+## Dependencies
 
 A stable physical Port model and actual board schematic.
 
-## 15. Not yet
+## Not yet
 
 No production YAML, final property list, GPIO values, SHT40/Relay assignment, or
 EEPROM discovery property until requirements are real.

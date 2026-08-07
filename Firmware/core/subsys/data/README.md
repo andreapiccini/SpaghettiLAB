@@ -1,26 +1,31 @@
 # Data
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Data gives measurements, actuator state, and events a common contract so a
 producer does not know every consumer.
 
-## 2. Responsibility
+## Responsibility
 
 Own message semantics, validation, timestamps, payload lifetime rules, delivery
 policy, and observable backpressure/drop behavior.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No sensor acquisition, automation evaluation, MQTT serialization, persistence
 policy, or module lifecycle.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/data.h`; types and publish/consumer contract.
 - Implementation: `subsys/data/data.c`; validation and selected transport.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - `spaghetti_data`: value object created by producer or Data factory, copied into
   bounded transport, then owned by consumer copy; contains source instance,
@@ -29,7 +34,7 @@ policy, or module lifecycle.
 - channel descriptors: immutable, owned by Data, read by all participants.
 - delivery statistics: Data-owned counters for drops/full queues.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_data_init()`
 
@@ -78,7 +83,7 @@ policy, or module lifecycle.
 - **Failure cases:** invalid output/not initialized.
 - **Called next:** none.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Driver/Manager --DIRECT CALL publish--> Data
@@ -87,13 +92,13 @@ Data --ZBUS PUBLISH?--> Runtime subscriber
      --ZBUS PUBLISH?--> Communication subscriber
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 Initialize once; channels remain active for firmware lifetime. Individual values
 move conceptually through CREATED -> VALIDATED -> ENQUEUED/PUBLISHED -> CONSUMED
 or DROPPED.
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Multiple producers/consumers are expected. Direct callbacks are cheapest but can
 block and couple components. `k_msgq` gives strict bounded FIFO semantics but
@@ -102,14 +107,14 @@ loss semantics. RECOMMENDATION: prototype both with representative sizes before
 freezing the contract; commands needing guaranteed delivery should not share a
 lossy measurement channel.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 - zbus is a channel-based publish/subscribe service.
 - `k_msgq` copies fixed-size messages into a bounded ring and can block threads.
 - uptime is monotonic since boot; wall-clock time requires synchronization.
 - atomic counters or a short mutex can protect statistics.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define one bounded temperature value.
 2. Document ownership and timestamp source.
@@ -118,20 +123,20 @@ lossy measurement channel.
 5. Compare with zbus for three consumers.
 6. Freeze drop/backpressure policy and expose statistics.
 
-## 12. Expected result
+## Expected result
 
 One temperature item reaches Runtime and external-publish consumers with tested,
 visible behavior when capacity is exhausted.
 
-## 13. Minimal test
+## Minimal test
 
 Publish known values to two fake consumers, then fill capacity and verify policy.
 
-## 14. Dependencies
+## Dependencies
 
 Module identifiers and selected Zephyr transport configuration.
 
-## 15. Not yet
+## Not yet
 
 No unbounded strings, generic heap blobs, storage history, or network formatting.
 

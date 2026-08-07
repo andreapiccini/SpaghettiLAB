@@ -1,26 +1,31 @@
 # Runtime
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Runtime executes user-defined scheduling, processing, conditions, and actions
 without direct knowledge of sensor registers, GPIOs, or Core variant.
 
-## 2. Responsibility
+## Responsibility
 
 Own loaded program and execution state; consume timer/data events; validate
 references/types; evaluate rules; route commands through Module Manager.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No hardware access, driver lifecycle, discovery, persistence backend, or MQTT
 connection management.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/runtime.h`.
 - Implementation: `subsys/runtime/runtime.c`; program validation and executor.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - runtime program/config: created by parser/Config, copied/owned by Runtime while
   loaded, destroyed/replaced by Runtime.
@@ -28,7 +33,7 @@ connection management.
 - execution context: Runtime-owned state/counters; diagnostics receive snapshots.
 - event/command: copied value objects using stable module IDs, not raw pointers.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_runtime_init()`
 
@@ -90,7 +95,7 @@ connection management.
 - **Failure cases:** invalid output/not initialized.
 - **Called next:** none.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Timer --TIMER then MSGQ--> Runtime THREAD
@@ -98,7 +103,7 @@ Data --ZBUS SUBSCRIBER then MSGQ--> Runtime THREAD
 Runtime --DIRECT CALL--> Module Manager --DIRECT CALL--> driver
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 EMPTY -> LOADED -> RUNNING <-> PAUSED -> STOPPED
@@ -106,19 +111,19 @@ EMPTY -> LOADED -> RUNNING <-> PAUSED -> STOPPED
              +-----------------------> REPLACED
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Use one worker thread initially so event ordering and program replacement are
 deterministic. Producers must never execute user logic in zbus/timer callback
 context. Queue capacity and overflow policy must be explicit. Synchronous Manager
 commands are appropriate from the worker.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 `k_thread` owns a stack and scheduled execution context; `k_msgq` serializes
 bounded events; `k_timer` callback only signals; zbus may fan Data into the queue.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define minimal one-rule program model.
 2. Validate stable module/channel references.
@@ -128,20 +133,20 @@ bounded events; `k_timer` callback only signals; zbus may fan Data into the queu
 6. Route one relay command.
 7. Add atomic program replacement and diagnostics.
 
-## 12. Expected result
+## Expected result
 
 Every second, a synthetic/real temperature event is evaluated and a threshold
 crossing issues a relay command in deterministic thread context.
 
-## 13. Minimal test
+## Minimal test
 
 Feed below/equal/above-threshold values and verify exact fake Manager calls.
 
-## 14. Dependencies
+## Dependencies
 
 Module Manager, Data contract, Timer service; Config for persisted deployment.
 
-## 15. Not yet
+## Not yet
 
 No general language VM, parallel rules, unbounded graph, cloud execution, or OTA.
 

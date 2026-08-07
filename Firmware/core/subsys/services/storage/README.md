@@ -1,26 +1,31 @@
 # Storage Service
 
-## 1. Purpose
+[← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md) · [Roadmap](../../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Storage hides the selected persistent backend so Config owns schema/meaning while
 Storage owns reliable byte/key operations and backend errors.
 
-## 2. Responsibility
+## Responsibility
 
 Backend initialization, bounded read/write/delete, integrity/commit semantics,
 serialization, capacity/error reporting, and flash-partition access.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No Spaghetti configuration schema, module lifecycle, measurement retention policy,
 or board partition invention.
 
-## 4. Files
+## Files
 
 Only this design README exists. Future source/header and Kconfig integration are
 added with the Config milestone. Static storage partition belongs to board DTS.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - storage key/blob view: caller-owned for synchronous call; Storage copies when
   asynchronous.
@@ -28,7 +33,7 @@ added with the Config milestone. Static storage partition belongs to board DTS.
 - status/capacity statistics: Storage-owned, read as snapshots.
 - commit metadata/version/checksum only where the selected backend requires it.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_storage_init()`
 
@@ -75,7 +80,7 @@ added with the Config milestone. Static storage partition belongs to board DTS.
 - **Failure cases:** absent key, I/O, invalid output.
 - **Called next:** backend delete/status.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Board DTS --build-time--> flash partition
@@ -83,27 +88,27 @@ Core --DIRECT CALL--> Storage init --> Zephyr Settings/backend
 Config --DIRECT CALL read/write--> Storage --> Settings/NVS/ZMS/flash
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 UNINITIALIZED -> MOUNTING -> READY <-> WRITING
                        +-> RECOVERY/ERROR
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Start with synchronous serialized calls because configuration writes are rare.
 Use a mutex if multiple callers are later allowed. Do not write flash from ISR or
 timer callback. A storage thread is justified only if measured write latency must
 not block its caller.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 Settings is Zephyr's persistent key/value facade; NVS/ZMS are flash backends;
 flash map exposes fixed partitions described in Devicetree. Kconfig selects the
 compiled backend. Settings load can invoke registered callbacks.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define key/size/error contract.
 2. Add a real static storage partition only from known hardware layout.
@@ -112,20 +117,20 @@ compiled backend. Settings load can invoke registered callbacks.
 5. Test reboot and power-loss/corruption behavior supported by backend.
 6. Add capacity/wear diagnostics.
 
-## 12. Expected result
+## Expected result
 
 A versioned record survives reboot; absence/corruption/full storage are distinct
 observable failures.
 
-## 13. Minimal test
+## Minimal test
 
 Write a counter, reboot, read/increment; test missing key and undersized buffer.
 
-## 14. Dependencies
+## Dependencies
 
 Known board flash layout and chosen Zephyr storage backend; Config consumes it.
 
-## 15. Not yet
+## Not yet
 
 No invented partition, database, measurement history, filesystem, or OTA image.
 

@@ -1,29 +1,34 @@
 # Port
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Port represents one physical Spaghetti connector while hiding the board-specific
 controller, pin routing, and optional power/presence hardware beneath it.
 
-## 2. Responsibility
+## Responsibility
 
 - Own runtime Port objects and their static descriptors.
 - Enumerate ports generated from Devicetree and expose capabilities.
 - Validate underlying Zephyr devices and coordinate shared access.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 - Never identify a connected module or implement its protocol.
 - Never store `Port 0 = SHT40` in static state.
 - Never expose MCU-specific conditionals to higher layers.
 
-## 4. Files
+## Files
 
 - Public API: `include/spaghetti/port.h`; opaque handles, IDs, capabilities.
 - Implementation: `subsys/port/port.c`; Devicetree translation, Zephyr device
   references, locks, and private Port state.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - `spaghetti_port_id`: stable logical identifier; value semantics.
 - `spaghetti_port_capabilities`: immutable flags/parameters created from DT,
@@ -32,7 +37,7 @@ controller, pin routing, and optional power/presence hardware beneath it.
   lifetime; other layers receive an opaque or const reference.
 - `spaghetti_port_state`: available/claimed/fault where each state is needed.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_port_init_all()`
 
@@ -78,21 +83,21 @@ controller, pin routing, and optional power/presence hardware beneath it.
 - **Failure cases:** busy, timeout, wrong owner on release.
 - **Called next:** `k_mutex_lock/unlock` if a mutex is selected.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Core --DIRECT CALL--> Port init --DIRECT CALL--> Zephyr Device Model
 Manager/driver --DIRECT CALL--> Port API --DIRECT CALL--> I2C/GPIO/SPI
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 UNINITIALIZED -> AVAILABLE <-> CLAIMED
                        +----> FAULT
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Lookups should remain non-blocking. Protect only mutable claim/bus state, using a
 mutex in thread context. ISR access is not part of the initial contract. Shared
@@ -100,14 +105,14 @@ I2C serialization may already occur in the controller driver, but Port ownership
 and multi-step transactions can still require a higher-level lock: DECISION
 REQUIRED after real transaction boundaries are known.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 - Devicetree is compiled static hardware description.
 - Device Model supplies initialized controller objects.
 - DT spec structures bind controllers and GPIOs without hard-coded pin numbers.
 - Mutex suspends a contending thread; it must not be used from ISR.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define ID and minimum capability enum.
 2. Define opaque runtime object and descriptor.
@@ -116,20 +121,20 @@ REQUIRED after real transaction boundaries are known.
 5. Obtain and validate one real controller.
 6. Add locking only for a demonstrated shared resource.
 
-## 12. Expected result
+## Expected result
 
 The firmware enumerates physical ports and reports capabilities identically on
 different boards, despite different underlying mappings.
 
-## 13. Minimal test
+## Minimal test
 
 Enumerate one port; verify valid lookup, invalid lookup, and expected capability.
 
-## 14. Dependencies
+## Dependencies
 
 Board/Devicetree description and relevant Zephyr peripheral drivers.
 
-## 15. Not yet
+## Not yet
 
 No module identity, universal bus API, EEPROM discovery, or actual board pins.
 

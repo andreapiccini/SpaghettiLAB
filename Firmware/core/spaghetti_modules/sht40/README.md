@@ -1,27 +1,32 @@
 # SHT40 Module
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 This future implementation controls an external SHT40-class environmental module
 through a compatible Spaghetti Port and exposes temperature and humidity.
 
-## 2. Responsibility
+## Responsibility
 
 Validate required bus capability, initialize per-instance context, perform the
 documented sensor transaction, validate/convert response, and produce normalized
 temperature/humidity values.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No port assignment, discovery claim, periodic scheduling, threshold automation,
 MQTT publish, real GPIO mapping, or assumption that the device is always present.
 
-## 4. Files
+## Files
 
 Only this implementation plan exists. Future source/header files remain local;
 the public generic contract stays in `include/spaghetti/module_driver.h`.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - immutable SHT40 driver descriptor: static lifetime, owned here, read by Registry.
 - per-instance SHT40 context: Manager-provided storage; contains only protocol
@@ -30,7 +35,7 @@ the public generic contract stays in `include/spaghetti/module_driver.h`.
 - sample result: caller/Data-owned value with both channels or explicit partial
   validity, depending on the final Data contract.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### SHT40 `init`
 
@@ -68,7 +73,7 @@ the public generic contract stays in `include/spaghetti/module_driver.h`.
 - **Failure cases:** operation in progress or bus cleanup failure if applicable.
 - **Called next:** Port/Power release.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Timer --deferred event--> Runtime
@@ -78,26 +83,26 @@ SHT40 result --DIRECT CALL--> Data publish
 Data --ZBUS/MSGQ TBD--> Runtime + MQTT + Communication
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 Manager authoritative state: allocated -> initializing -> ready -> reading ->
 ready/error -> deinitializing -> removed.
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Start with synchronous direct reads because the sensor transaction is bounded and
 one caller is simpler. Do not add a driver thread. Port/Manager serializes reads
 and removal. zbus is useful only after the completed sample reaches Data and has
 multiple consumers; using zbus inside the driver would blur ownership.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 Zephyr I2C controller API performs bus transfers through a static controller
 device. A mutex may protect a multi-step transaction. `k_sleep` in a driver call
 blocks its thread, so use only bounded datasheet-required delays; delayed work is
 an alternative if latency later proves harmful.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Read the exact module schematic and SHT40 datasheet.
 2. State I2C Port capability requirement without pin/address invention.
@@ -107,22 +112,22 @@ an alternative if latency later proves harmful.
 6. Test absent device, bad response, timeout, removal.
 7. Connect completed sample to Data.
 
-## 12. Expected result
+## Expected result
 
 An assigned SHT40 returns valid temperature/humidity on request and reports
 deterministic errors when missing or faulty.
 
-## 13. Minimal test
+## Minimal test
 
 One explicit read on known hardware; log both channels, then disconnect and verify
 the expected error without crash or stuck bus.
 
-## 14. Dependencies
+## Dependencies
 
 Module Driver contract, Port I2C capability, Registry/Manager for runtime use,
 Data for distribution.
 
-## 15. Not yet
+## Not yet
 
 No guessed address/pins/timing, periodic thread, zbus channel owned by driver,
 MQTT formatting, or auto-discovery claim.

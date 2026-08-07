@@ -1,32 +1,37 @@
 # Timer Service
 
-## 1. Purpose
+[← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md) · [Roadmap](../../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 Timer gives Runtime stable named/identified schedules without embedding Zephyr
 timer objects inside user-program data.
 
-## 2. Responsibility
+## Responsibility
 
 Own bounded timer slots, start/stop/restart, one-shot/periodic semantics,
 generation handling, and deferred expiry delivery.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No rule evaluation, sensor read, actuator command, wall-clock scheduler, or long
 work inside timer expiry callbacks.
 
-## 4. Files
+## Files
 
 Only this design README exists. Introduce service files with the Runtime
 milestone after timer IDs, capacity, and delivery semantics are fixed.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - timer handle/ID: created and destroyed by Timer, referenced by Runtime.
 - timer slot: Timer-owned `k_timer`, period, generation, destination metadata.
 - expiry event: bounded value copied to Runtime queue; owned by queue/consumer.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### `spaghetti_timer_init()`
 
@@ -73,14 +78,14 @@ milestone after timer IDs, capacity, and delivery semantics are fixed.
 - **Failure cases:** full queue/stale generation.
 - **Called next:** Runtime MESSAGE QUEUE; never Module Manager directly.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Runtime --DIRECT CALL--> Timer service --DIRECT CALL--> k_timer
 k_timer --TIMER callback--> K_NO_WAIT MESSAGE QUEUE --> Runtime THREAD
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 ```text
 FREE -> CREATED -> RUNNING <-> STOPPED -> DESTROYED/FREE
@@ -88,20 +93,20 @@ FREE -> CREATED -> RUNNING <-> STOPPED -> DESTROYED/FREE
                     +--expiry--> RUNNING or STOPPED(one-shot)
 ```
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Runtime should own create/start/stop calls initially, avoiding a mutex. Expiry
 can race with stop/replacement, so generation IDs are required. Callback cannot
 block; queue overflow must increment diagnostics. A dedicated Timer thread is not
 needed.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 `k_timer` schedules kernel timeouts; its expiry function has restricted context.
 `k_msgq` with `K_NO_WAIT` safely defers bounded events. Delayable work is an
 alternative for one-shot internal tasks but can execute on shared workqueue.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Define handle/generation and fixed capacity.
 2. Wrap one one-shot `k_timer`.
@@ -110,20 +115,20 @@ alternative for one-shot internal tasks but can execute on shared workqueue.
 5. Test stop/replace race and queue full.
 6. Integrate Runtime.
 
-## 12. Expected result
+## Expected result
 
 A one-second periodic timer produces ordered Runtime events without executing
 Runtime or I/O inside expiry context.
 
-## 13. Minimal test
+## Minimal test
 
 Count ten expiries, verify interval tolerance, stop behavior, and stale generation.
 
-## 14. Dependencies
+## Dependencies
 
 Zephyr kernel timing; Runtime event contract for final integration.
 
-## 15. Not yet
+## Not yet
 
 No cron/time-zone calendar, sensor work, dynamic heap timer count, or busy waiting.
 

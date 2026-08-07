@@ -1,33 +1,38 @@
 # Relay Module
 
-## 1. Purpose
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+
+> [!NOTE]
+> This is a design contract. See the roadmap for current implementation status.
+
+## Purpose
 
 This future implementation controls one external relay module through the Port
 capability actually defined by its hardware.
 
-## 2. Responsibility
+## Responsibility
 
 Validate capability/config, initialize safe state, apply ON/OFF commands, expose
 known state/diagnostics, and leave the relay safe during deinit where hardware
 permits.
 
-## 3. Non-responsibility
+## Non-responsibility
 
 No threshold rule, timer, discovery, port assignment, MQTT, or invented active
 level/GPIO mapping.
 
-## 4. Files
+## Files
 
 Only this design README exists. The implementation will use the generic public
 Module Driver contract; hardware-specific details remain local.
 
-## 5. Data structures to implement
+## Data structures to implement
 
 - static relay driver descriptor owned here.
 - per-instance context owned by Manager and modified by relay operations.
 - command/state types describing logical ON/OFF independently of electrical level.
 
-## 6. Functions to implement
+## Functions to implement
 
 ### Relay `init`
 
@@ -61,30 +66,30 @@ Module Driver contract; hardware-specific details remain local.
 - **Failure cases:** safe transition failure.
 - **Called next:** Port/Power release.
 
-## 7. Interaction diagram
+## Interaction diagram
 
 ```text
 Runtime --DIRECT CALL--> Manager --DIRECT CALL--> Relay command
 Relay --DIRECT CALL--> Port --DIRECT CALL--> Zephyr peripheral API
 ```
 
-## 8. State / lifecycle
+## State / lifecycle
 
 UNINITIALIZED -> SAFE/READY -> ON/OFF -> SAFE -> REMOVED, with FAULT reachable
 from hardware operations.
 
-## 9. Concurrency considerations
+## Concurrency considerations
 
 Commands remain synchronous and serialized by Manager/Port. No thread or zbus is
 needed in the driver. State-change publication may occur through Data after the
 command returns, outside any Port lock.
 
-## 10. Zephyr concepts involved
+## Zephyr concepts involved
 
 GPIO or another peripheral API will be chosen only from the real module/port
 hardware. Devicetree describes Core wiring, not logical relay identity.
 
-## 11. Implementation steps
+## Implementation steps
 
 1. Confirm electrical interface and safe state from hardware documentation.
 2. Declare required Port capability.
@@ -92,19 +97,19 @@ hardware. Devicetree describes Core wiring, not logical relay identity.
 4. Implement init/command/deinit through Port.
 5. Test boot/removal/failure safety.
 
-## 12. Expected result
+## Expected result
 
 A READY relay follows logical commands and transitions safely on removal/error.
 
-## 13. Minimal test
+## Minimal test
 
 Fake Port records OFF, ON, OFF sequence and an injected hardware failure.
 
-## 14. Dependencies
+## Dependencies
 
 Module Driver, Port, Manager; Data only for state publication.
 
-## 15. Not yet
+## Not yet
 
 No guessed active level, pin number, latching behavior, timing, or automation.
 
