@@ -172,29 +172,25 @@ The `build/` directory is generated locally and can be safely recreated.
 
 ## Documentation
 
-Start with the roadmap when implementing features and use the architecture and
-component documents as design references.
+Start with the architecture overview, then open a component document only when
+you need its detailed contract.
 
 | Guide | Use it for |
 |---|---|
-| [Implementation roadmap](IMPLEMENTATION_ROADMAP.md) | Ordered milestones, build gates, and hardware tests |
-| [Firmware architecture](ARCHITECTURE.md) | Ownership, dependencies, control flow, and runtime model |
+| [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |
 | [Public interfaces](include/spaghetti/README.md) | Shared types and public API boundaries |
 | [Board support](boards/spaghettilab/README.md) | Core variants and static hardware descriptions |
 | [Devicetree bindings](dts/bindings/spaghetti/README.md) | Spaghetti-specific hardware schemas |
 | [Module implementations](spaghetti_modules/README.md) | External sensor and actuator drivers |
-| [Subsystems](subsys/core/README.md) | Core, Port, Config, Runtime, Data, and other firmware layers |
-| [Services](subsys/services/README.md) | MQTT, storage, and timer services |
+| [Optional services](subsys/services/README.md) | Replaceable timing, persistence, or transport capabilities |
 
 ### Subsystem reference
 
-| Architecture | Lifecycle and I/O | Services |
+| Foundation | Runtime model | Boundaries |
 |---|---|---|
-| [Core](subsys/core/README.md) | [Module Manager](subsys/module_manager/README.md) | [MQTT](subsys/services/mqtt/README.md) |
-| [Port](subsys/port/README.md) | [Discovery](subsys/discovery/README.md) | [Storage](subsys/services/storage/README.md) |
-| [Driver Registry](subsys/driver_registry/README.md) | [Communication](subsys/communication/README.md) | [Timer](subsys/services/timer/README.md) |
-| [Config](subsys/config/README.md) | [Data](subsys/data/README.md) | [Power](subsys/power/README.md) |
-| [Runtime](subsys/runtime/README.md) | [SHT40 module](spaghetti_modules/sht40/README.md) | [Relay module](spaghetti_modules/relay/README.md) |
+| [Core](subsys/core/README.md) | [Module Manager](subsys/module_manager/README.md) | [Config](subsys/config/README.md) |
+| [Port](subsys/port/README.md) | [Data](subsys/data/README.md) | [Communication adapters](subsys/communication/README.md) |
+| [Driver Registry](subsys/driver_registry/README.md) | [Runtime](subsys/runtime/README.md) | [Optional Discovery](subsys/discovery/README.md) |
 
 ## Licensing and third-party software
 

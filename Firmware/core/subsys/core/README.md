@@ -1,6 +1,6 @@
 # Core
 
-[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) · [Roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
 > [!NOTE]
 > This is a design contract. See the roadmap for current implementation status.
