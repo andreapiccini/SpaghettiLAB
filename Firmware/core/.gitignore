@@ -1,0 +1,60 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Zephyr, CMake, and Ninja build output
+/build/
+/build-*/
+/twister-out*/
+/CMakeCache.txt
+/CMakeFiles/
+/cmake_install.cmake
+/compile_commands.json
+/build.ninja
+/.ninja_deps
+/.ninja_log
+
+# Local West workspace and caches
+/.west/
+/.cache/
+/.ccache/
+
+# Compiled firmware and native binaries
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.elf
+*.bin
+*.hex
+*.uf2
+*.map
+*.dis
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+/.venv/
+/venv/
+
+# Editor and IDE files
+/.vscode/
+/.idea/
+/.cursor/
+*.swp
+*.swo
+*~
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp

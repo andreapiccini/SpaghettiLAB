@@ -1,0 +1,20 @@
+services:
+  dev:
+    build:
+      context: .
+      args:
+        ZEPHYR_DOCKER_TAG: ${ZEPHYR_DOCKER_TAG:-v0.29.2}
+        ZEPHYR_VERSION: ${ZEPHYR_VERSION:-v4.4.0}
+    image: esp32c3-zephyr-dev:${ZEPHYR_VERSION:-v4.4.0}
+    working_dir: /opt/zephyrproject/app
+    environment:
+      BOARD: ${BOARD:-esp32c3_devkitm/esp32c3}
+      CCACHE_DIR: /home/user/.cache/ccache
+    volumes:
+      - .:/opt/zephyrproject/app
+      - zephyr-ccache:/home/user/.cache/ccache
+    stdin_open: true
+    tty: true
+
+volumes:
+  zephyr-ccache:
