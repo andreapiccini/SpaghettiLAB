@@ -20,9 +20,9 @@ A Spaghetti LAB **Core** controls external **Modules** connected to physical
 
 ```mermaid
 flowchart LR
-    HW["Core hardware<br/>MCU, buses, pins, physical ports"]
-    LIVE["Live modules<br/>what is connected now"]
-    BEHAVIOR["Product behavior<br/>read, transform, react, expose"]
+    HW["Core hardware <br/> MCU, buses, pins, physical ports"]
+    LIVE["Live modules <br/> what is connected now"]
+    BEHAVIOR["Product behavior <br/> read, transform, react, expose"]
 
     HW -->|"described at build time"| PORT["Port API"]
     LIVE -->|"represented at runtime"| MANAGER["Module Manager"]
@@ -74,7 +74,7 @@ flowchart LR
     LOG["Local logger"]
     USB["USB adapter"]
     UI["Display adapter"]
-    NET["Network adapter<br/>MQTT is one example"]
+    NET["Network adapter <br/> MQTT is one example"]
 
     DATA --> LOG
     DATA --> USB
@@ -95,7 +95,7 @@ board has no controllable rail, there is nothing for a Power component to own.
 flowchart LR
     M0["Module on Port 0"] -->|"acquire"| R["Optional shared rail"]
     M1["Module on Port 1"] -->|"acquire"| R
-    R -->|"first user: ON<br/>last user: OFF"| HW["Physical power switch"]
+    R -->|"first user: ON <br/> last user: OFF"| HW["Physical power switch"]
 ```
 
 This is an optional shared-resource pattern, not a requirement that every Core
@@ -135,14 +135,14 @@ Examples:
 flowchart TB
     subgraph BUILD["Build time"]
         BOARD["Board + Devicetree"]
-        STATIC["Port 0 has I2C<br/>SDA and SCL use physical pins"]
+        STATIC["Port 0 has I2C <br/> SDA and SCL use physical pins"]
         BOARD --> STATIC
     end
 
     subgraph RUN["Runtime"]
         CONFIG["Configuration"]
         ASSIGN["Port 0 = temperature sensor"]
-        STATE["Module is READY<br/>temperature = 24.6 °C"]
+        STATE["Module is READY <br/> temperature = 24.6 °C"]
         CONFIG --> ASSIGN --> STATE
     end
 
@@ -204,9 +204,9 @@ be `i2c0`; on another Core it may be `i2c1`. The driver sees only the Port API.
 ```mermaid
 flowchart LR
     DRIVER["Generic temperature driver"]
-    PORT["Port 0 API<br/>capability: I2C"]
-    C3["Core variant A<br/>controller i2c0"]
-    S3["Core variant B<br/>controller i2c1"]
+    PORT["Port 0 API <br/> capability: I2C"]
+    C3["Core variant A <br/> controller i2c0"]
+    S3["Core variant B <br/> controller i2c1"]
 
     DRIVER --> PORT
     PORT --> C3
@@ -230,9 +230,9 @@ runtime state.
 
 ```mermaid
 flowchart TB
-    D["One immutable temperature driver<br/>init · read · deinit"]
-    M0["Module A<br/>Port 0 · address 0x44"]
-    M1["Module B<br/>Port 2 · address 0x45"]
+    D["One immutable temperature driver <br/> init · read · deinit"]
+    M0["Module A <br/> Port 0 · address 0x44"]
+    M1["Module B <br/> Port 2 · address 0x45"]
 
     M0 -. "uses" .-> D
     M1 -. "uses" .-> D
@@ -337,8 +337,8 @@ can consume the same value without knowing how the sensor speaks I2C.
 
 ```mermaid
 flowchart LR
-    SENSOR["Module driver<br/>raw sensor result"]
-    VALUE["Data<br/>temperature, source, time"]
+    SENSOR["Module driver <br/> raw sensor result"]
+    VALUE["Data <br/> temperature, source, time"]
     LOG["Logger"]
     RULE["Runtime rule"]
     OUTPUT["Optional output adapter"]
@@ -429,7 +429,7 @@ flowchart LR
     MANUAL["Manual assignment"]
     MEMORY["Identity memory"]
     PROBE["Hardware-specific probe"]
-    RESULT["Normalized proposal<br/>Port + type + config"]
+    RESULT["Normalized proposal <br/> Port + type + config"]
     MANAGER["Module Manager"]
 
     MANUAL --> RESULT
@@ -454,7 +454,7 @@ Use the simplest mechanism that satisfies the real behavior.
 
 ```mermaid
 flowchart TB
-    CONTROL["Control operation<br/>needs success or error"]
+    CONTROL["Control operation <br/> needs success or error"]
     DIRECT["DIRECT CALL"]
     EVENT["One event, one worker"]
     QUEUE["SEMAPHORE / WORK / MESSAGE QUEUE"]
@@ -499,8 +499,8 @@ query Port capabilities instead of branching on MCU or board names.
 
 ```mermaid
 flowchart LR
-    A["Core variant A<br/>2 I2C Ports"]
-    B["Core variant B<br/>1 SPI + 3 I2C Ports"]
+    A["Core variant A <br/> 2 I2C Ports"]
+    B["Core variant B <br/> 1 SPI + 3 I2C Ports"]
     C["Future Core variant"]
     PORT["Same Port contract"]
     COMMON["Same Manager, drivers, Data, Runtime"]

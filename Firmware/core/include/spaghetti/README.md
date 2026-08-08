@@ -49,7 +49,7 @@ This component has no runtime C API. Its contract is processed at build time.
 
 ```mermaid
 flowchart TB
-    PUBLIC["include/spaghetti/*.h<br/>public contracts"]
+    PUBLIC["include/spaghetti/*.h <br/> public contracts"]
     CORE["Subsystem implementations"]
     MODULES["Concrete module drivers"]
     APP["main / tests / adapters"]

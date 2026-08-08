@@ -41,8 +41,8 @@ This component has no runtime C API. Its contract is processed at build time.
 
 ```mermaid
 flowchart LR
-    YAML["Binding YAML<br/>defines valid properties"]
-    DTS["Board DTS<br/>supplies real values"]
+    YAML["Binding YAML <br/> defines valid properties"]
+    DTS["Board DTS <br/> supplies real values"]
     VALIDATE["Devicetree validation"]
     MACROS["Generated C macros"]
     PORT["Port initialization"]

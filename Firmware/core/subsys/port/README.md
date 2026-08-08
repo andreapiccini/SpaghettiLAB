@@ -168,8 +168,8 @@ Port converts the static board description into stable runtime objects that conc
 ```mermaid
 flowchart LR
     DTS["Board Devicetree"] --> INIT["Port init"]
-    INIT --> P0["Port 0<br/>I2C"]
-    INIT --> P1["Port 1<br/>GPIO"]
+    INIT --> P0["Port 0 <br/> I2C"]
+    INIT --> P1["Port 1 <br/> GPIO"]
     DRIVER["Module driver"] -->|"query capability"| P0
     P0 -->|"stable handle"| BUS["Zephyr I2C device"]
 ```
