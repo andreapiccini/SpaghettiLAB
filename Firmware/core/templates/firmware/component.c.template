@@ -1,0 +1,112 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+#include <spaghetti/example.h>
+
+#include <errno.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include "example_internal.h"
+
+LOG_MODULE_REGISTER(spaghetti_example, CONFIG_SPAGHETTI_EXAMPLE_LOG_LEVEL);
+
+struct example_context {
+	struct spaghetti_example_config config;
+	enum spaghetti_example_state state;
+};
+
+static struct example_context context = {
+	.state = SPAGHETTI_EXAMPLE_UNINITIALIZED,
+};
+
+K_MUTEX_DEFINE(context_lock);
+
+static int validate_config(const struct spaghetti_example_config *config)
+{
+	if (config == NULL) {
+		return -EINVAL;
+	}
+
+	if ((config->period_ms == 0U) || (config->capacity == 0U)) {
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int spaghetti_example_backend_run(const struct example_command *command)
+{
+	if ((command == NULL) || (command->type != EXAMPLE_COMMAND_RUN)) {
+		return -EINVAL;
+	}
+
+	/* Perform the component-owned bounded backend operation. */
+	return 0;
+}
+
+int spaghetti_example_init(const struct spaghetti_example_config *config)
+{
+	int err;
+
+	err = validate_config(config);
+	if (err < 0) {
+		return err;
+	}
+
+	k_mutex_lock(&context_lock, K_FOREVER);
+
+	if (context.state != SPAGHETTI_EXAMPLE_UNINITIALIZED) {
+		err = -EALREADY;
+		goto unlock;
+	}
+
+	/* Initialize fallible dependencies before committing READY state. */
+	context.config = *config;
+	context.state = SPAGHETTI_EXAMPLE_READY;
+	err = 0;
+
+unlock:
+	k_mutex_unlock(&context_lock);
+	return err;
+}
+
+int spaghetti_example_read(struct spaghetti_example_result *result,
+			   k_timeout_t timeout)
+{
+	struct spaghetti_example_config config;
+	struct spaghetti_example_result candidate;
+
+	if ((result == NULL) || K_TIMEOUT_EQ(timeout, K_FOREVER)) {
+		return -EINVAL;
+	}
+
+	k_mutex_lock(&context_lock, K_FOREVER);
+
+	if (context.state != SPAGHETTI_EXAMPLE_READY) {
+		k_mutex_unlock(&context_lock);
+		return -EACCES;
+	}
+	config = context.config;
+	k_mutex_unlock(&context_lock);
+
+	/* Replace with the bounded backend operation using config and timeout. */
+	ARG_UNUSED(config);
+	ARG_UNUSED(timeout);
+	candidate.value_milliunits = 0;
+	candidate.uptime_ms = k_uptime_get();
+	*result = candidate;
+
+	return 0;
+}
+
+enum spaghetti_example_state spaghetti_example_get_state(void)
+{
+	enum spaghetti_example_state state;
+
+	k_mutex_lock(&context_lock, K_FOREVER);
+	state = context.state;
+	k_mutex_unlock(&context_lock);
+
+	return state;
+}

@@ -1,0 +1,90 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+#include <spaghetti/example.h>
+
+#include <errno.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
+
+#include "example_internal.h"
+
+LOG_MODULE_DECLARE(spaghetti_example, CONFIG_SPAGHETTI_EXAMPLE_LOG_LEVEL);
+
+K_MSGQ_DEFINE(command_queue, sizeof(struct example_command),
+	      CONFIG_SPAGHETTI_EXAMPLE_QUEUE_DEPTH, 4);
+K_THREAD_STACK_DEFINE(worker_stack, CONFIG_SPAGHETTI_EXAMPLE_STACK_SIZE);
+
+static struct k_thread worker_thread;
+static atomic_t worker_started;
+
+static void example_thread_entry(void *arg1, void *arg2, void *arg3)
+{
+	struct example_command command;
+
+	ARG_UNUSED(arg1);
+	ARG_UNUSED(arg2);
+	ARG_UNUSED(arg3);
+
+	for (;;) {
+		k_msgq_get(&command_queue, &command, K_FOREVER);
+
+		switch (command.type) {
+		case EXAMPLE_COMMAND_RUN: {
+			int err = spaghetti_example_backend_run(&command);
+
+			if (err < 0) {
+				LOG_ERR("command failed: correlation=%u err=%d",
+					command.correlation_id, err);
+			}
+			break;
+		}
+		default:
+			LOG_WRN("rejected command type: %d", command.type);
+			break;
+		}
+	}
+}
+
+int spaghetti_example_worker_start(void)
+{
+	k_tid_t tid;
+	int err;
+
+	if (!atomic_cas(&worker_started, 0, 1)) {
+		return -EALREADY;
+	}
+
+	tid = k_thread_create(&worker_thread, worker_stack,
+			      K_THREAD_STACK_SIZEOF(worker_stack),
+			      example_thread_entry, NULL, NULL, NULL,
+			      CONFIG_SPAGHETTI_EXAMPLE_THREAD_PRIORITY,
+			      0, K_NO_WAIT);
+	err = k_thread_name_set(tid, "spaghetti_example");
+	if (err < 0) {
+		LOG_WRN("could not set worker thread name: %d", err);
+	}
+
+	return 0;
+}
+
+int spaghetti_example_worker_submit(uint32_t correlation_id,
+				    k_timeout_t timeout)
+{
+	const struct example_command command = {
+		.type = EXAMPLE_COMMAND_RUN,
+		.correlation_id = correlation_id,
+	};
+
+	if (K_TIMEOUT_EQ(timeout, K_FOREVER)) {
+		return -EINVAL;
+	}
+	if (!atomic_get(&worker_started)) {
+		return -EACCES;
+	}
+
+	return k_msgq_put(&command_queue, &command, timeout);
+}
+
+/* This template models a boot-started worker with application lifetime. */

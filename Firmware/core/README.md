@@ -40,6 +40,12 @@ Then build the firmware:
 make build
 ```
 
+Every firmware build runs [`validator`](VALIDATOR.md) before compilation. It
+reports objective errors in red and review warnings in orange, including the
+file, line, correction, and implementation-guide section. Convention findings
+do not stop compilation. Run `make validate` for the same check without building,
+or `make build VALIDATOR_QUIET=1` to run it without printing its report.
+
 On Windows, where `make` may not be installed, use these PowerShell commands:
 
 ```powershell
@@ -134,6 +140,7 @@ flashing again.
 | Command | Description |
 |---|---|
 | `make image` | Build the Docker development image |
+| `make validate` | Check firmware writing conventions without compiling |
 | `make build` | Run an incremental firmware build |
 | `make pristine` | Reconfigure and rebuild from scratch |
 | `make shell` | Open a shell in the Zephyr environment |
@@ -158,9 +165,16 @@ docker compose run --rm dev west build -d build -t pristine
 
 ```text
 .
-├── src/                                    application source code
+├── src/                                    application entry point
+├── include/spaghetti/                      public firmware contracts
+├── subsys/                                 common subsystem implementations
+├── spaghetti_modules/                      removable-module drivers
+├── boards/                                 board definitions and overlays
+├── dts/bindings/spaghetti/                 project Devicetree schemas
+├── templates/firmware/                     copyable implementation skeletons
+├── validator                               pre-build firmware convention checker
+├── FILE_MAP.md                             what to read before each kind of change
 ├── prj.conf                                Zephyr/Kconfig settings
-├── boards/esp32c3_devkitm_esp32c3.overlay  additional hardware settings
 ├── CMakeLists.txt                          build configuration
 ├── Dockerfile                              Zephyr development image
 ├── compose.yaml                            common container configuration
@@ -178,6 +192,9 @@ you need its detailed contract.
 | Guide | Use it for |
 |---|---|
 | [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |
+| [Implementation guide](FIRMWARE_IMPLEMENTATION_GUIDE.md) | Mandatory coding rules, decisions, workflow, and copyable templates |
+| [File map](FILE_MAP.md) | What each file contains and what to read before each kind of task |
+| [Firmware validator](VALIDATOR.md) | Pre-build checks, commands, severities, scope, and corrections |
 | [Public interfaces](include/spaghetti/README.md) | Shared types and public API boundaries |
 | [Board support](boards/spaghettilab/README.md) | Core variants and static hardware descriptions |
 | [Devicetree bindings](dts/bindings/spaghetti/README.md) | Spaghetti-specific hardware schemas |
@@ -237,3 +254,16 @@ make pristine
 ```
 
 On Windows, use the equivalent command shown above.
+
+### The validator reports convention findings
+
+Review each `ERROR` and `WARNING` using the reported guide section, then run:
+
+```sh
+make validate
+```
+
+Neither severity blocks a normal build. To scan without displaying the
+convention report, use `make build VALIDATOR_QUIET=1`. See
+[`VALIDATOR.md`](VALIDATOR.md) for colors, strict mode, scope, and selected-file
+commands.

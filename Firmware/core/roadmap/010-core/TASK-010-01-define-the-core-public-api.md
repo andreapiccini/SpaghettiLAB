@@ -1,6 +1,6 @@
 # TASK-010-01 — Define the Core public API
 
-**Status:** ⬜ TODO  
+**Status:** ✅ DONE 
 **Phase:** 010 — Core  
 **Depends on:** [TASK-000-02](../000-baseline/TASK-000-02-flash-and-observe-the-baseline.md)  
 **Estimated scope:** Small

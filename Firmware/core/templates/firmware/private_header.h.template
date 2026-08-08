@@ -1,0 +1,25 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+#ifndef SPAGHETTI_EXAMPLE_INTERNAL_H
+#define SPAGHETTI_EXAMPLE_INTERNAL_H
+
+#include <stdint.h>
+
+/*
+ * Private contract shared only by sibling source files in this component.
+ * Do not include this header from another subsystem or install it publicly.
+ */
+
+enum example_command_type {
+	EXAMPLE_COMMAND_RUN,
+};
+
+struct example_command {
+	enum example_command_type type;
+	uint32_t correlation_id;
+};
+
+/* Internal helper implemented by the component backend source file. */
+int spaghetti_example_backend_run(const struct example_command *command);
+
+#endif /* SPAGHETTI_EXAMPLE_INTERNAL_H */

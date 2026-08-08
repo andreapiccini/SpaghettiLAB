@@ -1,0 +1,1093 @@
+#!/usr/bin/env python3
+"""Validate Spaghetti LAB firmware source conventions before compilation."""
+
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, Sequence
+
+
+VERSION = "1.1.0"
+PROJECT_ROOT = Path(__file__).resolve().parent
+
+SOURCE_ROOTS = (
+    "src",
+    "include",
+    "subsys",
+    "spaghetti_modules",
+    "boards",
+    "dts",
+    "tests",
+)
+ROOT_FILES = ("CMakeLists.txt", "Kconfig", "prj.conf")
+EXCLUDED_DIRS = {
+    ".git",
+    ".west",
+    "build",
+    "templates",
+    "roadmap",
+    "LICENSES",
+    "__pycache__",
+}
+SUPPORTED_SUFFIXES = {
+    ".c",
+    ".h",
+    ".cpp",
+    ".dts",
+    ".dtsi",
+    ".overlay",
+    ".conf",
+    ".cmake",
+    ".yaml",
+    ".yml",
+}
+SUPPORTED_NAMES = {"CMakeLists.txt", "Kconfig"}
+C_SUFFIXES = {".c", ".h", ".cpp"}
+PUBLIC_HEADER_ROOT = PROJECT_ROOT / "include" / "spaghetti"
+
+
+@dataclass(frozen=True)
+class Rule:
+    code: str
+    default_severity: str
+    title: str
+    correction: str
+    guide_section: str
+
+
+RULES = {
+    rule.code: rule
+    for rule in (
+        Rule(
+            "TEXT001",
+            "error",
+            "File is not valid UTF-8 text",
+            "Save the file as UTF-8 without binary data.",
+            "Formatting",
+        ),
+        Rule(
+            "TEXT002",
+            "error",
+            "File uses CRLF line endings",
+            "Convert line endings to LF.",
+            "Formatting",
+        ),
+        Rule(
+            "FMT001",
+            "error",
+            "Trailing whitespace",
+            "Remove spaces or tabs at the end of the line.",
+            "Formatting",
+        ),
+        Rule(
+            "FMT002",
+            "error",
+            "Missing final newline",
+            "End the file with exactly one newline.",
+            "Formatting",
+        ),
+        Rule(
+            "FMT003",
+            "error",
+            "Line exceeds 100 columns",
+            "Split the statement or declaration without hiding its structure.",
+            "Formatting",
+        ),
+        Rule(
+            "FMT004",
+            "error",
+            "Multiple consecutive blank lines",
+            "Keep one blank line between logical sections.",
+            "Spaces and line breaks",
+        ),
+        Rule(
+            "C001",
+            "error",
+            "Block indentation uses spaces",
+            "Use one tab per block level; reserve spaces for continuation alignment.",
+            "Spaces and line breaks",
+        ),
+        Rule(
+            "C002",
+            "warning",
+            "Tab used for alignment after code",
+            "Use tabs only for indentation and spaces for alignment.",
+            "Spaces and line breaks",
+        ),
+        Rule(
+            "C003",
+            "error",
+            "C++-style // comment",
+            "Use a C89-style /* ... */ comment.",
+            "Formatting",
+        ),
+        Rule(
+            "C004",
+            "error",
+            "Function declaration has unspecified parameters",
+            "Use (void) for no parameters or provide a full named prototype.",
+            "Function prototypes",
+        ),
+        Rule(
+            "C005",
+            "error",
+            "Plain uint type",
+            "Choose uint8_t, uint16_t, uint32_t, or uint64_t from the domain range.",
+            "Integer and scalar types",
+        ),
+        Rule(
+            "C006",
+            "error",
+            "Forbidden unbounded string function",
+            "Use a bounded API and handle truncation explicitly.",
+            "Arrays, buffers, and strings",
+        ),
+        Rule(
+            "C007",
+            "error",
+            "Doxygen block appears in an implementation file",
+            "Keep public Doxygen beside the declaration in the public header.",
+            "Doxygen location",
+        ),
+        Rule(
+            "C008",
+            "error",
+            "Mutable extern object",
+            "Keep mutable state file-private and expose an owner function or copied message.",
+            "Global and file-static variables",
+        ),
+        Rule(
+            "C009",
+            "warning",
+            "Dynamic allocation requires documented justification",
+            "Prefer bounded static storage, a fixed pool, or a Zephyr memory slab.",
+            "Static and dynamic data",
+        ),
+        Rule(
+            "C010",
+            "warning",
+            "printk used outside the bootstrap baseline",
+            "Use the Zephyr logging module and an appropriate LOG_* level.",
+            "Logging",
+        ),
+        Rule(
+            "C011",
+            "error",
+            "Project macro lacks component prefix",
+            "Rename it to SPAGHETTI_<COMPONENT>_<NAME> or use Kconfig/Devicetree.",
+            "Preprocessor and constants",
+        ),
+        Rule(
+            "C012",
+            "warning",
+            "Public/external function lacks spaghetti_ prefix",
+            "Use spaghetti_<component>_<verb>, unless this is a required Zephyr entry point.",
+            "Naming conventions",
+        ),
+        Rule(
+            "HDR001",
+            "error",
+            "Public header has no include guard",
+            "Add matching SPAGHETTI_<NAME>_H #ifndef/#define/#endif directives.",
+            "Public headers",
+        ),
+        Rule(
+            "HDR002",
+            "error",
+            "Public header has no @file block",
+            "Add the Doxygen @file block before the include guard.",
+            "Doxygen location",
+        ),
+        Rule(
+            "HDR003",
+            "error",
+            "Public function has no adjacent Doxygen contract",
+            "Document it in the header with @brief, parameters, return values, and context.",
+            "Function documentation",
+        ),
+        Rule(
+            "HDR004",
+            "error",
+            "Public function parameter is undocumented",
+            "Add @param with direction, range, units, ownership, and lifetime.",
+            "Function documentation",
+        ),
+        Rule(
+            "HDR005",
+            "error",
+            "Public function return contract is incomplete",
+            "Use @retval for int errors or @return for an infallible domain value.",
+            "Choosing the return type",
+        ),
+        Rule(
+            "HDR006",
+            "error",
+            "Public enum/struct is undocumented",
+            "Document the type and every public value or field in the public header.",
+            "Function documentation",
+        ),
+        Rule(
+            "LOG001",
+            "error",
+            "Logging used without module registration/declaration",
+            "Register once with LOG_MODULE_REGISTER or declare the owner's module.",
+            "Logging",
+        ),
+        Rule(
+            "LOG002",
+            "warning",
+            "Log module level is not controlled by Kconfig",
+            "Use CONFIG_SPAGHETTI_<COMPONENT>_LOG_LEVEL.",
+            "Logging",
+        ),
+        Rule(
+            "LOG003",
+            "error",
+            "Log module registered more than once",
+            "Keep one LOG_MODULE_REGISTER and use LOG_MODULE_DECLARE in sibling files.",
+            "Logging",
+        ),
+        Rule(
+            "LOG004",
+            "error",
+            "Declared log module has no registration",
+            "Register the same module once in the component's primary source file.",
+            "Logging",
+        ),
+        Rule(
+            "CFG001",
+            "error",
+            "Invalid prj.conf assignment",
+            "Use CONFIG_<UPPERCASE_NAME>=<value> or a # comment.",
+            "Devicetree, Kconfig, and runtime Config",
+        ),
+        Rule(
+            "FILE001",
+            "error",
+            "Source filename does not use lowercase snake_case",
+            "Rename the source file using lowercase snake_case.",
+            "Naming conventions",
+        ),
+        Rule(
+            "CMAKE001",
+            "error",
+            "Invalid CMake indentation",
+            "Use spaces, two per nesting level; never indent CMake with tabs.",
+            "CMake rules",
+        ),
+        Rule(
+            "CMAKE002",
+            "error",
+            "Invalid CMake command style",
+            "Use lowercase commands with no space before the opening parenthesis.",
+            "CMake rules",
+        ),
+        Rule(
+            "KCFG001",
+            "error",
+            "Invalid Kconfig indentation",
+            "Indent Kconfig with tabs; help text uses one tab followed by two spaces.",
+            "Devicetree, Kconfig, and runtime Config",
+        ),
+        Rule(
+            "KCFG002",
+            "error",
+            "Invalid Kconfig comment spacing",
+            "Write comments as '# Comment' with a space after #.",
+            "Devicetree, Kconfig, and runtime Config",
+        ),
+        Rule(
+            "DTS001",
+            "error",
+            "Devicetree indentation uses spaces",
+            "Use tabs for Devicetree block indentation and spaces only for alignment.",
+            "Devicetree, Kconfig, and runtime Config",
+        ),
+        Rule(
+            "DTS002",
+            "error",
+            "Devicetree property name uses underscores",
+            "Use dashes in node/property names; underscores are reserved for labels.",
+            "Devicetree, Kconfig, and runtime Config",
+        ),
+        Rule(
+            "YAML001",
+            "error",
+            "YAML contains a tab",
+            "Indent YAML with spaces only.",
+            "Devicetree, Kconfig, and runtime Config",
+        ),
+    )
+}
+
+
+@dataclass(frozen=True)
+class Finding:
+    code: str
+    path: Path
+    line: int
+    detail: str
+
+    @property
+    def rule(self) -> Rule:
+        return RULES[self.code]
+
+
+@dataclass
+class CScan:
+    sanitized_lines: list[str]
+    line_comment_columns: list[int | None]
+
+
+def is_supported(path: Path) -> bool:
+    return path.name in SUPPORTED_NAMES or path.suffix.lower() in SUPPORTED_SUFFIXES
+
+
+def is_excluded(path: Path) -> bool:
+    try:
+        relative = path.resolve().relative_to(PROJECT_ROOT)
+    except ValueError:
+        return True
+    return any(part in EXCLUDED_DIRS or part.startswith("build-") for part in relative.parts)
+
+
+def default_files() -> list[Path]:
+    candidates: list[Path] = []
+    for root_name in SOURCE_ROOTS:
+        root = PROJECT_ROOT / root_name
+        if root.exists():
+            candidates.extend(path for path in root.rglob("*") if path.is_file())
+    candidates.extend(PROJECT_ROOT / name for name in ROOT_FILES if (PROJECT_ROOT / name).is_file())
+    return sorted(
+        {
+            path.resolve()
+            for path in candidates
+            if is_supported(path) and not is_excluded(path)
+        }
+    )
+
+
+def explicit_files(values: Sequence[str]) -> list[Path]:
+    candidates: list[Path] = []
+    for value in values:
+        if Path(value).is_absolute():
+            path = Path(value).resolve()
+        else:
+            path = (PROJECT_ROOT / value).resolve()
+        if not path.exists():
+            raise ValueError(f"path does not exist: {value}")
+        if path.is_dir():
+            candidates.extend(item for item in path.rglob("*") if item.is_file())
+        else:
+            candidates.append(path)
+    return sorted({path for path in candidates if is_supported(path) and not is_excluded(path)})
+
+
+def display_path(path: Path) -> str:
+    try:
+        return path.relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def add(findings: list[Finding], code: str, path: Path, line: int, detail: str) -> None:
+    findings.append(Finding(code=code, path=path, line=max(line, 1), detail=detail))
+
+
+def decode_file(path: Path, findings: list[Finding]) -> tuple[str, list[str]] | None:
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as error:
+        add(findings, "TEXT001", path, 1, f"UTF-8 decoding failed at byte {error.start}")
+        return None
+
+    if b"\r\n" in raw or b"\r" in raw:
+        add(findings, "TEXT002", path, 1, "CR or CRLF line ending detected")
+
+    return text, text.splitlines(keepends=True)
+
+
+def visible_columns(line: str) -> int:
+    return len(line.rstrip("\r\n").expandtabs(8))
+
+
+def validate_common(path: Path, text: str, lines: Sequence[str], findings: list[Finding]) -> None:
+    for line_number, line in enumerate(lines, start=1):
+        content = line.rstrip("\r\n")
+        if content.endswith((" ", "\t")):
+            add(findings, "FMT001", path, line_number, "line ends with whitespace")
+        columns = visible_columns(line)
+        if columns > 100:
+            add(findings, "FMT003", path, line_number, f"line has {columns} columns")
+
+    if text and not text.endswith("\n"):
+        add(findings, "FMT002", path, len(lines), "file does not end with LF")
+
+    blank_run = 0
+    for line_number, line in enumerate(lines, start=1):
+        if line.strip():
+            blank_run = 0
+            continue
+        blank_run += 1
+        if blank_run >= 2:
+            add(findings, "FMT004", path, line_number, "more than one consecutive blank line")
+
+
+def scan_c_lexical(lines: Sequence[str]) -> CScan:
+    sanitized_lines: list[str] = []
+    line_comments: list[int | None] = []
+    in_block_comment = False
+
+    for raw_line in lines:
+        line = raw_line.rstrip("\r\n")
+        output = list(line)
+        line_comment_column: int | None = None
+        quote: str | None = None
+        index = 0
+        while index < len(line):
+            char = line[index]
+            next_char = line[index + 1] if index + 1 < len(line) else ""
+
+            if in_block_comment:
+                output[index] = " "
+                if char == "*" and next_char == "/":
+                    output[index + 1] = " "
+                    in_block_comment = False
+                    index += 2
+                    continue
+                index += 1
+                continue
+
+            if quote is not None:
+                output[index] = " "
+                if char == "\\" and index + 1 < len(line):
+                    output[index + 1] = " "
+                    index += 2
+                    continue
+                if char == quote:
+                    quote = None
+                index += 1
+                continue
+
+            if char in ('"', "'"):
+                quote = char
+                output[index] = " "
+                index += 1
+                continue
+
+            if char == "/" and next_char == "*":
+                output[index] = " "
+                output[index + 1] = " "
+                in_block_comment = True
+                index += 2
+                continue
+
+            if char == "/" and next_char == "/":
+                line_comment_column = index
+                for remainder in range(index, len(line)):
+                    output[remainder] = " "
+                break
+
+            index += 1
+
+        sanitized_lines.append("".join(output))
+        line_comments.append(line_comment_column)
+
+    return CScan(sanitized_lines=sanitized_lines, line_comment_columns=line_comments)
+
+
+def line_for_offset(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
+def previous_doxygen(text: str, offset: int) -> str | None:
+    prefix = text[:offset].rstrip()
+    if not prefix.endswith("*/"):
+        return None
+    start = prefix.rfind("/**")
+    if start < 0:
+        return None
+    return prefix[start:]
+
+
+def parameter_names(parameters: str) -> list[str]:
+    compact = " ".join(parameters.replace("\n", " ").split())
+    if not compact or compact == "void":
+        return []
+    names: list[str] = []
+    for parameter in compact.split(","):
+        parameter = parameter.strip()
+        if "(*" in parameter:
+            match = re.search(r"\(\s*\*\s*([A-Za-z_]\w*)", parameter)
+        else:
+            match = re.search(r"([A-Za-z_]\w*)\s*(?:\[[^]]*\])?\s*$", parameter)
+        if match:
+            names.append(match.group(1))
+    return names
+
+
+FUNCTION_PATTERN = re.compile(
+    r"(?ms)^[ \t]*(?!typedef\b)(?!static\b)"
+    r"(?P<return>(?:const\s+)?(?:(?:struct|enum)\s+)?[A-Za-z_]\w*(?:\s*\*)?)"
+    r"[ \t]+(?P<name>[A-Za-z_]\w*)[ \t]*\((?P<params>[^;{}]*)\)[ \t]*;"
+)
+
+
+def validate_public_header(
+    path: Path, text: str, sanitized_text: str, findings: list[Finding]
+) -> None:
+    if not text.strip():
+        return
+
+    guard_match = re.search(r"(?m)^#ifndef\s+(SPAGHETTI_[A-Z0-9_]+_H)\s*$", text)
+    if not guard_match or not re.search(
+        rf"(?m)^#define\s+{re.escape(guard_match.group(1))}\s*$" if guard_match else r"(?!)",
+        text,
+    ):
+        add(findings, "HDR001", path, 1, "matching SPAGHETTI_*_H guard not found")
+
+    if not re.search(r"/\*\*.*?@file.*?\*/", text, re.DOTALL):
+        add(
+            findings,
+            "HDR002",
+            path,
+            1,
+            "public header must start its API documentation with @file",
+        )
+
+    for match in FUNCTION_PATTERN.finditer(sanitized_text):
+        name = match.group("name")
+        if name.startswith(("if", "for", "while", "switch")):
+            continue
+        line = line_for_offset(sanitized_text, match.start())
+        comment = previous_doxygen(text, match.start())
+        if comment is None:
+            add(findings, "HDR003", path, line, f"{name} has no adjacent /** ... */ contract")
+            continue
+
+        for parameter in parameter_names(match.group("params")):
+            if not re.search(rf"@param(?:\[[^]]+\])?\s+{re.escape(parameter)}\b", comment):
+                add(
+                    findings,
+                    "HDR004",
+                    path,
+                    line,
+                    f"parameter '{parameter}' of {name} is undocumented",
+                )
+
+        return_type = " ".join(match.group("return").split())
+        if return_type == "void":
+            pass
+        elif return_type == "int":
+            if "@retval 0" not in comment or not re.search(r"@retval\s+-E[A-Z0-9_]+", comment):
+                add(
+                    findings,
+                    "HDR005",
+                    path,
+                    line,
+                    f"{name} must document success and expected errno values",
+                )
+        elif "@return" not in comment:
+            add(
+                findings,
+                "HDR005",
+                path,
+                line,
+                f"{name} must document its infallible return value with @return",
+            )
+
+        if not name.startswith("spaghetti_"):
+            add(
+                findings,
+                "C012",
+                path,
+                line,
+                f"external declaration '{name}' is not project-qualified",
+            )
+
+    type_pattern = re.compile(
+        r"(?ms)^[ \t]*(?P<kind>enum|struct)\s+"
+        r"(spaghetti_\w+)\s*\{(?P<body>.*?)\};"
+    )
+    for match in type_pattern.finditer(sanitized_text):
+        line = line_for_offset(sanitized_text, match.start())
+        if previous_doxygen(text, match.start()) is None:
+            add(
+                findings,
+                "HDR006",
+                path,
+                line,
+                f"public {match.group('kind')} {match.group(2)} has no type comment",
+            )
+        body_start_line = line_for_offset(sanitized_text, match.start("body"))
+        for offset, raw_line in enumerate(match.group("body").splitlines()):
+            stripped = raw_line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if stripped.endswith(",") or re.match(r"^[A-Za-z_]\w*\s*(?:=|;|\[)", stripped):
+                source_line_number = body_start_line + offset
+                source_line = text.splitlines()[source_line_number - 1]
+                if "/**<" not in source_line:
+                    add(
+                        findings,
+                        "HDR006",
+                        path,
+                        source_line_number,
+                        "public enum value or struct field needs a /**< ... */ comment",
+                    )
+
+
+def parenthesis_depth_before(lines: Sequence[str]) -> list[int]:
+    depths: list[int] = []
+    depth = 0
+    for line in lines:
+        depths.append(depth)
+        depth += line.count("(") - line.count(")")
+        depth = max(depth, 0)
+    return depths
+
+
+def validate_c_file(path: Path, text: str, lines: Sequence[str], findings: list[Finding]) -> None:
+    scan = scan_c_lexical(lines)
+    sanitized_text = "\n".join(scan.sanitized_lines)
+    depths = parenthesis_depth_before(scan.sanitized_lines)
+
+    for line_number, column in enumerate(scan.line_comment_columns, start=1):
+        if column is not None:
+            add(findings, "C003", path, line_number, f"// comment begins at column {column + 1}")
+
+    for line_number, (raw_line, sanitized) in enumerate(
+        zip(lines, scan.sanitized_lines), start=1
+    ):
+        raw = raw_line.rstrip("\r\n")
+        stripped = raw.lstrip()
+        if (
+            raw.startswith(" ")
+            and stripped
+            and not stripped.startswith(("*", "/*", "*/", "#"))
+            and depths[line_number - 1] == 0
+        ):
+            add(findings, "C001", path, line_number, "first indentation character is a space")
+        if re.search(r"\S\t", raw):
+            add(findings, "C002", path, line_number, "tab appears after non-whitespace content")
+
+        code = sanitized.strip()
+        if re.search(r"\buint\b", code):
+            add(
+                findings,
+                "C005",
+                path,
+                line_number,
+                "plain uint is not an explicit-width project type",
+            )
+        if re.search(r"\b(?:strcpy|strcat|sprintf)\s*\(", code) or re.search(
+            r"\bscanf\s*\(\s*\"%s", raw
+        ):
+            add(findings, "C006", path, line_number, "unbounded string operation detected")
+        if re.search(r"\b(?:k_malloc|k_calloc|k_realloc|malloc|calloc|realloc)\s*\(", code):
+            add(
+                findings,
+                "C009",
+                path,
+                line_number,
+                "allocation requires an owner, bound, and failure policy",
+            )
+        if re.search(r"\bprintk\s*\(", code):
+            add(
+                findings,
+                "C010",
+                path,
+                line_number,
+                "use LOG_* outside the explicit bootstrap baseline",
+            )
+        if re.search(r"^\s*extern\s+(?!const\b).+\b[A-Za-z_]\w*\s*(?:\[[^]]*\])?\s*;", sanitized):
+            add(findings, "C008", path, line_number, "extern object is mutable")
+
+        define = re.match(r"^\s*#define\s+([A-Za-z_]\w*)", sanitized)
+        if define:
+            name = define.group(1)
+            allowed = (
+                name.startswith("SPAGHETTI_")
+                or name.startswith("CONFIG_")
+                or name in {"DT_DRV_COMPAT", "LOG_LEVEL", "_POSIX_C_SOURCE"}
+            )
+            if not allowed:
+                add(
+                    findings,
+                    "C011",
+                    path,
+                    line_number,
+                    f"macro '{name}' lacks project/component prefix",
+                )
+
+    if path.suffix.lower() in {".c", ".cpp"} and "/**" in text:
+        for match in re.finditer(r"/\*\*", text):
+            add(
+                findings,
+                "C007",
+                path,
+                line_for_offset(text, match.start()),
+                "Doxygen belongs in the public header",
+            )
+
+    unspecified_parameters = re.compile(
+        r"(?m)^[ \t]*(?:static[ \t]+)?(?:const[ \t]+)?"
+        r"(?:(?:struct|enum)[ \t]+[A-Za-z_]\w*|[A-Za-z_]\w*)"
+        r"(?:[ \t]*\*)?[ \t]+([a-z_]\w*)[ \t]*\([ \t]*\)[ \t]*(?:;|\{)"
+    )
+    for match in unspecified_parameters.finditer(sanitized_text):
+        add(
+            findings,
+            "C004",
+            path,
+            line_for_offset(sanitized_text, match.start()),
+            f"'{match.group(1)}()' does not declare an explicit parameter list",
+        )
+
+    if path.suffix.lower() in {".c", ".cpp"}:
+        definition_pattern = re.compile(
+            r"(?m)^[ \t]*(?!static\b)(?!typedef\b)"
+            r"(?:[A-Za-z_]\w*[ \t]+)+(?:\*[ \t]*)?(?P<name>[A-Za-z_]\w*)[ \t]*\([^;]*\)[ \t]*\{"
+        )
+        for match in definition_pattern.finditer(sanitized_text):
+            name = match.group("name")
+            if name != "main" and not name.startswith("spaghetti_"):
+                add(
+                    findings,
+                    "C012",
+                    path,
+                    line_for_offset(sanitized_text, match.start()),
+                    f"external definition '{name}' is not project-qualified",
+                )
+
+    uses_logging = bool(re.search(r"\bLOG_(?:ERR|WRN|INF|DBG|HEXDUMP|INSTANCE)", sanitized_text))
+    has_module = "LOG_MODULE_REGISTER" in sanitized_text or "LOG_MODULE_DECLARE" in sanitized_text
+    if uses_logging and not has_module:
+        line = line_for_offset(sanitized_text, re.search(r"\bLOG_", sanitized_text).start())
+        add(
+            findings,
+            "LOG001",
+            path,
+            line,
+            "LOG_* call has no module registration/declaration in this file",
+        )
+
+    if path.suffix.lower() == ".h" and path.is_relative_to(PUBLIC_HEADER_ROOT):
+        validate_public_header(path, text, sanitized_text, findings)
+
+
+def validate_filename(path: Path, findings: list[Finding]) -> None:
+    if path.suffix.lower() not in C_SUFFIXES:
+        return
+    stem = path.stem
+    if not re.fullmatch(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*", stem):
+        add(findings, "FILE001", path, 1, f"'{path.name}' is not lowercase snake_case")
+
+
+def validate_prj_conf(path: Path, lines: Sequence[str], findings: list[Finding]) -> None:
+    if path.name != "prj.conf":
+        return
+    for line_number, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if not re.fullmatch(r"CONFIG_[A-Z0-9_]+=(?:y|n|m|.+)", stripped):
+            add(findings, "CFG001", path, line_number, f"invalid assignment: {stripped}")
+
+
+def validate_cmake(path: Path, lines: Sequence[str], findings: list[Finding]) -> None:
+    if path.name != "CMakeLists.txt" and path.suffix.lower() != ".cmake":
+        return
+    for line_number, line in enumerate(lines, start=1):
+        content = line.rstrip("\r\n")
+        if not content.strip() or content.lstrip().startswith("#"):
+            continue
+        prefix = content[: len(content) - len(content.lstrip())]
+        if "\t" in prefix or len(prefix) % 2 != 0:
+            add(
+                findings,
+                "CMAKE001",
+                path,
+                line_number,
+                "indentation is not a multiple of two spaces",
+            )
+        command = re.match(r"^\s*([A-Za-z_]\w*)(\s*)\(", content)
+        if command and (command.group(1) != command.group(1).lower() or command.group(2)):
+            add(
+                findings,
+                "CMAKE002",
+                path,
+                line_number,
+                f"command is written as '{command.group(1)}{command.group(2)}('",
+            )
+
+
+def validate_kconfig(path: Path, lines: Sequence[str], findings: list[Finding]) -> None:
+    if path.name != "Kconfig":
+        return
+    for line_number, line in enumerate(lines, start=1):
+        content = line.rstrip("\r\n")
+        if not content.strip():
+            continue
+        if content.startswith(" "):
+            add(findings, "KCFG001", path, line_number, "indented line starts with spaces")
+        if re.match(r"^\s*#[^\s#]", content):
+            add(findings, "KCFG002", path, line_number, "comment has no space after #")
+
+
+def validate_devicetree(path: Path, lines: Sequence[str], findings: list[Finding]) -> None:
+    if path.suffix.lower() not in {".dts", ".dtsi", ".overlay"}:
+        return
+    for line_number, line in enumerate(lines, start=1):
+        content = line.rstrip("\r\n")
+        stripped = content.lstrip()
+        if not stripped or stripped.startswith(("/*", "*", "*/", "#include")):
+            continue
+        if content.startswith(" "):
+            add(findings, "DTS001", path, line_number, "block indentation starts with spaces")
+        property_match = re.match(r"^\s*([A-Za-z0-9,#_-]+)\s*=", content)
+        if property_match and "_" in property_match.group(1):
+            add(
+                findings,
+                "DTS002",
+                path,
+                line_number,
+                f"property '{property_match.group(1)}' contains an underscore",
+            )
+
+
+def validate_yaml(path: Path, lines: Sequence[str], findings: list[Finding]) -> None:
+    if path.suffix.lower() not in {".yaml", ".yml"}:
+        return
+    for line_number, line in enumerate(lines, start=1):
+        if "\t" in line:
+            add(findings, "YAML001", path, line_number, "tab character detected")
+
+
+def validate_log_modules(
+    files: Sequence[Path],
+    decoded: dict[Path, str],
+    findings: list[Finding],
+    require_registration: bool,
+) -> None:
+    registrations: dict[str, list[tuple[Path, int, str | None]]] = {}
+    declarations: dict[str, list[tuple[Path, int]]] = {}
+    register_pattern = re.compile(
+        r"LOG_MODULE_REGISTER\s*\(\s*([A-Za-z_]\w*)\s*(?:,\s*([A-Za-z_]\w*))?\s*\)"
+    )
+    declare_pattern = re.compile(r"LOG_MODULE_DECLARE\s*\(\s*([A-Za-z_]\w*)")
+
+    for path in files:
+        if path.suffix.lower() not in {".c", ".cpp"} or path not in decoded:
+            continue
+        text = decoded[path]
+        for match in register_pattern.finditer(text):
+            registrations.setdefault(match.group(1), []).append(
+                (path, line_for_offset(text, match.start()), match.group(2))
+            )
+        for match in declare_pattern.finditer(text):
+            declarations.setdefault(match.group(1), []).append(
+                (path, line_for_offset(text, match.start()))
+            )
+
+    for module, locations in registrations.items():
+        if len(locations) > 1:
+            for path, line, _level in locations:
+                add(
+                    findings,
+                    "LOG003",
+                    path,
+                    line,
+                    f"module '{module}' has {len(locations)} registrations",
+                )
+        for path, line, level in locations:
+            if level is None or not level.startswith("CONFIG_SPAGHETTI_"):
+                add(
+                    findings,
+                    "LOG002",
+                    path,
+                    line,
+                    f"module '{module}' level is '{level or 'default'}'",
+                )
+
+    for module, locations in declarations.items():
+        if require_registration and module not in registrations:
+            for path, line in locations:
+                add(
+                    findings,
+                    "LOG004",
+                    path,
+                    line,
+                    f"module '{module}' is declared but never registered",
+                )
+
+
+def validate(
+    paths: Sequence[Path], require_complete_scope: bool
+) -> tuple[list[Finding], int, int]:
+    findings: list[Finding] = []
+    decoded: dict[Path, str] = {}
+    checked_files = 0
+    empty_files = 0
+
+    for path in paths:
+        result = decode_file(path, findings)
+        if result is None:
+            continue
+        text, lines = result
+        decoded[path] = text
+        if not text.strip():
+            empty_files += 1
+            continue
+
+        checked_files += 1
+        validate_common(path, text, lines, findings)
+        validate_filename(path, findings)
+        validate_prj_conf(path, lines, findings)
+        validate_cmake(path, lines, findings)
+        validate_kconfig(path, lines, findings)
+        validate_devicetree(path, lines, findings)
+        validate_yaml(path, lines, findings)
+        if path.suffix.lower() in C_SUFFIXES:
+            validate_c_file(path, text, lines, findings)
+
+    validate_log_modules(paths, decoded, findings, require_complete_scope)
+    findings.sort(key=lambda finding: (display_path(finding.path), finding.line, finding.code))
+    return findings, checked_files, empty_files
+
+
+def supports_color(disabled: bool) -> bool:
+    return not disabled and "NO_COLOR" not in os.environ and sys.stdout.isatty()
+
+
+def color(text: str, code: str, enabled: bool) -> str:
+    return f"\033[{code}m{text}\033[0m" if enabled else text
+
+
+def effective_severity(finding: Finding, strict: bool) -> str:
+    if strict and finding.rule.default_severity == "warning":
+        return "error"
+    return finding.rule.default_severity
+
+
+def print_findings(findings: Sequence[Finding], strict: bool, use_color: bool) -> tuple[int, int]:
+    errors = 0
+    warnings = 0
+    for finding in findings:
+        severity = effective_severity(finding, strict)
+        if severity == "error":
+            errors += 1
+            label = color("ERROR", "31;1", use_color)
+        else:
+            warnings += 1
+            label = color("WARNING", "38;5;208;1", use_color)
+        location = f"{display_path(finding.path)}:{finding.line}"
+        print(f"{label} [{finding.code}] {location} — {finding.rule.title}")
+        print(f"  Found: {finding.detail}")
+        print(f"  Fix:   {finding.rule.correction}")
+        print(f"  Guide: FIRMWARE_IMPLEMENTATION_GUIDE.md — {finding.rule.guide_section}")
+    return errors, warnings
+
+
+def print_rule_list() -> None:
+    for code in sorted(RULES):
+        rule = RULES[code]
+        print(f"{rule.code} [{rule.default_severity}] {rule.title}")
+        print(f"  Fix: {rule.correction}")
+        print(f"  Guide: {rule.guide_section}")
+
+
+def parse_arguments(argv: Sequence[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Validate Spaghetti LAB firmware writing conventions before compilation."
+    )
+    parser.add_argument(
+        "paths",
+        nargs="*",
+        help="files/directories to validate; defaults to firmware source roots",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="return exit code 1 when any convention finding is reported",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="run every check without printing convention findings or a summary",
+    )
+    parser.add_argument("--no-color", action="store_true", help="disable ANSI colors")
+    parser.add_argument(
+        "--list-rules",
+        action="store_true",
+        help="print every validator rule and exit",
+    )
+    parser.add_argument("--version", action="version", version=f"validator {VERSION}")
+    return parser.parse_args(argv)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = parse_arguments(argv if argv is not None else sys.argv[1:])
+    if args.list_rules:
+        print_rule_list()
+        return 0
+
+    environment_quiet = os.environ.get("SPAGHETTI_VALIDATOR_QUIET") == "1"
+    quiet = args.quiet or environment_quiet
+
+    if os.environ.get("SPAGHETTI_VALIDATOR_ALREADY_RUN") == "1" and not args.paths:
+        if not quiet:
+            print("Spaghetti LAB validator: already completed before West; CMake check skipped.")
+        return 0
+
+    try:
+        paths = explicit_files(args.paths) if args.paths else default_files()
+    except ValueError as error:
+        print(f"validator: {error}", file=sys.stderr)
+        return 2
+
+    if not quiet:
+        print(f"Spaghetti LAB validator {VERSION}")
+        print(f"Scope: {len(paths)} candidate files")
+
+    findings, checked_files, empty_files = validate(
+        paths, require_complete_scope=not bool(args.paths)
+    )
+    if quiet:
+        errors = sum(
+            effective_severity(finding, args.strict) == "error" for finding in findings
+        )
+        warnings = len(findings) - errors
+    else:
+        errors, warnings = print_findings(
+            findings, args.strict, supports_color(args.no_color)
+        )
+
+    if not quiet:
+        print()
+        print(
+            f"Summary: checked={checked_files}, empty-skipped={empty_files}, "
+            f"errors={errors}, warnings={warnings}"
+        )
+
+    if args.strict and findings:
+        if not quiet:
+            print("Result: FAILED (strict mode) — convention findings require review.")
+        return 1
+
+    if not quiet:
+        if findings:
+            print("Result: REPORTED — findings do not block the build.")
+        else:
+            print("Result: PASSED — source conventions are satisfied.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

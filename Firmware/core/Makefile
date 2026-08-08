@@ -1,7 +1,11 @@
 COMPOSE := docker compose
 LINUX_COMPOSE := $(COMPOSE) -f compose.yaml -f compose.linux.yaml
+VALIDATOR_QUIET_VALUES := 1 true yes on
+VALIDATOR_IS_QUIET := $(filter $(VALIDATOR_QUIET_VALUES),$(VALIDATOR_QUIET))
+VALIDATOR_FLAGS := $(if $(VALIDATOR_IS_QUIET),--quiet,)
+VALIDATOR_ENV := $(if $(VALIDATOR_IS_QUIET),SPAGHETTI_VALIDATOR_QUIET=1 ,)
 
-.PHONY: image shell build pristine flash monitor clean
+.PHONY: image shell validate build pristine flash monitor clean
 
 image:
 	$(COMPOSE) build
@@ -9,11 +13,18 @@ image:
 shell:
 	$(COMPOSE) run --rm dev
 
+validate:
+	$(COMPOSE) run --rm --entrypoint python3 dev validator $(VALIDATOR_FLAGS)
+
 build:
-	$(COMPOSE) run --rm dev sh -lc 'west build -p auto -b "$$BOARD" -d build .'
+	$(COMPOSE) run --rm dev sh -lc \
+		'python3 validator $(VALIDATOR_FLAGS) \
+		&& SPAGHETTI_VALIDATOR_ALREADY_RUN=1 $(VALIDATOR_ENV)west build -p auto -b "$$BOARD" -d build .'
 
 pristine:
-	$(COMPOSE) run --rm dev sh -lc 'west build -p always -b "$$BOARD" -d build .'
+	$(COMPOSE) run --rm dev sh -lc \
+		'python3 validator $(VALIDATOR_FLAGS) \
+		&& SPAGHETTI_VALIDATOR_ALREADY_RUN=1 $(VALIDATOR_ENV)west build -p always -b "$$BOARD" -d build .'
 
 # USB passthrough in compose.linux.yaml is supported on a native Linux host.
 flash:
