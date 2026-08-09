@@ -1,0 +1,27 @@
+# Fase 040 — Sezione verticale INA219
+
+[← Indice del backlog](../README.md)
+
+**Stato:** ⬜ TODO
+
+## Obiettivo
+
+Leggere un INA219 reale con il driver Sensor incluso in Zephyr 4.4.
+
+## Dipende da
+
+[Fase 030 — Port](../030-port/README.md)
+
+## Risultato visibile
+
+`ESP32-C3 -> Port 0 -> I2C -> INA219 -> bus voltage/current/power -> LOG_INF`.
+
+## Task
+
+1. ⬜ [TASK-040-01 — Leggere il sensore INA219](TASK-040-01-leggere-il-sensore-ina219.md)
+
+## Criteri di completamento della fase
+
+- [ ] Il nodo temporaneo usa il binding Zephyr 4.4 `ti,ina219`.
+- [ ] Bus voltage e current reali compaiono nei log; power è letto nello stesso sample.
+- [ ] La scorciatoia Devicetree è collegata alla sua rimozione nella fase 080.
