@@ -2,7 +2,7 @@
 
 **Status:** ⬜ TODO  
 **Phase:** 020 — Current board / I2C  
-**Depends on:** [TASK-010-05](../010-core/TASK-010-05-build-and-flash-the-core-boundary.md)  
+**Depends on:** [TASK-010-07](../010-core/TASK-010-07-build-and-flash-the-core-boundary.md)
 **Estimated scope:** Small
 
 ---

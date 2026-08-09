@@ -1,9 +1,17 @@
+#include <spaghetti/core.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
 int main(void)
 {
-	printk("Hello from Zephyr on ESP32-C3!\n");
+	int err = spaghetti_core_init();
+
+	if (err < 0) {
+		printk("Spaghetti Core initialization failed: %d\n", err);
+		return err;
+	}
+
+	printk("Hello from Spaghetti LAB!\n");
 
 	for (;;) {
 		printk("uptime: %lld ms\n", k_uptime_get());

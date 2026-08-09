@@ -175,6 +175,7 @@ spaghetti_modules/
 boards/
 dts/
 tests/
+roadmap/*/TASK-*.md
 CMakeLists.txt
 Kconfig
 prj.conf
@@ -188,8 +189,11 @@ It excludes:
 - `build/` and `build-*` generated artifacts;
 - `.git/`, `.west/`, caches, and Python bytecode;
 - `LICENSES/` third-party license texts;
-- `roadmap/` planning/task documents;
 - `templates/`, because placeholders are intentionally not complete firmware.
+
+Roadmap task Markdown is included only for task-path, identity, metadata,
+completion-checklist, and status-consistency rules. General firmware whitespace
+and C rules are not applied to Markdown.
 
 Empty future source/header placeholders are counted and skipped. Validation
 starts as soon as a file contains non-whitespace content.
@@ -209,6 +213,7 @@ starts as soon as a file contains non-whitespace content.
 | `KCFG` | Kconfig indentation and comment style |
 | `DTS` | Devicetree indentation and property naming |
 | `YAML` | Binding/YAML tab prohibition |
+| `TASK` | Roadmap location, ID/phase identity, checklist, and status consistency |
 
 The complete live list is always:
 

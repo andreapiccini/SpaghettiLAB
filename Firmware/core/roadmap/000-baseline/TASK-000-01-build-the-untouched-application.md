@@ -90,11 +90,11 @@ Missing Docker image/daemon or stale generated build; use
 
 ## Steps
 
-- [ ] Open only `Makefile`, `compose.yaml`, `src/main.c` for reading only.
-- [ ] Nothing.
-- [ ] Handle only these realistic errors: Missing Docker image/daemon or stale generated build; use `make image` only if the image is absent, then `make pristine` if needed.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [x] Open only `Makefile`, `compose.yaml`, `src/main.c` for reading only.
+- [x] Nothing.
+- [x] Handle only these realistic errors: Missing Docker image/daemon or stale generated build; use `make image` only if the image is absent, then `make pristine` if needed.
+- [x] Confirm no item from **Do NOT implement yet** was added
+- [x] Run the task test and compare it with **Expected result**
 
 ---
 
@@ -124,11 +124,11 @@ Confirm command exits zero and `build/zephyr/zephyr.bin` exists.
 
 ## Completion checklist
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+- [x] Required documentation or implementation file changed as specified
+- [x] Named type, function, configuration, or test exists
+- [x] Build succeeds when this task requires a build
+- [x] Task-specific test passes
+- [x] No unrelated functionality was added
 
 ---
 

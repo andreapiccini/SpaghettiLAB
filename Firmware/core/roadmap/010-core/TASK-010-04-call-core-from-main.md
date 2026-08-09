@@ -142,4 +142,4 @@ Reset and read console.
 
 ## Next task
 
-[TASK-010-05](TASK-010-05-build-and-flash-the-core-boundary.md) — Build and flash the Core boundary
+[TASK-010-05](TASK-010-05-structure-firmware-logging.md) — Structure firmware logging

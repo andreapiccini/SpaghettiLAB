@@ -90,11 +90,11 @@ Busy/wrong port and bootloader entry failure.
 
 ## Steps
 
-- [ ] Open only Root `README.md`, section “Flash and monitor” for the host OS.
-- [ ] Nothing.
-- [ ] Handle only these realistic errors: Busy/wrong port and bootloader entry failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [x] Open only Root `README.md`, section “Flash and monitor” for the host OS.
+- [x] Nothing.
+- [x] Handle only these realistic errors: Busy/wrong port and bootloader entry failure.
+- [x] Confirm no item from **Do NOT implement yet** was added
+- [x] Run the task test and compare it with **Expected result**
 
 ---
 
@@ -124,11 +124,11 @@ The console prints the ESP32-C3 greeting and increasing uptime at 115200 baud.
 
 ## Completion checklist
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+- [x] Required documentation or implementation file changed as specified
+- [x] Named type, function, configuration, or test exists
+- [x] Build succeeds when this task requires a build
+- [x] Task-specific test passes
+- [x] No unrelated functionality was added
 
 ---
 

@@ -13,12 +13,41 @@ backlog derived from it. Open one task at a time and complete its checklist.
 | ✅ | DONE |
 | ⛔ | BLOCKED |
 
+## Task status consistency
+
+Task status is derived from the checkboxes under `## Completion checklist`:
+
+| Completion checklist | Automatic status |
+|---|---|
+| No item checked | ⬜ TODO |
+| Some items checked | 🟨 IN PROGRESS |
+| Every item checked | ✅ DONE |
+
+Statuses are edited manually. The validator reads every task during a build and
+reports a warning when the status disagrees with `## Completion checklist`. It
+never edits a roadmap file. `⛔ BLOCKED` is a deliberate manual exception and
+may be used with any incomplete checklist.
+
+Every task must use this future-proof location and identity pattern:
+
+```text
+roadmap/<NNN-phase-name>/TASK-<same-NNN>-<NN>-task-name.md
+```
+
+The filename ID, `# TASK-NNN-NN` title, and `**Phase:** NNN` metadata must
+match. The validator reports an objective `TASK001` error if they diverge and a
+non-blocking `TASK002` warning if status and checklist diverge.
+
+[Markdown Checkbox Preview](https://marketplace.visualstudio.com/items?itemName=GSejas.markdown-checkbox-preview)
+can still be used to check boxes with the mouse. After checking them, update the
+status manually; the next save/build shows any mismatch that remains.
+
 ## Phases
 
 | Status | Phase | Visible result |
 |:---:|---|---|
 | ✅ | [000 — Baseline](000-baseline/README.md) | The existing Zephyr uptime firmware builds, flashes, and prints. |
-| ⬜ | [010 — Core](010-core/README.md) | `main` boots through `spaghetti_core_init()` and the console reports Core readiness. |
+| 🟨 | [010 — Core](010-core/README.md) | `main` boots through `spaghetti_core_init()` and the console reports Core readiness. |
 | ⬜ | [020 — Current board / I2C](020-board-i2c/README.md) | The generated DTS contains the real enabled I2C controller and the firmware still boots. |
 | ⬜ | [030 — Port](030-port/README.md) | Port 0 exists, reports I2C capability, and owns a ready Zephyr device. |
 | ⬜ | [040 — SHT40 vertical slice](040-sht40/README.md) | Real temperature and humidity values appear in the serial log. |

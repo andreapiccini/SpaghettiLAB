@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 PROJECT_ROOT = Path(__file__).resolve().parent
+ROADMAP_ROOT = PROJECT_ROOT / "roadmap"
 
 SOURCE_ROOTS = (
     "src",
@@ -30,7 +31,6 @@ EXCLUDED_DIRS = {
     ".west",
     "build",
     "templates",
-    "roadmap",
     "LICENSES",
     "__pycache__",
 }
@@ -322,6 +322,26 @@ RULES = {
             "Indent YAML with spaces only.",
             "Devicetree, Kconfig, and runtime Config",
         ),
+        Rule(
+            "TASK001",
+            "error",
+            "Roadmap task path or identity is not canonical",
+            (
+                "Use roadmap/<NNN-name>/TASK-<same-NNN>-<NN>-name.md "
+                "and match its title/phase."
+            ),
+            "Task documents",
+        ),
+        Rule(
+            "TASK002",
+            "warning",
+            "Task status does not match its completion checklist",
+            (
+                "Use TODO for none checked, IN PROGRESS for some, "
+                "or DONE for all checked."
+            ),
+            "Task documents",
+        ),
     )
 }
 
@@ -344,8 +364,20 @@ class CScan:
     line_comment_columns: list[int | None]
 
 
+def is_roadmap_task_candidate(path: Path) -> bool:
+    try:
+        path.resolve().relative_to(ROADMAP_ROOT)
+    except ValueError:
+        return False
+    return path.suffix.lower() == ".md" and path.name.upper().startswith("TASK")
+
+
 def is_supported(path: Path) -> bool:
-    return path.name in SUPPORTED_NAMES or path.suffix.lower() in SUPPORTED_SUFFIXES
+    return (
+        path.name in SUPPORTED_NAMES
+        or path.suffix.lower() in SUPPORTED_SUFFIXES
+        or is_roadmap_task_candidate(path)
+    )
 
 
 def is_excluded(path: Path) -> bool:
@@ -363,6 +395,12 @@ def default_files() -> list[Path]:
         if root.exists():
             candidates.extend(path for path in root.rglob("*") if path.is_file())
     candidates.extend(PROJECT_ROOT / name for name in ROOT_FILES if (PROJECT_ROOT / name).is_file())
+    if ROADMAP_ROOT.exists():
+        candidates.extend(
+            path
+            for path in ROADMAP_ROOT.rglob("*.md")
+            if path.is_file() and is_roadmap_task_candidate(path)
+        )
     return sorted(
         {
             path.resolve()
@@ -870,6 +908,122 @@ def validate_yaml(path: Path, lines: Sequence[str], findings: list[Finding]) -> 
             add(findings, "YAML001", path, line_number, "tab character detected")
 
 
+def validate_roadmap_task(
+    path: Path, text: str, lines: Sequence[str], findings: list[Finding]
+) -> None:
+    try:
+        relative = path.resolve().relative_to(ROADMAP_ROOT)
+    except ValueError:
+        add(findings, "TASK001", path, 1, "task is outside the roadmap directory")
+        return
+
+    phase_pattern = re.compile(r"^(?P<phase>\d{3})-[a-z0-9]+(?:-[a-z0-9]+)*$")
+    file_pattern = re.compile(
+        r"^TASK-(?P<phase>\d{3})-(?P<task>\d{2})-"
+        r"[a-z0-9]+(?:-[a-z0-9]+)*\.md$"
+    )
+    phase_match = phase_pattern.fullmatch(relative.parent.name)
+    file_match = file_pattern.fullmatch(relative.name)
+    canonical_location = len(relative.parts) == 2 and phase_match and file_match
+
+    if not canonical_location:
+        add(
+            findings,
+            "TASK001",
+            path,
+            1,
+            f"non-canonical roadmap task path: roadmap/{relative.as_posix()}",
+        )
+    elif phase_match.group("phase") != file_match.group("phase"):
+        add(
+            findings,
+            "TASK001",
+            path,
+            1,
+            "task filename phase does not match its parent phase directory",
+        )
+
+    expected_phase = file_match.group("phase") if file_match else None
+    expected_task = file_match.group("task") if file_match else None
+    title_match = re.search(r"(?m)^# TASK-(\d{3})-(\d{2})\s+—\s+.+$", text)
+    phase_line_match = re.search(r"(?m)^\*\*Phase:\*\*\s+(\d{3})\s+—\s+.+$", text)
+
+    if (
+        expected_phase is None
+        or expected_task is None
+        or title_match is None
+        or phase_line_match is None
+        or title_match.group(1) != expected_phase
+        or title_match.group(2) != expected_task
+        or phase_line_match.group(1) != expected_phase
+    ):
+        add(
+            findings,
+            "TASK001",
+            path,
+            1,
+            "filename, H1 task ID, and **Phase:** metadata are not identical",
+        )
+
+    status_match = re.search(
+        r"(?m)^\*\*Status:\*\*\s+"
+        r"(⬜ TODO|🟨 IN PROGRESS|✅ DONE|⛔ BLOCKED)\s*$",
+        text,
+    )
+    if status_match is None:
+        add(
+            findings,
+            "TASK001",
+            path,
+            1,
+            "missing or invalid **Status:** metadata",
+        )
+        return
+
+    checklist_start = next(
+        (
+            index
+            for index, line in enumerate(lines)
+            if line.strip() == "## Completion checklist"
+        ),
+        None,
+    )
+    if checklist_start is None:
+        add(findings, "TASK001", path, 1, "missing ## Completion checklist section")
+        return
+
+    boxes: list[bool] = []
+    for line in lines[checklist_start + 1 :]:
+        if line.startswith("## "):
+            break
+        checkbox = re.match(r"^\s*-\s+\[([ xX])\]\s+", line)
+        if checkbox:
+            boxes.append(checkbox.group(1).lower() == "x")
+
+    if not boxes:
+        add(findings, "TASK001", path, checklist_start + 1, "completion checklist is empty")
+        return
+
+    actual_status = status_match.group(1)
+    if actual_status == "⛔ BLOCKED":
+        return
+    if all(boxes):
+        expected_status = "✅ DONE"
+    elif any(boxes):
+        expected_status = "🟨 IN PROGRESS"
+    else:
+        expected_status = "⬜ TODO"
+
+    if actual_status != expected_status:
+        add(
+            findings,
+            "TASK002",
+            path,
+            line_for_offset(text, status_match.start()),
+            f"status is '{actual_status}', checklist requires '{expected_status}'",
+        )
+
+
 def validate_log_modules(
     files: Sequence[Path],
     decoded: dict[Path, str],
@@ -942,6 +1096,12 @@ def validate(
             continue
         text, lines = result
         decoded[path] = text
+
+        if is_roadmap_task_candidate(path):
+            checked_files += 1
+            validate_roadmap_task(path, text, lines, findings)
+            continue
+
         if not text.strip():
             empty_files += 1
             continue
