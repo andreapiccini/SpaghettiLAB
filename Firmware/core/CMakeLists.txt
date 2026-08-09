@@ -18,6 +18,11 @@ add_custom_target(spaghetti_validator
 
 add_dependencies(app spaghetti_validator)
 
-target_sources(app PRIVATE src/main.c subsys/core/core.c)
+target_sources(app PRIVATE
+  src/main.c
+  spaghetti_modules/ina219/ina219.c
+  subsys/core/core.c
+  subsys/port/port.c
+)
 
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/)

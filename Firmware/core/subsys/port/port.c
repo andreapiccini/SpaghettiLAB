@@ -3,6 +3,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(
     spaghetti_port,

@@ -161,7 +161,7 @@ indirizzo runtime e transazioni I2C dirette.
 Bus voltage è espressa in V, current in A e power in W dentro `struct sensor_value`.
 L’esempio converte soltanto il log in mV, mA e mW.
 
-## Checklist
+## Checklist di completamento
 
 - [ ] Il modulo è INA219 a `0x40` con shunt `R100`.
 - [ ] Il nodo temporaneo contiene le proprietà mostrate.

@@ -140,7 +140,7 @@ più avanti MQTT ricevono ciascuno una copia dalla propria coda.
 subscriber usa internamente una `k_msgq`: capacità e timeout devono essere finiti. Non
 pubblicare un puntatore a memoria temporanea come payload.
 
-## Checklist
+## Checklist di completamento
 
 - [ ] Messaggio e API hanno le firme mostrate.
 - [ ] Tutte le unità sono dichiarate nei nomi dei campi.

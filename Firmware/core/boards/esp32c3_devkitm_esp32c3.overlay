@@ -21,5 +21,13 @@
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&spaghetti_i2c0_default>;
 	pinctrl-names = "default";
-};
 
+	/* TEMPORARY SHORTCUT: rimosso in TASK-080-01. */
+	ina219_test: ina219@40 {
+		status = "okay";
+		compatible = "ti,ina219";
+		reg = <0x40>;
+		shunt-milliohm = <100>;
+		lsb-microamp = <200>;
+	};
+};

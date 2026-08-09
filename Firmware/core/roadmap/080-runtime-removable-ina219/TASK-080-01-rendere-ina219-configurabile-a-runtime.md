@@ -189,7 +189,7 @@ Config chiama Manager; Manager assegna Port e context; il descrittore `ina219` e
 init/read/deinit. Runtime e Data vedono soltanto `spaghetti_sample`, mai registri I2C o
 un device INA219 statico.
 
-## Checklist
+## Checklist di completamento
 
 - [ ] La config contiene address, shunt e current LSB copiati.
 - [ ] Il controller arriva soltanto da `spaghetti_port_i2c_device()`.
