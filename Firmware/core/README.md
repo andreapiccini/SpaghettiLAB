@@ -255,6 +255,11 @@ make pristine
 
 On Windows, use the equivalent command shown above.
 
+`make build` also detects an incomplete `build/` directory. If the directory
+exists but `build/build.ninja` is missing, it removes only those generated build
+artifacts and regenerates the build system. `make pristine` always performs the
+same clean regeneration explicitly.
+
 ### The validator reports convention findings
 
 Review each `ERROR` and `WARNING` using the reported guide section, then run:
