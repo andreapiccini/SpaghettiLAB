@@ -1,142 +1,151 @@
-# TASK-060-05 — Test known and unknown driver lookup
+# TASK-060-05 — Provare la ricerca di driver noti e sconosciuti
 
-**Status:** ⬜ TODO  
-**Phase:** 060 — Driver Registry  
-**Depends on:** [TASK-060-04](TASK-060-04-initialize-the-registry-from-core.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test known and unknown driver lookup** and produce this focused outcome:
-
-Exact pointer/null behavior.
+**Stato:** ⬜ TODO
+**Fase:** 060 — Driver Registry
+**Dipende da:** [TASK-060-04](TASK-060-04-initialize-the-registry-from-core.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`src/main.c` or a temporary focused test location and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Call `spaghetti_driver_registry_find("sht40")`, `find("does-not-exist")`, and `find(NULL)`. Log/assert a non-null known descriptor and null invalid/unknown results, then preserve the current real read path.
+Esattamente il comportamento pointer/null.
 
 ---
 
-## Why
+## File da aprire
 
-Manager must receive a trustworthy Registry.
+`src/main.c` o una posizione temporanea di test focalizzato e la console seriale.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Chiama `spaghetti_driver_registry_find("sht40")`, `find("does-not-exist")` e
+`find(NULL)`. Log/assert un descrittore noto non-null e risultati invalid/unknown nulli,
+quindi preserva il percorso di lettura reale corrente.
+
+---
+
+## Perché
+
+Il gestore deve ricevere un registro affidabile.
+
+---
+
+## Chi usa il risultato
 
 Core/test.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-BOOT.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+AVVIO.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
 
-Main thread.
-
----
-
-## Calls / dependencies
-
-Registry APIs.
+CHIAMATA DIRETTA.
 
 ---
 
-## Inputs
+## Contesto di esecuzione
 
-Known/unknown strings.
-
----
-
-## Outputs
-
-Exact pointer/null behavior.
+Thread principale.
 
 ---
 
-## Errors to handle
+## Chiamate e dipendenze
 
-Registry init error stops Core readiness.
-
----
-
-## Do NOT implement yet
-
-- Manager or dynamic configuration
+API del registro.
 
 ---
 
-## Steps
+## Input
 
-- [ ] Open only `src/main.c` or a temporary focused test location and the serial console.
-- [ ] Call `spaghetti_driver_registry_find("sht40")`, `find("does-not-exist")`, and `find(NULL)`. Log/assert a non-null known descriptor and null invalid/unknown results, then preserve the current real read path.
-- [ ] Handle only these realistic errors: Registry init error stops Core readiness.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Stringe Known/unknown.
+
+---
+
+## Output
+
+Esattamente il comportamento pointer/null.
+
+---
+
+## Errori da gestire
+
+L'errore di init del registro blocca la disponibilità di Core.
+
+---
+
+## Non implementare ancora
+
+- Gestione o configurazione dinamica
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `src/main.c` o una posizione temporanea di test focalizzato e la
+      console seriale.
+- [ ] Chiama `spaghetti_driver_registry_find("sht40")`, `find("does-not-exist")` e
+      `find(NULL)`. Log/assert un descrittore noto non-null e risultati invalid/unknown
+      nulli, quindi preserva il percorso di lettura reale corrente.
+- [ ] Gestisci solo questi errori realistici: l'errore di init del Registry
+      blocca la prontezza Core.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Observe known success/unknown rejection and continued sensor reading.
-
----
-
-## Expected result
-
-Known lookup succeeds, unknown and null lookups fail cleanly, and the SHT40 still reads.
+Osservare il rifiuto noto success/unknown e la lettura continua del sensore.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+La ricerca conosciuta riesce, la ricerca sconosciuta e nulla fallisce in modo pulito, e
+la SHT40 continua a leggere.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `driver: test known and unknown driver lookup`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-070-01](../070-module-manager/TASK-070-01-declare-the-module-manager-api.md) — Declare the Module Manager API
+[TASK-070-01](../070-module-manager/TASK-070-01-declare-the-module-manager-api.md) — Dichiarare l’API di Module Manager

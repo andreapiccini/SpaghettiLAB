@@ -1,104 +1,109 @@
-# TASK-070-01 — Declare the Module Manager API
+# TASK-070-01 — Dichiarare l’API di Module Manager
 
-**Status:** ⬜ TODO  
-**Phase:** 070 — Module Manager  
-**Depends on:** [TASK-060-05](../060-driver-registry/TASK-060-05-test-known-and-unknown-driver-lookup.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Declare the Module Manager API** and produce this focused outcome:
-
-READY instance and real sample.
+**Stato:** ⬜ TODO
+**Fase:** 070 — Module Manager
+**Dipende da:** [TASK-060-05](../060-driver-registry/TASK-060-05-test-known-and-unknown-driver-lookup.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Pronta istanza e campione reale.
+
+---
+
+## File da aprire
 
 `include/spaghetti/module_manager.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Declare `int spaghetti_module_manager_init(void);`,
-`int spaghetti_module_manager_configure(spaghetti_port_id_t port_id, const char
-*type_id, spaghetti_module_id_t *out_id);`,
-`const struct spaghetti_module *spaghetti_module_manager_get_by_port(...)`, and
-`int spaghetti_module_manager_read(spaghetti_module_id_t id, struct
-spaghetti_sample *out);`.
-
----
-
-## Why
-
-The Port and Registry are independently proven.
+Dichiarare `int spaghetti_module_manager_init(void);`, `int
+spaghetti_module_manager_configure(spaghetti_port_id_t port_id, const char *type_id,
+spaghetti_module_id_t *out_id);`, `const struct spaghetti_module
+*spaghetti_module_manager_get_by_port(...)` e `int
+spaghetti_module_manager_read(spaghetti_module_id_t id, struct spaghetti_sample *out);`.
 
 ---
 
-## Called / used by
+## Perché
 
-Core/main test; Runtime later.
-
----
-
-## Trigger
-
-BOOT TEST/MODULE CONFIGURATION/READ REQUEST.
+Port e Registry sono provati in modo indipendente.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Caller thread.
+Test Core/main; Runtime più tardi.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
+
+RICHIESTA BOOT TEST/MODULE CONFIGURATION/READ.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
+
+Thread chiamante.
+
+---
+
+## Chiamate e dipendenze
 
 Port, Registry, driver ops.
 
 ---
 
-## Inputs
+## Input
 
-Port 0, `"sht40"`, output ID/sample.
-
----
-
-## Outputs
-
-READY instance and real sample.
+Port 0, `"sht40"`, uscita ID/sample.
 
 ---
 
-## Errors to handle
+## Output
 
-Invalid port/type, occupied port, no slot, init/read failure.
-
----
-
-## Do NOT implement yet
-
-- Remove/replace, mutex, dynamic pool, discovery
+Pronta istanza e campione reale.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `include/spaghetti/module_manager.h`.
-- [ ] Declare `int spaghetti_module_manager_init(void);`, `int spaghetti_module_manager_configure(spaghetti_port_id_t port_id, const char *type_id, spaghetti_module_id_t *out_id);`, `const struct spaghetti_module *spaghetti_module_manager_get_by_port(...)`, and `int spaghetti_module_manager_read(spaghetti_module_id_t id, struct spaghetti_sample *out);`.
-- [ ] Handle only these realistic errors: Invalid port/type, occupied port, no slot, init/read failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+port/type non valido, porta occupata, nessun slot, errore init/read.
+
+---
+
+## Non implementare ancora
+
+- Remove/replace, mutex, piscina dinamica, scoperta
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/module_manager.h`.
+- [ ] Dichiarare `int spaghetti_module_manager_init(void);`, `int
+      spaghetti_module_manager_configure(spaghetti_port_id_t port_id, const char
+      *type_id, spaghetti_module_id_t *out_id);`, `const struct spaghetti_module
+      *spaghetti_module_manager_get_by_port(...)` e `int
+      spaghetti_module_manager_read(spaghetti_module_id_t id, struct spaghetti_sample
+      *out);`.
+- [ ] Gestisci solo questi errori realistici: port/type non valido, porta occupata,
+      nessun slot, errore init/read.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -114,34 +119,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Ownership: CREATED/OWNED/MODIFIED/DESTROYED by Manager.
-
----
-
-## Expected result
-
-API limited to one configuration case.
+Proprietà: CREATED/OWNED/MODIFIED/DESTROYED da Manager.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+API limitata a un caso di configurazione.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: declare the module manager api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-070-02](TASK-070-02-implement-the-one-slot-manager-state.md) — Implement the one-slot Manager state
+[TASK-070-02](TASK-070-02-implement-the-one-slot-manager-state.md) — Implementare lo stato Manager con uno slot

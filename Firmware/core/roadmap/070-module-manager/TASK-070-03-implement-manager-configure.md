@@ -1,105 +1,111 @@
-# TASK-070-03 — Implement Manager configure
+# TASK-070-03 — Implementare la configurazione nel Manager
 
-**Status:** ⬜ TODO  
-**Phase:** 070 — Module Manager  
-**Depends on:** [TASK-070-02](TASK-070-02-implement-the-one-slot-manager-state.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement Manager configure** and produce this focused outcome:
-
-Instance ID and sample.
+**Stato:** ⬜ TODO
+**Fase:** 070 — Module Manager
+**Dipende da:** [TASK-070-02](TASK-070-02-implement-the-one-slot-manager-state.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Identificazione dell'istanza e campione.
+
+---
+
+## File da aprire
 
 `subsys/module_manager/module_manager.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement configure in this order: validate output pointer and free slot; call `spaghetti_port_get()`; call `spaghetti_driver_registry_find()`; verify required capabilities; populate provisional state; call driver `init`; commit READY and output ID only on success. Clear the slot on every failure.
-
----
-
-## Why
-
-One slot makes failure/ownership visible before adding complexity.
+Implementa la configurazione in questo ordine: convalidare il puntatore di uscita e lo
+slot libero; chiamare `spaghetti_port_get()`; chiamare
+`spaghetti_driver_registry_find()`; verificare le capacità richieste; popolare lo stato
+provvisorio; chiamare driver `init`; commit READY e ID di output solo in caso di
+successo. Cancellare lo slot su ogni guasto.
 
 ---
 
-## Called / used by
+## Perché
 
-Main test/Runtime.
-
----
-
-## Trigger
-
-MODULE CONFIGURATION/READ.
+Uno slot rende failure/ownership visibile prima di aggiungere complessità.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL chain.
-
----
-
-## Execution context
-
-Main/calling thread.
+Principale test/Runtime.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
+
+MODULO CONFIGURATION/READ.
+
+---
+
+## Meccanismo di invocazione
+
+Catena di CHIAMATE DIRETTE.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale o thread chiamante.
+
+---
+
+## Chiamate e dipendenze
 
 `port_get` -> `registry_find` -> `driver->init/read`.
 
 ---
 
-## Inputs
+## Input
 
-Valid IDs and output pointers.
-
----
-
-## Outputs
-
-Instance ID and sample.
+ID validi e puntatori di output.
 
 ---
 
-## Errors to handle
+## Output
+
+Identificazione dell'istanza e campione.
+
+---
+
+## Errori da gestire
 
 `-EINVAL`, `-ENOENT`, `-ENOTSUP`, `-EBUSY`, driver errno.
 
 ---
 
-## Do NOT implement yet
+## Non implementare ancora
 
-- Threads, queues, replacement, callbacks
+- Threads, codes, replacement, callbacks
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `subsys/module_manager/module_manager.c`.
-- [ ] Implement configure in this order: validate output pointer and free slot
-- [ ] call `spaghetti_port_get()`
-- [ ] call `spaghetti_driver_registry_find()`
-- [ ] verify required capabilities
-- [ ] populate provisional state
-- [ ] call driver `init`
-- [ ] commit READY and output ID only on success. Clear the slot on every failure.
-- [ ] Handle only these realistic errors: `-EINVAL`, `-ENOENT`, `-ENOTSUP`, `-EBUSY`, driver errno.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `subsys/module_manager/module_manager.c`.
+- [ ] Implementare la configurazione in questo ordine: convalidare il puntatore di
+      uscita e lo slot libero
+- [ ] Chiama `spaghetti_port_get()`
+- [ ] Chiama `spaghetti_driver_registry_find()`
+- [ ] verifica le capacità richieste
+- [ ] Stato provvisorio popolato
+- [ ] Chiama driver `init`
+- [ ] commit READY e ID di output solo su successo. Cancellare lo slot su ogni guasto.
+- [ ] Gestisci solo questi errori realistici: `-EINVAL`, `-ENOENT`, `-ENOTSUP`,
+      `-EBUSY`, driver errno.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -115,34 +121,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Mentally trace rollback before compiling.
-
----
-
-## Expected result
-
-No partially READY instance after failure.
+Tracciare mentalmente il rollback prima di compilare.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessuna istanza parzialmente READY dopo il fallimento.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: implement manager configure`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-070-04](TASK-070-04-implement-manager-read.md) — Implement Manager read
+[TASK-070-04](TASK-070-04-implement-manager-read.md) — Implementare la lettura nel Manager

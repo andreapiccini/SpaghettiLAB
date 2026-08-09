@@ -1,100 +1,104 @@
-# TASK-180-04 — Move verified hardware facts into board DTS
+# TASK-180-04 — Spostare i dati hardware verificati nel DTS della board
 
-**Status:** ⬜ TODO  
-**Phase:** 180 — Multiple Core variants  
-**Depends on:** [TASK-180-03](TASK-180-03-create-the-first-real-spaghetti-board-skeleton.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Move verified hardware facts into board DTS** and produce this focused outcome:
-
-Same Port 0/SHT40 behavior on custom board target.
+**Stato:** ⬜ TODO
+**Fase:** 180 — Varianti Core multiple
+**Dipende da:** [TASK-180-03](TASK-180-03-create-the-first-real-spaghetti-board-skeleton.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-The new board DTS and related pinctrl/partition files.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Describe the verified MCU, console, I2C controller, physical Spaghetti Port nodes, capability references, and real power/presence wiring. Keep runtime SHT40/Relay assignments out of DTS.
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
 
 ---
 
-## Why
+## File da aprire
 
-The abstraction is already proven, so refactor has observable parity.
+La nuova scheda DTS e i relativi file pinctrl/partition.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Descrivi la MCU verificata, la console, il controller I2C, i nodi Port fisici, i
+riferimenti di capacità e il vero cablaggio power/presence. Mantieni le assegnazioni
+runtime SHT40/Relay fuori dal DTS.
+
+---
+
+## Perché
+
+L'astrazione è già provata, in modo da refactor ha parità osservabile.
+
+---
+
+## Chi usa il risultato
 
 West/CMake/Port.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BUILD/BOOT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME descriptors then BOOT DIRECT CALL.
-
----
-
-## Execution context
-
-Build tools/main thread.
+I descrittori del tempo ACQUISTO poi BOOT DIRECT CALL.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Generated macros and Device Model.
-
----
-
-## Inputs
-
-Real first-Core board description.
+Costruisci tools/main thread.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Same Port 0/SHT40 behavior on custom board target.
-
----
-
-## Errors to handle
-
-Board discovery, DTS validation, device readiness.
+Macro generate e Device Model.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Copy all devkit definitions blindly or add second board guesses
+Vera prima descrizione della scheda Core.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only The new board DTS and related pinctrl/partition files.
-- [ ] Describe the verified MCU, console, I2C controller, physical Spaghetti Port nodes, capability references, and real power/presence wiring.
-- [ ] Keep runtime SHT40/Relay assignments out of DTS.
-- [ ] Handle only these realistic errors: Board discovery, DTS validation, device readiness.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
+
+---
+
+## Errori da gestire
+
+Scoperta da tavolo, convalida DTS, prontezza del dispositivo.
+
+---
+
+## Non implementare ancora
+
+- Copia tutte le definizioni di devkit ciecamente o aggiungi indovina la seconda scheda
+
+---
+
+## Procedura
+
+- [ ] Aprire solo la nuova scheda DTS e i relativi file pinctrl/partition.
+- [ ] Descrivi il McU verificato, la console, il controller I2C, i nodi Port fisici, i
+      riferimenti di capacità e il cablaggio power/presence reale.
+- [ ] Tenere le assegnazioni runtime SHT40/Relay fuori dal DTS.
+- [ ] Gestisci solo questi errori realistici: Scoperta da tavolo, validazione DTS,
+      prontezza del dispositivo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +114,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Compare Port capability/status and real measurement with old devkit target.
-
----
-
-## Expected result
-
-No C3 pin/controller label in higher layers or Port catalog data.
+Confronta Port capability/status e misura reale con il vecchio obiettivo devkit.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessun'etichetta C3 pin/controller in livelli superiori o dati del catalogo Port.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `multiple: move verified hardware facts into board dts`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-180-05](TASK-180-05-enumerate-devicetree-ports.md) — Enumerate Devicetree Ports
+[TASK-180-05](TASK-180-05-enumerate-devicetree-ports.md) — Enumerare i Port dal Devicetree

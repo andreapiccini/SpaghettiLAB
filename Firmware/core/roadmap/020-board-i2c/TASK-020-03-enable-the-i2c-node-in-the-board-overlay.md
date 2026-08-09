@@ -1,30 +1,42 @@
-# TASK-020-03 — Enable the I2C node in the board overlay
+# TASK-020-03 — Abilitare I2C nell’overlay della scheda
 
-**Status:** ⬜ TODO  
-**Phase:** 020 — Current board / I2C  
-**Depends on:** [TASK-020-02](TASK-020-02-inspect-the-current-generated-devicetree.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Enable the I2C node in the board overlay** and produce this focused outcome:
-
-Enabled I2C node in final DTS.
+**Stato:** ⬜ TODO
+**Fase:** 020 — Scheda attuale / I2C
+**Dipende da:** [TASK-020-02](TASK-020-02-inspect-the-current-generated-devicetree.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Abilitato il nodo I2C nel DTS finale.
+
+---
+
+## File da aprire
 
 `boards/esp32c3_devkitm_esp32c3.overlay`.
 
 ---
 
-## Write / Modify
+## Orientamento Zephyr — overlay, node label e pinctrl
 
-Add/override the real I2C controller and its real pinctrl.
-Conceptual template only:
+1. **Cos’è:** Un overlay è un file che modifica il Devicetree della board selezionata senza cambiare i sorgenti Zephyr. Una node label, per esempio `i2c0`, permette di riferirsi a un nodo già definito. `pinctrl` descrive su quali GPIO viene instradata la periferica.
+2. **A cosa serve:** Adatta controller e pin della board generica al cablaggio reale di Spaghetti LAB.
+3. **Quando viene usato:** Zephyr unisce l’overlay al DTS della board durante la configurazione della build.
+4. **Build-time o runtime:** Build-time.
+5. **Collegamento con questo task:** Il controller I2C esiste già nel SoC; qui devi abilitarlo e associargli soltanto i pin verificati nel task precedente.
+6. **File reali coinvolti:** `boards/esp32c3_devkitm_esp32c3.overlay`.
+7. **Cosa guardare nei file:** Confronta le label e la sintassi `pinctrl` con `build/zephyr/zephyr.dts` e con i file board installati.
+8. **Cosa non modificare:** Non inserire ancora il nodo SHT40, un’identità di modulo rimovibile o numeri dei pin copiati da un’altra board.
+
+---
+
+## Cosa scrivere o modificare
+
+Aggiungi o ridefinisci il vero controller I2C e il suo vero pinctrl. Solo modello concettuale:
 
 ```dts
 /* I2C_CONTROLLER and I2C_PINCTRL are placeholders resolved in Step 2.1. */
@@ -36,86 +48,84 @@ Conceptual template only:
 };
 ```
 
-Define the corresponding ESP32 pinctrl group using the syntax already used by
-the installed ESP32-C3 DTS/bindings; do not copy pin numbers from another board.
+Definire il corrispondente gruppo ESP32 pinctrl utilizzando la sintassi già utilizzata
+dall'ESP32-C3 DTS/bindings installato; non copiare numeri dei pin da un'altra scheda.
 
 ---
 
-## Why
+## Perché
 
-Port needs a ready Zephyr controller device.
-
----
-
-## Called / used by
-
-Devicetree tools and Zephyr I2C driver.
+Port ha bisogno di un dispositivo di controllo Zephyr pronto.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Strumenti Devicetree e driver I2C di Zephyr.
+
+---
+
+## Evento che attiva il codice
 
 BUILD.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME.
-
----
-
-## Execution context
-
-Devicetree compiler/C compiler.
+BUILD-TIME.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Existing SoC I2C/pinctrl bindings.
-
----
-
-## Inputs
-
-Verified controller and pin mapping.
+Compilatore Devicetree e compilatore C.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Enabled I2C node in final DTS.
-
----
-
-## Errors to handle
-
-Unknown label, invalid pinctrl, pin conflict.
+Binding I2C/pinctrl esistenti del SoC.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- SHT40 child node or removable-module identity
-
----
-
-## Zephyr note
-
-An overlay changes the board's compile-time hardware description. It should contain physical wiring only, never a removable module assignment.
+Controllore verificato e mappatura pin.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `boards/esp32c3_devkitm_esp32c3.overlay`.
-- [ ] Add/override the real I2C controller and its real pinctrl. Conceptual template only: Add the exact dts template shown in **Write / Modify**.
-- [ ] Define the corresponding ESP32 pinctrl group using the syntax already used by the installed ESP32-C3 DTS/bindings
-- [ ] do not copy pin numbers from another board.
-- [ ] Handle only these realistic errors: Unknown label, invalid pinctrl, pin conflict.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Abilitato il nodo I2C nel DTS finale.
+
+---
+
+## Errori da gestire
+
+Etichetta sconosciuta, pinctrl non valido, conflitto pin.
+
+---
+
+## Non implementare ancora
+
+- Nodo figlio SHT40 o identità del modulo rimovibile
+
+---
+
+
+## Procedura
+
+- [ ] Apri solo `boards/esp32c3_devkitm_esp32c3.overlay`.
+- [ ] Aggiungi o ridefinisci il vero controller I2C e il suo vero modello pinctrl. Solo modello
+      concettuale: Aggiungi l'esatto blocco DTS mostrato in **Cosa scrivere o modificare**.
+- [ ] Definire il corrispondente gruppo ESP32 pinctrl utilizzando la sintassi già
+      utilizzata dall'ESP32-C3 DTS/bindings installato
+- [ ] non copiare numeri dei pin da un'altra scheda.
+- [ ] Gestisci solo questi errori realistici: etichetta sconosciuta, pinctrl non valido,
+      conflitto pin.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -131,34 +141,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Check template contains no unresolved placeholder before building.
-
----
-
-## Expected result
-
-Overlay describes only static bus wiring.
+Il modello di controllo non contiene alcun segnaposto irrisolto prima della build.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+L’overlay descrive solo il cablaggio statico dei bus.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `current: enable the i2c node in the board overlay`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-020-04](TASK-020-04-enable-zephyr-i2c-support.md) — Enable Zephyr I2C support
+[TASK-020-04](TASK-020-04-enable-zephyr-i2c-support.md) — Abilitare il supporto I2C di Zephyr

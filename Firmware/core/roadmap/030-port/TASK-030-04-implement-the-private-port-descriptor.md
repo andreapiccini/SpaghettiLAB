@@ -1,106 +1,112 @@
-# TASK-030-04 — Implement the private Port descriptor
+# TASK-030-04 — Implementare il descrittore privato di Port
 
-**Status:** ⬜ TODO  
-**Phase:** 030 — Port  
-**Depends on:** [TASK-030-03](TASK-030-03-declare-the-port-public-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement the private Port descriptor** and produce this focused outcome:
-
-One ready Port or `-ENODEV`.
+**Stato:** ⬜ TODO
+**Fase:** 030 — Port
+**Dipende da:** [TASK-033-03](TASK-030-03-declare-the-port-public-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Uno Port pronto o `-ENODEV`.
+
+---
+
+## File da aprire
 
 `subsys/port/port.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define private `struct spaghetti_port` fields `id`, `capabilities`, and `const struct device *i2c`. Create one fixed Port 0 descriptor and implement count, lookup, and capability checks with null and bounds validation.
+Definire campi privati `struct spaghetti_port` `id`, `capabilities` e `const struct
+device *i2c`. Creare un descrittore Port 0 fisso e implementare i controlli di
+conteggio, ricerca e capacità con convalida nulla e limiti.
 
-> [!WARNING]
-> TEMPORARY SHORTCUT
+> [!ATTENZIONE]
+> SHORTCUT TEMPORANEO
 >
-> This is intentionally temporary and will be removed in [TASK-180-05](../180-multi-core/TASK-180-05-enumerate-devicetree-ports.md).
+> Questo è intenzionalmente temporaneo e verrà rimosso in
+  [TASK-180-05](../180-multi-core/TASK-180-05-enumerate-devicetree-ports.md).
 
 
 ---
 
-## Why
+## Perché
 
-Hardware feedback is more valuable than designing all Port variants.
-
----
-
-## Called / used by
-
-Core and SHT40 wrapper.
+Il feedback hardware è più prezioso della progettazione di tutte le varianti Port.
 
 ---
 
-## Trigger
+## Chi usa il risultato
 
-BOOT.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Core e SHT40 wrapper.
 
 ---
 
-## Execution context
+## Evento che attiva il codice
 
-Main thread.
-
----
-
-## Calls / dependencies
-
-Devicetree macros, `DEVICE_DT_GET`, `device_is_ready`.
+AVVIO.
 
 ---
 
-## Inputs
+## Meccanismo di invocazione
 
-Static compiled DTS.
-
----
-
-## Outputs
-
-One ready Port or `-ENODEV`.
+CHIAMATA DIRETTA.
 
 ---
 
-## Errors to handle
+## Contesto di esecuzione
 
-Controller absent/not ready and invalid lookup.
-
----
-
-## Do NOT implement yet
-
-- Mutex unless two actual users share multi-step access
+Thread principale.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `subsys/port/port.c`.
-- [ ] Define private `struct spaghetti_port` fields `id`, `capabilities`, and `const struct device *i2c`.
-- [ ] Create one fixed Port 0 descriptor and implement count, lookup, and capability checks with null and bounds validation.
-- [ ] Handle only these realistic errors: Controller absent/not ready and invalid lookup.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Macro Devicetree, `DEVICE_DT_GET`, `device_is_ready`.
+
+---
+
+## Input
+
+DTS compilato statico.
+
+---
+
+## Output
+
+Uno Port pronto o `-ENODEV`.
+
+---
+
+## Errori da gestire
+
+Controllore absent/not ricerca pronta e non valida.
+
+---
+
+## Non implementare ancora
+
+- Mutex a meno che due utenti effettivi non condividano l'accesso multi-step
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/port/port.c`.
+- [ ] Definire campi privati `struct spaghetti_port` `id`, `capabilities` e `const
+      struct device *i2c`.
+- [ ] Crea un descrittore Port 0 fisso e implementa i controlli di conteggio, ricerca e
+      capacità con convalida null e limiti.
+- [ ] Gestisci solo questi errori realistici: Controller absent/not ricerca pronta e non
+      valida.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -116,34 +122,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Unit-level inspection of ID bounds/null behavior.
-
----
-
-## Expected result
-
-One private descriptor and no module knowledge.
+Ispezione a livello di unità del comportamento di ID bounds/null.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Un descrittore privato e nessuna conoscenza del modulo.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `port: implement the private port descriptor`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-030-05](TASK-030-05-bind-port-0-to-the-i2c-device.md) — Bind Port 0 to the I2C device
+[TASK-030-05](TASK-030-05-bind-port-0-to-the-i2c-device.md) — Associare Port 0 al device I2C

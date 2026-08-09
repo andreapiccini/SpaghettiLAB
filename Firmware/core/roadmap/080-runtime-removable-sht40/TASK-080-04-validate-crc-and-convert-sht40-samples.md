@@ -1,99 +1,106 @@
-# TASK-080-04 — Validate CRC and convert SHT40 samples
+# TASK-080-04 — Convalidare il CRC e convertire i campioni SHT40
 
-**Status:** ⬜ TODO  
-**Phase:** 080 — Runtime-removable SHT40  
-**Depends on:** [TASK-080-03](TASK-080-03-implement-direct-i2c-sht40-measurement.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Validate CRC and convert SHT40 samples** and produce this focused outcome:
-
-Same real values as static driver path.
+**Stato:** ⬜ TODO
+**Fase:** 080 — SHT40 rimovibile a runtime
+**Dipende da:** [TASK-080-03](TASK-080-03-implement-direct-i2c-sht40-measurement.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Stessi valori reali del percorso statico driver.
+
+---
+
+## File da aprire
 
 `spaghetti_modules/sht40/sht40.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement the datasheet CRC check for both raw values. Convert raw temperature and humidity into the existing bounded sample representation, clamp only where the datasheet requires it, and return an error for a CRC mismatch.
-
----
-
-## Why
-
-The standard Zephyr SHT4x driver requires static DT instantiation.
+Implementa il controllo CRC descritto nel datasheet per entrambi i valori grezzi.
+Converti temperatura e umidità nella rappresentazione già usata dal progetto, limita i
+valori soltanto quando il datasheet lo richiede e restituisci un errore se il CRC non
+corrisponde.
 
 ---
 
-## Called / used by
+## Perché
 
-Manager through driver ops.
-
----
-
-## Trigger
-
-MODULE INIT/READ.
+Lo standard Zephyr SHT4x driver richiede un'istantanea statica DT.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Manager/Runtime thread; bounded sleep if datasheet requires.
+Module Manager tramite driver ops.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Port API and Zephyr I2C API.
-
----
-
-## Inputs
-
-Port, runtime address, output sample.
+MODULO INIT/READ.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-Same real values as static driver path.
-
----
-
-## Errors to handle
-
-NACK, timeout, CRC, invalid raw response, removal during read.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Async I2C, heater modes, automatic probing
+Manager/Runtime thread; riposo limitato se necessario.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `spaghetti_modules/sht40/sht40.c`.
-- [ ] Implement the datasheet CRC check for both raw values. Convert raw temperature and humidity into the existing bounded sample representation, clamp only where the datasheet requires it, and return an error for a CRC mismatch.
-- [ ] Handle only these realistic errors: NACK, timeout, CRC, invalid raw response, removal during read.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Port API e Zephyr I2C API.
+
+---
+
+## Input
+
+Port, indirizzo runtime, campione di uscita.
+
+---
+
+## Output
+
+Stessi valori reali del percorso statico driver.
+
+---
+
+## Errori da gestire
+
+NACK, timeout, CRC, risposta grezza non valida, rimozione durante la lettura.
+
+---
+
+## Non implementare ancora
+
+- Async I2C, modalità di riscaldamento, controllo automatico
+
+---
+
+## Procedura
+
+- [ ] Apri solo `spaghetti_modules/sht40/sht40.c`.
+- [ ] Implementa il foglio dati check CRC per entrambi i valori grezzi. Converti la
+      temperatura e l'umidità grezzi nella rappresentazione del campione delimitata
+      esistente, morsetto solo quando il foglio dati lo richiede, e restituire un errore
+      per un disallineamento CRC.
+- [ ] Gestisci solo questi errori realistici: NACK, timeout, CRC, risposta cruda non
+      valida, rimozione durante la lettura.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -109,35 +116,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Real reading and disconnected-sensor error; compare plausible values with
-Milestone 4 output.
-
----
-
-## Expected result
-
-Driver no longer calls Sensor API.
+Lettura reale ed errore del sensore disconnesso; confronta i valori plausibili con
+l'uscita Milestone 4.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il driver non chiama più l'API del sensore.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `runtime-removable: validate crc and convert sht40 samples`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-080-05](TASK-080-05-remove-the-static-sensor-shortcut.md) — Remove the static sensor shortcut
+[TASK-080-05](TASK-080-05-remove-the-static-sensor-shortcut.md) — Rimuovere la scorciatoia Sensor statica

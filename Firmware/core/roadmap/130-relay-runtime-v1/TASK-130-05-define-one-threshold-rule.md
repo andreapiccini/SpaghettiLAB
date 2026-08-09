@@ -1,100 +1,107 @@
-# TASK-130-05 — Define one threshold rule
+# TASK-130-05 — Definire una regola di soglia
 
-**Status:** ⬜ TODO  
-**Phase:** 130 — Relay + Runtime V1  
-**Depends on:** [TASK-130-04](TASK-130-04-route-commands-through-module-manager.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define one threshold rule** and produce this focused outcome:
-
-Relay ON only for values strictly above threshold.
+**Stato:** ⬜ TODO
+**Fase:** 130 — Relay + Runtime V1
+**Dipende da:** [TASK-130-04](TASK-130-04-route-commands-through-module-manager.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Relay ON solo per valori rigorosamente superiori alla soglia.
+
+---
+
+## File da aprire
 
 `include/spaghetti/runtime.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define only `spaghetti_runtime_threshold_rule` with source module/channel, fixed-unit threshold, target relay ID, and target boolean. Declare `spaghetti_runtime_load_threshold_rule()` with bounded single-rule semantics.
-
----
-
-## Why
-
-Both sensor Data and relay command work independently.
+Definisci `spaghetti_runtime_threshold_rule` con modulo e canale sorgente, soglia in
+unità fissa, ID del relè di destinazione e valore booleano da applicare. Dichiara
+`spaghetti_runtime_load_threshold_rule()` e limita esplicitamente questa versione a una
+sola regola.
 
 ---
 
-## Called / used by
+## Perché
 
-Config loads; Runtime evaluates.
-
----
-
-## Trigger
-
-DATA ARRIVAL.
+Sia il sensore Data che il comando relè funzionano indipendentemente.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
+
+Carichi Config; Runtime valuta.
+
+---
+
+## Evento che attiva il codice
+
+ARRIVO DATI.
+
+---
+
+## Meccanismo di invocazione
 
 ZBUS MSG SUBSCRIBER -> Runtime THREAD -> DIRECT CALL.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Runtime thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Data subscriber and Manager command.
-
----
-
-## Inputs
-
-Temperature sample and one rule.
+Data subscriber e comando Manager.
 
 ---
 
-## Outputs
+## Input
 
-Relay ON only for values strictly above threshold.
-
----
-
-## Errors to handle
-
-Missing target/source, wrong channel, command failure.
+Campione di temperatura e una regola.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Generic operators/actions, hysteresis unless required for safe physical test, rule arrays, scripting
+Relay ON solo per valori rigorosamente superiori alla soglia.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `include/spaghetti/runtime.h`.
-- [ ] Define only `spaghetti_runtime_threshold_rule` with source module/channel, fixed-unit threshold, target relay ID, and target boolean.
-- [ ] Declare `spaghetti_runtime_load_threshold_rule()` with bounded single-rule semantics.
-- [ ] Handle only these realistic errors: Missing target/source, wrong channel, command failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Manca target/source, canale sbagliato, comando fallito.
+
+---
+
+## Non implementare ancora
+
+- Generico operators/actions, isteresi a meno che non sia necessario per test fisici
+  sicuri, array di regole, scripting
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/runtime.h`.
+- [ ] Definisci solo `spaghetti_runtime_threshold_rule` con sorgente module/channel,
+      soglia di unità fissa, ID del relè di destinazione e booleano di destinazione.
+- [ ] Dichiara `spaghetti_runtime_load_threshold_rule()` con semantica a singola regola
+      delimitata.
+- [ ] Gestisci solo questi errori realistici: Manca target/source, canale sbagliato,
+      errore di comando.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +117,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Inject 24.9, 25.0, 25.1 fixed-unit samples; expect no/no/one command.
-
----
-
-## Expected result
-
-Exact threshold semantics and real relay response.
+Inietti 24.9, 25.0, 25.1 campioni di unità fissa; attenda il comando no/no/one.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Semantica di soglia esatta e risposta a relè reale.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `relay: define one threshold rule`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-130-06](TASK-130-06-evaluate-temperature-in-the-runtime-thread.md) — Evaluate temperature in the Runtime thread
+[TASK-130-06](TASK-130-06-evaluate-temperature-in-the-runtime-thread.md) — Valutare la temperatura nel thread Runtime

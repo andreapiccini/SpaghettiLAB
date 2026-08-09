@@ -1,112 +1,122 @@
-# TASK-180-02 — Validate the Port binding
+# TASK-180-02 — Convalidare il binding di Port
 
-**Status:** ⬜ TODO  
-**Phase:** 180 — Multiple Core variants  
-**Depends on:** [TASK-180-01](TASK-180-01-define-the-spaghetti-port-binding.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Validate the Port binding** and produce this focused outcome:
-
-Generated DT macros.
+**Stato:** ⬜ TODO
+**Fase:** 180 — Varianti Core multiple
+**Dipende da:** [TASK-180-01](TASK-180-01-define-the-spaghetti-port-binding.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`dts/bindings/spaghetti/spaghettilab,port.yaml` and a minimal test node in the appropriate board/test DTS.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Run a pristine configure with one valid node, then verify missing required properties and invalid references fail Devicetree validation. Remove any deliberately invalid test node after the check.
+Macro DT generate.
 
 ---
 
-## Why
+## File da aprire
 
-One Core/Port works and its actual minimum requirements are known.
-
----
-
-## Called / used by
-
-Devicetree build and `port.c` macros.
+`dts/bindings/spaghetti/spaghettilab,port.yaml` e un nodo di prova minimo nell'apposita
+board/test DTS.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Eseguire una configurazione pulita con un nodo valido, quindi verificare le
+proprietà richieste mancanti e le referenze non valide falliscono la convalida
+Devicetree. Rimuovere qualsiasi nodo di prova deliberatamente non valido dopo il
+controllo.
+
+---
+
+## Perché
+
+Uno Core/Port funziona e i suoi requisiti minimi effettivi sono noti.
+
+---
+
+## Chi usa il risultato
+
+Generazione Devicetree e macro `port.c`.
+
+---
+
+## Evento che attiva il codice
 
 BUILD.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME.
+BUILD-TIME.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Host DT tools/compiler.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Zephyr binding schema and real board DTS.
-
----
-
-## Inputs
-
-Valid static Port nodes.
+Schema Zephyr binding e scheda reale DTS.
 
 ---
 
-## Outputs
+## Input
 
-Generated DT macros.
-
----
-
-## Errors to handle
-
-Missing property/wrong reference must fail build.
+Nodi statici validi Port.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Runtime module identity or imaginary capabilities
-
----
-
-## Zephyr note
-
-Bindings are YAML schemas used at build time to validate DTS nodes and generate C macros. They must describe static Core hardware, not runtime module identity.
+Macro DT generate.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `dts/bindings/spaghetti/spaghettilab,port.yaml` and a minimal test node in the appropriate board/test DTS.
-- [ ] Run a pristine configure with one valid node, then verify missing required properties and invalid references fail Devicetree validation.
-- [ ] Remove any deliberately invalid test node after the check.
-- [ ] Handle only these realistic errors: Missing property/wrong reference must fail build.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Il riferimento property/wrong mancante deve essere generato.
+
+---
+
+## Non implementare ancora
+
+- Identità del modulo Runtime o funzionalità immaginarie
+
+---
+
+## Orientamento Zephyr
+
+I legami sono schemi YAML usati al momento della compilazione per convalidare i nodi DTS
+e generare macro C. Devono descrivere l'hardware statico Core, non l'identità del modulo
+runtime.
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `dts/bindings/spaghetti/spaghettilab,port.yaml` e un nodo di prova
+      minimo nell'apposita board/test DTS.
+- [ ] Eseguire una configurazione pulita con un nodo valido, quindi verificare le
+      proprietà richieste mancanti e le referenze non valide non riescono a convalidare
+      Devicetree.
+- [ ] Rimuovere qualsiasi nodo di prova deliberatamente non valido dopo il controllo.
+- [ ] Gestisci solo questi errori realistici: La mancanza di riferimento property/wrong
+      deve fallire la compilazione.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -116,34 +126,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Valid node builds; intentionally missing required field fails, then restore.
-
----
-
-## Expected result
-
-Useful build-time validation.
+Costruisce un nodo valido; manca intenzionalmente il campo richiesto non riesce, quindi
+ripristina.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Convalida utile build-time.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `multiple: validate the port binding`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-180-03](TASK-180-03-create-the-first-real-spaghetti-board-skeleton.md) — Create the first real Spaghetti board skeleton
+[TASK-180-03](TASK-180-03-create-the-first-real-spaghetti-board-skeleton.md) — Creare la prima definizione board Spaghetti LAB

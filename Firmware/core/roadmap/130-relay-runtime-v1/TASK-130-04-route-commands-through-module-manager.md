@@ -1,102 +1,109 @@
-# TASK-130-04 — Route commands through Module Manager
+# TASK-130-04 — Instradare i comandi tramite Module Manager
 
-**Status:** ⬜ TODO  
-**Phase:** 130 — Relay + Runtime V1  
-**Depends on:** [TASK-130-03](TASK-130-03-register-and-build-the-relay-driver.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Route commands through Module Manager** and produce this focused outcome:
-
-Applied state/status.
+**Stato:** ⬜ TODO
+**Fase:** 130 — Relay + Runtime V1
+**Dipende da:** [TASK-130-03](TASK-130-03-register-and-build-the-relay-driver.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`include/spaghetti/module_manager.h` and `subsys/module_manager/module_manager.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Declare and implement `spaghetti_module_manager_command()`. Validate ID, READY state, command support, and value before one direct driver call. Add the Relay module to the current test configuration using verified hardware.
+Applicato state/status.
 
 ---
 
-## Why
+## File da aprire
 
-Runtime V1 needs a tested target.
-
----
-
-## Called / used by
-
-Manager command routing.
+`include/spaghetti/module_manager.h` e `subsys/module_manager/module_manager.c`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-MODULE CONFIGURATION/USER ACTION.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Dichiara e implementa `spaghetti_module_manager_command()`. Prima di chiamare il driver,
+verifica l'ID del modulo, lo stato READY, il supporto dell'operazione e la validità del
+valore. Aggiungi il modulo Relay alla configurazione di test usando soltanto hardware
+già verificato.
 
 ---
 
-## Execution context
+## Perché
+
+Runtime V1 ha bisogno di un target testato.
+
+---
+
+## Chi usa il risultato
+
+Manager routing di comando.
+
+---
+
+## Evento che attiva il codice
+
+MODULO CONFIGURATION/USER ACTION.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
 
 Manager/Runtime thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Real Port API and Zephyr GPIO/other verified peripheral.
-
----
-
-## Inputs
-
-Logical ON/OFF.
+Real Port API e Zephyr GPIO/other hanno verificato la periferica.
 
 ---
 
-## Outputs
+## Input
 
-Applied state/status.
-
----
-
-## Errors to handle
-
-Unsupported Port, invalid command, hardware failure.
+Logica ON/OFF.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Invent pin/active level/latching behavior
-- use schematic
+Applicato state/status.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `include/spaghetti/module_manager.h` and `subsys/module_manager/module_manager.c`.
-- [ ] Declare and implement `spaghetti_module_manager_command()`.
-- [ ] Validate ID, READY state, command support, and value before one direct driver call.
-- [ ] Add the Relay module to the current test configuration using verified hardware.
-- [ ] Handle only these realistic errors: Unsupported Port, invalid command, hardware failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Port non supportato, comando non valido, guasto hardware.
+
+---
+
+## Non implementare ancora
+
+- Inventare il comportamento pin/active level/latching
+- schema d'uso
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/module_manager.h` e
+      `subsys/module_manager/module_manager.c`.
+- [ ] Dichiarare e implementare `spaghetti_module_manager_command()`.
+- [ ] Convalida l'ID, lo stato pronto, il supporto di comando e il valore prima di una
+      chiamata diretta driver.
+- [ ] Aggiungere il modulo Relay alla configurazione di test corrente utilizzando
+      l'hardware verificato.
+- [ ] Gestisci solo questi errori realistici: Port non supportato, comando non valido,
+      guasto hardware.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -112,34 +119,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Manual Manager configure and OFF->ON->OFF; verify electrically and on log.
-
----
-
-## Expected result
-
-Logical state controls real/fake relay safely.
+Configurazione manuale Manager e OFF->ON->OFF; verifica elettricamente e sul log.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Lo stato logico controlla in sicurezza sia il Relay reale sia il backend finto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `relay: route commands through module manager`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-130-05](TASK-130-05-define-one-threshold-rule.md) — Define one threshold rule
+[TASK-130-05](TASK-130-05-define-one-threshold-rule.md) — Definire una regola di soglia

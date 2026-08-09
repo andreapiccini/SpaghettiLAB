@@ -1,101 +1,104 @@
-# TASK-000-02 — Flash and observe the baseline
+# TASK-000-02 — Caricare e osservare la baseline
 
-**Status:** ✅ DONE  
-**Phase:** 000 — Baseline  
-**Depends on:** [TASK-000-01](TASK-000-01-build-the-untouched-application.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Flash and observe the baseline** and produce this focused outcome:
-
-Boot greeting and uptime every five seconds at 115200 baud.
+**Stato:** ✅ DONE
+**Fase:** 000 — Baseline
+**Dipende da:** [TASK-000-01](TASK-000-01-build-the-untouched-application.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-Root `README.md`, section “Flash and serial console” for the host OS.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Nothing.
+Saluto di stivale e uptime ogni cinque secondi a 115200 baud.
 
 ---
 
-## Why
+## File da aprire
 
-Port/I2C work should start only after console and board reset work.
-
----
-
-## Called / used by
-
-Developer.
+Root `README.md`, sezione Flash e console seriale per il sistema operativo host.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Nessuna modifica.
+
+---
+
+## Perché
+
+Il lavoro Port/I2C dovrebbe iniziare solo dopo il ripristino della console e della
+scheda.
+
+---
+
+## Chi usa il risultato
+
+Sviluppatore.
+
+---
+
+## Evento che attiva il codice
 
 FIRMWARE DEPLOY.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-HOST FLASH TOOL, then serial monitor.
+Utensile HOST FLASH, poi monitor seriale.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Host OS.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Run `make flash`, then `make screen` on Linux, macOS, or Windows. The active
-Zephyr build selects the flash runner; use `PORT=<device>` only when automatic
-detection is unavailable or ambiguous.
-
----
-
-## Inputs
-
-Built image and an automatically detected port or explicit `PORT`.
+Esegui `make flash`, poi `make screen` su Linux, macOS o Windows. La generazione attiva
+Zephyr seleziona il corridore flash; usa `PORT=<device>` solo quando il rilevamento
+automatico non è disponibile o ambiguo.
 
 ---
 
-## Outputs
+## Input
 
-Boot greeting and uptime every five seconds at 115200 baud.
-
----
-
-## Errors to handle
-
-Busy/wrong port and bootloader entry failure.
+Immagine incorporata e una porta rilevata automaticamente o `PORT` esplicita.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- I2C or new logging
+Saluto di stivale e uptime ogni cinque secondi a 115200 baud.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [x] Open only Root `README.md`, section “Flash and serial console” for the host OS.
-- [x] Nothing.
-- [x] Handle only these realistic errors: Busy/wrong port and bootloader entry failure.
-- [x] Confirm no item from **Do NOT implement yet** was added
-- [x] Run the task test and compare it with **Expected result**
+Porta Busy/wrong e ingresso bootloader non riuscito.
+
+---
+
+## Non implementare ancora
+
+- I2C o nuova registrazione
+
+---
+
+## Procedura
+
+- [x] Aprire solo Root `README.md`, sezione Flash e console seriale per il sistema
+      operativo host.
+- [x] Nessuna modifica.
+- [x] Gestisci solo questi errori realistici: port Busy/wrong e bootloader entry
+      failure.
+- [x] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [x] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -107,38 +110,40 @@ NO
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Reset board with serial monitor open.
-
----
-
-## Expected result
-
-The console prints the ESP32-C3 greeting and increasing uptime at 115200 baud.
+Reimposta la scheda con monitor seriale aperto.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [x] Required documentation or implementation file changed as specified
-- [x] Named type, function, configuration, or test exists
-- [x] Build succeeds when this task requires a build
-- [x] Task-specific test passes
-- [x] No unrelated functionality was added
+La console stampa il saluto ESP32-C3 e aumenta l'uptime a 115200 baud.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [x] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [x] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [x] La build riesce quando il task la richiede
+- [x] La verifica specifica del task passa
+- [x] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `baseline: flash and observe the baseline`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-010-01](../010-core/TASK-010-01-define-the-core-public-api.md) — Define the Core public API
+[TASK-010-01](../010-core/TASK-010-01-define-the-core-public-api.md) — Definire l’API pubblica di Core

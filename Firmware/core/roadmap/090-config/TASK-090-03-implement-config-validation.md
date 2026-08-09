@@ -1,101 +1,107 @@
-# TASK-090-03 — Implement Config validation
+# TASK-090-03 — Implementare la validazione di Config
 
-**Status:** ⬜ TODO  
-**Phase:** 090 — Internal Config  
-**Depends on:** [TASK-090-02](TASK-090-02-make-config-string-ownership-explicit.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement Config validation** and produce this focused outcome:
-
-Applied module(s) or exact validation/apply error.
+**Stato:** ⬜ TODO
+**Fase:** 090 — Config interna
+**Dipende da:** [TASK-090-02](TASK-090-02-make-config-string-ownership-explicit.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Moduli applicati(s) o errore validation/apply esatto.
+
+---
+
+## File da aprire
 
 `subsys/config/config.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement pure validation for version, module count, Port IDs, nonempty terminated type IDs, I2C address range, duplicate Port assignments, and nonzero bounded sample period. Do not mutate live Manager state.
-
----
-
-## Why
-
-Main hardcode can be replaced without serialization.
+Implementa la convalida pura per la versione, il conteggio dei moduli, gli ID Port, gli
+ID di tipo terminati non vuoti, l'intervallo di indirizzi I2C, le assegnazioni duplicate
+Port e il periodo di campionamento non limitato a zero. Non mutare lo stato live
+Manager.
 
 ---
 
-## Called / used by
+## Perché
 
-Main now; Communication/decoder later.
-
----
-
-## Trigger
-
-CONFIG COMMAND.
+Il codice principale può essere sostituito senza serializzazione.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main/calling thread.
+Principale ora; Communication/decoder più tardi.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Module Manager configure.
-
----
-
-## Inputs
-
-Complete internal config.
+COMANDO DI CONFIGURAZIONE.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-Applied module(s) or exact validation/apply error.
-
----
-
-## Errors to handle
-
-Partial apply. For one module, rollback is simple; document
-transaction strategy before multiple modules.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Persistent state, CBOR, async config worker
+Thread principale o thread chiamante.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `subsys/config/config.c`.
-- [ ] Implement pure validation for version, module count, Port IDs, nonempty terminated type IDs, I2C address range, duplicate Port assignments, and nonzero bounded sample period.
-- [ ] Do not mutate live Manager state.
-- [ ] Handle only these realistic errors: Partial apply. For one module, rollback is simple; document transaction strategy before multiple modules.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Configura Module Manager.
+
+---
+
+## Input
+
+Config interna completa.
+
+---
+
+## Output
+
+Moduli applicati(s) o errore validation/apply esatto.
+
+---
+
+## Errori da gestire
+
+Applicazione parziale. Per un modulo, il rollback è semplice; strategia di transazione
+del documento prima di più moduli.
+
+---
+
+## Non implementare ancora
+
+- Stato persistente, CBOR, configurazione asincrona worker
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/config/config.c`.
+- [ ] Implementa la convalida pura per la versione, il conteggio dei moduli, gli ID
+      Port, gli ID tipo terminati non vuoti, l'intervallo di indirizzi I2C, le
+      assegnazioni Port duplicate e il periodo di campionamento non limitato a zero.
+- [ ] Non mutare live Manager State.
+- [ ] Gestisci solo questi errori realistici: Applicazione parziale. Per un modulo, il
+      rollback è semplice; strategia di transazione del documento prima di più moduli.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +117,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Validate valid config plus bad version, duplicate/invalid Port, zero period.
-
----
-
-## Expected result
-
-Invalid config never calls Manager.
+Convalida configurazione valida più versione difettosa, duplicate/invalid Port, periodo
+zero.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Config non valida non chiama mai Manager.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `internal: implement config validation`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-090-04](TASK-090-04-implement-config-apply.md) — Implement Config apply
+[TASK-090-04](TASK-090-04-implement-config-apply.md) — Implementare l’applicazione di Config

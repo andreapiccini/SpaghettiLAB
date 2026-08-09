@@ -1,111 +1,124 @@
-# TASK-010-03 — Add Core to the application build
+# TASK-010-03 — Aggiungere Core alla build dell’applicazione
 
-**Status:** ⬜ TODO  
-**Phase:** 010 — Core  
-**Depends on:** [TASK-010-02](TASK-010-02-implement-core-state-and-initialization.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Add Core to the application build** and produce this focused outcome:
-
-Core object linked into `zephyr.elf`.
+**Stato:** ⬜ TODO
+**Fase:** 010 — Core
+**Dipende da:** [TASK-010-02](TASK-010-02-implement-core-state-and-initialization.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`CMakeLists.txt` and `prj.conf`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add `include` to `target_include_directories(app PRIVATE ...)`, add `subsys/core/core.c` to `target_sources(app PRIVATE ...)`, and enable `CONFIG_LOG=y` without removing existing console options.
+Oggetto Core collegato a `zephyr.elf`.
 
 ---
 
-## Why
+## File da aprire
 
-Unlisted `.c` files are ignored by CMake.
-
----
-
-## Called / used by
-
-Zephyr build system.
+`CMakeLists.txt` e `prj.conf`.
 
 ---
 
-## Trigger
+## Orientamento Zephyr — CMake in un’applicazione Zephyr
+
+1. **Cos’è:** CMake costruisce l’elenco dei sorgenti e degli include che formeranno l’applicazione Zephyr.
+2. **A cosa serve:** Dice alla build che `subsys/core/core.c` deve essere compilato e che `include/` contiene header pubblici.
+3. **Quando viene usato:** Zephyr legge `CMakeLists.txt` durante la configurazione della build, prima della compilazione C.
+4. **Build-time o runtime:** Build-time.
+5. **Collegamento con questo task:** Senza questa modifica l’API Core può esistere negli header, ma la sua implementazione non entra nel firmware.
+6. **File reali coinvolti:** `CMakeLists.txt` nella root del progetto.
+7. **Cosa guardare nei file:** Cerca `target_sources(app ...)` e `target_include_directories(app ...)`; `app` è il target applicazione creato da Zephyr.
+8. **Cosa non modificare:** Non modificare i file CMake installati da Zephyr e non aggiungere ancora sorgenti di componenti futuri.
+
+---
+
+## Cosa scrivere o modificare
+
+Aggiungere `include` a `target_include_directories(app PRIVATE ...)`, aggiungere
+`subsys/core/core.c` a `target_sources(app PRIVATE ...)` e abilitare `CONFIG_LOG=y`
+senza rimuovere le opzioni di console esistenti.
+
+---
+
+## Perché
+
+I file `.c` non elencati vengono ignorati da CMake.
+
+---
+
+## Chi usa il risultato
+
+Sistema di generazione Zephyr.
+
+---
+
+## Evento che attiva il codice
 
 BUILD.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME.
+BUILD-TIME.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 CMake/Ninja in Docker.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Zephyr application target and logging Kconfig.
-
----
-
-## Inputs
-
-Existing target plus two new entries.
+Obiettivo dell'applicazione Zephyr e registrazione Kconfig.
 
 ---
 
-## Outputs
+## Input
 
-Core object linked into `zephyr.elf`.
-
----
-
-## Errors to handle
-
-Wrong relative path or include directory.
+Obiettivo esistente più due nuove voci.
 
 ---
 
-## Do NOT implement yet
+## Output
+
+Oggetto Core collegato a `zephyr.elf`.
+
+---
+
+## Errori da gestire
+
+Percorso relativo errato o directory di inclusione.
+
+---
+
+## Non implementare ancora
 
 - Per-directory CMake/Kconfig
 
 ---
 
-## Zephyr note
 
-Kconfig selects software at build time. `CONFIG_LOG=y` compiles Zephyr logging; it is not runtime configuration.
+## Procedura
 
----
-
-## Steps
-
-- [ ] Open only `CMakeLists.txt` and `prj.conf`.
-- [ ] Add `include` to `target_include_directories(app PRIVATE ...)`, add `subsys/core/core.c` to `target_sources(app PRIVATE ...)`, and enable `CONFIG_LOG=y` without removing existing console options.
-- [ ] Handle only these realistic errors: Wrong relative path or include directory.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `CMakeLists.txt` e `prj.conf`.
+- [ ] Aggiungere `include` a `target_include_directories(app PRIVATE ...)`, aggiungere
+      `subsys/core/core.c` a `target_sources(app PRIVATE ...)` e abilitare
+      `CONFIG_LOG=y` senza rimuovere le opzioni di console esistenti.
+- [ ] Gestisci solo questi errori realistici: percorso relativo errato o directory
+      include.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine` because `prj.conf` changes.
+SÌ — `make pristine` perché `prj.conf` cambia.
 
 ---
 
@@ -115,34 +128,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Build has no undefined symbol/include error.
-
----
-
-## Expected result
-
-Successful build with Core compiled but not called.
+La generazione non ha alcun errore symbol/include non definito.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Generazione di successo con Core compilata ma non chiamata.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `core: add core to the application build`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-010-04](TASK-010-04-call-core-from-main.md) — Call Core from main
+[TASK-010-04](TASK-010-04-call-core-from-main.md) — Chiamare Core da main

@@ -1,34 +1,32 @@
-# Phase 100 — Persistent Config
+# Fase 100 — Config persistente
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Persist only the proven internal configuration using a bounded Storage contract.
+Salvare e ricaricare soltanto la Config interna già validata.
 
-## Depends on
+## Dipende da
 
-[Phase 090 — Internal Config](../090-config/README.md)
+[Fase 090 — Config interna](../090-config/README.md)
 
-## Visible result
+## Risultato visibile
 
-The internal configuration survives a reboot.
+La configurazione valida sopravvive a un riavvio reale.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-100-01 — Define the synchronous Storage API](TASK-100-01-define-the-synchronous-storage-api.md)
-2. ⬜ [TASK-100-02 — Implement and test a RAM Storage backend](TASK-100-02-implement-and-test-a-ram-storage-backend.md)
-3. ⬜ [TASK-100-03 — Verify and define the storage partition](TASK-100-03-verify-and-define-the-storage-partition.md)
-4. ⬜ [TASK-100-04 — Enable Zephyr Settings and its backend](TASK-100-04-enable-zephyr-settings-and-its-backend.md)
-5. ⬜ [TASK-100-05 — Implement the Settings-backed Storage record](TASK-100-05-implement-the-settings-backed-storage-record.md)
-6. ⬜ [TASK-100-06 — Load Config at boot and test persistence](TASK-100-06-load-config-at-boot-and-test-persistence.md)
+1. ⬜ [TASK-100-01 — Definire l’API di storage sincrono](TASK-100-01-define-the-synchronous-storage-api.md)
+2. ⬜ [TASK-100-02 — Implementare e provare il backend storage RAM](TASK-100-02-implement-and-test-a-ram-storage-backend.md)
+3. ⬜ [TASK-100-03 — Verificare e definire la partizione di storage](TASK-100-03-verify-and-define-the-storage-partition.md)
+4. ⬜ [TASK-100-04 — Abilitare Zephyr Settings e il relativo backend](TASK-100-04-enable-zephyr-settings-and-its-backend.md)
+5. ⬜ [TASK-100-05 — Implementare il record persistente con Settings](TASK-100-05-implement-the-settings-backed-storage-record.md)
+6. ⬜ [TASK-100-06 — Caricare Config all’avvio e provare la persistenza](TASK-100-06-load-config-at-boot-and-test-persistence.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Storage partition is verified non-overlapping.
-- [ ] Settings backend initializes.
-- [ ] Config survives a real power cycle.
-- [ ] Missing/corrupt record has controlled behavior.
-- [ ] No measurement history or secrets were added.
+- [ ] Il contratto storage è provato prima con backend RAM.
+- [ ] La partizione flash non si sovrappone ad altre regioni.
+- [ ] Record assente o corrotto ha un comportamento deterministico.

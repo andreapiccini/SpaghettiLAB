@@ -1,145 +1,157 @@
-# TASK-100-06 — Load Config at boot and test persistence
+# TASK-100-06 — Caricare Config all’avvio e provare la persistenza
 
-**Status:** ⬜ TODO  
-**Phase:** 100 — Persistent Config  
-**Depends on:** [TASK-100-05](TASK-100-05-implement-the-settings-backed-storage-record.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Load Config at boot and test persistence** and produce this focused outcome:
-
-Record restored after power cycle.
+**Stato:** ⬜ TODO
+**Fase:** 100 — Config persistente
+**Dipende da:** [TASK-100-05](TASK-100-05-implement-the-settings-backed-storage-record.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/core/core.c`, `subsys/config/config.c`, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Initialize Storage before Config, load the saved snapshot, validate it, and apply it. Provide a defined first-boot/default path. Write one changed valid snapshot, reboot, and confirm the same assignment returns; corrupt/version-mismatch data must fall back safely.
+Registrare ripristinato dopo il ciclo di potenza.
 
 ---
 
-## Why
+## File da aprire
 
-Config read/write semantics already work without flash.
+`subsys/core/core.c`, `subsys/config/config.c` e la console seriale.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Inizializzare Archiviazione prima di Config, caricare l'istantanea salvata, convalidarla
+e applicala. Definisci in modo esplicito il comportamento al primo avvio, quando non
+esiste ancora una configurazione salvata. Scrivi uno snapshot
+valido cambiato, riavviare e confermare lo stesso ritorno dell'assegnazione; i dati
+corrupt/version-mismatch devono ripiegare in modo sicuro.
+
+---
+
+## Perché
+
+La semantica Config read/write funziona già senza flash.
+
+---
+
+## Chi usa il risultato
 
 Core/Config.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BOOT/CONFIG COMMIT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL + SETTINGS CALLBACK.
-
----
-
-## Execution context
-
-Main/calling thread during synchronous load/save.
+Chiamata diretta + richiamo di posizione.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Zephyr Settings, chosen backend, real fixed partition.
-
----
-
-## Inputs
-
-Valid record and safe flash region.
+Main/calling thread durante il sincrono load/save.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Record restored after power cycle.
-
----
-
-## Errors to handle
-
-Missing/corrupt/full/I/O; never erase unrelated flash.
+Zephyr Settings, scelta backend, vera e propria partizione fissa.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Invent a partition size/address
-- derive from real flash
+Record valido e regione flash sicura.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `subsys/core/core.c`, `subsys/config/config.c`, and the serial console.
-- [ ] Initialize Storage before Config, load the saved snapshot, validate it, and apply it. Provide a defined first-boot/default path. Write one changed valid snapshot, reboot, and confirm the same assignment returns
-- [ ] corrupt/version-mismatch data must fall back safely.
-- [ ] Handle only these realistic errors: Missing/corrupt/full/I/O; never erase unrelated flash.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Registrare ripristinato dopo il ciclo di potenza.
+
+---
+
+## Errori da gestire
+
+Missing/corrupt/full/I/O; mai cancellare flash non correlati.
+
+---
+
+## Non implementare ancora
+
+- Inventare una partizione size/address
+- derivano da un reale flash
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `subsys/core/core.c`, `subsys/config/config.c` e la console seriale.
+- [ ] Inizializzare Archiviazione prima di Config, caricare l'istantanea salvata,
+      convalidarla e applicarla. Definisci il comportamento al primo avvio, quando non
+      esiste ancora una configurazione salvata.
+      Scrivere uno snapshot valido cambiato, riavviare e confermare la stessa
+      assegnazione restituisce
+- [ ] I dati corrupt/version-mismatch devono ripiegare in modo sicuro.
+- [ ] Gestisci solo questi errori realistici: Missing/corrupt/full/I/O; mai cancellare
+      flash non correlati.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Save assignment, power-cycle, load/apply; corrupt/version-mismatch test
-through a controlled test record, not random flash writes.
-
----
-
-## Expected result
-
-A valid config survives reboot and invalid persisted data does not create a partial module assignment.
+Salva assegnazione, power-cycle, load/apply; corrupt/version-mismatch prova attraverso
+un record di prova controllato, non scrittura flash casuale.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Una configurazione valida sopravvive al riavvio e i dati persi non validi non creano
+un'assegnazione parziale del modulo.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `persistent: load config at boot and test persistence`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-110-01](../110-data-zbus/TASK-110-01-define-the-temperature-sample-message.md) — Define the temperature sample message
+[TASK-110-01](../110-data-zbus/TASK-110-01-define-the-temperature-sample-message.md) — Definire il messaggio del campione di temperatura

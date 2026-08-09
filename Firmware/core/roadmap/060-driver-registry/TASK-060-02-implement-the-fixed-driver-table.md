@@ -1,101 +1,106 @@
-# TASK-060-02 — Implement the fixed driver table
+# TASK-060-02 — Implementare la tabella statica dei driver
 
-**Status:** ⬜ TODO  
-**Phase:** 060 — Driver Registry  
-**Depends on:** [TASK-060-01](TASK-060-01-declare-the-driver-registry-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement the fixed driver table** and produce this focused outcome:
-
-SHT40 pointer or `NULL`.
+**Stato:** ⬜ TODO
+**Fase:** 060 — Driver Registry
+**Dipende da:** [TASK-060-01](TASK-060-01-declare-the-driver-registry-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Puntatore SHT40 o `NULL`.
+
+---
+
+## File da aprire
 
 `subsys/driver_registry/driver_registry.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Create a private immutable pointer array containing `&spaghetti_sht40_driver`. Implement exact-string `spaghetti_driver_registry_find()` and the optional count getter with null-safe behavior.
-
----
-
-## Why
-
-One driver does not justify linker magic or a hash table.
+Crea un array di puntatore immutabile privato contenente `&spaghetti_sht40_driver`.
+Implementa la stringa esatta `spaghetti_driver_registry_find()` e il contatore opzionale
+con comportamento null-safe.
 
 ---
 
-## Called / used by
+## Perché
+
+Uno driver non giustifica la magia del linker o un tavolo di hash.
+
+---
+
+## Chi usa il risultato
 
 Core/Manager.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BOOT/LOOKUP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Caller thread; immutable after init.
+CHIAMATA DIRETTA.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-SHT40 descriptor and standard bounded string comparison.
-
----
-
-## Inputs
-
-`"sht40"` or another ID.
+Chiamatore thread; immutabile dopo init.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-SHT40 pointer or `NULL`.
-
----
-
-## Errors to handle
-
-Duplicate/invalid table; unknown lookup is normal.
+Il descrittore SHT40 e il confronto delle stringhe standard.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Locking
-- frozen lookup needs none
+`"sht40"` o un altro ID.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `subsys/driver_registry/driver_registry.c`.
-- [ ] Create a private immutable pointer array containing `&spaghetti_sht40_driver`.
-- [ ] Implement exact-string `spaghetti_driver_registry_find()` and the optional count getter with null-safe behavior.
-- [ ] Handle only these realistic errors: Duplicate/invalid table; unknown lookup is normal.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Puntatore SHT40 o `NULL`.
+
+---
+
+## Errori da gestire
+
+Tabella Duplicate/invalid; la ricerca sconosciuta è normale.
+
+---
+
+## Non implementare ancora
+
+- Bloccaggio
+- ricerca surgelata non ha bisogno di nessuno
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/driver_registry/driver_registry.c`.
+- [ ] Crea un array di puntatore immutabile privato contenente
+      `&spaghetti_sht40_driver`.
+- [ ] Implementa la stringa esatta `spaghetti_driver_registry_find()` e il contatore
+      opzionale con comportamento null-safe.
+- [ ] Gestisci solo questi errori realistici: tabella Duplicate/invalid; la ricerca
+      sconosciuta è normale.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +116,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Local test path for known and unknown IDs.
-
----
-
-## Expected result
-
-Deterministic linear registry.
+Percorso di test locale per ID noti e sconosciuti.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Registro lineare deterministico.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `driver: implement the fixed driver table`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-060-03](TASK-060-03-validate-registry-entries.md) — Validate registry entries
+[TASK-060-03](TASK-060-03-validate-registry-entries.md) — Convalidare le voci del registry

@@ -1,106 +1,111 @@
-# TASK-130-03 — Register and build the Relay driver
+# TASK-130-03 — Registrare e compilare il driver Relay
 
-**Status:** ⬜ TODO  
-**Phase:** 130 — Relay + Runtime V1  
-**Depends on:** [TASK-130-02](TASK-130-02-implement-safe-relay-lifecycle-and-set.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Register and build the Relay driver** and produce this focused outcome:
-
-Applied state/status.
+**Stato:** ⬜ TODO
+**Fase:** 130 — Relay + Runtime V1
+**Dipende da:** [TASK-130-02](TASK-130-02-implement-safe-relay-lifecycle-and-set.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/driver_registry/driver_registry.c` and `CMakeLists.txt`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add the immutable Relay descriptor to the fixed Registry and its source to CMake. Extend duplicate/operation validation for the command path without weakening SHT40 requirements.
+Applicato state/status.
 
 ---
 
-## Why
+## File da aprire
 
-Runtime V1 needs a tested target.
-
----
-
-## Called / used by
-
-Manager command routing.
+`subsys/driver_registry/driver_registry.c` e `CMakeLists.txt`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-MODULE CONFIGURATION/USER ACTION.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Aggiungi il descrittore immutabile del driver Relay al Registry e includi il relativo
+sorgente in CMake. Estendi i controlli del Registry per rilevare duplicati e operazioni
+mancanti nel percorso dei comandi, senza ridurre i controlli già previsti per SHT40.
 
 ---
 
-## Execution context
+## Perché
+
+Runtime V1 ha bisogno di un target testato.
+
+---
+
+## Chi usa il risultato
+
+Manager routing di comando.
+
+---
+
+## Evento che attiva il codice
+
+MODULO CONFIGURATION/USER ACTION.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
 
 Manager/Runtime thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Real Port API and Zephyr GPIO/other verified peripheral.
-
----
-
-## Inputs
-
-Logical ON/OFF.
+Real Port API e Zephyr GPIO/other hanno verificato la periferica.
 
 ---
 
-## Outputs
+## Input
 
-Applied state/status.
-
----
-
-## Errors to handle
-
-Unsupported Port, invalid command, hardware failure.
+Logica ON/OFF.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Invent pin/active level/latching behavior
-- use schematic
+Applicato state/status.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `subsys/driver_registry/driver_registry.c` and `CMakeLists.txt`.
-- [ ] Add the immutable Relay descriptor to the fixed Registry and its source to CMake. Extend duplicate/operation validation for the command path without weakening SHT40 requirements.
-- [ ] Handle only these realistic errors: Unsupported Port, invalid command, hardware failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Port non supportato, comando non valido, guasto hardware.
+
+---
+
+## Non implementare ancora
+
+- Inventare il comportamento pin/active level/latching
+- schema d'uso
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/driver_registry/driver_registry.c` e `CMakeLists.txt`.
+- [ ] Aggiungere il descrittore Relay immutabile al Registry fisso e alla sua
+      sorgente a CMake. Estendere la convalida duplicate/operation per il percorso di
+      comando senza indebolire i requisiti SHT40.
+- [ ] Gestisci solo questi errori realistici: Port non supportato, comando non valido,
+      guasto hardware.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -110,34 +115,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Manual Manager configure and OFF->ON->OFF; verify electrically and on log.
-
----
-
-## Expected result
-
-Logical state controls real/fake relay safely.
+Configurazione manuale Manager e OFF->ON->OFF; verifica elettricamente e sul log.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Lo stato logico controlla in sicurezza sia il Relay reale sia il backend finto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `relay: register and build the relay driver`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-130-04](TASK-130-04-route-commands-through-module-manager.md) — Route commands through Module Manager
+[TASK-130-04](TASK-130-04-route-commands-through-module-manager.md) — Instradare i comandi tramite Module Manager

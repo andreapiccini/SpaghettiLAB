@@ -1,100 +1,107 @@
-# TASK-040-07 — Call the SHT40 wrapper from main
+# TASK-040-07 — Chiamare il wrapper SHT40 da main
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-06](TASK-040-06-add-the-sht40-wrapper-to-cmake.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Call the SHT40 wrapper from main** and produce this focused outcome:
-
-Temperature and humidity once per second.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-06](TASK-040-06-add-the-sht40-wrapper-to-cmake.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Temperatura e umidità una volta al secondo.
+
+---
+
+## File da aprire
 
 `src/main.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-After Core initialization, call `spaghetti_sht40_test_init()` once. In the existing loop, call the temporary read once per second and print both `sensor_value` values using integer `val1` and six-digit absolute `val2`; handle read errors without float printf.
-
----
-
-## Why
-
-Do not proceed to abstractions without real bus/sensor proof.
+Dopo l'inizializzazione Core, chiamare `spaghetti_sht40_test_init()` una volta. Nel loop
+esistente, chiamare la lettura temporanea una volta al secondo e stampare entrambi i
+valori `sensor_value` utilizzando `val1` interi e `val2` assoluto a sei cifre; gestire
+gli errori di lettura senza dipendere dalla formattazione `%f` di `printf`.
 
 ---
 
-## Called / used by
+## Perché
 
-Main test harness.
+Non procedere alle astrazioni senza la prova bus/sensor reale.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Imbracatura di prova principale.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/PERIODIC TEST LOOP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL and `k_sleep`, not `K_TIMER` yet.
-
----
-
-## Execution context
-
-Main thread.
+DIRECT CALL e `k_sleep`, non `K_TIMER` ancora.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
+
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
 
 Temporary wrapper -> Sensor API -> I2C.
 
 ---
 
-## Inputs
+## Input
 
 Connected powered SHT40.
 
 ---
 
-## Outputs
+## Output
 
-Temperature and humidity once per second.
-
----
-
-## Errors to handle
-
-Init/read failure; log and retry only with a clear policy.
+Temperatura e umidità una volta al secondo.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- Runtime scheduling, zbus, MQTT
+Errore Init/read; log e riprova solo con una politica chiara.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `src/main.c`.
-- [ ] After Core initialization, call `spaghetti_sht40_test_init()` once. In the existing loop, call the temporary read once per second and print both `sensor_value` values using integer `val1` and six-digit absolute `val2`
-- [ ] handle read errors without float printf.
-- [ ] Handle only these realistic errors: Init/read failure; log and retry only with a clear policy.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Programmazione Runtime, zbus, MQTT
+
+---
+
+## Procedura
+
+- [ ] Apri solo `src/main.c`.
+- [ ] Dopo l'inizializzazione Core, chiamare `spaghetti_sht40_test_init()` una volta.
+      Nel loop esistente, chiamare la lettura temporanea una volta al secondo e stampare
+      entrambi i valori `sensor_value` utilizzando `val1` interi e `val2` assoluto a sei
+      cifre
+- [ ] gestire gli errori di lettura senza float printf.
+- [ ] Gestire solo questi errori realistici: Errore Init/read; registrare e riprovare
+      solo con una politica chiara.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,35 +117,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Observe plausible temperature/humidity; disconnect sensor and verify a
-bounded error rather than crash/hang; reconnect/reset.
-
----
-
-## Expected result
-
-Real SHT40 values in serial log.
+Osservare temperature/humidity plausibile; disconnettere il sensore e verificare un
+errore limitato piuttosto che crash/hang; reconnect/reset.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Valori reali SHT40 nel registro seriale.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: call the sht40 wrapper from main`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-08](TASK-040-08-build-and-inspect-the-sht40-image.md) — Build and inspect the SHT40 image
+[TASK-040-08](TASK-040-08-build-and-inspect-the-sht40-image.md) — Compilare e ispezionare l’immagine SHT40

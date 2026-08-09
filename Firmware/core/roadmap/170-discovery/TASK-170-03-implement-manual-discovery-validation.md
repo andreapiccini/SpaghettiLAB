@@ -1,101 +1,106 @@
-# TASK-170-03 — Implement manual Discovery validation
+# TASK-170-03 — Implementare la validazione di Discovery manuale
 
-**Status:** ⬜ TODO  
-**Phase:** 170 — Discovery  
-**Depends on:** [TASK-170-02](TASK-170-02-define-the-discovery-provider-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement manual Discovery validation** and produce this focused outcome:
-
-Same SHT40 instance/readings.
+**Stato:** ⬜ TODO
+**Fase:** 170 — Discovery
+**Dipende da:** [TASK-170-02](TASK-170-02-define-the-discovery-provider-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Stesso SHT40 instance/readings.
+
+---
+
+## File da aprire
 
 `subsys/discovery/discovery.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement MANUAL-only submission validation for mode, Port, type/config bounds, source, and generation. Reject stale generations and call the registered sink only after the full result validates.
-
----
-
-## Why
-
-Existing behavior is a regression oracle.
+Implementa la convalida di invio MANUAL-only per modalità, Port, type/config limiti,
+sorgente e generazione. Rifiuta le generazioni obsolete e chiama la callback registrata
+solo dopo che il risultato completo valida.
 
 ---
 
-## Called / used by
+## Perché
+
+Il comportamento esistente è un oracolo di regressione.
+
+---
+
+## Chi usa il risultato
 
 Config/Communication -> Discovery -> Manager.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-CONFIG COMMAND.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL chain.
+COMANDO DI CONFIGURAZIONE.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
+
+Catena di CHIAMATE DIRETTE.
+
+---
+
+## Contesto di esecuzione
 
 Config/Communication thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Port validation and unchanged Manager API.
-
----
-
-## Inputs
-
-Manual result.
+Convalida Port e API Manager immutate.
 
 ---
 
-## Outputs
+## Input
 
-Same SHT40 instance/readings.
-
----
-
-## Errors to handle
-
-Stale generation, unsupported mode, Manager error propagation.
+Risultato manuale.
 
 ---
 
-## Do NOT implement yet
+## Output
+
+Stesso SHT40 instance/readings.
+
+---
+
+## Errori da gestire
+
+Generazione dello stato, modalità non supportata, propagazione degli errori Manager.
+
+---
+
+## Non implementare ancora
 
 - Async provider worker
-- Add K_WORK only when provider needs it
+- Aggiungi K_WORK solo quando il provider ne ha bisogno
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `subsys/discovery/discovery.c`.
-- [ ] Implement MANUAL-only submission validation for mode, Port, type/config bounds, source, and generation.
-- [ ] Reject stale generations and call the registered sink only after the full result validates.
-- [ ] Handle only these realistic errors: Stale generation, unsupported mode, Manager error propagation.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `subsys/discovery/discovery.c`.
+- [ ] Implementa la convalida di invio MANUAL per modalità, Port, type/config limiti,
+      sorgente e generazione.
+- [ ] Rifiuta le generazioni obsolete e chiama la callback registrata solo dopo che il
+      risultato completo valida.
+- [ ] Gestisci solo questi errori realistici: Generazione dello stadio, modalità non
+      supportata, propagazione degli errori Manager.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +116,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Apply same CBOR/manual assignment and compare status/measurement to before.
-
----
-
-## Expected result
-
-Behavior unchanged; Manager has no source/provider knowledge.
+Applicare la stessa assegnazione CBOR/manual e confrontare status/measurement a prima.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Comportamento invariato; Manager non ha conoscenze source/provider.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `discovery: implement manual discovery validation`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-170-04](TASK-170-04-route-accepted-results-to-module-manager.md) — Route accepted results to Module Manager
+[TASK-170-04](TASK-170-04-route-accepted-results-to-module-manager.md) — Inviare i risultati accettati al Module Manager

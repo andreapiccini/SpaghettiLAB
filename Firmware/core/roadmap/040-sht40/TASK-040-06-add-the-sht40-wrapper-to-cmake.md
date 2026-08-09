@@ -1,99 +1,102 @@
-# TASK-040-06 — Add the SHT40 wrapper to CMake
+# TASK-040-06 — Aggiungere il wrapper SHT40 a CMake
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-05](TASK-040-05-implement-the-temporary-sht40-wrapper.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Add the SHT40 wrapper to CMake** and produce this focused outcome:
-
-Temperature and humidity once per second.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-05](TASK-040-05-implement-the-temporary-sht40-wrapper.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Temperatura e umidità una volta al secondo.
+
+---
+
+## File da aprire
 
 `CMakeLists.txt`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Add `spaghetti_modules/sht40/sht40.c` to `target_sources(app PRIVATE ...)` without changing other sources.
-
----
-
-## Why
-
-Do not proceed to abstractions without real bus/sensor proof.
+Aggiungi `spaghetti_modules/sht40/sht40.c` a `target_sources(app PRIVATE ...)` senza
+cambiare altre fonti.
 
 ---
 
-## Called / used by
+## Perché
 
-Main test harness.
+Non procedere alle astrazioni senza la prova bus/sensor reale.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Imbracatura di prova principale.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/PERIODIC TEST LOOP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME
+BUILD-TIME
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 build time
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
 Temporary wrapper -> Sensor API -> I2C.
 
 ---
 
-## Inputs
+## Input
 
 Connected powered SHT40.
 
 ---
 
-## Outputs
+## Output
 
-Temperature and humidity once per second.
-
----
-
-## Errors to handle
-
-Init/read failure; log and retry only with a clear policy.
+Temperatura e umidità una volta al secondo.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- Runtime scheduling, zbus, MQTT
+Errore Init/read; log e riprova solo con una politica chiara.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `CMakeLists.txt`.
-- [ ] Add `spaghetti_modules/sht40/sht40.c` to `target_sources(app PRIVATE ...)` without changing other sources.
-- [ ] Handle only these realistic errors: Init/read failure; log and retry only with a clear policy.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Programmazione Runtime, zbus, MQTT
+
+---
+
+## Procedura
+
+- [ ] Apri solo `CMakeLists.txt`.
+- [ ] Aggiungi `spaghetti_modules/sht40/sht40.c` a `target_sources(app PRIVATE ...)`
+      senza cambiare altre fonti.
+- [ ] Gestire solo questi errori realistici: Errore Init/read; registrare e riprovare
+      solo con una politica chiara.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -109,35 +112,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Observe plausible temperature/humidity; disconnect sensor and verify a
-bounded error rather than crash/hang; reconnect/reset.
-
----
-
-## Expected result
-
-Real SHT40 values in serial log.
+Osservare temperature/humidity plausibile; disconnettere il sensore e verificare un
+errore limitato piuttosto che crash/hang; reconnect/reset.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Valori reali SHT40 nel registro seriale.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: add the sht40 wrapper to cmake`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-07](TASK-040-07-call-the-sht40-wrapper-from-main.md) — Call the SHT40 wrapper from main
+[TASK-040-07](TASK-040-07-call-the-sht40-wrapper-from-main.md) — Chiamare il wrapper SHT40 da main

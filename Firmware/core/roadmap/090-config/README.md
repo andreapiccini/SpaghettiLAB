@@ -1,34 +1,32 @@
-# Phase 090 — Internal Config
+# Fase 090 — Config interna
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Represent and apply the smallest validated internal product configuration.
+Definire, validare e applicare la più piccola configurazione interna del prodotto.
 
-## Depends on
+## Dipende da
 
-[Phase 080 — Runtime-removable SHT40](../080-runtime-removable-sht40/README.md)
+[Fase 080 — SHT40 rimovibile a runtime](../080-runtime-removable-sht40/README.md)
 
-## Visible result
+## Risultato visibile
 
-A C configuration applies Port 0, SHT40 address, and the sample period.
+Una Config C assegna Port 0, SHT40 e il periodo di campionamento.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-090-01 — Define the internal Config model](TASK-090-01-define-the-internal-config-model.md)
-2. ⬜ [TASK-090-02 — Make Config string ownership explicit](TASK-090-02-make-config-string-ownership-explicit.md)
-3. ⬜ [TASK-090-03 — Implement Config validation](TASK-090-03-implement-config-validation.md)
-4. ⬜ [TASK-090-04 — Implement Config apply](TASK-090-04-implement-config-apply.md)
-5. ⬜ [TASK-090-05 — Add and apply one hardcoded C config](TASK-090-05-add-and-apply-one-hardcoded-c-config.md)
-6. ⬜ [TASK-090-06 — Test Config validation and apply](TASK-090-06-test-config-validation-and-apply.md)
+1. ⬜ [TASK-090-01 — Definire il modello interno di Config](TASK-090-01-define-the-internal-config-model.md)
+2. ⬜ [TASK-090-02 — Rendere esplicita la proprietà delle stringhe Config](TASK-090-02-make-config-string-ownership-explicit.md)
+3. ⬜ [TASK-090-03 — Implementare la validazione di Config](TASK-090-03-implement-config-validation.md)
+4. ⬜ [TASK-090-04 — Implementare l’applicazione di Config](TASK-090-04-implement-config-apply.md)
+5. ⬜ [TASK-090-05 — Aggiungere e applicare una Config C statica](TASK-090-05-add-and-apply-one-hardcoded-c-config.md)
+6. ⬜ [TASK-090-06 — Provare validazione e applicazione di Config](TASK-090-06-test-config-validation-and-apply.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Config is bounded and owns/controls string lifetime.
-- [ ] Validation occurs before Manager calls.
-- [ ] Main does not directly configure Manager.
-- [ ] Hardcoded C config produces a real sample.
-- [ ] Invalid config is rejected with exact error.
+- [ ] Proprietà e durata delle stringhe sono esplicite.
+- [ ] La validazione non modifica lo stato.
+- [ ] L’applicazione usa API pubbliche e gestisce rollback.

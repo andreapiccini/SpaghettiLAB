@@ -1,100 +1,120 @@
-# TASK-180-03 — Create the first real Spaghetti board skeleton
+# TASK-180-03 — Creare la prima definizione board Spaghetti LAB
 
-**Status:** ⬜ TODO  
-**Phase:** 180 — Multiple Core variants  
-**Depends on:** [TASK-180-02](TASK-180-02-validate-the-port-binding.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Create the first real Spaghetti board skeleton** and produce this focused outcome:
-
-Same Port 0/SHT40 behavior on custom board target.
+**Stato:** ⬜ TODO
+**Fase:** 180 — Varianti Core multiple
+**Dipende da:** [TASK-180-02](TASK-180-02-validate-the-port-binding.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-Create the required files under `boards/spaghettilab/<real_core_name>/` following the installed Zephyr board model.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add only the verified `board.yml`, board DTS, `Kconfig.<board>`, defconfig, and required qualifier/runner metadata. Use installed Zephyr 4.4 board conventions and no speculative variants.
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
 
 ---
 
-## Why
+## File da aprire
 
-The abstraction is already proven, so refactor has observable parity.
+Crea i file richiesti sotto `boards/spaghettilab/<real_core_name>/` seguendo il modello
+di scheda Zephyr installato.
 
 ---
 
-## Called / used by
+## Orientamento Zephyr — board definition e defconfig
+
+1. **Cos’è:** Una board definition è l’insieme di metadati, DTS, Kconfig e runner con cui Zephyr riconosce un target hardware. Il `defconfig` contiene i default Kconfig specifici della board.
+2. **A cosa serve:** Consente a `west build -b <board>` di scegliere SoC, hardware statico e metodo di flash senza rami nel codice applicativo.
+3. **Quando viene usato:** West e CMake scoprono la board all’inizio della build; DTS e defconfig vengono poi uniti alla configurazione.
+4. **Build-time o runtime:** Build-time.
+5. **Collegamento con questo task:** Questa è la prima board Spaghetti LAB reale che sostituisce il target generico ESP32-C3.
+6. **File reali coinvolti:** File sotto `boards/spaghettilab/<nome_core_reale>/`, seguendo esattamente il layout delle board Zephyr 4.4 installate.
+7. **Cosa guardare nei file:** Controlla `board.yml`, DTS della board, file Kconfig/defconfig, qualifier e runner richiesti dalla versione installata.
+8. **Cosa non modificare:** Non inventare varianti, revisioni o runner; non copiare una board di una versione Zephyr diversa e non spostare logica runtime nel DTS.
+
+---
+
+## Cosa scrivere o modificare
+
+Aggiungi solo i metadati verificati `board.yml`, board DTS, `Kconfig.<board>`, defconfig
+e necessari qualifier/runner. Usa le convenzioni Zephyr 4.4 installate e nessuna
+variante speculativa.
+
+---
+
+## Perché
+
+L'astrazione è già provata, in modo da refactor ha parità osservabile.
+
+---
+
+## Chi usa il risultato
 
 West/CMake/Port.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BUILD/BOOT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME descriptors then BOOT DIRECT CALL.
-
----
-
-## Execution context
-
-Build tools/main thread.
+I descrittori del tempo ACQUISTO poi BOOT DIRECT CALL.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Generated macros and Device Model.
-
----
-
-## Inputs
-
-Real first-Core board description.
+Costruisci tools/main thread.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Same Port 0/SHT40 behavior on custom board target.
-
----
-
-## Errors to handle
-
-Board discovery, DTS validation, device readiness.
+Macro generate e Device Model.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Copy all devkit definitions blindly or add second board guesses
+Vera prima descrizione della scheda Core.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only Create the required files under `boards/spaghettilab/<real_core_name>/` following the installed Zephyr board model.
-- [ ] Add only the verified `board.yml`, board DTS, `Kconfig.<board>`, defconfig, and required qualifier/runner metadata.
-- [ ] Use installed Zephyr 4.4 board conventions and no speculative variants.
-- [ ] Handle only these realistic errors: Board discovery, DTS validation, device readiness.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
+
+---
+
+## Errori da gestire
+
+Scoperta da tavolo, convalida DTS, prontezza del dispositivo.
+
+---
+
+## Non implementare ancora
+
+- Copia tutte le definizioni di devkit ciecamente o aggiungi indovina la seconda scheda
+
+---
+
+## Procedura
+
+- [ ] Aprire solo Crea i file richiesti sotto `boards/spaghettilab/<real_core_name>/`
+      seguendo il modello di scheda Zephyr installato.
+- [ ] Aggiungere solo `board.yml` verificato, scheda DTS, `Kconfig.<board>`, defconfig e
+      i metadati qualifier/runner richiesti.
+- [ ] Utilizzare le convenzioni di bordo Zephyr 4.4 installate e nessuna variante
+      speculativa.
+- [ ] Gestisci solo questi errori realistici: Scoperta da tavolo, validazione DTS,
+      prontezza del dispositivo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +130,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Compare Port capability/status and real measurement with old devkit target.
-
----
-
-## Expected result
-
-No C3 pin/controller label in higher layers or Port catalog data.
+Confronta Port capability/status e misura reale con il vecchio obiettivo devkit.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessun'etichetta C3 pin/controller in livelli superiori o dati del catalogo Port.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `multiple: create the first real spaghetti board skeleton`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-180-04](TASK-180-04-move-verified-hardware-facts-into-board-dts.md) — Move verified hardware facts into board DTS
+[TASK-180-04](TASK-180-04-move-verified-hardware-facts-into-board-dts.md) — Spostare i dati hardware verificati nel DTS della board

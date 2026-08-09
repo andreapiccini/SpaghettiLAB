@@ -1,107 +1,112 @@
-# TASK-040-08 — Build and inspect the SHT40 image
+# TASK-040-08 — Compilare e ispezionare l’immagine SHT40
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-07](TASK-040-07-call-the-sht40-wrapper-from-main.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Build and inspect the SHT40 image** and produce this focused outcome:
-
-Temperature and humidity once per second.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-07](TASK-040-07-call-the-sht40-wrapper-from-main.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`build/zephyr/.config`, `build/zephyr/zephyr.dts`, and `build/zephyr/zephyr.bin`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Run a pristine build. Confirm `CONFIG_SENSOR=y`, `CONFIG_SHT4X=y`, the `sht40_test` node is enabled at the verified address, and the firmware binary exists. Do not edit generated files.
+Temperatura e umidità una volta al secondo.
 
 ---
 
-## Why
+## File da aprire
 
-Do not proceed to abstractions without real bus/sensor proof.
-
----
-
-## Called / used by
-
-Main test harness.
+`build/zephyr/.config`, `build/zephyr/zephyr.dts` e `build/zephyr/zephyr.bin`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Eseguire una build incontaminata. Confermare `CONFIG_SENSOR=y`, `CONFIG_SHT4X=y`, il
+nodo `sht40_test` è abilitato all'indirizzo verificato e il binario del firmware esiste.
+Non modificare i file generati.
+
+---
+
+## Perché
+
+Non procedere alle astrazioni senza la prova bus/sensor reale.
+
+---
+
+## Chi usa il risultato
+
+Imbracatura di prova principale.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/PERIODIC TEST LOOP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL and `k_sleep`, not `K_TIMER` yet.
-
----
-
-## Execution context
-
-Main thread.
+DIRECT CALL e `k_sleep`, non `K_TIMER` ancora.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
+
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
 
 Temporary wrapper -> Sensor API -> I2C.
 
 ---
 
-## Inputs
+## Input
 
 Connected powered SHT40.
 
 ---
 
-## Outputs
+## Output
 
-Temperature and humidity once per second.
-
----
-
-## Errors to handle
-
-Init/read failure; log and retry only with a clear policy.
+Temperatura e umidità una volta al secondo.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- Runtime scheduling, zbus, MQTT
+Errore Init/read; log e riprova solo con una politica chiara.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `build/zephyr/.config`, `build/zephyr/zephyr.dts`, and `build/zephyr/zephyr.bin`.
-- [ ] Run a pristine build.
-- [ ] Confirm `CONFIG_SENSOR=y`, `CONFIG_SHT4X=y`, the `sht40_test` node is enabled at the verified address, and the firmware binary exists.
-- [ ] Do not edit generated files.
-- [ ] Handle only these realistic errors: Init/read failure; log and retry only with a clear policy.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Programmazione Runtime, zbus, MQTT
+
+---
+
+## Procedura
+
+- [ ] Apri solo `build/zephyr/.config`, `build/zephyr/zephyr.dts` e
+      `build/zephyr/zephyr.bin`.
+- [ ] Eseguire una build pulita.
+- [ ] Confermare `CONFIG_SENSOR=y`, `CONFIG_SHT4X=y`, il nodo `sht40_test` è abilitato
+      all'indirizzo verificato e il binario del firmware esiste.
+- [ ] Non modificare i file generati.
+- [ ] Gestire solo questi errori realistici: Errore Init/read; registrare e riprovare
+      solo con una politica chiara.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -111,35 +116,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Observe plausible temperature/humidity; disconnect sensor and verify a
-bounded error rather than crash/hang; reconnect/reset.
-
----
-
-## Expected result
-
-The static SHT4x instance and wrapper compile into a flashable image.
+Osservare temperature/humidity plausibile; disconnettere il sensore e verificare un
+errore limitato piuttosto che crash/hang; reconnect/reset.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+L'istanza statica SHT4x e wrapper compilano in un'immagine lampeggiante.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: build and inspect the sht40 image`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-09](TASK-040-09-flash-and-test-the-real-sht40.md) — Flash and test the real SHT40
+[TASK-040-09](TASK-040-09-flash-and-test-the-real-sht40.md) — Caricare e provare il sensore SHT40 reale

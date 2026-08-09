@@ -1,106 +1,112 @@
-# TASK-180-07 — Build a second Core variant
+# TASK-180-07 — Compilare una seconda variante Core
 
-**Status:** ⬜ TODO  
-**Phase:** 180 — Multiple Core variants  
-**Depends on:** [TASK-180-06](TASK-180-06-build-and-test-the-first-real-core-board.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Build a second Core variant** and produce this focused outcome:
-
-Common higher layers compile and enumerate correctly.
+**Stato:** ⬜ TODO
+**Fase:** 180 — Varianti Core multiple
+**Dipende da:** [TASK-180-06](TASK-180-06-build-and-test-the-first-real-core-board.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-A second real board directory, or a clearly named build-only test fixture when hardware does not exist.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Describe a verified or explicitly simulated different Port count/capability set. Build the unchanged Core, Manager, Runtime, Data, and module code; replace any board-name branch with capability queries.
+I livelli più alti comuni compilano ed elencano correttamente.
 
 ---
 
-## Why
+## File da aprire
 
-Generated Port enumeration is complete.
-
----
-
-## Called / used by
-
-Build matrix/tests.
+Una seconda directory reale della scheda, o un dispositivo di prova chiaramente chiamato
+solo build quando l'hardware non esiste.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Descrivi un set Port diverso verificato o esplicitamente simulato. Costruisci Core
+immutato, Manager, Runtime, Dati e codice modulo; sostituisci qualsiasi ramo di
+nome-board con query di capacità.
+
+---
+
+## Perché
+
+L'enumerazione Port generata è completa.
+
+---
+
+## Chi usa il risultato
+
+Costruisci matrix/tests.
+
+---
+
+## Evento che attiva il codice
 
 BUILD.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME.
+BUILD-TIME.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Host CI/developer.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Second board DTS/Kconfig.
-
----
-
-## Inputs
-
-Different number/capabilities.
+Seconda scheda DTS/Kconfig.
 
 ---
 
-## Outputs
+## Input
 
-Common higher layers compile and enumerate correctly.
-
----
-
-## Errors to handle
-
-Unsupported module on capability-poor port -> `-ENOTSUP`.
+Diversi number/capabilities.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Runtime board-name branching
+I livelli più alti comuni compilano ed elencano correttamente.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only A second real board directory, or a clearly named build-only test fixture when hardware does not exist.
-- [ ] Describe a verified or explicitly simulated different Port count/capability set. Build the unchanged Core, Manager, Runtime, Data, and module code
-- [ ] replace any board-name branch with capability queries.
-- [ ] Handle only these realistic errors: Unsupported module on capability-poor port -> `-ENOTSUP`.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Modulo non supportato sulla porta di capacità -> `-ENOTSUP`.
+
+---
+
+## Non implementare ancora
+
+- Branching del nome di bordo Runtime
+
+---
+
+## Procedura
+
+- [ ] Aprire solo una seconda directory reale della scheda, o un dispositivo di test di
+      build-only chiaramente chiamato quando l'hardware non esiste.
+- [ ] Descrivi un set Port diverso verificato o esplicitamente simulato. Costruisci il
+      codice Core immodificato, Manager, Runtime, Dati e modulo
+- [ ] sostituire qualsiasi ramo di nome-board con query di funzionalità.
+- [ ] Gestisci solo questi errori realistici: modulo non supportato sulla porta di
+      capacità -> `-ENOTSUP`.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -110,34 +116,37 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Build both variants and compare generated Port counts/capabilities; search higher layers for C3/S3 board-name conditionals.
-
----
-
-## Expected result
-
-Both variants build with common higher layers and no MCU-name policy branches.
+Costruisci entrambe le varianti e confronta Port generato counts/capabilities; cerca
+livelli più alti per i condizionali C3/S3 nome scheda.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Entrambe le varianti sono costruite con livelli più alti comuni e nessun ramo di policy
+del nome MCU.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `multiple: build a second core variant`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-190-01](../190-power/TASK-190-01-verify-controllable-power-hardware.md) — Verify controllable power hardware
+[TASK-190-01](../190-power/TASK-190-01-verify-controllable-power-hardware.md) — Verificare l’hardware di alimentazione controllabile

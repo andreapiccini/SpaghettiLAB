@@ -1,101 +1,107 @@
-# TASK-050-05 — Adapt SHT40 to driver operations
+# TASK-050-05 — Adattare SHT40 alle operazioni del driver
 
-**Status:** ⬜ TODO  
-**Phase:** 050 — Module + Module Driver  
-**Depends on:** [TASK-050-04](TASK-050-04-declare-the-sht40-driver-descriptor.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Adapt SHT40 to driver operations** and produce this focused outcome:
-
-Same real values as Milestone 4.
+**Stato:** ⬜ TODO
+**Fase:** 050 — Module + Module Driver
+**Dipende da:** [TASK-050-04](TASK-050-04-declare-the-sht40-driver-descriptor.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Stessi valori reali di Milestone 4.
+
+---
+
+## File da aprire
 
 `spaghetti_modules/sht40/sht40.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement SHT40 `init`, `read`, and `deinit` callbacks around the already working static Zephyr SHT4x device. Define the private ops table and exported descriptor with type ID `sht40` and I2C capability. Keep calls synchronous and propagate Sensor API errors.
-
----
-
-## Why
-
-Registry should store a tested driver descriptor.
+Implementa le chiamate SHT40 `init`, `read` e `deinit` intorno al dispositivo statico
+Zephyr SHT4x già funzionante. Definisci la tabella delle operazioni private ed esporta
+il descrittore con il tipo di ID `sht40` e la capacità I2C. Mantenere le chiamate
+sincrone e propagare gli errori API del sensore.
 
 ---
 
-## Called / used by
+## Perché
 
-Temporary main harness.
-
----
-
-## Trigger
-
-BOOT/PERIODIC READ.
+Il registro deve memorizzare un descrittore driver testato.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL through operation table.
-
----
-
-## Execution context
-
-Main thread.
+Imbragatura principale temporanea.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Temporary SHT4x Sensor wrapper.
-
----
-
-## Inputs
-
-Module with Port 0 and output sample.
+BOOT/PERIODIC LEGGERE.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-Same real values as Milestone 4.
-
----
-
-## Errors to handle
-
-Missing op, incompatible Port, prior sensor errors.
+Chiamata diretta attraverso il tavolo operatorio.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Registry/Manager lookup or zbus
+Thread principale.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `spaghetti_modules/sht40/sht40.c`.
-- [ ] Implement SHT40 `init`, `read`, and `deinit` callbacks around the already working static Zephyr SHT4x device.
-- [ ] Define the private ops table and exported descriptor with type ID `sht40` and I2C capability.
-- [ ] Keep calls synchronous and propagate Sensor API errors.
-- [ ] Handle only these realistic errors: Missing op, incompatible Port, prior sensor errors.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Sensore SHT4x temporaneo wrapper.
+
+---
+
+## Input
+
+Modulo con Port 0 e campione di uscita.
+
+---
+
+## Output
+
+Stessi valori reali di Milestone 4.
+
+---
+
+## Errori da gestire
+
+Op mancante, Port incompatibile, precedenti errori del sensore.
+
+---
+
+## Non implementare ancora
+
+- Cerca Registry/Manager o zbus
+
+---
+
+## Procedura
+
+- [ ] Apri solo `spaghetti_modules/sht40/sht40.c`.
+- [ ] Implementa le chiamate SHT40 `init`, `read` e `deinit` intorno al dispositivo
+      statico già funzionante Zephyr SHT4x.
+- [ ] Definire la tabella delle operazioni private ed esportare il descrittore con il
+      tipo ID `sht40` e la capacità I2C.
+- [ ] Mantenere le chiamate sincrone e propagare gli errori API sensore.
+- [ ] Gestisci solo questi errori realistici: Op mancante, Port incompatibile, errori
+      precedenti del sensore.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,35 +117,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Ensure main never calls `sensor_*` or SHT40 concrete functions directly;
-it calls operation pointers.
-
----
-
-## Expected result
-
-Measurements unchanged through generic driver contract.
+Assicurarsi che le funzioni di calcestruzzo `sensor_*` o SHT40 non siano mai chiamate
+direttamente; chiama puntatori operativi.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Misure immutate tramite contratto generico driver.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: adapt sht40 to driver operations`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-050-06](TASK-050-06-exercise-sht40-through-the-operation-table.md) — Exercise SHT40 through the operation table
+[TASK-050-06](TASK-050-06-exercise-sht40-through-the-operation-table.md) — Usare SHT40 tramite la tabella operazioni

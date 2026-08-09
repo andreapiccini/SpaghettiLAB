@@ -1,112 +1,120 @@
-# TASK-160-06 — Queue temperature for a fixed development topic
+# TASK-160-06 — Accodare la temperatura per un topic di sviluppo
 
-**Status:** ⬜ TODO  
-**Phase:** 160 — MQTT  
-**Depends on:** [TASK-160-05](TASK-160-05-implement-the-mqtt-worker-and-client-state.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Queue temperature for a fixed development topic** and produce this focused outcome:
-
-One fixed topic payload.
+**Stato:** ⬜ TODO
+**Fase:** 160 — MQTT
+**Dipende da:** [TASK-160-05](TASK-160-05-implement-the-mqtt-worker-and-client-state.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/services/mqtt/mqtt.c` and `subsys/data/data.c`.
+Questo task deve produrre un solo risultato verificabile:
+
+Un carico fisso.
 
 ---
 
-## Write / Modify
+## File da aprire
 
-Create one bounded outbound `k_msgq`. Make Data's MQTT subscriber format/copy one temperature payload and enqueue with a defined nonblocking/full policy. Publish it to one fixed development topic from the MQTT thread.
+`subsys/services/mqtt/mqtt.c` e `subsys/data/data.c`.
 
-> [!WARNING]
-> TEMPORARY SHORTCUT
+---
+
+## Cosa scrivere o modificare
+
+Crea uno `k_msgq` in uscita limitato. Crea MQTT subscriber format/copy carico di una
+temperatura e enqueue con una politica nonblocking/full definita. Pubblicalo su un
+argomento di sviluppo fisso dalla MQTT thread.
+
+> [!ATTENZIONE]
+> SHORTCUT TEMPORANEO
 >
-> The fixed broker/topic is intentionally temporary and will be removed in [TASK-160-08](TASK-160-08-move-mqtt-settings-into-config.md).
+> La broker/topic fissa è intenzionalmente temporanea e verrà rimossa in
+  [TASK-160-08](TASK-160-08-move-mqtt-settings-into-config.md).
 
 
 ---
 
-## Why
+## Perché
 
-Network and Data independently work.
-
----
-
-## Called / used by
-
-Core starts; Data subscriber publishes.
+Rete e dati funzionano in modo indipendente.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Inizia Core; Pubblica dati subscriber.
+
+---
+
+## Evento che attiva il codice
 
 DATA ARRIVAL/NETWORK EVENT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-ZBUS SUBSCRIBER + K_MSGQ + THREAD
-
----
-
-## Execution context
-
-Subscriber copies; dedicated MQTT thread performs I/O.
+ABBONAMENTO ZBUS + K_MSGQ + THREAD
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Zephyr MQTT/socket/poll APIs.
-
----
-
-## Inputs
-
-Temperature sample.
+Copie di subscriber; MQTT dedicato thread esegue I/O.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-One fixed topic payload.
-
----
-
-## Errors to handle
-
-Queue full, disconnected, DNS/connect/publish error, keepalive.
+API Zephyr MQTT/socket/poll.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Dynamic topics, TLS, QoS matrix, offline history
-
----
-
-## Zephyr note
-
-The message queue decouples zbus consumption from socket work. MQTT connection and publish processing belongs to its thread, not a zbus callback.
+Campione di temperatura.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `subsys/services/mqtt/mqtt.c` and `subsys/data/data.c`.
-- [ ] Create one bounded outbound `k_msgq`.
-- [ ] Make Data's MQTT subscriber format/copy one temperature payload and enqueue with a defined nonblocking/full policy. Publish it to one fixed development topic from the MQTT thread.
-- [ ] Handle only these realistic errors: Queue full, disconnected, DNS/connect/publish error, keepalive.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Un carico fisso.
+
+---
+
+## Errori da gestire
+
+Coda piena, disconnessa, errore DNS/connect/publish, conservativo.
+
+---
+
+## Non implementare ancora
+
+- Argomenti dinamici, TLS, matrice QoS, cronologia offline
+
+---
+
+## Orientamento Zephyr
+
+La message queue disaccoppia il consumo di zbus dal lavoro in socket. La connessione
+MQTT e l'elaborazione delle pubblicazioni appartengono alla thread, non ad una callback
+zbus.
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/services/mqtt/mqtt.c` e `subsys/data/data.c`.
+- [ ] Crea uno `k_msgq` in uscita limitato.
+- [ ] Rendere data's MQTT subscriber format/copy un carico di temperatura e enqueue con
+      una politica nonblocking/full definita. Pubblicarlo a un argomento di sviluppo
+      fisso dalla MQTT thread.
+- [ ] Gestisci solo questi errori realistici: Coda piena, disconnesso, errore
+      DNS/connect/publish, conservativo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -122,35 +130,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Local broker subscriber receives value; stop/restart broker and verify
-Runtime sampling continues plus MQTT reconnects.
-
----
-
-## Expected result
-
-Known sample reaches known topic without blocking Runtime.
+Il broker locale subscriber riceve valore; il broker stop/restart e verifica che il
+campionamento Runtime continui più le connessioni MQTT.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il campione conosciuto raggiunge l'argomento conosciuto senza bloccare Runtime.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `mqtt: queue temperature for a fixed development topic`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-160-07](TASK-160-07-integrate-and-test-fixed-topic-mqtt.md) — Integrate and test fixed-topic MQTT
+[TASK-160-07](TASK-160-07-integrate-and-test-fixed-topic-mqtt.md) — Integrare e provare MQTT con topic fisso

@@ -1,100 +1,102 @@
-# TASK-030-02 — Define Port capabilities
+# TASK-030-02 — Definire le capacità di Port
 
-**Status:** ⬜ TODO  
-**Phase:** 030 — Port  
-**Depends on:** [TASK-030-01](TASK-030-01-define-the-port-identifier.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define Port capabilities** and produce this focused outcome:
-
-One I2C capability bit.
+**Stato:** ⬜ TODO
+**Fase:** 030 — Port
+**Dipende da:** [TASK-030-01](TASK-030-01-define-the-port-identifier.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Un bit di capacità I2C.
+
+---
+
+## File da aprire
 
 `include/spaghetti/port.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define `enum spaghetti_port_capability` with only `SPAGHETTI_PORT_CAP_I2C = BIT(0)`. Add only the include required for `BIT()`.
-
----
-
-## Why
-
-SHT40 code needs one verified abstraction immediately.
+Definire `enum spaghetti_port_capability` con solo `SPAGHETTI_PORT_CAP_I2C = BIT(0)`.
+Aggiungere solo l'inclusione richiesta per `BIT()`.
 
 ---
 
-## Called / used by
+## Perché
 
-Core, SHT40 test driver; later Manager.
-
----
-
-## Trigger
-
-BOOT/LOOKUP/MODULE OPERATION.
+Il codice SHT40 ha bisogno di un'astrazione verificata immediatamente.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main/calling thread.
+Core, SHT40 test driver; successivamente Manager.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Zephyr `struct device` declaration and basic types.
-
----
-
-## Inputs
-
-No runtime input; this is a public compile-time contract.
+Funzionamento BOOT/LOOKUP/MODULE.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-One I2C capability bit.
-
----
-
-## Errors to handle
-
-Invalid ID/null port/not initialized.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- SPI/GPIO/power, module occupancy, dynamic allocation
+Thread principale o thread chiamante.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `include/spaghetti/port.h`.
-- [ ] Define `enum spaghetti_port_capability` with only `SPAGHETTI_PORT_CAP_I2C = BIT(0)`.
-- [ ] Add only the include required for `BIT()`.
-- [ ] Handle only these realistic errors: Invalid ID/null port/not initialized.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Dichiarazione Zephyr `struct device` e tipi di base.
+
+---
+
+## Input
+
+Nessun input runtime; si tratta di un contratto pubblico di compilazione.
+
+---
+
+## Output
+
+Un bit di capacità I2C.
+
+---
+
+## Errori da gestire
+
+ID/null port/not inizializzato.
+
+---
+
+## Non implementare ancora
+
+- SPI/GPIO/power, occupazione moduli, allocazione dinamica
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/port.h`.
+- [ ] Definire `enum spaghetti_port_capability` con solo `SPAGHETTI_PORT_CAP_I2C =
+      BIT(0)`.
+- [ ] Aggiungere solo l'inclusione richiesta per `BIT()`.
+- [ ] Gestisci solo questi errori realistici: inizializzato ID/null port/not non valido.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +112,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Confirm no ESP32 or pin identifier is public.
-
----
-
-## Expected result
-
-Small API sufficient for one I2C vertical slice.
+Confermare che nessun identificativo ESP32 o pin è pubblico.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Piccola API sufficiente per una fetta verticale I2C.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `port: define port capabilities`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-030-03](TASK-030-03-declare-the-port-public-api.md) — Declare the Port public API
+[TASK-030-03](TASK-030-03-declare-the-port-public-api.md) — Dichiarare l’API pubblica di Port

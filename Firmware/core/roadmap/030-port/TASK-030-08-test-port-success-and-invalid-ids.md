@@ -1,144 +1,155 @@
-# TASK-030-08 — Test Port success and invalid IDs
+# TASK-030-08 — Provare Port con ID validi e non validi
 
-**Status:** ⬜ TODO  
-**Phase:** 030 — Port  
-**Depends on:** [TASK-030-07](TASK-030-07-initialize-port-from-core.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test Port success and invalid IDs** and produce this focused outcome:
-
-`Port 0: I2C ready`-equivalent log.
+**Stato:** ⬜ TODO
+**Fase:** 030 — Port
+**Dipende da:** [TASK-030-07](TASK-030-07-initialize-port-from-core.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/port/port.c`, `subsys/core/core.c`, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Exercise Port 0 and one out-of-range ID through the public API. Verify Port 0 is ready and the invalid ID returns `NULL` without dereferencing it. Temporarily test the disabled-controller failure path without committing that test overlay change.
+Log equivalente a `Port 0: I2C ready`.
 
 ---
 
-## Why
+## File da aprire
 
-SHT40 should not be added until Port reports the real controller ready.
-
----
-
-## Called / used by
-
-Build and Core.
+`subsys/port/port.c`, `subsys/core/core.c` e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-BOOT.
-
----
-
-## Invocation mechanism
-
-BUILD TIME then DIRECT CALL.
+Esercizio Port 0 e un ID fuori gamma attraverso l'API pubblica. Verificare Port 0 è
+pronto e l'ID non valido restituisce `NULL` senza dereferenziarlo. Provare
+temporaneamente il percorso di guasto del controller disabilitato senza effettuare il
+test overlay cambiamento.
 
 ---
 
-## Execution context
+## Perché
 
-Main thread.
+SHT40 non deve essere aggiunto fino a quando Port non segnala il controller reale
+pronto.
 
 ---
 
-## Calls / dependencies
+## Chi usa il risultato
+
+Costruisci e Core.
+
+---
+
+## Evento che attiva il codice
+
+AVVIO.
+
+---
+
+## Meccanismo di invocazione
+
+CAMPIONE DEL TEMPO E CHIAMATA DIRETTAMENTE.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
 
 Port init/count/capability.
 
 ---
 
-## Inputs
+## Input
 
-Enabled controller from Milestone 2.
-
----
-
-## Outputs
-
-`Port 0: I2C ready`-equivalent log.
+Controllore abilitato da Milestone 2.
 
 ---
 
-## Errors to handle
+## Output
 
-Propagate negative Port error; no silent READY.
-
----
-
-## Do NOT implement yet
-
-- SHT40 or registry
+Log equivalente a `Port 0: I2C ready`.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `subsys/port/port.c`, `subsys/core/core.c`, and the serial console.
-- [ ] Exercise Port 0 and one out-of-range ID through the public API.
-- [ ] Verify Port 0 is ready and the invalid ID returns `NULL` without dereferencing it. Temporarily test the disabled-controller failure path without committing that test overlay change.
-- [ ] Handle only these realistic errors: Propagate negative Port error; no silent READY.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Propaga l'errore negativo Port; non è pronto silenzioso.
+
+---
+
+## Non implementare ancora
+
+- SHT40 o registro
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `subsys/port/port.c`, `subsys/core/core.c` e la console seriale.
+- [ ] Esercizio Port 0 e un ID fuori gamma attraverso l'API pubblica.
+- [ ] Verificare che Port 0 sia pronto e l'ID non valido restituisce `NULL` senza
+      dereferenziarlo. Provare temporaneamente il percorso di guasto del controllore
+      disabilitato senza effettuare il test overlay.
+- [ ] Gestire solo questi errori realistici: Propagare l'errore negativo Port; nessun
+      silent READY.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`; use `make pristine` only for the temporary overlay failure test.
+SÌ — `make build`; utilizzare `make pristine` solo per il test temporaneo di guasto
+overlay.
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Boot normally, then temporarily disable the controller in a test branch
-and confirm Port init fails; restore it immediately.
-
----
-
-## Expected result
-
-Port 0 reports I2C readiness, invalid lookup fails safely, and Core propagates controller failure.
+Avviare normalmente, quindi disattivare temporaneamente il controller in un ramo di test
+e confermare Port init fallisce; ripristinarlo immediatamente.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Port 0 segnala la prontezza I2C, la ricerca non valida fallisce in modo sicuro e Core
+propaga il fallimento del controller.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `port: test port success and invalid ids`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-01](../040-sht40/TASK-040-01-inspect-the-installed-sht4x-driver.md) — Inspect the installed SHT4x driver
+[TASK-040-01](../040-sht40/TASK-040-01-inspect-the-installed-sht4x-driver.md) — Esaminare il driver SHT4x fornito da Zephyr

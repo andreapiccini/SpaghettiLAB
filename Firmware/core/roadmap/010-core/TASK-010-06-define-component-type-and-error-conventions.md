@@ -1,137 +1,141 @@
-# TASK-010-06 — Define component type and error conventions
+# TASK-010-06 — Definire le convenzioni per tipi ed errori
 
-**Status:** ⬜ TODO
-**Phase:** 010 — Core
-**Depends on:** [TASK-010-05](TASK-010-05-structure-firmware-logging.md)
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Define one repeatable type-design process for every firmware component and
-produce this focused outcome:
-
-Domain values have meaningful component-owned names while fallible Zephyr-facing
-operations retain interoperable negative errno return values.
+**Stato:** ⬜ TODO
+**Fase:** 010 — Core
+**Dipende da:** [TASK-010-05](TASK-010-05-structure-firmware-logging.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-`FIRMWARE_IMPLEMENTATION_GUIDE.md`,
-`templates/firmware/change_contract.md.template`,
-`templates/firmware/public_api.h.template`, `roadmap/README.md`, and the task
-indexes for future component phases.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add a mandatory **Type inventory** step before each component API or algorithm is
-implemented. The inventory names every state, identifier, mode, command, value,
-configuration, snapshot, diagnostic reason, and buffer length crossing the
-component boundary.
-
-Update the roadmap so each future component phase defines its public types before
-implementing state or algorithms. Reuse an existing focused type/API task when it
-already provides that gate; add or split a task only when a phase currently jumps
-directly from prose to untyped implementation.
-
-Do not create all future firmware types in this task. This task defines the
-decision rules and ensures later tasks introduce each type only when its component
-contract becomes concrete.
+I valori di dominio hanno nomi significativi di proprietà dei componenti mentre le
+operazioni di facciata Zephyr fallibili mantengono valori di ritorno negativi
+interoperabili.
 
 ---
 
-## Why
+## File da aprire
 
-A variable such as `int value`, `int state`, or `int error` does not communicate
-which values are valid, which component owns the meaning, or whether the value is
-a domain result or an operating-system failure.
-
-At the same time, replacing every `int` return with a custom error enum would
-discard Zephyr's standard negative errno convention and make driver errors harder
-to propagate. The type system must improve meaning without breaking integration.
+`FIRMWARE_IMPLEMENTATION_GUIDE.md`, `templates/firmware/change_contract.md.template`,
+`templates/firmware/public_api.h.template`, `roadmap/README.md` e gli indici delle
+attività per le fasi future dei componenti.
 
 ---
 
-## Ownership rule
+## Cosa scrivere o modificare
 
-The component that defines the meaning owns the type:
+Aggiungi un passaggio obbligatorio chiamato **Inventario dei tipi** prima di implementare
+l'API o gli algoritmi di ogni componente. L'inventario deve elencare ogni stato,
+identificatore, modalità,
+comando, valore, configurazione, snapshot, ragione diagnostica e lunghezza del buffer
+che attraversa il confine del componente.
 
-| Meaning | Owner and location | Example |
+Aggiorna la roadmap in modo che ogni fase futura dei componenti definisca i suoi tipi
+pubblici prima di implementare lo stato o gli algoritmi. Riusare un'attività type/API
+focalizzata esistente quando già prevede quel gate; aggiungere o dividere un'attività
+solo quando una fase attualmente salta direttamente dalla prosa all'implementazione non
+digitata.
+
+Non creare tutti i futuri tipi di firmware in questa attività. Questa attività definisce
+le regole di decisione e assicura che le attività successive introducono ogni tipo solo
+quando il suo contratto componente diventa concreto.
+
+---
+
+## Perché
+
+Una variabile come `int value`, `int state` o `int error` non comunica quali valori sono
+validi, quale componente possiede il significato, o se il valore è un risultato di
+dominio o un guasto del sistema operativo.
+
+Allo stesso tempo, la sostituzione di ogni ritorno `int` con un enum di errore
+personalizzato avrebbe scartato la convenzione standard di errno negativo di Zephyr e
+reso gli errori driver più difficili da propagare. Il sistema di tipo deve migliorare il
+significato senza rompere l'integrazione.
+
+---
+
+## Regola di proprietà
+
+Il componente che definisce il significato possiede il tipo:
+
+| Significato | Proprietario e ubicazione | Esempio |
 |---|---|---|
-| Core lifecycle | Core public header | `enum spaghetti_core_state` |
-| Port identity/capability | Port public header | `spaghetti_port_id_t`, capability flags |
-| Module kind/state | Module public header | `enum spaghetti_module_state` |
-| Driver command | Module Driver contract | `enum spaghetti_module_command` |
-| Runtime configuration | Config/Runtime contract | `struct spaghetti_runtime_config` |
-| Wire/protocol code | Adapter-private boundary | decoded into a domain enum before dispatch |
-| Zephyr/driver failure | Function return | `int`, zero or negative errno |
+| Ciclo di vita Core | Intestazione pubblica Core | `enum spaghetti_core_state` |
+| Port identity/capability | Intestazione pubblica Port | `spaghetti_port_id_t`, flag di funzionalità |
+| Modulo kind/state | Intestazione pubblica del modulo | `enum spaghetti_module_state` |
+| Comando driver | Contratto del driver del modulo | `enum spaghetti_module_command` |
+| Configurazione Runtime | Contratto Config/Runtime | `struct spaghetti_runtime_config` |
+| Codice Wire/protocol | Adattatore-confine privato | decodificato in un enum di dominio prima della spedizione |
+| Errore Zephyr/driver | Ritorno della funzione | `int`, zero o negativo errno |
 
-A higher layer must not redefine a lower component's enum or copy its values into
-anonymous integers.
+Un livello superiore non deve ridefinire l'enum di un componente inferiore né copiarne i
+valori in interi anonimi.
 
 ---
 
-## Type decision rules
+## Norme relative alla decisione del tipo
 
-### Use an enum
+### Usa un enum
 
-Use `enum spaghetti_<component>_<name>` when the valid values form a small,
-closed vocabulary known at compile time:
+Usa `enum spaghetti_<component>_<name>` quando i valori validi formano un piccolo
+vocabolario chiuso conosciuto al momento della compilazione:
 
-- lifecycle state;
-- mode or policy;
-- command or event kind;
-- value/discriminator kind;
-- domain diagnostic reason on which callers genuinely branch.
+- stato del ciclo di vita;
+- modalità o politica;
+- tipo di comando o di evento;
+- tipo value/discriminator;
+- ragione diagnostica del dominio su cui i chiamanti realmente ramificano.
 
-Every public enumerator uses the full component prefix and has a documented
-meaning. External enum inputs are validated because C accepts integer values not
-listed by the declaration.
+Ogni numeratore pubblico utilizza il prefisso completo dei componenti e ha un
+significato documentato. Gli ingressi enum esterni sono convalidati perché C accetta i
+valori interi non elencati dalla dichiarazione.
 
-### Use a struct
+### Usa una struttura
 
-Use `struct spaghetti_<component>_<name>` when fields belong together and must be
-validated, copied, versioned, or returned as one coherent snapshot:
+Usa `struct spaghetti_<component>_<name>` quando i campi appartengono insieme e devono
+essere convalidati, copiati, versioneti o restituiti come un'istantanea coerente:
 
-- configuration;
-- sample/value plus unit and timestamp;
-- status snapshot;
-- bounded request/response;
-- detailed diagnostic output.
+- configurazione;
+- sample/value più unità e timestamp;
+- istantanea di stato;
+- limitato request/response;
+- uscita diagnostica dettagliata.
 
-Do not create a one-field struct merely to avoid a scalar.
+Non creare una struttura a un campo solo per evitare uno scalare.
 
-### Use a typedef
+### Usa un typedef
 
-Use a project typedef only when it creates a stable domain abstraction, such as a
-Port ID whose representation may change. Do not hide ordinary pointers, structs,
-fixed-width integers, or ownership behind decorative typedefs.
+Utilizzare un typedef di progetto solo quando crea un'astrazione di dominio stabile,
+come ad esempio un ID Port la cui rappresentazione può cambiare. Non nascondere
+puntatori ordinari, strutture, interi a larghezza fissa o proprietà dietro typedef
+decorativi.
 
-### Use fixed-width integers
+### Usa interi a larghezza fissa
 
-Use `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`, and signed equivalents for
-protocol fields, persisted values, counters with defined bounds, and hardware
-register data. Document range and unit. Do not use plain `int` for a domain value
-only because it is convenient.
+Utilizzare `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`, ed equivalenti firmati per
+campi di protocollo, valori persistenti, contatori con limiti definiti, e dati di
+registro hardware. Campo documento e unità. Non utilizzare `int` normale per un valore
+di dominio solo perché è conveniente.
 
-### Keep int for operation status
+### Mantieni int per lo stato dell'operazione
 
-A function that can fail returns `int`: `0` for success and a precise negative
-errno for failure. Public Doxygen lists every expected result with `@retval`.
-Callers preserve dependency errors unless they can add a more precise contract.
+Una funzione che può fallire restituisce `int`: `0` per il successo e un errore negativo
+preciso per il fallimento. Public Doxygen elenca tutti i risultati attesi con `@retval`.
+I chiamanti conservano gli errori di dipendenza a meno che non possano aggiungere un
+contratto più preciso.
 
-The local variable holding that result uses a short scope and a conventional
-name such as `ret`. It is checked immediately and is never stored as component
-state merely to avoid handling it.
+La variabile locale che tiene il risultato utilizza un breve campo di applicazione e un
+nome convenzionale come `ret`. Viene controllata immediatamente e non viene mai
+memorizzata come stato componente solo per evitare di gestirlo.
 
-### Add a diagnostic enum only when needed
+### Aggiungi un enum diagnostico solo quando necessario
 
-If callers need a domain reason beyond errno, keep the function return as `int`
-and provide a separate typed output, for example:
+Se i chiamanti hanno bisogno di una ragione di dominio al di là di errno, mantenere la
+funzione ritorno come `int` e fornire un output separato digitato, ad esempio:
 
 ```c
 enum spaghetti_config_reject_reason {
@@ -146,141 +150,154 @@ struct spaghetti_config_diagnostic {
 };
 ```
 
-The API may return `-EINVAL` while the optional diagnostic explains which domain
-rule rejected the candidate. Do not create a custom error enum when callers only
-need success/failure or when it would duplicate errno values.
+L'API può restituire `-EINVAL` mentre la diagnostica opzionale spiega quale regola di
+dominio ha respinto il candidato. Non creare un enum di errore personalizzato quando i
+chiamanti hanno bisogno solo di success/failure o quando avrebbe duplicato i valori
+errno.
 
 ---
 
-## Called / used by
+## Chi usa il risultato
 
-Every later public API, implementation task, code review, validator rule, and
-firmware template.
-
----
-
-## Trigger
-
-DESIGN TIME, before the first public declaration for a component or feature.
+Ogni successiva API pubblica, attività di implementazione, revisione del codice, regola
+validatore e template firmware.
 
 ---
 
-## Invocation mechanism
+## Evento che attiva il codice
 
-Human design checklist enforced by task ordering, templates, Doxygen review, and
-focused validator rules where mechanical checks are reliable.
-
----
-
-## Execution context
-
-Not applicable at runtime. The produced types document runtime ownership and
-execution constraints.
+TEMPI DI DESIGN, prima della prima dichiarazione pubblica di un componente o di una
+caratteristica.
 
 ---
 
-## Inputs
+## Meccanismo di invocazione
 
-- Component responsibility and owner from `ARCHITECTURE.md`.
-- Inputs, outputs, ranges, units, lifetime, and failure behavior from its README.
-- Zephyr API types and negative errno contracts used at the boundary.
-
----
-
-## Outputs
-
-- A mandatory type-inventory section in the change-contract template.
-- Copyable enum/struct/result patterns in the public-header template.
-- An implementation-guide decision table for enum, struct, typedef, scalar,
-  errno, and optional typed diagnostics.
-- Future roadmap phases ordered so types precede algorithms.
+Checklist di progettazione umana eseguita dall'ordine dei compiti, modelli, revisione
+del Doxygen e regole di validatore focalizzate dove i controlli meccanici sono
+affidabili.
 
 ---
 
-## Errors to handle
+## Contesto di esecuzione
 
-- Two components claim ownership of the same type.
-- A public integer has no range, unit, or semantic name.
-- A custom enum duplicates `errno` without adding domain meaning.
-- An enum is used for an open-ended ID or numeric measurement.
-- A struct exposes writable internal state or pointer lifetime ambiguity.
-- A later task consumes a type before the defining task.
+Non applicabile a runtime. I tipi prodotti documentano i vincoli di proprietà ed
+esecuzione di runtime.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Concrete future Port, Module, Config, Data, Runtime, MQTT, or Power types.
-- One shared `common_types.h` dumping ground.
-- Global error variables, exception-like macros, or hidden early returns.
-- Custom replacements for Zephyr errno values.
-- Wire-format enums leaking directly into component-owned domain APIs.
+- Componente responsabile e proprietario di `ARCHITECTURE.md`.
+- Ingressi, uscite, gamme, unità, durata e comportamento di guasto dal suo README.
+- Tipi di API Zephyr e contratti di errno negativi utilizzati al confine.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Add the mandatory type inventory and ownership questions to the change-contract template.
-- [ ] Add documented enum, struct, fixed-width scalar, errno return, and optional diagnostic-output examples to the public API template.
-- [ ] Consolidate the decision rules in the implementation guide without duplicating conflicting advice.
-- [ ] Audit every future phase index: its type/API task must precede state, algorithms, threads, persistence, or transports that consume those types.
-- [ ] Record an explicit type owner in each affected component README's data model when that owner is currently ambiguous.
-- [ ] Confirm current `enum spaghetti_core_state` follows the new rules without adding speculative Core types.
-- [ ] Run documentation link checks and the validator.
-- [ ] Confirm no item from **Do NOT implement yet** was added.
+- Una sezione obbligatoria dell'inventario del tipo nel modello di contratto di cambio.
+- Modelli copiabili enum/struct/result nel modello di intestazione pubblica.
+- Una tabella di decisione sulla guida di attuazione per enum, struct, typedef, scalar,
+errno, e diagnostica facoltativa digitata.
+- Le fasi future della roadmap ordinate così i tipi precedono gli algoritmi.
+
+---
+
+## Errori da gestire
+
+- Due componenti rivendicano la proprietà dello stesso tipo.
+- Un intero pubblico non ha un'intervallo, un'unità o un nome semantico.
+- Un enum personalizzato duplica `errno` senza aggiungere il significato del dominio.
+- Un enum è utilizzato per un ID o una misurazione numerica a risposta aperta.
+- Una struttura espone lo stato interno scrivibile o l'ambiguità della vita del
+  puntatore.
+- Un'attività successiva consuma un tipo prima dell'attività di definizione.
+
+---
+
+## Non implementare ancora
+
+- Concrete future Port, Module, Config, Data, Runtime, MQTT, o Power tipi.
+- Un terreno di dumping `common_types.h` condiviso.
+- Variabili di errore globali, macro come eccezioni o ritorni iniziali nascosti.
+- Sostituzione personalizzata dei valori Zephyr errno.
+- Enum in formato Wire che fuoriescono direttamente nelle API di dominio di proprietà
+  dei componenti.
+
+---
+
+## Procedura
+
+- [ ] Aggiungere l'inventario obbligatorio del tipo e le domande di proprietà al modello
+      di contratto di cambiamento.
+- [ ] Aggiungi esempi documentati di enum, struttura, scalare a larghezza fissa, ritorno
+      errno ed esempi di uscita diagnostica opzionali al modello API pubblico.
+- [ ] Consolidare le regole di decisione nella guida di attuazione senza duplicare i
+      pareri contrastanti.
+- [ ] Verificare ogni indice di fase futura: il suo task type/API deve precedere stato,
+      algoritmi, thread, persistenza o trasporti che consumano tali tipi.
+- [ ] Registrare un proprietario del tipo esplicito in ogni componente interessato
+      modello di dati di README quando il proprietario è attualmente ambiguo.
+- [ ] Confermare l'attuale `enum spaghetti_core_state` segue le nuove regole senza
+      aggiungere tipi di Core speculativi.
+- [ ] Eseguire i controlli del link di documentazione e il validatore.
+- [ ] Confermare nessun elemento da **Non implementare ancora** è stato aggiunto.
 
 ---
 
 ## Build
 
-NO — this task changes conventions, templates, and roadmap ordering only.
+NO — questo task cambia solo le convenzioni, i modelli e l'ordine di roadmap.
 
 ---
 
 ## Flash
 
-NO.
+No.
 
 ---
 
-## Test
+## Verifica
 
-Choose one planned type from Core, Port, Module, Config, Data, and Runtime. For
-each, identify its owner, representation category, valid values/range, unit,
-public/private location, and function error convention without inventing its
-implementation.
+Scegliere un tipo pianificato da Core, Port, modulo, Config, dati e Runtime. Per
+ciascuno, identificare il suo proprietario, categoria di rappresentazione, values/range
+valido, unità, public/private posizione, e convenzione di errore di funzione senza
+inventare la sua implementazione.
 
-Review every future phase index and confirm no algorithm task appears before the
-task that defines the types it consumes.
-
----
-
-## Expected result
-
-A developer can decide from the guide and templates whether a new value is an
-enum, struct, typedef, fixed-width scalar, errno return, or separate diagnostic.
-Every future component defines meaningful types before algorithms, while Zephyr
-errors remain directly interoperable.
+Esaminare ogni indice di fase futura e confermare nessun task algoritmo appare prima del
+task che definisce i tipi che consuma.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Type inventory is mandatory in the change-contract workflow.
-- [ ] Templates contain copyable, documented type and result patterns.
-- [ ] Enum, struct, typedef, scalar, errno, and diagnostic decisions are unambiguous.
-- [ ] Every future component phase defines types before consuming them.
-- [ ] Core state satisfies the policy without speculative additions.
-- [ ] No common-type dumping ground or custom errno replacement was introduced.
+Uno sviluppatore può decidere dalla guida e dai modelli se un nuovo valore è un enum,
+una struttura, un typedef, uno scalare a larghezza fissa, un ritorno errno o una
+diagnostica separata. Ogni componente futuro definisce tipi significativi prima degli
+algoritmi, mentre gli errori Zephyr rimangono direttamente interoperabili.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] L'inventario del tipo è obbligatorio nel flusso di lavoro del contratto di cambio.
+- [ ] I modelli contengono modelli copiabili, di tipo documentato e di risultati.
+- [ ] Enum, struct, typedef, scalar, errno, e le decisioni diagnostiche sono
+      inequivocabili.
+- [ ] Ogni fase futura della componente definisce i tipi prima di consumarli.
+- [ ] Lo stato Core soddisfa la politica senza aggiunte speculative.
+- [ ] Non è stato introdotto alcun tipo comune di terreno di dumping o di sostituzione
+      personalizzata.
+
+---
+
+## Commit suggerito
 
 `docs: define component type and error conventions`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-010-07](TASK-010-07-build-and-flash-the-core-boundary.md) — Build and flash the Core boundary
+[TASK-010-07](TASK-010-07-build-and-flash-the-core-boundary.md) — Compilare e provare il confine di Core

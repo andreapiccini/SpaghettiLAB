@@ -1,106 +1,111 @@
-# TASK-060-04 — Initialize the Registry from Core
+# TASK-060-04 — Inizializzare Driver Registry da Core
 
-**Status:** ⬜ TODO  
-**Phase:** 060 — Driver Registry  
-**Depends on:** [TASK-060-03](TASK-060-03-validate-registry-entries.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Initialize the Registry from Core** and produce this focused outcome:
-
-Exact pointer/null behavior.
+**Stato:** ⬜ TODO
+**Fase:** 060 — Driver Registry
+**Dipende da:** [TASK-060-03](TASK-060-03-validate-registry-entries.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`CMakeLists.txt` and `subsys/core/core.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add `subsys/driver_registry/driver_registry.c` to the application sources. Call registry init from Core after Port initialization and propagate a negative result before Core becomes READY.
+Esattamente il comportamento pointer/null.
 
 ---
 
-## Why
+## File da aprire
 
-Manager must receive a trustworthy Registry.
+`CMakeLists.txt` e `subsys/core/core.c`.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Aggiungi `subsys/driver_registry/driver_registry.c` alle sorgenti dell'applicazione.
+Init registro chiamate da Core dopo l'inizializzazione Port e propaga un risultato
+negativo prima che Core diventi READY.
+
+---
+
+## Perché
+
+Il gestore deve ricevere un registro affidabile.
+
+---
+
+## Chi usa il risultato
 
 Core/test.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-BOOT.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+AVVIO.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
 
-Main thread.
-
----
-
-## Calls / dependencies
-
-Registry APIs.
+CHIAMATA DIRETTA.
 
 ---
 
-## Inputs
+## Contesto di esecuzione
 
-Known/unknown strings.
-
----
-
-## Outputs
-
-Exact pointer/null behavior.
+Thread principale.
 
 ---
 
-## Errors to handle
+## Chiamate e dipendenze
 
-Registry init error stops Core readiness.
-
----
-
-## Do NOT implement yet
-
-- Manager or dynamic configuration
+API del registro.
 
 ---
 
-## Steps
+## Input
 
-- [ ] Open only `CMakeLists.txt` and `subsys/core/core.c`.
-- [ ] Add `subsys/driver_registry/driver_registry.c` to the application sources.
-- [ ] Call registry init from Core after Port initialization and propagate a negative result before Core becomes READY.
-- [ ] Handle only these realistic errors: Registry init error stops Core readiness.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Stringe Known/unknown.
+
+---
+
+## Output
+
+Esattamente il comportamento pointer/null.
+
+---
+
+## Errori da gestire
+
+L'errore di init del registro blocca la disponibilità di Core.
+
+---
+
+## Non implementare ancora
+
+- Gestione o configurazione dinamica
+
+---
+
+## Procedura
+
+- [ ] Apri solo `CMakeLists.txt` e `subsys/core/core.c`.
+- [ ] Aggiungi `subsys/driver_registry/driver_registry.c` alle sorgenti
+      dell'applicazione.
+- [ ] Init registro chiamate da Core dopo l'inizializzazione Port e propagare un
+      risultato negativo prima che Core diventi READY.
+- [ ] Gestisci solo questi errori realistici: l'errore di init del Registry
+      blocca la prontezza Core.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -110,34 +115,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Observe known success/unknown rejection and continued sensor reading.
-
----
-
-## Expected result
-
-No crash or fallback for unknown ID.
+Osservare il rifiuto noto success/unknown e la lettura continua del sensore.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessun crash o ripiego per un ID sconosciuto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `driver: initialize the registry from core`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-060-05](TASK-060-05-test-known-and-unknown-driver-lookup.md) — Test known and unknown driver lookup
+[TASK-060-05](TASK-060-05-test-known-and-unknown-driver-lookup.md) — Provare la ricerca di driver noti e sconosciuti

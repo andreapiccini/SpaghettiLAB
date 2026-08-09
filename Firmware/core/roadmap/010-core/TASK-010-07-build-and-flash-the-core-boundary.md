@@ -1,151 +1,155 @@
-# TASK-010-07 — Build and flash the Core boundary
+# TASK-010-07 — Compilare e provare il confine di Core
 
-**Status:** ⬜ TODO
-**Phase:** 010 — Core
-**Depends on:** [TASK-010-06](TASK-010-06-define-component-type-and-error-conventions.md)
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Build and flash the Core boundary** and produce this focused outcome:
-
-Structured Core log then structured uptime log.
+**Stato:** ⬜ TODO
+**Fase:** 010 — Core
+**Dipende da:** [TASK-010-06](TASK-010-06-define-component-type-and-error-conventions.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`README.md`, `src/main.c`, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Do not add code. Build, flash, reset the board, and capture the boot output that
-proves Core initializes before the temporary uptime loop.
+Log strutturato Core poi log strutturato uptime.
 
 ---
 
-## Why
+## File da aprire
 
-The boundary, logging policy, and type conventions are complete only after the
-firmware is observed on the real board.
-
----
-
-## Called / used by
-
-Zephyr invokes `main`; `main` calls Core; the log backend reports both modules.
+`README.md`, `src/main.c` e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-BOOT.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL and Zephyr Logging.
+Non aggiungere codice. Costruisci, flash, resetta la scheda e cattura l'output di avvio
+che prova l'inizializzazione di Core prima del loop temporaneo di uptime.
 
 ---
 
-## Execution context
+## Perché
 
-Main thread and Zephyr logging context.
-
----
-
-## Calls / dependencies
-
-`spaghetti_core_init()` and the configured logging backend.
+Il limite, la politica di registrazione e le convenzioni di tipo sono complete solo dopo
+che il firmware è stato osservato sulla scheda reale.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-None.
-
----
-
-## Outputs
-
-Structured Core readiness followed by structured application uptime.
+Zephyr invoca `main`; `main` chiama Core; il log backend segnala entrambi i moduli.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-Negative init result, missing serial output, wrong serial port, or unexpected log
-filtering.
-
----
-
-## Do NOT implement yet
-
-- Move the loop into Core or start other threads.
-- Change logging or type conventions while performing the hardware proof.
+AVVIO.
 
 ---
 
-## Steps
+## Meccanismo di invocazione
 
-- [ ] Open only `README.md`, `src/main.c`, and the serial console.
-- [ ] Run the validator and build without changing source.
-- [ ] Flash, reset the board, and capture the boot output.
-- [ ] Confirm `spaghetti_core` reports READY once before the first `spaghetti_app` uptime message.
-- [ ] Confirm no raw application `printk` line appears.
-- [ ] Handle only the errors listed in **Errors to handle**.
-- [ ] Confirm no item from **Do NOT implement yet** was added.
+CALL DIRECT e Zephyr Logging.
+
+---
+
+## Contesto di esecuzione
+
+Contesto di registrazione principale thread e Zephyr.
+
+---
+
+## Chiamate e dipendenze
+
+`spaghetti_core_init()` e la registrazione configurata backend.
+
+---
+
+## Input
+
+Nessuno.
+
+---
+
+## Output
+
+Strutturato Core prontezza seguita da uptime applicativo strutturato.
+
+---
+
+## Errori da gestire
+
+Risultato negativo init, uscita seriale mancante, porta seriale errata o filtro log
+inatteso.
+
+---
+
+## Non implementare ancora
+
+- Spostare il ciclo in Core o avviare altri thread.
+- Cambia le convenzioni di registrazione o tipo durante l'esecuzione della prova
+  hardware.
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `README.md`, `src/main.c` e la console seriale.
+- [ ] Eseguire il validatore e costruire senza cambiare la sorgente.
+- [ ] Flash, resetta la scheda e cattura l'output di avvio.
+- [ ] Confermare i rapporti `spaghetti_core` Pronti una volta prima del primo messaggio
+      di uptime `spaghetti_app`.
+- [ ] Confermare non viene visualizzata alcuna linea `printk`.
+- [ ] Gestisci solo gli errori elencati in **Errors to handle**.
+- [ ] Confermare nessun elemento da **Non implementare ancora** è stato aggiunto.
 
 ---
 
 ## Build
 
-YES — `make build`.
+SÌ — `make build`.
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Reset with the serial monitor open. Confirm each line contains the expected
-Zephyr module/level information and that Core readiness appears once before
-uptime output.
-
----
-
-## Expected result
-
-The board boots through Core, reports structured boot diagnostics, and preserves
-the temporary uptime behavior.
+Reimpostare con il monitor seriale aperto. Confermare ogni linea contiene le
+informazioni previste Zephyr module/level e che Core pronta appare una volta prima
+dell'uscita di uptime.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Validator and build complete.
-- [ ] Firmware is flashed to the intended board.
-- [ ] Core readiness appears once before uptime.
-- [ ] App and Core module names/severities are visible and correct.
-- [ ] No raw project-owned print or unrelated functionality was added.
+La scheda avvia attraverso Core, segnala diagnostica di avvio strutturata, e conserva il
+comportamento temporaneo di uptime.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] Validatore e compilazione completa.
+- [ ] Il firmware è lampeggiato sulla scheda prevista.
+- [ ] La prontezza Core appare una volta prima dell'uptime.
+- [ ] App e modulo Core names/severities sono visibili e corretti.
+- [ ] Non è stata aggiunta alcuna stampa raw di proprietà di progetto o funzionalità non
+      correlate.
+
+---
+
+## Commit suggerito
 
 `core: build and flash the structured core boundary`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-020-01](../020-board-i2c/TASK-020-01-verify-the-real-i2c-controller-and-pins.md) — Verify the real I2C controller and pins
+[TASK-020-01](../020-board-i2c/TASK-020-01-verify-the-real-i2c-controller-and-pins.md) — Verificare controller e pin I2C reali

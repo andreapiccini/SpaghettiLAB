@@ -1,106 +1,111 @@
-# TASK-190-04 — Test Power ownership and rollback logic
+# TASK-190-04 — Provare proprietà e rollback di Power
 
-**Status:** ⬜ TODO  
-**Phase:** 190 — Power  
-**Depends on:** [TASK-190-03](TASK-190-03-implement-reference-counting-with-a-fake-backend.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test Power ownership and rollback logic** and produce this focused outcome:
-
-Correct transition/count/status.
+**Stato:** ⬜ TODO
+**Fase:** 190 — Power
+**Dipende da:** [TASK-190-03](TASK-190-03-implement-reference-counting-with-a-fake-backend.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/power/power.c` and a focused fake-backend test harness.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Exercise two owners acquiring/releasing in both orders, duplicate/invalid releases, overflow boundary, fake on failure, and fake off failure. Confirm counts and state remain coherent after each error.
+Corretto transition/count/status.
 
 ---
 
-## Why
+## File da aprire
 
-Exact acquire/release points are established by Manager.
+`subsys/power/power.c` e un'imbracatura di prova fake-backend focalizzata.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Esercizio di due proprietari acquiring/releasing in entrambi gli ordini,
+duplicate/invalid rilascia, overflow border, fake on failure, e fake off failure.
+Confermare i conti e lo stato rimangono coerenti dopo ogni errore.
+
+---
+
+## Perché
+
+I punti acquire/release esatti sono stabiliti da Manager.
+
+---
+
+## Chi usa il risultato
 
 Manager/driver.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-MODULE LIFECYCLE.
+Modulo LIFECICLO.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
 DIRECT CALL + K_MUTEX.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Thread only, never ISR.
-
----
-
-## Calls / dependencies
-
-Port/Zephyr GPIO or runtime PM.
+Solo thread, mai ISR.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-Valid owner/resource.
-
----
-
-## Outputs
-
-Correct transition/count/status.
+Port/Zephyr GPIO o runtime PM.
 
 ---
 
-## Errors to handle
+## Input
 
-Hardware on/off error, overflow/underflow, rollback after init failure.
-
----
-
-## Do NOT implement yet
-
-- System sleep until runtime/device PM requirements are measured
+Valido owner/resource.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `subsys/power/power.c` and a focused fake-backend test harness.
-- [ ] Exercise two owners acquiring/releasing in both orders, duplicate/invalid releases, overflow boundary, fake on failure, and fake off failure.
-- [ ] Confirm counts and state remain coherent after each error.
-- [ ] Handle only these realistic errors: Hardware on/off error, overflow/underflow, rollback after init failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Corretto transition/count/status.
+
+---
+
+## Errori da gestire
+
+Hardware on/off errore, overflow/underflow, rollback dopo guasto init.
+
+---
+
+## Non implementare ancora
+
+- Sistema di sospensione fino alla misurazione dei requisiti runtime/device PM
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `subsys/power/power.c` e un'imbracatura di prova fake-backend
+      focalizzata.
+- [ ] Esercitare due proprietari acquiring/releasing in entrambi gli ordini,
+      duplicate/invalid rilascia, overflow border, fake on failure, e fake off failure.
+- [ ] Confermare i conteggi e lo stato rimangono coerenti dopo ogni errore.
+- [ ] Gestisci solo questi errori realistici: Hardware on/off errore,
+      overflow/underflow, rollback dopo guasto init.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -110,35 +115,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Two owners acquire/release in both orders; inject failed driver init and
-confirm count/rail rollback.
-
----
-
-## Expected result
-
-One on transition, one final off transition, no premature off.
+Due proprietari acquire/release in entrambi gli ordini; iniezione non riuscita driver
+init e confermare count/rail rollback.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Una sulla transizione, una finale sulla transizione, nessuna prematura.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `power: test power ownership and rollback logic`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-190-05](TASK-190-05-connect-power-to-the-real-control.md) — Connect Power to the real control
+[TASK-190-05](TASK-190-05-connect-power-to-the-real-control.md) — Collegare Power al controllo hardware reale

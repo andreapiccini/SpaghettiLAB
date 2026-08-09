@@ -1,106 +1,109 @@
-# TASK-020-04 — Enable Zephyr I2C support
+# TASK-020-04 — Abilitare il supporto I2C di Zephyr
 
-**Status:** ⬜ TODO  
-**Phase:** 020 — Current board / I2C  
-**Depends on:** [TASK-020-03](TASK-020-03-enable-the-i2c-node-in-the-board-overlay.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Enable Zephyr I2C support** and produce this focused outcome:
-
-I2C API linked.
+**Stato:** ⬜ TODO
+**Fase:** 020 — Scheda attuale / I2C
+**Dipende da:** [TASK-020-03](TASK-020-03-enable-the-i2c-node-in-the-board-overlay.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+API I2C collegate.
+
+---
+
+## File da aprire
 
 `prj.conf`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Add `CONFIG_I2C=y`. This permanently compiles the generic
-I2C controller API required by I2C-capable ports.
-
----
-
-## Why
-
-DTS describes hardware; Kconfig includes software support.
+Aggiungi `CONFIG_I2C=y`. Questo compila in modo permanente le API generiche del
+controller I2C richieste dalle porte I2C.
 
 ---
 
-## Called / used by
+## Perché
 
-Port and later SHT40.
+DTS descrive l'hardware; Kconfig include il supporto software.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Port e successivamente SHT40.
+
+---
+
+## Evento che attiva il codice
 
 BUILD.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME.
+BUILD-TIME.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Kconfig/CMake.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Installed ESP32 I2C driver.
+Installato ESP32 I2C driver.
 
 ---
 
-## Inputs
+## Input
 
 `CONFIG_I2C=y`.
 
 ---
 
-## Outputs
+## Output
 
-I2C API linked.
-
----
-
-## Errors to handle
-
-Unsatisfied controller dependency shown by Kconfig warning.
+API I2C collegate.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
+
+Dipendenza del controller insoddisfatta mostrata dall'avvertimento Kconfig.
+
+---
+
+## Non implementare ancora
 
 - `CONFIG_SENSOR`, zbus, MQTT
 
 ---
 
-## Zephyr note
+## Orientamento Zephyr
 
-`CONFIG_I2C=y` compiles the generic Zephyr I2C API and selected controller driver. It does not describe pins and is not runtime configuration.
+`CONFIG_I2C=y` compila il generico Zephyr I2C API e il controller selezionato driver.
+Non descrive pin e non è configurazione runtime.
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `prj.conf`.
-- [ ] Add `CONFIG_I2C=y`. This permanently compiles the generic I2C controller API required by I2C-capable ports.
-- [ ] Handle only these realistic errors: Unsatisfied controller dependency shown by Kconfig warning.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `prj.conf`.
+- [ ] Aggiungi `CONFIG_I2C=y`. Questo compila in modo permanente le API generiche del
+      controller I2C richieste dalle porte I2C.
+- [ ] Gestisci solo questi errori realistici: dipendenze del controller insoddisfatta
+      mostrata da Kconfig warning.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -116,35 +119,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Find enabled controller and real pins in `build/zephyr/zephyr.dts`; find
+Trova controller abilitato e pin reali in `build/zephyr/zephyr.dts`; trova
 `CONFIG_I2C=y` in `build/zephyr/.config`.
 
 ---
 
-## Expected result
+## Risultato atteso
 
-Build succeeds; controller node is `okay`.
-
----
-
-## Completion checklist
-
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Build riesce; il nodo del controller è `okay`.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `current: enable zephyr i2c support`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-020-05](TASK-020-05-inspect-generated-i2c-configuration.md) — Inspect generated I2C configuration
+[TASK-020-05](TASK-020-05-inspect-generated-i2c-configuration.md) — Controllare la configurazione I2C generata

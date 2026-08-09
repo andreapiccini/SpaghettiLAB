@@ -1,101 +1,108 @@
-# TASK-170-04 — Route accepted results to Module Manager
+# TASK-170-04 — Inviare i risultati accettati al Module Manager
 
-**Status:** ⬜ TODO  
-**Phase:** 170 — Discovery  
-**Depends on:** [TASK-170-03](TASK-170-03-implement-manual-discovery-validation.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Route accepted results to Module Manager** and produce this focused outcome:
-
-Same SHT40 instance/readings.
+**Stato:** ⬜ TODO
+**Fase:** 170 — Discovery
+**Dipende da:** [TASK-170-03](TASK-170-03-implement-manual-discovery-validation.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/discovery/discovery.c`, `CMakeLists.txt`, and `subsys/core/core.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Implement a sink that directly calls the existing Manager configure API unchanged. Add Discovery source to CMake and initialize it from Core before Config can submit assignments.
+Stesso SHT40 instance/readings.
 
 ---
 
-## Why
+## File da aprire
 
-Existing behavior is a regression oracle.
+`subsys/discovery/discovery.c`, `CMakeLists.txt` e `subsys/core/core.c`.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Implementa una callback che inoltra i risultati accettati all'API di configurazione già
+esistente nel Module Manager
+immutata. Aggiungi sorgente Discovery a CMake e inizializzalo da Core prima che Config
+possa inviare le assegnazioni.
+
+---
+
+## Perché
+
+Il comportamento esistente è un oracolo di regressione.
+
+---
+
+## Chi usa il risultato
 
 Config/Communication -> Discovery -> Manager.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-CONFIG COMMAND.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL chain.
+COMANDO DI CONFIGURAZIONE.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
+
+Catena di CHIAMATE DIRETTE.
+
+---
+
+## Contesto di esecuzione
 
 Config/Communication thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Port validation and unchanged Manager API.
-
----
-
-## Inputs
-
-Manual result.
+Convalida Port e API Manager immutate.
 
 ---
 
-## Outputs
+## Input
 
-Same SHT40 instance/readings.
-
----
-
-## Errors to handle
-
-Stale generation, unsupported mode, Manager error propagation.
+Risultato manuale.
 
 ---
 
-## Do NOT implement yet
+## Output
+
+Stesso SHT40 instance/readings.
+
+---
+
+## Errori da gestire
+
+Generazione dello stato, modalità non supportata, propagazione degli errori Manager.
+
+---
+
+## Non implementare ancora
 
 - Async provider worker
-- Add K_WORK only when provider needs it
+- Aggiungi K_WORK solo quando il provider ne ha bisogno
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `subsys/discovery/discovery.c`, `CMakeLists.txt`, and `subsys/core/core.c`.
-- [ ] Implement a sink that directly calls the existing Manager configure API unchanged.
-- [ ] Add Discovery source to CMake and initialize it from Core before Config can submit assignments.
-- [ ] Handle only these realistic errors: Stale generation, unsupported mode, Manager error propagation.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `subsys/discovery/discovery.c`, `CMakeLists.txt` e `subsys/core/core.c`.
+- [ ] Implementa una callback che chiama direttamente l'API di configurazione del
+      Module Manager
+      inalterata.
+- [ ] Aggiungi sorgente Discovery a CMake e inizializzala da Core prima che Config possa
+      inviare le assegnazioni.
+- [ ] Gestisci solo questi errori realistici: Generazione dello stadio, modalità non
+      supportata, propagazione degli errori Manager.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +118,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Apply same CBOR/manual assignment and compare status/measurement to before.
-
----
-
-## Expected result
-
-Behavior unchanged; Manager has no source/provider knowledge.
+Applicare la stessa assegnazione CBOR/manual e confrontare status/measurement a prima.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Comportamento invariato; Manager non ha conoscenze source/provider.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `discovery: route accepted results to module manager`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-170-05](TASK-170-05-route-config-assignments-through-discovery.md) — Route Config assignments through Discovery
+[TASK-170-05](TASK-170-05-route-config-assignments-through-discovery.md) — Instradare le assegnazioni Config tramite Discovery

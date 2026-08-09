@@ -1,73 +1,96 @@
-# Spaghetti LAB firmware backlog
+# Backlog del firmware Spaghetti LAB
 
-[`IMPLEMENTATION_ROADMAP.md`](../IMPLEMENTATION_ROADMAP.md) is the long-form
-technical reference. This directory is the actionable, Jira-like development
-backlog derived from it. Open one task at a time and complete its checklist.
+Questa cartella contiene i task eseguibili del firmware. Apri un solo task alla
+volta, completa la relativa checklist e aggiorna lo stato.
 
-## Status legend
+## Legenda degli stati
 
-| Symbol | Status |
+| Simbolo | Stato |
 |:---:|---|
 | ⬜ | TODO |
 | 🟨 | IN PROGRESS |
 | ✅ | DONE |
 | ⛔ | BLOCKED |
 
-## Task status consistency
+## Coerenza fra stato e checkbox
 
-Task status is derived from the checkboxes under `## Completion checklist`:
+Lo stato deriva dalle checkbox presenti in `## Checklist di completamento`:
 
-| Completion checklist | Automatic status |
+| Checklist | Stato corretto |
 |---|---|
-| No item checked | ⬜ TODO |
-| Some items checked | 🟨 IN PROGRESS |
-| Every item checked | ✅ DONE |
+| Nessuna voce selezionata | ⬜ TODO |
+| Alcune voci selezionate | 🟨 IN PROGRESS |
+| Tutte le voci selezionate | ✅ DONE |
 
-Statuses are edited manually. The validator reads every task during a build and
-reports a warning when the status disagrees with `## Completion checklist`. It
-never edits a roadmap file. `⛔ BLOCKED` is a deliberate manual exception and
-may be used with any incomplete checklist.
+Lo stato viene aggiornato manualmente. Il validator controlla ogni task durante
+la build e mostra un warning se stato e checkbox non coincidono. Non modifica
+mai i file. `⛔ BLOCKED` è un'eccezione manuale ammessa anche con checklist
+incompleta.
 
-Every task must use this future-proof location and identity pattern:
+Ogni task deve rispettare questo schema:
 
 ```text
-roadmap/<NNN-phase-name>/TASK-<same-NNN>-<NN>-task-name.md
+roadmap/<NNN-nome-fase>/TASK-<stesso-NNN>-<NN>-nome-task.md
 ```
 
-The filename ID, `# TASK-NNN-NN` title, and `**Phase:** NNN` metadata must
-match. The validator reports an objective `TASK001` error if they diverge and a
-non-blocking `TASK002` warning if status and checklist diverge.
+Devono coincidere:
 
+- ID nel nome del file;
+- ID nel titolo `# TASK-NNN-NN`;
+- numero nella riga `**Fase:** NNN — ...`.
+
+Il validator segnala `TASK001` se l'identità non coincide e `TASK002` se lo
+stato non rispecchia le checkbox.
+
+L'estensione
 [Markdown Checkbox Preview](https://marketplace.visualstudio.com/items?itemName=GSejas.markdown-checkbox-preview)
-can still be used to check boxes with the mouse. After checking them, update the
-status manually; the next save/build shows any mismatch that remains.
+permette di selezionare le checkbox con il mouse. Dopo averle modificate,
+aggiorna anche la riga `**Stato:**`.
 
-## Phases
+## Regola obbligatoria per i concetti Zephyr
 
-| Status | Phase | Visible result |
+Un task che introduce per la prima volta un concetto specifico di Zephyr deve
+spiegarlo **prima** della procedura. La sezione di orientamento deve indicare:
+
+1. cos'è;
+2. a cosa serve;
+3. quando viene usato;
+4. se opera a build-time o runtime;
+5. come si collega al task;
+6. qual è il file reale coinvolto;
+7. cosa cercare dentro quel file;
+8. cosa non modificare.
+
+La spiegazione deve essere breve e riferita ai file reali di Spaghetti LAB.
+Termini come “aggiungi il nodo”, “abilita il driver” o “usa il Device Model”
+non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
+
+## Fasi
+
+| Stato | Fase | Risultato visibile |
 |:---:|---|---|
-| ✅ | [000 — Baseline](000-baseline/README.md) | The existing Zephyr uptime firmware builds, flashes, and prints. |
-| 🟨 | [010 — Core](010-core/README.md) | `main` boots through `spaghetti_core_init()` and the console reports Core readiness. |
-| ⬜ | [020 — Current board / I2C](020-board-i2c/README.md) | The generated DTS contains the real enabled I2C controller and the firmware still boots. |
-| ⬜ | [030 — Port](030-port/README.md) | Port 0 exists, reports I2C capability, and owns a ready Zephyr device. |
-| ⬜ | [040 — SHT40 vertical slice](040-sht40/README.md) | Real temperature and humidity values appear in the serial log. |
-| ⬜ | [050 — Module + Module Driver](050-module-driver/README.md) | The SHT40 is called only through a module-driver operation table. |
-| ⬜ | [060 — Driver Registry](060-driver-registry/README.md) | The `sht40` lookup succeeds and an unknown type fails cleanly. |
-| ⬜ | [070 — Module Manager](070-module-manager/README.md) | A Manager call configures Port 0 as SHT40 and reads the real sensor. |
-| ⬜ | [080 — Runtime-removable SHT40](080-runtime-removable-sht40/README.md) | The SHT40 remains readable after all static SHT4x shortcuts are removed. |
-| ⬜ | [090 — Internal Config](090-config/README.md) | A C configuration applies Port 0, SHT40 address, and the sample period. |
-| ⬜ | [100 — Persistent Config](100-storage/README.md) | The internal configuration survives a reboot. |
-| ⬜ | [110 — Data / zbus](110-data-zbus/README.md) | One real sample reaches both the logger and a second consumer. |
-| ⬜ | [120 — Runtime V0](120-runtime-v0/README.md) | Runtime samples temperature every 1000 ms while `main` only boots Core. |
-| ⬜ | [130 — Relay + Runtime V1](130-relay-runtime-v1/README.md) | A temperature above 25 °C commands the configured relay. |
-| ⬜ | [140 — Communication](140-communication/README.md) | A local shell command reads status and submits configuration bytes. |
-| ⬜ | [150 — CBOR](150-cbor/README.md) | A tiny CBOR payload decodes into `spaghetti_config` and applies. |
-| ⬜ | [160 — MQTT](160-mqtt/README.md) | One configured temperature topic reaches a broker. |
-| ⬜ | [170 — Discovery](170-discovery/README.md) | Manual discovery feeds the Manager without provider knowledge leaking into it. |
-| ⬜ | [180 — Multiple Core variants](180-multi-core/README.md) | Common higher layers build for two Core variants without C3-specific branches. |
-| ⬜ | [190 — Power](190-power/README.md) | One power resource transitions correctly under two-owner and rollback tests. |
+| ✅ | [000 — Baseline](000-baseline/README.md) | Il firmware Zephyr iniziale viene compilato, caricato e osservato sulla console. |
+| 🟨 | [010 — Core](010-core/README.md) | `main` avvia Core e la console mostra log strutturati. |
+| ⬜ | [020 — Scheda attuale / I2C](020-board-i2c/README.md) | Il DTS generato contiene il controller I2C reale e abilitato. |
+| ⬜ | [030 — Port](030-port/README.md) | Port 0 espone la capacità I2C e possiede un device Zephyr pronto. |
+| ⬜ | [040 — Sezione verticale SHT40](040-sht40/README.md) | Temperatura e umidità reali compaiono nei log. |
+| ⬜ | [050 — Module + Module Driver](050-module-driver/README.md) | SHT40 viene usato soltanto tramite la tabella operazioni del driver. |
+| ⬜ | [060 — Driver Registry](060-driver-registry/README.md) | La ricerca di `sht40` riesce e un tipo sconosciuto fallisce correttamente. |
+| ⬜ | [070 — Module Manager](070-module-manager/README.md) | Il Manager configura Port 0 come SHT40 e legge il sensore reale. |
+| ⬜ | [080 — SHT40 rimovibile a runtime](080-runtime-removable-sht40/README.md) | SHT40 resta utilizzabile senza scorciatoie Devicetree specifiche del sensore. |
+| ⬜ | [090 — Config interna](090-config/README.md) | Una configurazione C assegna Port 0, indirizzo SHT40 e periodo di campionamento. |
+| ⬜ | [100 — Config persistente](100-storage/README.md) | La configurazione sopravvive al riavvio. |
+| ⬜ | [110 — Data / zbus](110-data-zbus/README.md) | Un campione reale raggiunge logger e un secondo consumer. |
+| ⬜ | [120 — Runtime V0](120-runtime-v0/README.md) | Runtime campiona ogni secondo mentre `main` esegue soltanto il boot. |
+| ⬜ | [130 — Relay + Runtime V1](130-relay-runtime-v1/README.md) | Una temperatura sopra 25 °C comanda il relay configurato. |
+| ⬜ | [140 — Communication](140-communication/README.md) | Un comando Shell locale legge lo stato e invia configurazioni. |
+| ⬜ | [150 — CBOR](150-cbor/README.md) | Un payload CBOR viene decodificato e applicato a Config. |
+| ⬜ | [160 — MQTT](160-mqtt/README.md) | Un campione raggiunge un topic MQTT configurato. |
+| ⬜ | [170 — Discovery](170-discovery/README.md) | Discovery alimenta il Manager senza esporre il provider. |
+| ⬜ | [180 — Varianti Core multiple](180-multi-core/README.md) | Gli stessi livelli applicativi funzionano su due varianti Core. |
+| ⬜ | [190 — Power](190-power/README.md) | Una risorsa di alimentazione gestisce correttamente più proprietari e rollback. |
 
-## Start here
+## Da dove iniziare
 
-The baseline is complete. Start with
-[TASK-010-01 — Define the Core public API](010-core/TASK-010-01-define-the-core-public-api.md).
+La baseline è completa. Continua dal primo task non completato della
+[fase 010 — Core](010-core/README.md).

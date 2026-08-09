@@ -1,105 +1,111 @@
-# TASK-040-04 — Declare the temporary SHT40 wrapper API
+# TASK-040-04 — Dichiarare l’API del wrapper temporaneo SHT40
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-03](TASK-040-03-enable-the-sensor-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Declare the temporary SHT40 wrapper API** and produce this focused outcome:
-
-`0` and two sensor values.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-03](TASK-040-03-enable-the-sensor-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-Create `spaghetti_modules/sht40/sht40.h`.
+Questo task deve produrre un solo risultato verificabile:
+
+`0` e due valori del sensore.
 
 ---
 
-## Write / Modify
+## File da aprire
 
-Add an include guard and declare `spaghetti_sht40_test_init()` plus `spaghetti_sht40_test_read(struct sensor_value *temperature, struct sensor_value *humidity)`. Include or forward-declare only what these signatures require.
+Crea `spaghetti_modules/sht40/sht40.h`.
 
-> [!WARNING]
-> TEMPORARY SHORTCUT
+---
+
+## Cosa scrivere o modificare
+
+Aggiungi una protezione include e dichiara `spaghetti_sht40_test_init()` più
+`spaghetti_sht40_test_read(struct sensor_value *temperature, struct sensor_value
+*humidity)`. Includi o dichiara in avanti solo ciò che queste firme richiedono.
+
+> [!ATTENZIONE]
+> SHORTCUT TEMPORANEO
 >
-> This bring-up API is intentionally temporary and will be removed in [TASK-080-05](../080-runtime-removable-sht40/TASK-080-05-remove-the-static-sensor-shortcut.md).
+> Questa API è intenzionalmente temporanea e verrà rimossa in
+  [TASK-080-05](../080-runtime-removable-sht40/TASK-080-05-remove-the-static-sensor-shortcut.md).
 
 
 ---
 
-## Why
+## Perché
 
-A working sensor result is the next vertical-slice proof.
-
----
-
-## Called / used by
-
-Temporary `main` test.
+Il risultato di un sensore di lavoro è la prossima prova di fetta verticale.
 
 ---
 
-## Trigger
+## Chi usa il risultato
 
-BOOT and periodic test call.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Prova temporanea `main`.
 
 ---
 
-## Execution context
+## Evento che attiva il codice
 
-Main thread.
-
----
-
-## Calls / dependencies
-
-Zephyr Device and Sensor APIs.
+BOOT e chiamata periodica di prova.
 
 ---
 
-## Inputs
+## Meccanismo di invocazione
 
-Two output pointers.
-
----
-
-## Outputs
-
-`0` and two sensor values.
+CHIAMATA DIRETTA.
 
 ---
 
-## Errors to handle
+## Contesto di esecuzione
 
-`-EINVAL`, device not ready, fetch/get error.
-
----
-
-## Do NOT implement yet
-
-- zbus, driver registry, own thread, heater
+Thread principale.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only Create `spaghetti_modules/sht40/sht40.h`.
-- [ ] Add an include guard and declare `spaghetti_sht40_test_init()` plus `spaghetti_sht40_test_read(struct sensor_value *temperature, struct sensor_value *humidity)`. Include or forward-declare only what these signatures require.
-- [ ] Handle only these realistic errors: `-EINVAL`, device not ready, fetch/get error.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+API del dispositivo e del sensore Zephyr.
+
+---
+
+## Input
+
+Due puntatori di uscita.
+
+---
+
+## Output
+
+`0` e due valori del sensore.
+
+---
+
+## Errori da gestire
+
+`-EINVAL`, dispositivo non pronto, errore fetch/get.
+
+---
+
+## Non implementare ancora
+
+- zbus, registro driver, proprio thread, riscaldatore
+
+---
+
+## Procedura
+
+- [ ] Apri solo Crea `spaghetti_modules/sht40/sht40.h`.
+- [ ] Aggiungi una protezione include e dichiara `spaghetti_sht40_test_init()` più
+      `spaghetti_sht40_test_read(struct sensor_value *temperature, struct sensor_value
+      *humidity)`. Includi o dichiara in avanti solo ciò che queste firme richiedono.
+- [ ] Gestisci solo questi errori realistici: `-EINVAL`, dispositivo non pronto, errore
+      fetch/get.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -115,34 +121,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Review every lower call's return value.
-
----
-
-## Expected result
-
-Thin wrapper, no loop.
+Esamina il valore di ritorno di ogni chiamata inferiore.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Sottile wrapper, senza loop.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: declare the temporary sht40 wrapper api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-05](TASK-040-05-implement-the-temporary-sht40-wrapper.md) — Implement the temporary SHT40 wrapper
+[TASK-040-05](TASK-040-05-implement-the-temporary-sht40-wrapper.md) — Implementare il wrapper temporaneo SHT40

@@ -1,113 +1,117 @@
-# TASK-040-01 — Inspect the installed SHT4x driver
+# TASK-040-01 — Esaminare il driver SHT4x fornito da Zephyr
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-030-08](../030-port/TASK-030-08-test-port-success-and-invalid-ids.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Inspect the installed SHT4x driver** and produce this focused outcome:
-
-Deliberate temporary/static plan.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-030-08](../030-port/TASK-030-08-test-port-success-and-invalid-ids.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-Installed Zephyr files inside `make shell`:
-`drivers/sensor/sensirion/sht4x/`,
-`dts/bindings/sensor/sensirion,sht4x.yaml`, and `samples/sensor/sht4x/`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Inspect the installed driver, binding, and sample. Confirm compatible string, required `repeatability`, channel names, and address expectations. Record the decision to use the static Zephyr driver only for bring-up; do not change production files.
+Piano deliberato temporary/static.
 
 ---
 
-## Why
+## File da aprire
 
-The installed environment already has `CONFIG_SHT4X`,
-`sensirion,sht4x`, and Sensor API support.
-
----
-
-## Called / used by
-
-SHT40 vertical slice.
+File Zephyr installati all'interno di `make shell`: `drivers/sensor/sensirion/sht4x/`,
+`dts/bindings/sensor/sensirion,sht4x.yaml` e `samples/sensor/sht4x/`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-DESIGN DECISION.
-
----
-
-## Invocation mechanism
-
-BUILD-TIME STATIC DEVICE for OPTION A.
+Ispezionare le driver installate, binding e il campione. Confermare la stringa
+compatibile, richiesta `repeatability`, i nomi dei canali e le aspettative di indirizzo.
+Registrare la decisione di utilizzare la Zephyr statico driver solo per portare-up; non
+cambiare i file di produzione.
 
 ---
 
-## Execution context
+## Perché
 
-Developer review.
-
----
-
-## Calls / dependencies
-
-Zephyr Device/Sensor/I2C model.
+L'ambiente installato ha già il supporto `CONFIG_SHT4X`, `sensirion,sht4x` e Sensor API.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Confirmed module wiring and address.
-
----
-
-## Outputs
-
-Deliberate temporary/static plan.
+Taglia verticale SHT40.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-If the actual module is not SHT4x-compatible, stop.
-
----
-
-## Do NOT implement yet
-
-- Direct-I2C protocol or generic module operations
+DECISIONE DI DESIGN.
 
 ---
 
-## Zephyr note
+## Meccanismo di invocazione
 
-Zephyr's Sensor API requires a statically instantiated Devicetree device. That is acceptable for bring-up but not for the final removable-module model.
+DISPOSITIVO STATICO BUILD-TIME per OPZIONE A.
 
 ---
 
-## Steps
+## Contesto di esecuzione
 
-- [ ] Open only Installed Zephyr files inside `make shell`:
-`drivers/sensor/sensirion/sht4x/`,
-`dts/bindings/sensor/sensirion,sht4x.yaml`, and `samples/sensor/sht4x/`.
-- [ ] Inspect the installed driver, binding, and sample.
-- [ ] Confirm compatible string, required `repeatability`, channel names, and address expectations.
-- [ ] Record the decision to use the static Zephyr driver only for bring-up
-- [ ] do not change production files.
-- [ ] Handle only these realistic errors: If the actual module is not SHT4x-compatible, stop.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Revisione degli sviluppatori.
+
+---
+
+## Chiamate e dipendenze
+
+Modello Zephyr Device/Sensor/I2C.
+
+---
+
+## Input
+
+Modulo di cablaggio confermato e indirizzo.
+
+---
+
+## Output
+
+Piano deliberato temporary/static.
+
+---
+
+## Errori da gestire
+
+Se il modulo reale non è compatibile con SHT4x, fermati.
+
+---
+
+## Non implementare ancora
+
+- Direct-I2C protocollo o operazioni del modulo generico
+
+---
+
+## Orientamento Zephyr
+
+L'API del sensore Zephyr richiede un dispositivo staticamente istanziato Devicetree. Ciò
+è accettabile per il lancio ma non per il modello finale del modulo rimovibile.
+
+---
+
+## Procedura
+
+- [ ] Aprire solo i file Zephyr installati all'interno di `make shell`:
+`drivers/sensor/sensirion/sht4x/`, `dts/bindings/sensor/sensirion,sht4x.yaml` e
+`samples/sensor/sht4x/`.
+- [ ] Ispezionare la driver installata, binding e il campione.
+- [ ] Conferma stringa compatibile, richiesta `repeatability`, nomi dei canali e
+      indirizzo aspettative.
+- [ ] Registrare la decisione di utilizzare il Zephyr statico driver solo per portare-up
+- [ ] non modificare i file di produzione.
+- [ ] Gestisci solo questi errori realistici: se il modulo reale non è compatibile con
+      SHT4x, fermati.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -123,34 +127,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Confirm installed binding requires `repeatability` and I2C address.
-
----
-
-## Expected result
-
-No ambiguity about why the static node is temporary.
+Confermare installato binding richiede `repeatability` e I2C indirizzo.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessuna ambiguità sul motivo per cui il nodo statico è temporaneo.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: inspect the installed sht4x driver`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-02](TASK-040-02-add-the-temporary-sht40-devicetree-node.md) — Add the temporary SHT40 Devicetree node
+[TASK-040-02](TASK-040-02-add-the-temporary-sht40-devicetree-node.md) — Aggiungere il nodo Devicetree temporaneo di SHT40

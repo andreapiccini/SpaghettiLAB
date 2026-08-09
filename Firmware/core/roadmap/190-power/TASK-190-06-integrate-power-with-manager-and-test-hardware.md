@@ -1,143 +1,154 @@
-# TASK-190-06 — Integrate Power with Manager and test hardware
+# TASK-190-06 — Integrare Power con Manager e provare l’hardware
 
-**Status:** ⬜ TODO  
-**Phase:** 190 — Power  
-**Depends on:** [TASK-190-05](TASK-190-05-connect-power-to-the-real-control.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Integrate Power with Manager and test hardware** and produce this focused outcome:
-
-Correct transition/count/status.
+**Stato:** ⬜ TODO
+**Fase:** 190 — Power
+**Dipende da:** [TASK-190-05](TASK-190-05-connect-power-to-the-real-control.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`CMakeLists.txt`, `subsys/core/core.c`, `subsys/module_manager/module_manager.c`, and real measurement equipment.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add Power source and initialize it from Core. Manager acquires before driver init and releases after deinit or every rollback. Measure first-on/final-off transitions and inject driver-init failure to confirm release.
+Corretto transition/count/status.
 
 ---
 
-## Why
+## File da aprire
 
-Exact acquire/release points are established by Manager.
+`CMakeLists.txt`, `subsys/core/core.c`, `subsys/module_manager/module_manager.c` e
+apparecchiature di misura reali.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Aggiungere il sorgente Power e inizializzarlo da Core. Manager acquisisce prima driver
+init e rilascia dopo il deinit o ogni rollback. Misurare le transizioni
+first-on/final-off e iniettare driver-init non confermare il rilascio.
+
+---
+
+## Perché
+
+I punti acquire/release esatti sono stabiliti da Manager.
+
+---
+
+## Chi usa il risultato
 
 Manager/driver.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-MODULE LIFECYCLE.
+Modulo LIFECICLO.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
 DIRECT CALL + K_MUTEX.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Thread only, never ISR.
-
----
-
-## Calls / dependencies
-
-Port/Zephyr GPIO or runtime PM.
+Solo thread, mai ISR.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-Valid owner/resource.
-
----
-
-## Outputs
-
-Correct transition/count/status.
+Port/Zephyr GPIO o runtime PM.
 
 ---
 
-## Errors to handle
+## Input
 
-Hardware on/off error, overflow/underflow, rollback after init failure.
-
----
-
-## Do NOT implement yet
-
-- System sleep until runtime/device PM requirements are measured
+Valido owner/resource.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `CMakeLists.txt`, `subsys/core/core.c`, `subsys/module_manager/module_manager.c`, and real measurement equipment.
-- [ ] Add Power source and initialize it from Core. Manager acquires before driver init and releases after deinit or every rollback. Measure first-on/final-off transitions and inject driver-init failure to confirm release.
-- [ ] Handle only these realistic errors: Hardware on/off error, overflow/underflow, rollback after init failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Corretto transition/count/status.
+
+---
+
+## Errori da gestire
+
+Hardware on/off errore, overflow/underflow, rollback dopo guasto init.
+
+---
+
+## Non implementare ancora
+
+- Sistema di sospensione fino alla misurazione dei requisiti runtime/device PM
+
+---
+
+## Procedura
+
+- [ ] Apri solo `CMakeLists.txt`, `subsys/core/core.c`,
+      `subsys/module_manager/module_manager.c` e apparecchiature di misura reali.
+- [ ] Aggiungere il sorgente Power e inizializzarlo da Core. Manager acquisisce prima
+      driver init e rilascia dopo il deinit o ogni rollback. Misurare le transizioni
+      first-on/final-off e iniettare driver-init non confermare il rilascio.
+- [ ] Gestisci solo questi errori realistici: Hardware on/off errore,
+      overflow/underflow, rollback dopo guasto init.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Two owners acquire/release in both orders; inject failed driver init and
-confirm count/rail rollback.
-
----
-
-## Expected result
-
-Two owners share one real resource without premature off, and failed module initialization releases it.
+Due proprietari acquire/release in entrambi gli ordini; iniezione non riuscita driver
+init e confermare count/rail rollback.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Due proprietari condividono una risorsa reale senza premature off, e l'inizializzazione
+del modulo non è riuscita lo rilascia.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `power: integrate power with manager and test hardware`
 
 ---
 
-## Next task
+## Task successivo
 
-[Backlog index](../README.md) — define the next requirement before adding work.
+[Indice di backlog](../README.md) — definisce il prossimo requisito prima di aggiungere
+lavoro.

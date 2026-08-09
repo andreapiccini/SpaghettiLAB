@@ -1,101 +1,107 @@
-# TASK-100-05 — Implement the Settings-backed Storage record
+# TASK-100-05 — Implementare il record persistente con Settings
 
-**Status:** ⬜ TODO  
-**Phase:** 100 — Persistent Config  
-**Depends on:** [TASK-100-04](TASK-100-04-enable-zephyr-settings-and-its-backend.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Implement the Settings-backed Storage record** and produce this focused outcome:
-
-Record restored after power cycle.
+**Stato:** ⬜ TODO
+**Fase:** 100 — Config persistente
+**Dipende da:** [TASK-100-04](TASK-100-04-enable-zephyr-settings-and-its-backend.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/services/storage/storage.c` and `CMakeLists.txt`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Register one Settings handler, decode the fixed versioned config record in a SETTINGS CALLBACK, load it into private Storage state, and save with the Settings API. Add Storage source to CMake and propagate backend errors.
+Registrare ripristinato dopo il ciclo di potenza.
 
 ---
 
-## Why
+## File da aprire
 
-Config read/write semantics already work without flash.
+`subsys/services/storage/storage.c` e `CMakeLists.txt`.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Registra un handler di Zephyr Settings. Nella callback, decodifica il record di
+configurazione con versione fissa e caricalo nello stato privato del componente
+Storage. Implementa il salvataggio tramite l'API Settings, aggiungi il sorgente a CMake
+e propaga gli errori restituiti dal backend.
+
+---
+
+## Perché
+
+La semantica Config read/write funziona già senza flash.
+
+---
+
+## Chi usa il risultato
 
 Core/Config.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BOOT/CONFIG COMMIT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL + SETTINGS CALLBACK.
-
----
-
-## Execution context
-
-Main/calling thread during synchronous load/save.
+Chiamata diretta + richiamo di posizione.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Zephyr Settings, chosen backend, real fixed partition.
-
----
-
-## Inputs
-
-Valid record and safe flash region.
+Main/calling thread durante il sincrono load/save.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Record restored after power cycle.
-
----
-
-## Errors to handle
-
-Missing/corrupt/full/I/O; never erase unrelated flash.
+Zephyr Settings, scelta backend, vera e propria partizione fissa.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Invent a partition size/address
-- derive from real flash
+Record valido e regione flash sicura.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `subsys/services/storage/storage.c` and `CMakeLists.txt`.
-- [ ] Register one Settings handler, decode the fixed versioned config record in a SETTINGS CALLBACK, load it into private Storage state, and save with the Settings API.
-- [ ] Add Storage source to CMake and propagate backend errors.
-- [ ] Handle only these realistic errors: Missing/corrupt/full/I/O; never erase unrelated flash.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Registrare ripristinato dopo il ciclo di potenza.
+
+---
+
+## Errori da gestire
+
+Missing/corrupt/full/I/O; mai cancellare flash non correlati.
+
+---
+
+## Non implementare ancora
+
+- Inventare una partizione size/address
+- derivano da un reale flash
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/services/storage/storage.c` e `CMakeLists.txt`.
+- [ ] Registrare un gestore Settings, decodificare il record di configurazione in
+      versione fissa in un CALLBACK SETTINGS, caricarlo nello stato di storage privato e
+      salvare con l'API Settings.
+- [ ] Aggiungi sorgente di archiviazione a CMake e propaga gli errori backend.
+- [ ] Gestisci solo questi errori realistici: Missing/corrupt/full/I/O; mai cancellare
+      flash non correlati.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,35 +117,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Save assignment, power-cycle, load/apply; corrupt/version-mismatch test
-through a controlled test record, not random flash writes.
-
----
-
-## Expected result
-
-Config persists or falls back explicitly.
+Salva assegnazione, power-cycle, load/apply; corrupt/version-mismatch prova attraverso
+un record di prova controllato, non scrittura flash casuale.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Config persiste o ricade esplicitamente.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `persistent: implement the settings-backed storage record`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-100-06](TASK-100-06-load-config-at-boot-and-test-persistence.md) — Load Config at boot and test persistence
+[TASK-100-06](TASK-100-06-load-config-at-boot-and-test-persistence.md) — Caricare Config all’avvio e provare la persistenza

@@ -1,101 +1,106 @@
-# TASK-090-04 — Implement Config apply
+# TASK-090-04 — Implementare l’applicazione di Config
 
-**Status:** ⬜ TODO  
-**Phase:** 090 — Internal Config  
-**Depends on:** [TASK-090-03](TASK-090-03-implement-config-validation.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement Config apply** and produce this focused outcome:
-
-Applied module(s) or exact validation/apply error.
+**Stato:** ⬜ TODO
+**Fase:** 090 — Config interna
+**Dipende da:** [TASK-090-03](TASK-090-03-implement-config-validation.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Moduli applicati(s) o errore validation/apply esatto.
+
+---
+
+## File da aprire
 
 `subsys/config/config.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Validate the entire snapshot first, then call Manager configure for each initial module in order. Preserve and report the first failure index/code. Store the sampling fields as accepted but inactive until Runtime exists.
-
----
-
-## Why
-
-Main hardcode can be replaced without serialization.
+Convalidare l'intera istantanea prima, quindi chiamare Manager configurare per ogni
+modulo iniziale in ordine. Preservare e segnalare il primo guasto index/code. Conservare
+i campi di campionamento come accettato ma inattivo fino a quando Runtime esiste.
 
 ---
 
-## Called / used by
+## Perché
 
-Main now; Communication/decoder later.
-
----
-
-## Trigger
-
-CONFIG COMMAND.
+Il codice principale può essere sostituito senza serializzazione.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main/calling thread.
+Principale ora; Communication/decoder più tardi.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Module Manager configure.
-
----
-
-## Inputs
-
-Complete internal config.
+COMANDO DI CONFIGURAZIONE.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-Applied module(s) or exact validation/apply error.
-
----
-
-## Errors to handle
-
-Partial apply. For one module, rollback is simple; document
-transaction strategy before multiple modules.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Persistent state, CBOR, async config worker
+Thread principale o thread chiamante.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `subsys/config/config.c`.
-- [ ] Validate the entire snapshot first, then call Manager configure for each initial module in order. Preserve and report the first failure index/code.
-- [ ] Store the sampling fields as accepted but inactive until Runtime exists.
-- [ ] Handle only these realistic errors: Partial apply. For one module, rollback is simple; document transaction strategy before multiple modules.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Configura Module Manager.
+
+---
+
+## Input
+
+Config interna completa.
+
+---
+
+## Output
+
+Moduli applicati(s) o errore validation/apply esatto.
+
+---
+
+## Errori da gestire
+
+Applicazione parziale. Per un modulo, il rollback è semplice; strategia di transazione
+del documento prima di più moduli.
+
+---
+
+## Non implementare ancora
+
+- Stato persistente, CBOR, configurazione asincrona worker
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/config/config.c`.
+- [ ] Convalidare l'intera istantanea prima, quindi chiamare Manager configurare per
+      ogni modulo iniziale in ordine. Preservare e segnalare il primo guasto index/code.
+- [ ] Conservare i campi di campionamento come accettati ma inattivi fino all'esistenza
+      di Runtime.
+- [ ] Gestisci solo questi errori realistici: Applicazione parziale. Per un modulo, il
+      rollback è semplice; strategia di transazione del documento prima di più moduli.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +116,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Validate valid config plus bad version, duplicate/invalid Port, zero period.
-
----
-
-## Expected result
-
-Invalid config never calls Manager.
+Convalida configurazione valida più versione difettosa, duplicate/invalid Port, periodo
+zero.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Config non valida non chiama mai Manager.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `internal: implement config apply`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-090-05](TASK-090-05-add-and-apply-one-hardcoded-c-config.md) — Add and apply one hardcoded C config
+[TASK-090-05](TASK-090-05-add-and-apply-one-hardcoded-c-config.md) — Aggiungere e applicare una Config C statica

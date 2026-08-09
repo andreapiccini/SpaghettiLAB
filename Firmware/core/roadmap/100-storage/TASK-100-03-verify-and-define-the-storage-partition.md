@@ -1,113 +1,122 @@
-# TASK-100-03 — Verify and define the storage partition
+# TASK-100-03 — Verificare e definire la partizione di storage
 
-**Status:** ⬜ TODO  
-**Phase:** 100 — Persistent Config  
-**Depends on:** [TASK-100-02](TASK-100-02-implement-and-test-a-ram-storage-backend.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Verify and define the storage partition** and produce this focused outcome:
-
-Record restored after power cycle.
+**Stato:** ⬜ TODO
+**Fase:** 100 — Config persistente
+**Dipende da:** [TASK-100-02](TASK-100-02-implement-and-test-a-ram-storage-backend.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The verified board flash layout and the appropriate board overlay/Devicetree partition file.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Inspect current flash partitions, select a real non-overlapping region, and define one fixed `storage` partition using installed Zephyr binding syntax. Do not guess an address or size.
+Registrare ripristinato dopo il ciclo di potenza.
 
 ---
 
-## Why
+## File da aprire
 
-Config read/write semantics already work without flash.
+Il layout flash della scheda verificato e il file di partizione overlay/Devicetree
+appropriato.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Ispezionare le partizioni flash correnti, selezionare una regione reale non sovrapposta
+e definisci una partizione fissa `storage` usando il binding già fornito da Zephyr. Non
+indovinare un indirizzo o una dimensione.
+
+---
+
+## Perché
+
+La semantica Config read/write funziona già senza flash.
+
+---
+
+## Chi usa il risultato
 
 Core/Config.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BOOT/CONFIG COMMIT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL + SETTINGS CALLBACK.
-
----
-
-## Execution context
-
-Main/calling thread during synchronous load/save.
+Chiamata diretta + richiamo di posizione.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Zephyr Settings, chosen backend, real fixed partition.
-
----
-
-## Inputs
-
-Valid record and safe flash region.
+Main/calling thread durante il sincrono load/save.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Record restored after power cycle.
-
----
-
-## Errors to handle
-
-Missing/corrupt/full/I/O; never erase unrelated flash.
+Zephyr Settings, scelta backend, vera e propria partizione fissa.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Invent a partition size/address
-- derive from real flash
-
----
-
-## Zephyr note
-
-Flash partitions are compile-time hardware layout. A wrong offset can overwrite firmware, so generated DTS and partition boundaries must be inspected before use.
+Record valido e regione flash sicura.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only The verified board flash layout and the appropriate board overlay/Devicetree partition file.
-- [ ] Inspect current flash partitions, select a real non-overlapping region, and define one fixed `storage` partition using installed Zephyr binding syntax.
-- [ ] Do not guess an address or size.
-- [ ] Handle only these realistic errors: Missing/corrupt/full/I/O; never erase unrelated flash.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Registrare ripristinato dopo il ciclo di potenza.
+
+---
+
+## Errori da gestire
+
+Missing/corrupt/full/I/O; mai cancellare flash non correlati.
+
+---
+
+## Non implementare ancora
+
+- Inventare una partizione size/address
+- derivano da un reale flash
+
+---
+
+## Orientamento Zephyr
+
+Le partizioni Flash sono un layout hardware di tempo di compilazione. Un offset errato
+può sovrascrivere il firmware, quindi i confini di partizione e DTS generati devono
+essere ispezionati prima dell'uso.
+
+---
+
+## Procedura
+
+- [ ] Aprire solo il layout flash della scheda verificato e il file di partizione
+      overlay/Devicetree appropriato.
+- [ ] Ispezionare le partizioni flash correnti, selezionare una regione reale non
+      sovrapposta e definire una partizione `storage` fissa utilizzando la sintassi
+      Zephyr installata binding.
+- [ ] Non indovinare un indirizzo o una dimensione.
+- [ ] Gestisci solo questi errori realistici: Missing/corrupt/full/I/O; mai cancellare
+      flash non correlati.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -117,35 +126,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Save assignment, power-cycle, load/apply; corrupt/version-mismatch test
-through a controlled test record, not random flash writes.
-
----
-
-## Expected result
-
-Config persists or falls back explicitly.
+Salva assegnazione, power-cycle, load/apply; corrupt/version-mismatch prova attraverso
+un record di prova controllato, non scrittura flash casuale.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Config persiste o ricade esplicitamente.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `persistent: verify and define the storage partition`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-100-04](TASK-100-04-enable-zephyr-settings-and-its-backend.md) — Enable Zephyr Settings and its backend
+[TASK-100-04](TASK-100-04-enable-zephyr-settings-and-its-backend.md) — Abilitare Zephyr Settings e il relativo backend

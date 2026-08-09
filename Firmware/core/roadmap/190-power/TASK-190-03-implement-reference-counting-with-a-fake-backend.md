@@ -1,106 +1,113 @@
-# TASK-190-03 — Implement reference counting with a fake backend
+# TASK-190-03 — Implementare il reference counting con backend finto
 
-**Status:** ⬜ TODO  
-**Phase:** 190 — Power  
-**Depends on:** [TASK-190-02](TASK-190-02-define-the-power-public-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement reference counting with a fake backend** and produce this focused outcome:
-
-Correct transition/count/status.
+**Stato:** ⬜ TODO
+**Fase:** 190 — Power
+**Dipende da:** [TASK-190-02](TASK-190-02-define-the-power-public-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Corretto transition/count/status.
+
+---
+
+## File da aprire
 
 `subsys/power/power.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement private state under a short `k_mutex`: first acquire calls a fake power-on hook, intermediate acquire/release only change count, and final release calls power-off. Reject overflow, underflow, and invalid resource/owner.
-
----
-
-## Why
-
-Exact acquire/release points are established by Manager.
+Implementa lo stato privato con un breve `k_mutex`: in primo luogo acquisire chiamate un
+falso power-on hook, intermedio acquire/release solo cambiare il numero, e le chiamate
+di rilascio finale power-off. Rifiutare overflow, underflow, e resource/owner non
+valido.
 
 ---
 
-## Called / used by
+## Perché
+
+I punti acquire/release esatti sono stabiliti da Manager.
+
+---
+
+## Chi usa il risultato
 
 Manager/driver.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-MODULE LIFECYCLE.
+Modulo LIFECICLO.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
 DIRECT CALL + K_MUTEX
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-calling thread
-
----
-
-## Calls / dependencies
-
-Port/Zephyr GPIO or runtime PM.
+chiama thread
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-Valid owner/resource.
-
----
-
-## Outputs
-
-Correct transition/count/status.
+Port/Zephyr GPIO o runtime PM.
 
 ---
 
-## Errors to handle
+## Input
 
-Hardware on/off error, overflow/underflow, rollback after init failure.
-
----
-
-## Do NOT implement yet
-
-- System sleep until runtime/device PM requirements are measured
+Valido owner/resource.
 
 ---
 
-## Zephyr note
+## Output
 
-Use the mutex only around short state transitions. Never call this blocking API from ISR or timer callback context.
+Corretto transition/count/status.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `subsys/power/power.c`.
-- [ ] Implement private state under a short `k_mutex`: first acquire calls a fake power-on hook, intermediate acquire/release only change count, and final release calls power-off.
-- [ ] Reject overflow, underflow, and invalid resource/owner.
-- [ ] Handle only these realistic errors: Hardware on/off error, overflow/underflow, rollback after init failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Hardware on/off errore, overflow/underflow, rollback dopo guasto init.
+
+---
+
+## Non implementare ancora
+
+- Sistema di sospensione fino alla misurazione dei requisiti runtime/device PM
+
+---
+
+## Orientamento Zephyr
+
+Utilizzare il mutex solo intorno alle transizioni di stato corto. Non chiamare mai
+questo blocco API da ISR o timer contesto di callback.
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/power/power.c`.
+- [ ] Implementa lo stato privato con un breve `k_mutex`: prima acquisisci chiamate con
+      un falso power-on hook, acquire/release intermedio cambia solo il conteggio e le
+      chiamate a rilascio finale power-off.
+- [ ] Rifiuta overflow, underflow e resource/owner non validi.
+- [ ] Gestisci solo questi errori realistici: Hardware on/off errore,
+      overflow/underflow, rollback dopo guasto init.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -116,35 +123,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Two owners acquire/release in both orders; inject failed driver init and
-confirm count/rail rollback.
-
----
-
-## Expected result
-
-One on transition, one final off transition, no premature off.
+Due proprietari acquire/release in entrambi gli ordini; iniezione non riuscita driver
+init e confermare count/rail rollback.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Una sulla transizione, una finale sulla transizione, nessuna prematura.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `power: implement reference counting with a fake backend`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-190-04](TASK-190-04-test-power-ownership-and-rollback-logic.md) — Test Power ownership and rollback logic
+[TASK-190-04](TASK-190-04-test-power-ownership-and-rollback-logic.md) — Provare proprietà e rollback di Power

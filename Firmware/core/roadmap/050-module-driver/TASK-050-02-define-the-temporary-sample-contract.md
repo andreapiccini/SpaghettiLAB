@@ -1,100 +1,106 @@
-# TASK-050-02 — Define the temporary sample contract
+# TASK-050-02 — Definire il contratto temporaneo del campione
 
-**Status:** ⬜ TODO  
-**Phase:** 050 — Module + Module Driver  
-**Depends on:** [TASK-050-01](TASK-050-01-define-the-minimal-module-instance.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the temporary sample contract** and produce this focused outcome:
-
-One bounded sample value that can cross the driver operation table.
+**Stato:** ⬜ TODO
+**Fase:** 050 — Module + Module Driver
+**Dipende da:** [TASK-050-01](TASK-050-01-define-the-minimal-module-instance.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`include/spaghetti/data.h` or `include/spaghetti/module_driver.h`, choosing one location and documenting it.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Define only the temperature and humidity fields needed by the current SHT40 read as `struct spaghetti_sample`. Do not add generalized channels, metadata maps, or heap-owned payloads.
+Un valore di campione limitato che può attraversare la tabella di funzionamento driver.
 
 ---
 
-## Why
+## File da aprire
 
-SHT40 must prove the operation table before Registry exists.
-
----
-
-## Called / used by
-
-SHT40 implementation and future Manager.
+`include/spaghetti/data.h` o `include/spaghetti/module_driver.h`, scegliendo una
+posizione e documentandola.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-MODULE LIFECYCLE/READ.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL through function pointers.
+Definire solo i campi di temperatura e umidità necessari dall'attuale SHT40 letto come
+`struct spaghetti_sample`. Non aggiungere canali generalizzati, mappe dei metadati o
+payload di proprietà.
 
 ---
 
-## Execution context
+## Perché
 
-Caller thread.
-
----
-
-## Calls / dependencies
-
-Module and Port capability types.
+SHT40 deve dimostrare la tabella delle operazioni prima dell'esistenza del Registro.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Module pointer and sample output.
-
----
-
-## Outputs
-
-One bounded sample value that can cross the driver operation table.
+Implementazione SHT40 e futuro Manager.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-Null ops/module, unsupported capability, I/O failure.
-
----
-
-## Do NOT implement yet
-
-- Command/configure/probe/power callback or ABI version
+MODULO LIFECYCLE/READ.
 
 ---
 
-## Steps
+## Meccanismo di invocazione
 
-- [ ] Open only `include/spaghetti/data.h` or `include/spaghetti/module_driver.h`, choosing one location and documenting it.
-- [ ] Define only the temperature and humidity fields needed by the current SHT40 read as `struct spaghetti_sample`.
-- [ ] Do not add generalized channels, metadata maps, or heap-owned payloads.
-- [ ] Handle only these realistic errors: Null ops/module, unsupported capability, I/O failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+INVITARE DIRECT through function pointers.
+
+---
+
+## Contesto di esecuzione
+
+Thread chiamante.
+
+---
+
+## Chiamate e dipendenze
+
+Modulo e tipi di capacità Port.
+
+---
+
+## Input
+
+Puntatore del modulo e uscita del campione.
+
+---
+
+## Output
+
+Un valore di campione limitato che può attraversare la tabella di funzionamento driver.
+
+---
+
+## Errori da gestire
+
+Null ops/module, capacità non supportata, guasto I/O.
+
+---
+
+## Non implementare ancora
+
+- Command/configure/probe/power callback o versione ABI
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `include/spaghetti/data.h` o `include/spaghetti/module_driver.h`,
+      scegliendo una posizione e documentandola.
+- [ ] Definire solo i campi di temperatura e umidità necessari per l'attuale SHT40 letto
+      come `struct spaghetti_sample`.
+- [ ] Non aggiungere canali generalizzati, mappe dei metadati o payload di proprietà.
+- [ ] Gestisci solo questi errori realistici: Null ops/module, funzionalità non
+      supportata, errore I/O.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +116,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Review that driver does not own the module instance.
-
----
-
-## Expected result
-
-Three-operation contract only.
+Verificare che driver non possiede l'istanza del modulo.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Solo contratto di tre operazioni.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: define the temporary sample contract`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-050-03](TASK-050-03-define-the-module-driver-operation-table.md) — Define the module-driver operation table
+[TASK-050-03](TASK-050-03-define-the-module-driver-operation-table.md) — Definire la tabella operazioni di Module Driver

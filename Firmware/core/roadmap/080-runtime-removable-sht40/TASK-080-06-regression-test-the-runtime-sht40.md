@@ -1,143 +1,152 @@
-# TASK-080-06 — Regression-test the runtime SHT40
+# TASK-080-06 — Eseguire il test di regressione di SHT40 runtime
 
-**Status:** ⬜ TODO  
-**Phase:** 080 — Runtime-removable SHT40  
-**Depends on:** [TASK-080-05](TASK-080-05-remove-the-static-sensor-shortcut.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Regression-test the runtime SHT40** and produce this focused outcome:
-
-Same values with no static module DT node.
+**Stato:** ⬜ TODO
+**Fase:** 080 — SHT40 rimovibile a runtime
+**Dipende da:** [TASK-080-05](TASK-080-05-remove-the-static-sensor-shortcut.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`build/zephyr/.config`, `build/zephyr/zephyr.dts`, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Confirm generated output has no SHT4x instance or Sensor API dependency. Flash and test valid address, invalid address, missing sensor, CRC failure where injectable, and a remove/reconfigure cycle.
+Stessi valori senza nodo statico del modulo DT.
 
 ---
 
-## Why
+## File da aprire
 
-Both paths were compared on real hardware.
-
----
-
-## Called / used by
-
-Build and final SHT40 driver.
+`build/zephyr/.config`, `build/zephyr/zephyr.dts` e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-REFACTOR AFTER HARDWARE PROOF.
-
----
-
-## Invocation mechanism
-
-BUILD TIME plus DIRECT CALL runtime path.
+Confermare l'uscita generata non ha alcuna istanza SHT4x o dipendenza da Sensor API.
+Indirizzo Flash e test valido, indirizzo non valido, sensore mancante, guasto CRC dove
+iniettabile, e un ciclo remove/reconfigure.
 
 ---
 
-## Execution context
+## Perché
+
+Entrambi i percorsi sono stati confrontati su hardware reale.
+
+---
+
+## Chi usa il risultato
+
+Costruisci e finali SHT40 driver.
+
+---
+
+## Evento che attiva il codice
+
+Refattore dopo la prova dura.
+
+---
+
+## Meccanismo di invocazione
+
+TEMPO DI COMPILAZIONE più DIRECT CALL runtime path.
+
+---
+
+## Contesto di esecuzione
 
 Build/main thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Port I2C only.
+Solo Port I2C.
 
 ---
 
-## Inputs
+## Input
 
 Runtime Port/address.
 
 ---
 
-## Outputs
+## Output
 
-Same values with no static module DT node.
-
----
-
-## Errors to handle
-
-Kconfig/source still depending on Sensor API.
+Stessi valori senza nodo statico del modulo DT.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- Custom Port DT binding
+Kconfig/source dipende ancora dalle API del sensore.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `build/zephyr/.config`, `build/zephyr/zephyr.dts`, and the serial console.
-- [ ] Confirm generated output has no SHT4x instance or Sensor API dependency. Flash and test valid address, invalid address, missing sensor, CRC failure where injectable, and a remove/reconfigure cycle.
-- [ ] Handle only these realistic errors: Kconfig/source still depending on Sensor API.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Personalizzato Port DT binding
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `build/zephyr/.config`, `build/zephyr/zephyr.dts` e la console
+      seriale.
+- [ ] Confermare l'uscita generata non ha alcuna istanza SHT4x o dipendenza da Sensor
+      API. Indirizzo Flash e test valido, indirizzo non valido, sensore mancante, guasto
+      CRC dove iniettabile, e un ciclo remove/reconfigure.
+- [ ] Gestisci solo questi errori realistici: Kconfig/source a seconda delle API del
+      sensore.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Search source/final DTS for `sht40_test` and static compatible; confirm
-none, then verify measurement.
-
----
-
-## Expected result
-
-The real SHT40 is readable through Port and direct I2C with no static sensor shortcut.
+Cerca source/final DTS per `sht40_test` e compatibile statico; non confermare nessuno,
+quindi verificare la misurazione.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il vero SHT40 è leggibile tramite Port e I2C diretto senza collegamento statico al
+sensore.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `runtime-removable: regression-test the runtime sht40`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-090-01](../090-config/TASK-090-01-define-the-internal-config-model.md) — Define the internal Config model
+[TASK-090-01](../090-config/TASK-090-01-define-the-internal-config-model.md) — Definire il modello interno di Config

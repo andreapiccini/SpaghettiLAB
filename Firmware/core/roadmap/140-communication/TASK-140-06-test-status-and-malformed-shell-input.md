@@ -1,144 +1,152 @@
-# TASK-140-06 — Test status and malformed shell input
+# TASK-140-06 — Provare stato e input Shell non valido
 
-**Status:** ⬜ TODO  
-**Phase:** 140 — Communication  
-**Depends on:** [TASK-140-05](TASK-140-05-initialize-communication-from-core.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test status and malformed shell input** and produce this focused outcome:
-
-Core/modules/runtime status response.
+**Stato:** ⬜ TODO
+**Fase:** 140 — Communication
+**Dipende da:** [TASK-140-05](TASK-140-05-initialize-communication-from-core.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The USB serial shell and serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Run `spaghetti status`, an unknown subcommand, missing arguments, odd-length hex, invalid hex, and an oversized payload. Confirm valid status returns bounded data and every invalid command returns without changing Config.
+Risposta allo stato Core/modules/runtime.
 
 ---
 
-## Why
+## File da aprire
 
-No USB CDC/BLE/network transport must be invented.
-
----
-
-## Called / used by
-
-Developer/PC via USB serial.
+La shell seriale USB e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-SHELL COMMAND / COMMUNICATION RX.
+Eseguire `spaghetti status`, un sottocomando sconosciuto, argomenti mancanti, hex
+dispari, hex non valido e un payload sovradimensionato. Confermare lo stato valido
+restituisce dati limitati e ogni comando non valido restituisce senza cambiare Config.
 
 ---
 
-## Invocation mechanism
+## Perché
+
+Nessun trasporto USB CDC/BLE/network deve essere inventato.
+
+---
+
+## Chi usa il risultato
+
+Developer/PC via seriale USB.
+
+---
+
+## Evento che attiva il codice
+
+Commandera'/Comunicazione RX.
+
+---
+
+## Meccanismo di invocazione
 
 SHELL COMMAND -> DIRECT CALL.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Zephyr shell thread; safe for bounded parsing, but do not
-perform long blocking work while holding shell internals.
-
----
-
-## Calls / dependencies
-
-Zephyr Shell, Communication handler, Config/Status.
+Zephyr shell thread; sicuro per l'analisi delimitata, ma non eseguire un lungo lavoro di
+blocco durante la tenuta interna della shell.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-`spaghetti status` first.
-
----
-
-## Outputs
-
-Core/modules/runtime status response.
+Zephyr Shell, Communication Handler, Config/Status.
 
 ---
 
-## Errors to handle
+## Input
 
-Bad arguments, oversized hex, unavailable Config.
-
----
-
-## Do NOT implement yet
-
-- CBOR until Step 15, binary framing, authentication
+Prima `spaghetti status`.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only The USB serial shell and serial console.
-- [ ] Run `spaghetti status`, an unknown subcommand, missing arguments, odd-length hex, invalid hex, and an oversized payload.
-- [ ] Confirm valid status returns bounded data and every invalid command returns without changing Config.
-- [ ] Handle only these realistic errors: Bad arguments, oversized hex, unavailable Config.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Risposta allo stato Core/modules/runtime.
+
+---
+
+## Errori da gestire
+
+Argomenti sbagliati, esadecimale sovradimensionato, Config non disponibile.
+
+---
+
+## Non implementare ancora
+
+- CBOR fino al Passo 15, framing binario, autenticazione
+
+---
+
+## Procedura
+
+- [ ] Aprire solo la shell seriale USB e la console seriale.
+- [ ] Eseguire `spaghetti status`, un sottocomando sconosciuto, argomenti mancanti, hex
+      dispari, hex non valido e un payload sovradimensionato.
+- [ ] Confermare lo stato valido restituisce dati limitati e ogni comando non valido
+      restituisce senza modificare Config.
+- [ ] Gestisci solo questi errori realistici: Argomenti sbagliati, esagono
+      sovradimensionato, Config non disponibile.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-From existing serial console run help, valid status, invalid command.
-
----
-
-## Expected result
-
-The USB shell reaches Communication and rejects malformed input without side effects.
+Dalla console seriale esistente eseguire aiuto, stato valido, comando non valido.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+La shell USB raggiunge Communication e rifiuta l'ingresso malformato senza effetti
+collaterali.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `communication: test status and malformed shell input`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-150-01](../150-cbor/TASK-150-01-document-the-cbor-v0-schema.md) — Document the CBOR V0 schema
+[TASK-150-01](../150-cbor/TASK-150-01-document-the-cbor-v0-schema.md) — Documentare lo schema CBOR V0

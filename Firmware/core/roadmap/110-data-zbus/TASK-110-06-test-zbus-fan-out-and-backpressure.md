@@ -1,143 +1,154 @@
-# TASK-110-06 — Test zbus fan-out and backpressure
+# TASK-110-06 — Provare fan-out e backpressure di zbus
 
-**Status:** ⬜ TODO  
-**Phase:** 110 — Data / zbus  
-**Depends on:** [TASK-110-05](TASK-110-05-publish-real-manager-samples.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test zbus fan-out and backpressure** and produce this focused outcome:
-
-Logger and test subscriber receive identical sequence.
+**Stato:** ⬜ TODO
+**Fase:** 110 — Data / zbus
+**Dipende da:** [TASK-110-05](TASK-110-05-publish-real-manager-samples.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/data/data.c`, subscriber loops/test harness, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Receive the same sequence in logger and test subscribers. Fill or stall one bounded subscriber path deliberately and verify the selected timeout/error policy without blocking forever.
+Logger e test subscriber ricevono sequenza identica.
 
 ---
 
-## Why
+## File da aprire
 
-Runtime/MQTT must consume Data, not SHT40 APIs.
-
----
-
-## Called / used by
-
-Temporary main acquisition loop; subscribers.
+Imbragatura `subsys/data/data.c`, subscriber loops/test e console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-DATA ARRIVAL.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL then ZBUS PUBLISH.
+Ricevere la stessa sequenza in logger e iscritti ai test. Riempire o bloccare un
+percorso subscriber limitato deliberatamente e verificare la politica timeout/error
+selezionata senza bloccare per sempre.
 
 ---
 
-## Execution context
+## Perché
 
-Main publisher, subscriber threads.
-
----
-
-## Calls / dependencies
-
-Manager read and Data publish.
+Runtime/MQTT deve consumare i dati, non le API SHT40.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Real sample.
-
----
-
-## Outputs
-
-Logger and test subscriber receive identical sequence.
+Loop di acquisizione principale temporaneo; subscriber.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-Read failure publishes no valid sample; publish failure logged.
-
----
-
-## Do NOT implement yet
-
-- MQTT, PC streaming, generic Data routing
+ARRIVO DATI.
 
 ---
 
-## Steps
+## Meccanismo di invocazione
 
-- [ ] Open only `subsys/data/data.c`, subscriber loops/test harness, and the serial console.
-- [ ] Receive the same sequence in logger and test subscribers. Fill or stall one bounded subscriber path deliberately and verify the selected timeout/error policy without blocking forever.
-- [ ] Handle only these realistic errors: Read failure publishes no valid sample; publish failure logged.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Chiamate poi ZBUS Publish.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale publisher, subscriber.
+
+---
+
+## Chiamate e dipendenze
+
+Manager leggi e pubblichi i dati.
+
+---
+
+## Input
+
+Un vero campione.
+
+---
+
+## Output
+
+Logger e test subscriber ricevono sequenza identica.
+
+---
+
+## Errori da gestire
+
+Leggi il fallimento non pubblica alcun campione valido; pubblica il fallimento
+registrato.
+
+---
+
+## Non implementare ancora
+
+- MQTT, streaming PC, routing dati generico
+
+---
+
+## Procedura
+
+- [ ] Aprire solo l'imbracatura `subsys/data/data.c`, subscriber loops/test e la console
+      seriale.
+- [ ] Ricevere la stessa sequenza in logger e iscritti ai test. Riempire o bloccare un
+      percorso subscriber limitato deliberatamente e verificare la politica
+      timeout/error selezionata senza bloccare per sempre.
+- [ ] Gestisci solo questi errori realistici: Il fallimento della lettura non pubblica
+      alcun campione valido; pubblica il fallimento registrato.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Run for multiple samples; verify monotonically increasing sequence in both
-consumers; intentionally pause a consumer to test pool/backpressure policy.
-
----
-
-## Expected result
-
-One real sample reaches two consumers with matching sequence and defined full-buffer behavior.
+Eseguire per più campioni; verificare la sequenza monotonicamente crescente in entrambi
+i consumatori; fermare intenzionalmente un consumatore per testare la politica
+pool/backpressure.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Un campione reale raggiunge due consumatori con sequenza corrispondente e definito
+comportamento full-buffer.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `data: test zbus fan-out and backpressure`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-120-01](../120-runtime-v0/TASK-120-01-define-the-runtime-sampling-task-api.md) — Define the Runtime sampling task API
+[TASK-120-01](../120-runtime-v0/TASK-120-01-define-the-runtime-sampling-task-api.md) — Definire l’API del task di campionamento Runtime

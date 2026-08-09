@@ -1,33 +1,31 @@
-# Phase 170 — Discovery
+# Fase 170 — Discovery
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Normalize manual discovery results before they reach the unchanged Module Manager.
+Tradurre risultati di discovery in assegnazioni accettate dal Module Manager.
 
-## Depends on
+## Dipende da
 
-[Phase 160 — MQTT](../160-mqtt/README.md)
+[Fase 160 — MQTT](../160-mqtt/README.md)
 
-## Visible result
+## Risultato visibile
 
-Manual discovery feeds the Manager without provider knowledge leaking into it.
+Un provider manuale configura un modulo senza entrare nel Manager.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-170-01 — Define Discovery result types](TASK-170-01-define-discovery-result-types.md)
-2. ⬜ [TASK-170-02 — Define the Discovery provider API](TASK-170-02-define-the-discovery-provider-api.md)
-3. ⬜ [TASK-170-03 — Implement manual Discovery validation](TASK-170-03-implement-manual-discovery-validation.md)
-4. ⬜ [TASK-170-04 — Route accepted results to Module Manager](TASK-170-04-route-accepted-results-to-module-manager.md)
-5. ⬜ [TASK-170-05 — Route Config assignments through Discovery](TASK-170-05-route-config-assignments-through-discovery.md)
+1. ⬜ [TASK-170-01 — Definire i tipi risultato di Discovery](TASK-170-01-define-discovery-result-types.md)
+2. ⬜ [TASK-170-02 — Definire l’API del provider Discovery](TASK-170-02-define-the-discovery-provider-api.md)
+3. ⬜ [TASK-170-03 — Implementare la validazione di Discovery manuale](TASK-170-03-implement-manual-discovery-validation.md)
+4. ⬜ [TASK-170-04 — Inviare i risultati accettati al Module Manager](TASK-170-04-route-accepted-results-to-module-manager.md)
+5. ⬜ [TASK-170-05 — Instradare le assegnazioni Config tramite Discovery](TASK-170-05-route-config-assignments-through-discovery.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Manual assignment produces normalized Discovery result.
-- [ ] Manager API/implementation is provider-independent and unchanged.
-- [ ] Generation/stale result is tested.
-- [ ] No EEPROM/probe code exists.
-- [ ] Existing CBOR/manual flow still works.
+- [ ] Tipi risultato e ownership sono espliciti.
+- [ ] Il provider non modifica direttamente lo stato del Manager.
+- [ ] Risultati invalidi o duplicati vengono rifiutati.

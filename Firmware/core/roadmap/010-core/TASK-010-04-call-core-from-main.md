@@ -1,108 +1,110 @@
-# TASK-010-04 — Call Core from main
+# TASK-010-04 — Chiamare Core da main
 
-**Status:** ⬜ TODO  
-**Phase:** 010 — Core  
-**Depends on:** [TASK-010-03](TASK-010-03-add-core-to-the-application-build.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Call Core from main** and produce this focused outcome:
-
-Core log then uptime.
+**Stato:** ⬜ TODO
+**Fase:** 010 — Core
+**Dipende da:** [TASK-010-03](TASK-010-03-add-core-to-the-application-build.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Log Core poi uptime.
+
+---
+
+## File da aprire
 
 `src/main.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Include `<spaghetti/core.h>`, call
-`spaghetti_core_init()` once before the existing uptime loop, log/print its
-negative return and stop/return on failure. Keep the uptime loop for proof.
-
----
-
-## Why
-
-The boundary is useful only when exercised.
+Includi `<spaghetti/core.h>`, chiama `spaghetti_core_init()` una volta prima del loop
+uptime esistente, log/print il suo ritorno negativo e stop/return in caso di guasto.
+Mantenere il loop uptime per la prova.
 
 ---
 
-## Called / used by
+## Perché
 
-Zephyr invokes `main`; `main` calls Core.
-
----
-
-## Trigger
-
-BOOT.
+Il confine è utile solo se esercitato.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main thread.
+Zephyr invoca `main`; `main` chiama Core.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
+
+AVVIO.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
 
 `spaghetti_core_init()`.
 
 ---
 
-## Inputs
+## Input
 
-None.
-
----
-
-## Outputs
-
-Core log then uptime.
+Nessuno.
 
 ---
 
-## Errors to handle
+## Output
 
-Negative init result.
-
----
-
-## Do NOT implement yet
-
-- Move the loop into Core or start other threads
+Log Core poi uptime.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `src/main.c`.
-- [ ] Include `<spaghetti/core.h>`, call `spaghetti_core_init()` once before the existing uptime loop, log/print its negative return and stop/return on failure.
-- [ ] Keep the uptime loop for proof.
-- [ ] Handle only these realistic errors: Negative init result.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Risultato negativo.
+
+---
+
+## Non implementare ancora
+
+- Sposta il ciclo in Core o avvia altri thread
+
+---
+
+## Procedura
+
+- [ ] Apri solo `src/main.c`.
+- [ ] Includi `<spaghetti/core.h>`, chiama `spaghetti_core_init()` una volta prima del
+      loop di uptime esistente, log/print il suo ritorno negativo e stop/return in caso
+      di guasto.
+- [ ] Tenere il loop uptime per la prova.
+- [ ] Gestire solo questi errori realistici: risultato negativo init.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -112,34 +114,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Reset and read console.
-
----
-
-## Expected result
-
-`Spaghetti Core ready`, then unchanged uptime behavior.
+Reimposta e leggi la console.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+`Spaghetti Core ready`, quindi comportamento in tempo reale invariato.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `core: call core from main`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-010-05](TASK-010-05-structure-firmware-logging.md) — Structure firmware logging
+[Registrazione del firmware TASK-010-05](TASK-010-05-structure-firmware-logging.md) —
+Structure

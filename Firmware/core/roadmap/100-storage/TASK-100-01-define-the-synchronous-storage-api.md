@@ -1,100 +1,104 @@
-# TASK-100-01 — Define the synchronous Storage API
+# TASK-100-01 — Definire l’API di storage sincrono
 
-**Status:** ⬜ TODO  
-**Phase:** 100 — Persistent Config  
-**Depends on:** [TASK-090-06](../090-config/TASK-090-06-test-config-validation-and-apply.md)  
-**Estimated scope:** Small
+**Stato:** ⬜ TODO
+**Fase:** 100 — Config persistente
+**Dipende da:** [TASK-090-06](../090-config/TASK-090-06-test-config-validation-and-apply.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Goal
+## Obiettivo
 
-Complete **Define the synchronous Storage API** and produce this focused outcome:
+Questo task deve produrre un solo risultato verificabile:
 
 Found/not-found/corrupt/status.
 
 ---
 
-## Open
+## File da aprire
 
-Create `subsys/services/storage/storage.h`.
-
----
-
-## Write / Modify
-
-Declare `spaghetti_storage_init()`, `spaghetti_storage_read_config()`, and `spaghetti_storage_write_config()` around one versioned fixed record. Define explicit buffer/snapshot ownership and realistic return codes.
+Crea `subsys/services/storage/storage.h`.
 
 ---
 
-## Why
+## Cosa scrivere o modificare
 
-Internal model is proven and small enough to version.
-
----
-
-## Called / used by
-
-Core/Config only.
+Dichiara `spaghetti_storage_init()`, `spaghetti_storage_read_config()` e
+`spaghetti_storage_write_config()` intorno a un record fisso versione. Definisci
+proprietario buffer/snapshot esplicito e codici di ritorno realistici.
 
 ---
 
-## Trigger
+## Perché
 
-BOOT/VALID CONFIG UPDATE.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Il modello interno è collaudato e abbastanza piccolo per la versione.
 
 ---
 
-## Execution context
+## Chi usa il risultato
 
-Main/calling thread; never ISR.
-
----
-
-## Calls / dependencies
-
-Initially memory; later Zephyr Settings.
+Solo Core/Config.
 
 ---
 
-## Inputs
+## Evento che attiva il codice
+
+BOOT/VALID CONFIG AGGIORNAMENTO.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
+
+Main/calling thread; mai ISR.
+
+---
+
+## Chiamate e dipendenze
+
+Inizialmente memoria; successivamente Zephyr Settings.
+
+---
+
+## Input
 
 Config record/destination.
 
 ---
 
-## Outputs
+## Output
 
 Found/not-found/corrupt/status.
 
 ---
 
-## Errors to handle
+## Errori da gestire
 
-Missing record is normal; wrong size/version/corruption.
-
----
-
-## Do NOT implement yet
-
-- Measurement history or arbitrary blobs
+Il record mancante è normale; size/version/corruption sbagliato.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only Create `subsys/services/storage/storage.h`.
-- [ ] Declare `spaghetti_storage_init()`, `spaghetti_storage_read_config()`, and `spaghetti_storage_write_config()` around one versioned fixed record.
-- [ ] Define explicit buffer/snapshot ownership and realistic return codes.
-- [ ] Handle only these realistic errors: Missing record is normal; wrong size/version/corruption.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Storia delle misurazioni o blob arbitrarie
+
+---
+
+## Procedura
+
+- [ ] Apri solo Crea `subsys/services/storage/storage.h`.
+- [ ] Dichiara `spaghetti_storage_init()`, `spaghetti_storage_read_config()` e
+      `spaghetti_storage_write_config()` intorno a un record fisso versione.
+- [ ] Definire la proprietà buffer/snapshot esplicita e codici di ritorno realistici.
+- [ ] Gestisci solo questi errori realistici: Il record mancante è normale;
+      size/version/corruption sbagliato.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +114,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Write/read equality and wrong-version rejection.
-
----
-
-## Expected result
-
-Config can depend on Storage contract, not flash API.
+Uguaglianza Write/read e rifiuto della versione errata.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Config può dipendere dal contratto Storage, non da API flash.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `persistent: define the synchronous storage api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-100-02](TASK-100-02-implement-and-test-a-ram-storage-backend.md) — Implement and test a RAM Storage backend
+[TASK-100-02](TASK-100-02-implement-and-test-a-ram-storage-backend.md) — Implementare e provare il backend storage RAM

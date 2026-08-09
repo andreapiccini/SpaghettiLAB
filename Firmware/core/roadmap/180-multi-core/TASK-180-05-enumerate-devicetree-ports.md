@@ -1,99 +1,106 @@
-# TASK-180-05 — Enumerate Devicetree Ports
+# TASK-180-05 — Enumerare i Port dal Devicetree
 
-**Status:** ⬜ TODO  
-**Phase:** 180 — Multiple Core variants  
-**Depends on:** [TASK-180-04](TASK-180-04-move-verified-hardware-facts-into-board-dts.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Enumerate Devicetree Ports** and produce this focused outcome:
-
-Same Port 0/SHT40 behavior on custom board target.
+**Stato:** ⬜ TODO
+**Fase:** 180 — Varianti Core multiple
+**Dipende da:** [TASK-180-04](TASK-180-04-move-verified-hardware-facts-into-board-dts.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
+
+---
+
+## File da aprire
 
 `subsys/port/port.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Replace the single hardcoded descriptor and `DT_NODELABEL(i2c...)` reference with compile-time enumeration of enabled `spaghettilab,port` instances. Populate fixed descriptors from generated properties and delete the temporary Port 0 hardcode.
-
----
-
-## Why
-
-The abstraction is already proven, so refactor has observable parity.
+Sostituire il descrittore hardcoded singolo e il riferimento `DT_NODELABEL(i2c...)` con
+l'enumerazione dei tempi di compilazione delle istanze `spaghettilab,port` abilitate.
+Popolare i descrittori fissi dalle proprietà generate ed eliminare il momentaneo codice
+Port 0.
 
 ---
 
-## Called / used by
+## Perché
+
+L'astrazione è già provata, in modo da refactor ha parità osservabile.
+
+---
+
+## Chi usa il risultato
 
 West/CMake/Port.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BUILD/BOOT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME descriptors then BOOT DIRECT CALL.
-
----
-
-## Execution context
-
-Build tools/main thread.
+I descrittori del tempo ACQUISTO poi BOOT DIRECT CALL.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Generated macros and Device Model.
-
----
-
-## Inputs
-
-Real first-Core board description.
+Costruisci tools/main thread.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Same Port 0/SHT40 behavior on custom board target.
-
----
-
-## Errors to handle
-
-Board discovery, DTS validation, device readiness.
+Macro generate e Device Model.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Copy all devkit definitions blindly or add second board guesses
+Vera prima descrizione della scheda Core.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `subsys/port/port.c`.
-- [ ] Replace the single hardcoded descriptor and `DT_NODELABEL(i2c...)` reference with compile-time enumeration of enabled `spaghettilab,port` instances. Populate fixed descriptors from generated properties and delete the temporary Port 0 hardcode.
-- [ ] Handle only these realistic errors: Board discovery, DTS validation, device readiness.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
+
+---
+
+## Errori da gestire
+
+Scoperta da tavolo, convalida DTS, prontezza del dispositivo.
+
+---
+
+## Non implementare ancora
+
+- Copia tutte le definizioni di devkit ciecamente o aggiungi indovina la seconda scheda
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/port/port.c`.
+- [ ] Sostituire il descrittore hardcoded singolo e il riferimento
+      `DT_NODELABEL(i2c...)` con l'enumerazione dei tempi di compilazione delle istanze
+      `spaghettilab,port` abilitate. Popolare i descrittori fissi dalle proprietà
+      generate ed eliminare il momentaneo codice Port 0.
+- [ ] Gestisci solo questi errori realistici: Scoperta da tavolo, validazione DTS,
+      prontezza del dispositivo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -109,34 +116,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Compare Port capability/status and real measurement with old devkit target.
-
----
-
-## Expected result
-
-No C3 pin/controller label in higher layers or Port catalog data.
+Confronta Port capability/status e misura reale con il vecchio obiettivo devkit.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessun'etichetta C3 pin/controller in livelli superiori o dati del catalogo Port.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `multiple: enumerate devicetree ports`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-180-06](TASK-180-06-build-and-test-the-first-real-core-board.md) — Build and test the first real Core board
+[TASK-180-06](TASK-180-06-build-and-test-the-first-real-core-board.md) — Compilare e provare la prima board Core reale

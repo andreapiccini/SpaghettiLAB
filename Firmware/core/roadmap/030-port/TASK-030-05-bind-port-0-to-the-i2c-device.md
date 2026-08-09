@@ -1,106 +1,120 @@
-# TASK-030-05 — Bind Port 0 to the I2C device
+# TASK-030-05 — Associare Port 0 al device I2C
 
-**Status:** ⬜ TODO  
-**Phase:** 030 — Port  
-**Depends on:** [TASK-030-04](TASK-030-04-implement-the-private-port-descriptor.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Bind Port 0 to the I2C device** and produce this focused outcome:
-
-One ready Port or `-ENODEV`.
+**Stato:** ⬜ TODO
+**Fase:** 030 — Port
+**Dipende da:** [TASK-030-04](TASK-030-04-implement-the-private-port-descriptor.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Uno Port pronto o `-ENODEV`.
+
+---
+
+## File da aprire
 
 `subsys/port/port.c`.
 
 ---
 
-## Write / Modify
+## Orientamento Zephyr — Zephyr Device Model e DEVICE_DT_GET
 
-In `spaghetti_port_init_all()`, obtain the verified controller with `DEVICE_DT_GET(DT_NODELABEL(...))`, store it in Port 0, and return `-ENODEV` when `device_is_ready()` is false. Implement `spaghetti_port_i2c_device()` with null and capability checks.
-
----
-
-## Why
-
-Hardware feedback is more valuable than designing all Port variants.
-
----
-
-## Called / used by
-
-Core and SHT40 wrapper.
+1. **Cos’è:** Il Device Model rappresenta periferiche inizializzate da Zephyr tramite `struct device`. `DEVICE_DT_GET()` converte un nodo Devicetree noto a build-time nel puntatore al relativo device.
+2. **A cosa serve:** Consente a Port 0 di conservare il controller I2C senza creare manualmente un driver o una struttura hardware.
+3. **Quando viene usato:** La macro risolve il riferimento durante la build; `device_is_ready()` controlla a runtime che inizializzazione e dipendenze siano riuscite.
+4. **Build-time o runtime:** Riferimento a build-time, verifica e utilizzo a runtime.
+5. **Collegamento con questo task:** Il descrittore privato di Port 0 deve puntare al controller I2C abilitato nella fase 020.
+6. **File reali coinvolti:** `subsys/port/port.c`; per verifica anche `build/zephyr/zephyr.dts` e l’header Devicetree generato.
+7. **Cosa guardare nei file:** Individua la node label I2C reale, la chiamata `DEVICE_DT_GET()` e il controllo `device_is_ready()`.
+8. **Cosa non modificare:** Non istanziare `struct device`, non chiamare direttamente l’init del driver e non usare una label inventata.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-BOOT.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+In `spaghetti_port_init_all()`, ottenere il controller verificato con
+`DEVICE_DT_GET(DT_NODELABEL(...))`, memorizzarlo in Port 0, e restituire `-ENODEV`
+quando `device_is_ready()` è falso. Implementa `spaghetti_port_i2c_device()` con
+controlli null e funzionalità.
 
 ---
 
-## Execution context
+## Perché
 
-Main thread.
-
----
-
-## Calls / dependencies
-
-Devicetree macros, `DEVICE_DT_GET`, `device_is_ready`.
+Il feedback hardware è più prezioso della progettazione di tutte le varianti Port.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Static compiled DTS.
-
----
-
-## Outputs
-
-One ready Port or `-ENODEV`.
+Core e SHT40 wrapper.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-Controller absent/not ready and invalid lookup.
-
----
-
-## Do NOT implement yet
-
-- Mutex unless two actual users share multi-step access
+AVVIO.
 
 ---
 
-## Zephyr note
+## Meccanismo di invocazione
 
-`DEVICE_DT_GET` converts a compile-time Devicetree node into a Zephyr device pointer. Readiness must still be checked at runtime with `device_is_ready()`.
+CHIAMATA DIRETTA.
 
 ---
 
-## Steps
+## Contesto di esecuzione
 
-- [ ] Open only `subsys/port/port.c`.
-- [ ] In `spaghetti_port_init_all()`, obtain the verified controller with `DEVICE_DT_GET(DT_NODELABEL(...))`, store it in Port 0, and return `-ENODEV` when `device_is_ready()` is false.
-- [ ] Implement `spaghetti_port_i2c_device()` with null and capability checks.
-- [ ] Handle only these realistic errors: Controller absent/not ready and invalid lookup.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
+
+Macro Devicetree, `DEVICE_DT_GET`, `device_is_ready`.
+
+---
+
+## Input
+
+DTS compilato statico.
+
+---
+
+## Output
+
+Uno Port pronto o `-ENODEV`.
+
+---
+
+## Errori da gestire
+
+Controllore absent/not ricerca pronta e non valida.
+
+---
+
+## Non implementare ancora
+
+- Mutex a meno che due utenti effettivi non condividano l'accesso multi-step
+
+---
+
+
+## Procedura
+
+- [ ] Apri solo `subsys/port/port.c`.
+- [ ] In `spaghetti_port_init_all()`, ottenere il controller verificato con
+      `DEVICE_DT_GET(DT_NODELABEL(...))`, memorizzarlo in Port 0, e restituire `-ENODEV`
+      quando `device_is_ready()` è falso.
+- [ ] Implementa `spaghetti_port_i2c_device()` con controlli null e funzionalità.
+- [ ] Gestisci solo questi errori realistici: Controller absent/not ricerca pronta e non
+      valida.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -116,34 +130,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Unit-level inspection of ID bounds/null behavior.
-
----
-
-## Expected result
-
-One private descriptor and no module knowledge.
+Ispezione a livello di unità del comportamento di ID bounds/null.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Un descrittore privato e nessuna conoscenza del modulo.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `port: bind port 0 to the i2c device`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-030-06](TASK-030-06-add-port-to-cmake.md) — Add Port to CMake
+[TASK-030-06](TASK-030-06-add-port-to-cmake.md) — Aggiungere Port alla build CMake

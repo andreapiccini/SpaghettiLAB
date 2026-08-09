@@ -1,101 +1,107 @@
-# TASK-160-01 — Choose the development network path
+# TASK-160-01 — Scegliere il percorso di rete per lo sviluppo
 
-**Status:** ⬜ TODO  
-**Phase:** 160 — MQTT  
-**Depends on:** [TASK-150-06](../150-cbor/TASK-150-06-test-valid-and-invalid-cbor-payloads.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Choose the development network path** and produce this focused outcome:
-
-IP-ready event and address log.
+**Stato:** ⬜ TODO
+**Fase:** 160 — MQTT
+**Dipende da:** [TASK-150-06](../150-cbor/TASK-150-06-test-valid-and-invalid-cbor-payloads.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The target network environment, broker endpoint, credential source, and `subsys/services/mqtt/README.md`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Record whether the test uses Wi-Fi, DHCP or static IPv4, DNS or numeric broker address, and how development credentials are supplied without committing secrets. Do not edit firmware in this decision ticket.
+Evento e registro indirizzi IP-ready.
 
 ---
 
-## Why
+## File da aprire
 
-Data works and MQTT is the next external consumer.
-
----
-
-## Called / used by
-
-MQTT service.
+L'ambiente di rete target, l'endpoint broker, la origine delle credenziali e
+`subsys/services/mqtt/README.md`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Registrare se il test utilizza Wi-Fi, DHCP o IPv4, indirizzo DNS o broker numerico, e
+come vengono fornite le credenziali di sviluppo senza commettere segreti. Non modificare
+il firmware in questo task, che serve soltanto a documentare la decisione.
+
+---
+
+## Perché
+
+Data funziona e MQTT è il prossimo consumatore esterno.
+
+---
+
+## Chi usa il risultato
+
+Servizio MQTT.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/NETWORK EVENT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DECISION REQUIRED
+DECISIONE RICHIESTA
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 N/A
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-None
-
----
-
-## Inputs
-
-Credentials supplied by controlled development configuration,
-not committed secrets.
+Nessuno
 
 ---
 
-## Outputs
+## Input
 
-IP-ready event and address log.
-
----
-
-## Errors to handle
-
-Auth, association, DHCP, DNS, disconnect/retry.
+Credenziali forniti da configurazione di sviluppo controllata, non segreti commessi.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- MQTT protocol code, production provisioning, TLS, or committed credentials
+Evento e registro indirizzi IP-ready.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only The target network environment, broker endpoint, credential source, and `subsys/services/mqtt/README.md`.
-- [ ] Record whether the test uses Wi-Fi, DHCP or static IPv4, DNS or numeric broker address, and how development credentials are supplied without committing secrets.
-- [ ] Do not edit firmware in this decision ticket.
-- [ ] Handle only these realistic errors: Auth, association, DHCP, DNS, disconnect/retry.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Auth, associazione, DHCP, DNS, disconnect/retry.
+
+---
+
+## Non implementare ancora
+
+- Codice protocollo MQTT, provisioning di produzione, TLS o credenziali impegnate
+
+---
+
+## Procedura
+
+- [ ] Apri solo L'ambiente di rete di destinazione, l'endpoint broker, la fonte
+      credenziale e `subsys/services/mqtt/README.md`.
+- [ ] Registrare se il test utilizza Wi-Fi, DHCP o IPv4, DNS o indirizzo di broker
+      numerico, e come vengono fornite le credenziali di sviluppo senza commettere
+      segreti.
+- [ ] Non modificare il firmware in questo task di decisione.
+- [ ] Gestisci solo questi errori realistici: Auth, associazione, DHCP, DNS,
+      disconnect/retry.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +117,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Connect, obtain IP, disconnect AP, observe bounded retry/status.
-
----
-
-## Expected result
-
-Network-ready signal is reliable.
+Collegare, ottenere IP, disconnettere AP, osservare limitato retry/status.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il segnale pronto per la rete è affidabile.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `mqtt: choose the development network path`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-160-02](TASK-160-02-enable-the-minimum-network-kconfig.md) — Enable the minimum network Kconfig
+[TASK-160-02](TASK-160-02-enable-the-minimum-network-kconfig.md) — Abilitare la configurazione di rete minima

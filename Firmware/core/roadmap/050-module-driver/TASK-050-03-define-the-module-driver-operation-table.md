@@ -1,100 +1,107 @@
-# TASK-050-03 — Define the module-driver operation table
+# TASK-050-03 — Definire la tabella operazioni di Module Driver
 
-**Status:** ⬜ TODO  
-**Phase:** 050 — Module + Module Driver  
-**Depends on:** [TASK-050-02](TASK-050-02-define-the-temporary-sample-contract.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the module-driver operation table** and produce this focused outcome:
-
-`0` or negative errno.
+**Stato:** ⬜ TODO
+**Fase:** 050 — Module + Module Driver
+**Dipende da:** [TASK-050-02](TASK-050-02-define-the-temporary-sample-contract.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+`0` o negativo errno.
+
+---
+
+## File da aprire
 
 `include/spaghetti/module_driver.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define `spaghetti_module_driver_ops` with synchronous `init`, `read`, and `deinit` pointers. Define immutable `spaghetti_module_driver` fields `type_id`, `required_capabilities`, and `ops`. Forward-declare module and sample types instead of creating cyclic includes.
-
----
-
-## Why
-
-SHT40 must prove the operation table before Registry exists.
+Definire puntatori `spaghetti_module_driver_ops` con campi sincroni `init`, `read` e
+`deinit`. Definire i campi `spaghetti_module_driver` immutabili `type_id`,
+`required_capabilities` e `ops`. Modulo e tipi di campioni in avanti, invece di creare
+include ciclici.
 
 ---
 
-## Called / used by
+## Perché
 
-SHT40 implementation and future Manager.
-
----
-
-## Trigger
-
-MODULE LIFECYCLE/READ.
+SHT40 deve dimostrare la tabella delle operazioni prima dell'esistenza del Registro.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL through function pointers.
-
----
-
-## Execution context
-
-Caller thread.
+Implementazione SHT40 e futuro Manager.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Module and Port capability types.
-
----
-
-## Inputs
-
-Module pointer and sample output.
+MODULO LIFECYCLE/READ.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-`0` or negative errno.
-
----
-
-## Errors to handle
-
-Null ops/module, unsupported capability, I/O failure.
+INVITARE DIRECT through function pointers.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Command/configure/probe/power callback or ABI version
+Thread chiamante.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `include/spaghetti/module_driver.h`.
-- [ ] Define `spaghetti_module_driver_ops` with synchronous `init`, `read`, and `deinit` pointers.
-- [ ] Define immutable `spaghetti_module_driver` fields `type_id`, `required_capabilities`, and `ops`. Forward-declare module and sample types instead of creating cyclic includes.
-- [ ] Handle only these realistic errors: Null ops/module, unsupported capability, I/O failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Modulo e tipi di capacità Port.
+
+---
+
+## Input
+
+Puntatore del modulo e uscita del campione.
+
+---
+
+## Output
+
+`0` o negativo errno.
+
+---
+
+## Errori da gestire
+
+Null ops/module, capacità non supportata, guasto I/O.
+
+---
+
+## Non implementare ancora
+
+- Command/configure/probe/power callback o versione ABI
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/module_driver.h`.
+- [ ] Definire `spaghetti_module_driver_ops` con puntatori sincroni `init`, `read` e
+      `deinit`.
+- [ ] Definisci i campi `spaghetti_module_driver` immutabili `type_id`,
+      `required_capabilities` e `ops`. Modulo e tipi di campionamento in avanti invece
+      di creare include ciclici.
+- [ ] Gestisci solo questi errori realistici: Null ops/module, funzionalità non
+      supportata, errore I/O.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +117,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Review that driver does not own the module instance.
-
----
-
-## Expected result
-
-Three-operation contract only.
+Verificare che driver non possiede l'istanza del modulo.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Solo contratto di tre operazioni.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: define the module-driver operation table`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-050-04](TASK-050-04-declare-the-sht40-driver-descriptor.md) — Declare the SHT40 driver descriptor
+[TASK-050-04](TASK-050-04-declare-the-sht40-driver-descriptor.md) — Dichiarare il descrittore del driver SHT40

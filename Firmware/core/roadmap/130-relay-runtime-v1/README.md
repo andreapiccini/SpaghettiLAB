@@ -1,35 +1,33 @@
-# Phase 130 — Relay + Runtime V1
+# Fase 130 — Relay + Runtime V1
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Add one real relay command and one explicit temperature threshold rule.
+Aggiungere un attuatore Relay e una regola di soglia deterministica.
 
-## Depends on
+## Dipende da
 
-[Phase 120 — Runtime V0](../120-runtime-v0/README.md)
+[Fase 120 — Runtime V0](../120-runtime-v0/README.md)
 
-## Visible result
+## Risultato visibile
 
-A temperature above 25 °C commands the configured relay.
+Una temperatura sopra 25 °C comanda il Relay configurato.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-130-01 — Define the Relay command contract](TASK-130-01-define-the-relay-command-contract.md)
-2. ⬜ [TASK-130-02 — Implement safe Relay lifecycle and SET](TASK-130-02-implement-safe-relay-lifecycle-and-set.md)
-3. ⬜ [TASK-130-03 — Register and build the Relay driver](TASK-130-03-register-and-build-the-relay-driver.md)
-4. ⬜ [TASK-130-04 — Route commands through Module Manager](TASK-130-04-route-commands-through-module-manager.md)
-5. ⬜ [TASK-130-05 — Define one threshold rule](TASK-130-05-define-one-threshold-rule.md)
-6. ⬜ [TASK-130-06 — Evaluate temperature in the Runtime thread](TASK-130-06-evaluate-temperature-in-the-runtime-thread.md)
-7. ⬜ [TASK-130-07 — Test the Relay threshold and safe state](TASK-130-07-test-the-relay-threshold-and-safe-state.md)
+1. ⬜ [TASK-130-01 — Definire il contratto dei comandi Relay](TASK-130-01-define-the-relay-command-contract.md)
+2. ⬜ [TASK-130-02 — Implementare ciclo di vita e comando sicuro del Relay](TASK-130-02-implement-safe-relay-lifecycle-and-set.md)
+3. ⬜ [TASK-130-03 — Registrare e compilare il driver Relay](TASK-130-03-register-and-build-the-relay-driver.md)
+4. ⬜ [TASK-130-04 — Instradare i comandi tramite Module Manager](TASK-130-04-route-commands-through-module-manager.md)
+5. ⬜ [TASK-130-05 — Definire una regola di soglia](TASK-130-05-define-one-threshold-rule.md)
+6. ⬜ [TASK-130-06 — Valutare la temperatura nel thread Runtime](TASK-130-06-evaluate-temperature-in-the-runtime-thread.md)
+7. ⬜ [TASK-130-07 — Provare soglia e stato sicuro del Relay](TASK-130-07-test-the-relay-threshold-and-safe-state.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Relay hardware facts are verified.
-- [ ] Manual OFF/ON/OFF works safely.
-- [ ] Runtime receives Data in its thread.
-- [ ] 24.9/25.0/25.1 produce expected actions.
-- [ ] Runtime contains no GPIO/module-specific protocol.
+- [ ] Il Relay parte e termina nello stato sicuro.
+- [ ] I comandi passano dal Module Manager.
+- [ ] La regola usa isteresi o comportamento al limite documentato.

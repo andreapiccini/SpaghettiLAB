@@ -1,143 +1,154 @@
-# TASK-090-06 — Test Config validation and apply
+# TASK-090-06 — Provare validazione e applicazione di Config
 
-**Status:** ⬜ TODO  
-**Phase:** 090 — Internal Config  
-**Depends on:** [TASK-090-05](TASK-090-05-add-and-apply-one-hardcoded-c-config.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test Config validation and apply** and produce this focused outcome:
-
-SHT40 instance and real readings.
+**Stato:** ⬜ TODO
+**Fase:** 090 — Config interna
+**Dipende da:** [TASK-090-05](TASK-090-05-add-and-apply-one-hardcoded-c-config.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/config/config.c`, the current test harness, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Test the valid snapshot plus bad version, excessive count, duplicate Port, unknown type, invalid address, and zero period. Confirm invalid snapshots make no partial live assignment and the valid one preserves real SHT40 reads.
+istanza SHT40 e letture reali.
 
 ---
 
-## Why
+## File da aprire
 
-It isolates semantic config failures from future decoder failures.
-
----
-
-## Called / used by
-
-Main/Core test.
+`subsys/config/config.c`, l'infrastruttura di test di prova corrente e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-BOOT TEST.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Provare l'istantanea valida più la versione difettosa, il conteggio eccessivo, il
+duplicato Port, il tipo sconosciuto, l'indirizzo non valido e il periodo zero.
+Confermare le istantanee non valide non fanno un'assegnazione parziale dal vivo e quella
+valida conserva SHT40 reale legge.
 
 ---
 
-## Execution context
+## Perché
 
-Main thread.
+Isola i fallimenti della configurazione semantica dai futuri fallimenti del
+decodificatore.
 
 ---
 
-## Calls / dependencies
+## Chi usa il risultato
+
+Prova Main/Core.
+
+---
+
+## Evento che attiva il codice
+
+Test del bolide.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
 
 Config validate/apply -> Manager.
 
 ---
 
-## Inputs
+## Input
 
-Hardcoded internal object.
-
----
-
-## Outputs
-
-SHT40 instance and real readings.
+Oggetto interno hardcoded.
 
 ---
 
-## Errors to handle
+## Output
 
-Log config validation/apply error distinctly.
-
----
-
-## Do NOT implement yet
-
-- Encode/decode or storage
+istanza SHT40 e letture reali.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `subsys/config/config.c`, the current test harness, and the serial console.
-- [ ] Test the valid snapshot plus bad version, excessive count, duplicate Port, unknown type, invalid address, and zero period.
-- [ ] Confirm invalid snapshots make no partial live assignment and the valid one preserves real SHT40 reads.
-- [ ] Handle only these realistic errors: Log config validation/apply error distinctly.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Log config validation/apply errore distintamente.
+
+---
+
+## Non implementare ancora
+
+- Encode/decode o storage
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `subsys/config/config.c`, l'infrastruttura di test di prova corrente e la console
+      seriale.
+- [ ] Prova l'istantanea valida più la versione difettosa, il conteggio eccessivo, il
+      duplicato Port, il tipo sconosciuto, l'indirizzo non valido e il periodo zero.
+- [ ] Confermare le istantanee non valide non fanno un'assegnazione parziale dal vivo e
+      quella valida conserva SHT40 reale legge.
+- [ ] Gestisci solo questi errori realistici: Log config validation/apply errore
+      distintamente.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Change test period invalid to 0 and verify no Manager call; restore 1000.
-
----
-
-## Expected result
-
-Only a fully valid internal configuration changes Manager state.
+Cambiare il periodo di prova non valido a 0 e verificare nessuna chiamata Manager;
+ripristinare 1000.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Solo una configurazione interna completamente valida cambia stato del Module Manager.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `internal: test config validation and apply`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-100-01](../100-storage/TASK-100-01-define-the-synchronous-storage-api.md) — Define the synchronous Storage API
+[TASK-100-01](../100-storage/TASK-100-01-define-the-synchronous-storage-api.md) — Definire l’API di storage sincrono

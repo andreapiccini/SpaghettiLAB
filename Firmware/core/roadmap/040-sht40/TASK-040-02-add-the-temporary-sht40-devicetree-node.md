@@ -1,29 +1,42 @@
-# TASK-040-02 — Add the temporary SHT40 Devicetree node
+# TASK-040-02 — Aggiungere il nodo Devicetree temporaneo di SHT40
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-01](TASK-040-01-inspect-the-installed-sht4x-driver.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Add the temporary SHT40 Devicetree node** and produce this focused outcome:
-
-`DT_NODELABEL(sht40_test)` device instance.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-01](TASK-040-01-inspect-the-installed-sht4x-driver.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Esempio di dispositivo `DT_NODELABEL(sht40_test)`.
+
+---
+
+## File da aprire
 
 `boards/esp32c3_devkitm_esp32c3.overlay`.
 
 ---
 
-## Write / Modify
+## Orientamento Zephyr — binding YAML e proprietà compatible
 
-Under the already enabled real I2C controller add:
+1. **Cos’è:** Un binding YAML descrive quali proprietà sono valide per una famiglia di nodi Devicetree. La proprietà `compatible` seleziona il binding e permette a Zephyr di creare l’istanza del driver corretto.
+2. **A cosa serve:** Collega temporaneamente l’indirizzo I2C reale al driver SHT4x già fornito da Zephyr.
+3. **Quando viene usato:** Binding e nodo vengono validati ed elaborati durante la build; il driver risultante viene inizializzato al boot.
+4. **Build-time o runtime:** Definizione a build-time, device utilizzato a runtime.
+5. **Collegamento con questo task:** Serve a provare verticalmente il sensore prima di rimuovere questa associazione statica nella fase 080.
+6. **File reali coinvolti:** `boards/esp32c3_devkitm_esp32c3.overlay`; consulta il binding SHT4x trovato nel task precedente dentro il workspace Zephyr.
+7. **Cosa guardare nei file:** Nel binding controlla valore `compatible`, proprietà richieste e significato di `reg`; nell’overlay aggiungi il nodo figlio al bus I2C.
+8. **Cosa non modificare:** Non creare un binding Spaghetti LAB, non copiare proprietà non previste e non trasformare questa assegnazione temporanea in architettura definitiva.
+
+---
+
+## Cosa scrivere o modificare
+
+Sotto il controller I2C reale già abilitato aggiungere:
 
 ```dts
 /* TEMPORARY SHORTCUT: removed in Milestone 8. */
@@ -34,91 +47,92 @@ sht40_test: sht4x@44 {
 };
 ```
 
-Use `0x44` only after verifying the actual module/address selection. The static
-node is for bring-up, not the final removable-module model.
+Utilizzare `0x44` solo dopo aver verificato l'effettiva selezione module/address. Il
+nodo statico serve soltanto per il bring-up iniziale: non rappresenta il modello finale
+del modulo rimovibile.
 
-> [!WARNING]
-> TEMPORARY SHORTCUT
+> [!ATTENZIONE]
+> SHORTCUT TEMPORANEO
 >
-> This is intentionally temporary and will be removed in [TASK-080-05](../080-runtime-removable-sht40/TASK-080-05-remove-the-static-sensor-shortcut.md).
+> Questo è intenzionalmente temporaneo e verrà rimosso in
+  [TASK-080-05](../080-runtime-removable-sht40/TASK-080-05-remove-the-static-sensor-shortcut.md).
 
 
 ---
 
-## Why
+## Perché
 
-Device Model needs a DT instance for the standard sensor driver.
-
----
-
-## Called / used by
-
-Zephyr SHT4x driver and temporary wrapper.
+Device Model ha bisogno di un'istanza DT per il sensore standard driver.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Zephyr SHT4x driver e wrapper temporanei.
+
+---
+
+## Evento che attiva il codice
 
 BUILD.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME.
+BUILD-TIME.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Devicetree/CMake.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Real I2C controller and installed binding.
-
----
-
-## Inputs
-
-Verified address and bus.
+Controllore I2C reale e binding installato.
 
 ---
 
-## Outputs
+## Input
 
-`DT_NODELABEL(sht40_test)` device instance.
-
----
-
-## Errors to handle
-
-Address conflict, missing required repeatability, wrong bus.
+Indirizzo e bus verificati.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- A Spaghetti Port binding or runtime discovery
-
----
-
-## Zephyr note
-
-This node creates a compile-time Zephyr sensor instance. The removable SHT40 identity must later move to runtime configuration.
+Esempio di dispositivo `DT_NODELABEL(sht40_test)`.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `boards/esp32c3_devkitm_esp32c3.overlay`.
-- [ ] Under the already enabled real I2C controller add: Add the exact dts template shown in **Write / Modify**.
-- [ ] Use `0x44` only after verifying the actual module/address selection. The static node is for bring-up, not the final removable-module model.
-- [ ] Handle only these realistic errors: Address conflict, missing required repeatability, wrong bus.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Conflitto di indirizzo, ripetibilità richiesta mancante, bus sbagliato.
+
+---
+
+## Non implementare ancora
+
+- Una scoperta di spaghetti Port binding o runtime
+
+---
+
+
+## Procedura
+
+- [ ] Apri solo `boards/esp32c3_devkitm_esp32c3.overlay`.
+- [ ] Sotto il controller I2C già abilitato aggiungi: Aggiungi il blocco DTS esatto
+      mostrato in **Cosa scrivere o modificare**.
+- [ ] Utilizzare `0x44` solo dopo aver verificato l'effettiva selezione module/address.
+      Il nodo statico serve soltanto per il bring-up iniziale e non rappresenta il
+      modello finale del modulo rimovibile.
+- [ ] Gestisci solo questi errori realistici: conflitto di indirizzi, ripetibilità
+      richiesta mancante, bus sbagliato.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -134,34 +148,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-No placeholder remains; comment clearly says temporary.
-
----
-
-## Expected result
-
-Valid static sensor node.
+Nessun segnaposto rimane; il commento dice chiaramente temporaneo.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nodo del sensore statico valido.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: add the temporary sht40 devicetree node`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-03](TASK-040-03-enable-the-sensor-api.md) — Enable the Sensor API
+[TASK-040-03](TASK-040-03-enable-the-sensor-api.md) — Abilitare l’API Sensor di Zephyr

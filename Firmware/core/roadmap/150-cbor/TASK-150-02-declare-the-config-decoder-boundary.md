@@ -1,101 +1,107 @@
-# TASK-150-02 — Declare the Config decoder boundary
+# TASK-150-02 — Dichiarare il confine del decoder Config
 
-**Status:** ⬜ TODO  
-**Phase:** 150 — CBOR  
-**Depends on:** [TASK-150-01](TASK-150-01-document-the-cbor-v0-schema.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Declare the Config decoder boundary** and produce this focused outcome:
-
-Fully owned `spaghetti_config` or negative decode error.
+**Stato:** ⬜ TODO
+**Fase:** 150 — CBOR
+**Dipende da:** [TASK-150-01](TASK-150-01-document-the-cbor-v0-schema.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-Create `include/spaghetti/config_codec.h`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Declare `spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length, struct spaghetti_config *out)`. Document that output changes only after complete syntactic and semantic success.
+Completamente di proprietà `spaghetti_config` o errore di decodifica negativa.
 
 ---
 
-## Why
+## File da aprire
 
-The internal Config path is already proven end-to-end.
-
----
-
-## Called / used by
-
-Communication SET_CONFIG handler.
+Crea `include/spaghetti/config_codec.h`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-COMMUNICATION RX.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL decoder.
+Dichiara `spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length, struct
+spaghetti_config *out)`. Documento che l'output cambia solo dopo un completo successo
+sintattico e semantico.
 
 ---
 
-## Execution context
+## Perché
+
+Il percorso interno Config è già dimostrato end-to-end.
+
+---
+
+## Chi usa il risultato
+
+Gestore Communication SET_CONFIG.
+
+---
+
+## Evento che attiva il codice
+
+RICEZIONE COMUNICAZIONE.
+
+---
+
+## Meccanismo di invocazione
+
+Decodificatore di chiamata diretta.
+
+---
+
+## Contesto di esecuzione
 
 Shell/Communication thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-zcbor decoder and Config validator.
-
----
-
-## Inputs
-
-Byte span with no assumed termination.
+Decodificatore zcbor e validatore Config.
 
 ---
 
-## Outputs
+## Input
 
-Fully owned `spaghetti_config` or negative decode error.
-
----
-
-## Errors to handle
-
-Truncated, wrong type/key/version, oversized string/count,
-trailing unexpected bytes, semantic Config rejection.
+Byte span senza terminazione presunta.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Full runtime graph/MQTT/discovery schema or direct Manager decode
+Completamente di proprietà `spaghetti_config` o errore di decodifica negativa.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only Create `include/spaghetti/config_codec.h`.
-- [ ] Declare `spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length, struct spaghetti_config *out)`.
-- [ ] Document that output changes only after complete syntactic and semantic success.
-- [ ] Handle only these realistic errors: Truncated, wrong type/key/version, oversized string/count, trailing unexpected bytes, semantic Config rejection.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Trunched, wrong type/key/version, oversize string/count, trailing inatteso byte,
+semantic Config rifiuto.
+
+---
+
+## Non implementare ancora
+
+- Schema runtime graph/MQTT/discovery completo o decodifica diretta Manager
+
+---
+
+## Procedura
+
+- [ ] Apri solo Crea `include/spaghetti/config_codec.h`.
+- [ ] Dichiara `spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length, struct
+      spaghetti_config *out)`.
+- [ ] Documenta che l'output cambia solo dopo il completo successo sintattico e
+      semantico.
+- [ ] Gestisci solo questi errori realistici: Truncato, sbagliato type/key/version,
+      sovradimensionato string/count, inseguito byte inaspettati, rifiuto semantico
+      Config.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,35 +117,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Review that output contains no pointer into the input buffer unless its
-lifetime is explicitly copied before return.
-
----
-
-## Expected result
-
-Clean codec boundary.
+Verificare che l'output non contenga alcun puntatore nel buffer di input a meno che la
+sua vita non sia copiata esplicitamente prima del ritorno.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Pulisci il confine del codec.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `cbor: declare the config decoder boundary`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-150-03](TASK-150-03-enable-zcbor-and-add-the-codec-source.md) — Enable zcbor and add the codec source
+[TASK-150-03](TASK-150-03-enable-zcbor-and-add-the-codec-source.md) — Abilitare zcbor e aggiungere il sorgente codec

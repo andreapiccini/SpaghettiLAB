@@ -1,99 +1,104 @@
-# TASK-140-01 — Define bounded Communication messages
+# TASK-140-01 — Definire messaggi Communication a dimensione limitata
 
-**Status:** ⬜ TODO  
-**Phase:** 140 — Communication  
-**Depends on:** [TASK-130-07](../130-relay-runtime-v1/TASK-130-07-test-the-relay-threshold-and-safe-state.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define bounded Communication messages** and produce this focused outcome:
-
-Versioned response/status.
+**Stato:** ⬜ TODO
+**Fase:** 140 — Communication
+**Dipende da:** [TASK-130-07](../130-relay-runtime-v1/TASK-130-07-test-the-relay-threshold-and-safe-state.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Versione response/status.
+
+---
+
+## File da aprire
 
 `include/spaghetti/communication.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define bounded request and response types for only `GET_STATUS` and `SET_CONFIG`. Represent SET_CONFIG payload as a byte buffer plus length, not parsed fields, and define explicit maximum sizes.
-
----
-
-## Why
-
-Local Config works and can be invoked by external ingress.
+Definire i tipi di richiesta e risposta limitati solo per `GET_STATUS` e `SET_CONFIG`.
+Rappresentare SET_CONFIG payload come buffer di byte più lunghezza, non campi
+analizzati, e definire le dimensioni massime esplicite.
 
 ---
 
-## Called / used by
+## Perché
 
-Shell transport adapter now; future other transports.
-
----
-
-## Trigger
-
-COMMUNICATION RX.
+Config locale funziona e può essere invocato da un ingresso esterno.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL after transport reception.
+Adattatore di trasporto Shell ora; futuri altri trasporti.
 
 ---
 
-## Execution context
+## Evento che attiva il codice
+
+RICEZIONE COMUNICAZIONE.
+
+---
+
+## Meccanismo di invocazione
+
+Chiamata diretta dopo la ricezione del trasporto.
+
+---
+
+## Contesto di esecuzione
 
 Communication worker/caller thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Core/Config/decoder contract.
-
----
-
-## Inputs
-
-Bounded command and payload.
+Contratto Core/Config/decoder.
 
 ---
 
-## Outputs
+## Input
 
-Versioned response/status.
-
----
-
-## Errors to handle
-
-Unknown command, oversized payload, invalid state.
+Comando limitato e carico utile.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- CBOR fields in Manager, BLE/Wi-Fi transports, OTA
+Versione response/status.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `include/spaghetti/communication.h`.
-- [ ] Define bounded request and response types for only `GET_STATUS` and `SET_CONFIG`. Represent SET_CONFIG payload as a byte buffer plus length, not parsed fields, and define explicit maximum sizes.
-- [ ] Handle only these realistic errors: Unknown command, oversized payload, invalid state.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Comando sconosciuto, carico utile sovradimensionato, stato non valido.
+
+---
+
+## Non implementare ancora
+
+- Campi CBOR in Manager, Trasporti BLE/Wi-Fi, OTA
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/communication.h`.
+- [ ] Definire i tipi di richiesta e risposta limitati solo per `GET_STATUS` e
+      `SET_CONFIG`. Rappresentare SET_CONFIG payload come buffer di byte più lunghezza,
+      non campi analizzati, e definire le dimensioni massime esplicite.
+- [ ] Gestisci solo questi errori realistici: comando sconosciuto, payload
+      sovradimensionato, stato non valido.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -109,34 +114,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Pure request dispatch with GET_STATUS.
-
----
-
-## Expected result
-
-Transport-free protocol API.
+Pura richiesta di invio con GET_STATUS.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Protocollo API senza trasporto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `communication: define bounded communication messages`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-140-02](TASK-140-02-declare-and-implement-request-dispatch.md) — Declare and implement request dispatch
+[TASK-140-02](TASK-140-02-declare-and-implement-request-dispatch.md) — Dichiarare e implementare il dispatch delle richieste

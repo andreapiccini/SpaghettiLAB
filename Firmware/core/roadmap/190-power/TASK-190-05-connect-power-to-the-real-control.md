@@ -1,111 +1,119 @@
-# TASK-190-05 — Connect Power to the real control
+# TASK-190-05 — Collegare Power al controllo hardware reale
 
-**Status:** ⬜ TODO  
-**Phase:** 190 — Power  
-**Depends on:** [TASK-190-04](TASK-190-04-test-power-ownership-and-rollback-logic.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Connect Power to the real control** and produce this focused outcome:
-
-Correct transition/count/status.
+**Stato:** ⬜ TODO
+**Fase:** 190 — Power
+**Dipende da:** [TASK-190-04](TASK-190-04-test-power-ownership-and-rollback-logic.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-The Port binding/board DTS and `subsys/power/power.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add the verified power reference to the static hardware description and implement real on/off hooks through Port or the appropriate Zephyr GPIO/runtime-PM API. Preserve the measured safe polarity and propagate transition errors.
+Corretto transition/count/status.
 
 ---
 
-## Why
+## File da aprire
 
-Exact acquire/release points are established by Manager.
+Port binding/board DTS e `subsys/power/power.c`.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Aggiungere il riferimento di potenza verificato alla descrizione dell'hardware statico e
+implementare veri e propri ganci on/off tramite Port o l'appropriato Zephyr
+GPIO/runtime-PM API. Preservare la polarità sicura misurata e propagare gli errori di
+transizione.
+
+---
+
+## Perché
+
+I punti acquire/release esatti sono stabiliti da Manager.
+
+---
+
+## Chi usa il risultato
 
 Manager/driver.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-MODULE LIFECYCLE.
+Modulo LIFECICLO.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
 DIRECT CALL + K_MUTEX.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Thread only, never ISR.
-
----
-
-## Calls / dependencies
-
-Port/Zephyr GPIO or runtime PM.
+Solo thread, mai ISR.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-Valid owner/resource.
-
----
-
-## Outputs
-
-Correct transition/count/status.
+Port/Zephyr GPIO o runtime PM.
 
 ---
 
-## Errors to handle
+## Input
 
-Hardware on/off error, overflow/underflow, rollback after init failure.
-
----
-
-## Do NOT implement yet
-
-- System sleep until runtime/device PM requirements are measured
+Valido owner/resource.
 
 ---
 
-## Zephyr note
+## Output
 
-Devicetree identifies the physical control; the Power subsystem owns runtime reference state and transition policy.
+Corretto transition/count/status.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only The Port binding/board DTS and `subsys/power/power.c`.
-- [ ] Add the verified power reference to the static hardware description and implement real on/off hooks through Port or the appropriate Zephyr GPIO/runtime-PM API. Preserve the measured safe polarity and propagate transition errors.
-- [ ] Handle only these realistic errors: Hardware on/off error, overflow/underflow, rollback after init failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Hardware on/off errore, overflow/underflow, rollback dopo guasto init.
+
+---
+
+## Non implementare ancora
+
+- Sistema di sospensione fino alla misurazione dei requisiti runtime/device PM
+
+---
+
+## Orientamento Zephyr
+
+Devicetree identifica il controllo fisico; il sottosistema Power possiede lo stato di
+riferimento runtime e la politica di transizione.
+
+---
+
+## Procedura
+
+- [ ] Apri solo Port binding/board DTS e `subsys/power/power.c`.
+- [ ] Aggiungere il riferimento di potenza verificato alla descrizione dell'hardware
+      statico e implementare veri e propri ganci on/off tramite Port o l'appropriato
+      Zephyr GPIO/runtime-PM API. Preservare la polarità sicura misurata e propagare gli
+      errori di transizione.
+- [ ] Gestisci solo questi errori realistici: Hardware on/off errore,
+      overflow/underflow, rollback dopo guasto init.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -115,35 +123,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Two owners acquire/release in both orders; inject failed driver init and
-confirm count/rail rollback.
-
----
-
-## Expected result
-
-One on transition, one final off transition, no premature off.
+Due proprietari acquire/release in entrambi gli ordini; iniezione non riuscita driver
+init e confermare count/rail rollback.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Una sulla transizione, una finale sulla transizione, nessuna prematura.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `power: connect power to the real control`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-190-06](TASK-190-06-integrate-power-with-manager-and-test-hardware.md) — Integrate Power with Manager and test hardware
+[TASK-190-06](TASK-190-06-integrate-power-with-manager-and-test-hardware.md) — Integrare Power con Manager e provare l’hardware

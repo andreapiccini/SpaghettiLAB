@@ -1,34 +1,32 @@
-# Phase 140 — Communication
+# Fase 140 — Communication
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Add a bounded protocol boundary and expose it through the existing USB shell.
+Esporre richieste limitate attraverso un primo trasporto locale sostituibile.
 
-## Depends on
+## Dipende da
 
-[Phase 130 — Relay + Runtime V1](../130-relay-runtime-v1/README.md)
+[Fase 130 — Relay + Runtime V1](../130-relay-runtime-v1/README.md)
 
-## Visible result
+## Risultato visibile
 
-A local shell command reads status and submits configuration bytes.
+Zephyr Shell legge lo stato e invia bytes di configurazione.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-140-01 — Define bounded Communication messages](TASK-140-01-define-bounded-communication-messages.md)
-2. ⬜ [TASK-140-02 — Declare and implement request dispatch](TASK-140-02-declare-and-implement-request-dispatch.md)
-3. ⬜ [TASK-140-03 — Enable the Zephyr shell](TASK-140-03-enable-the-zephyr-shell.md)
-4. ⬜ [TASK-140-04 — Implement the shell transport adapter](TASK-140-04-implement-the-shell-transport-adapter.md)
-5. ⬜ [TASK-140-05 — Initialize Communication from Core](TASK-140-05-initialize-communication-from-core.md)
-6. ⬜ [TASK-140-06 — Test status and malformed shell input](TASK-140-06-test-status-and-malformed-shell-input.md)
+1. ⬜ [TASK-140-01 — Definire messaggi Communication a dimensione limitata](TASK-140-01-define-bounded-communication-messages.md)
+2. ⬜ [TASK-140-02 — Dichiarare e implementare il dispatch delle richieste](TASK-140-02-declare-and-implement-request-dispatch.md)
+3. ⬜ [TASK-140-03 — Abilitare Zephyr Shell](TASK-140-03-enable-the-zephyr-shell.md)
+4. ⬜ [TASK-140-04 — Implementare l’adattatore di trasporto Shell](TASK-140-04-implement-the-shell-transport-adapter.md)
+5. ⬜ [TASK-140-05 — Inizializzare Communication da Core](TASK-140-05-initialize-communication-from-core.md)
+6. ⬜ [TASK-140-06 — Provare stato e input Shell non valido](TASK-140-06-test-status-and-malformed-shell-input.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Protocol types do not mention Shell/USB.
-- [ ] Shell uses existing `usb_serial` console.
-- [ ] GET_STATUS succeeds.
-- [ ] Invalid/oversized command fails safely.
-- [ ] No CBOR field is read by Manager.
+- [ ] Messaggi e buffer hanno dimensioni massime.
+- [ ] Il dispatch non dipende dalla Shell.
+- [ ] Input malformati vengono rifiutati senza modificare lo stato.

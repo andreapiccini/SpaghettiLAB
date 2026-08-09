@@ -1,101 +1,106 @@
-# TASK-060-03 — Validate registry entries
+# TASK-060-03 — Convalidare le voci del registry
 
-**Status:** ⬜ TODO  
-**Phase:** 060 — Driver Registry  
-**Depends on:** [TASK-060-02](TASK-060-02-implement-the-fixed-driver-table.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Validate registry entries** and produce this focused outcome:
-
-SHT40 pointer or `NULL`.
+**Stato:** ⬜ TODO
+**Fase:** 060 — Driver Registry
+**Dipende da:** [TASK-060-02](TASK-060-02-implement-the-fixed-driver-table.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Puntatore SHT40 o `NULL`.
+
+---
+
+## File da aprire
 
 `subsys/driver_registry/driver_registry.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement `spaghetti_driver_registry_init()` validation for null descriptors, null/empty type IDs, missing required operation pointers, and duplicate type IDs. Return the first realistic error without modifying the const table.
-
----
-
-## Why
-
-One driver does not justify linker magic or a hash table.
+Implementa la validazione `spaghetti_driver_registry_init()` per i descrittori null,
+null/empty di tipo ID, mancano i puntatori di funzionamento richiesti e duplicati di
+tipo ID. Restituisci il primo errore realistico senza modificare la tabella dei conti.
 
 ---
 
-## Called / used by
+## Perché
+
+Uno driver non giustifica la magia del linker o un tavolo di hash.
+
+---
+
+## Chi usa il risultato
 
 Core/Manager.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BOOT/LOOKUP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Caller thread; immutable after init.
+CHIAMATA DIRETTA.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-SHT40 descriptor and standard bounded string comparison.
-
----
-
-## Inputs
-
-`"sht40"` or another ID.
+Chiamatore thread; immutabile dopo init.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-SHT40 pointer or `NULL`.
-
----
-
-## Errors to handle
-
-Duplicate/invalid table; unknown lookup is normal.
+Il descrittore SHT40 e il confronto delle stringhe standard.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Locking
-- frozen lookup needs none
+`"sht40"` o un altro ID.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `subsys/driver_registry/driver_registry.c`.
-- [ ] Implement `spaghetti_driver_registry_init()` validation for null descriptors, null/empty type IDs, missing required operation pointers, and duplicate type IDs.
-- [ ] Return the first realistic error without modifying the const table.
-- [ ] Handle only these realistic errors: Duplicate/invalid table; unknown lookup is normal.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Puntatore SHT40 o `NULL`.
+
+---
+
+## Errori da gestire
+
+Tabella Duplicate/invalid; la ricerca sconosciuta è normale.
+
+---
+
+## Non implementare ancora
+
+- Bloccaggio
+- ricerca surgelata non ha bisogno di nessuno
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/driver_registry/driver_registry.c`.
+- [ ] Implementa la convalida `spaghetti_driver_registry_init()` per i descrittori null,
+      null/empty di tipo ID, mancano i puntatori di funzionamento richiesti e i
+      duplicati di tipo ID.
+- [ ] Restituisce il primo errore realistico senza modificare la tabella dei conti.
+- [ ] Gestisci solo questi errori realistici: tabella Duplicate/invalid; la ricerca
+      sconosciuta è normale.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +116,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Local test path for known and unknown IDs.
-
----
-
-## Expected result
-
-Deterministic linear registry.
+Percorso di test locale per ID noti e sconosciuti.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Registro lineare deterministico.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `driver: validate registry entries`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-060-04](TASK-060-04-initialize-the-registry-from-core.md) — Initialize the Registry from Core
+[TASK-060-04](TASK-060-04-initialize-the-registry-from-core.md) — Inizializzare Driver Registry da Core

@@ -1,29 +1,28 @@
-# Phase 000 — Baseline
+# Fase 000 — Baseline
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ✅ DONE
+**Stato:** ✅ DONE
 
-## Goal
+## Obiettivo
 
-Confirm the existing toolchain, board, flashing path, and serial console before changing architecture code.
+Confermare che ambiente, build, flash e console funzionino prima di modificare il firmware.
 
-## Depends on
+## Dipende da
 
-None
+Nessuna fase precedente.
 
-## Visible result
+## Risultato visibile
 
-The existing Zephyr uptime firmware builds, flashes, and prints.
+Il firmware iniziale viene compilato, caricato e osservato sulla console seriale.
 
-## Tasks
+## Task
 
-1. ✅ [TASK-000-01 — Build the untouched application](TASK-000-01-build-the-untouched-application.md)
-2. ✅ [TASK-000-02 — Flash and observe the baseline](TASK-000-02-flash-and-observe-the-baseline.md)
+1. ✅ [TASK-000-01 — Compilare l’applicazione senza modifiche](TASK-000-01-build-the-untouched-application.md)
+2. ✅ [TASK-000-02 — Caricare e osservare la baseline](TASK-000-02-flash-and-observe-the-baseline.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [x] `make build` succeeds.
-- [x] Firmware flashes through the existing workflow.
-- [x] Console output is readable at 115200 baud.
-- [x] Uptime increases without reset loops.
+- [ ] La build produce `build/zephyr/zephyr.bin`.
+- [ ] Il firmware viene caricato sulla scheda corretta.
+- [ ] La console mostra avvio e uptime a 115200 baud.

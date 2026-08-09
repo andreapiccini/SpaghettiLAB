@@ -1,99 +1,106 @@
-# TASK-030-07 — Initialize Port from Core
+# TASK-030-07 — Inizializzare Port da Core
 
-**Status:** ⬜ TODO  
-**Phase:** 030 — Port  
-**Depends on:** [TASK-030-06](TASK-030-06-add-port-to-cmake.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Initialize Port from Core** and produce this focused outcome:
-
-`Port 0: I2C ready`-equivalent log.
+**Stato:** ⬜ TODO
+**Fase:** 030 — Port
+**Dipende da:** [TASK-030-06](TASK-030-06-add-port-to-cmake.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Log equivalente a `Port 0: I2C ready`.
+
+---
+
+## File da aprire
 
 `subsys/core/core.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Call `spaghetti_port_init_all()` from `spaghetti_core_init()`. Propagate a negative result before setting Core READY. On success, log the Port count and whether Port 0 has I2C.
-
----
-
-## Why
-
-SHT40 should not be added until Port reports the real controller ready.
+Chiama `spaghetti_port_init_all()` da `spaghetti_core_init()`. Propaga un risultato
+negativo prima di impostare Core READY. Al successo, registra il conteggio Port e se
+Port 0 ha I2C.
 
 ---
 
-## Called / used by
+## Perché
 
-Build and Core.
-
----
-
-## Trigger
-
-BOOT.
+SHT40 non deve essere aggiunto fino a quando Port non segnala il controller reale
+pronto.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-BUILD TIME then DIRECT CALL.
-
----
-
-## Execution context
-
-Main thread.
+Costruisci e Core.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-`spaghetti_port_init_all()`, `spaghetti_port_count()`, `spaghetti_port_get()`, and `spaghetti_port_has_capability()`.
-
----
-
-## Inputs
-
-Enabled controller from Milestone 2.
+AVVIO.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-`Port 0: I2C ready`-equivalent log.
-
----
-
-## Errors to handle
-
-Propagate negative Port error; no silent READY.
+CAMPIONE DEL TEMPO E CHIAMATA DIRETTAMENTE.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- SHT40 or registry
+Thread principale.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `subsys/core/core.c`.
-- [ ] Call `spaghetti_port_init_all()` from `spaghetti_core_init()`. Propagate a negative result before setting Core READY. On success, log the Port count and whether Port 0 has I2C.
-- [ ] Handle only these realistic errors: Propagate negative Port error; no silent READY.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+`spaghetti_port_init_all()`, `spaghetti_port_count()`, `spaghetti_port_get()` e
+`spaghetti_port_has_capability()`.
+
+---
+
+## Input
+
+Controllore abilitato da Milestone 2.
+
+---
+
+## Output
+
+Log equivalente a `Port 0: I2C ready`.
+
+---
+
+## Errori da gestire
+
+Propaga l'errore negativo Port; non è pronto silenzioso.
+
+---
+
+## Non implementare ancora
+
+- SHT40 o registro
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/core/core.c`.
+- [ ] Chiama `spaghetti_port_init_all()` da `spaghetti_core_init()`. Propaga un
+      risultato negativo prima di impostare Core READY. Al successo, registra il
+      conteggio Port e se Port 0 ha I2C.
+- [ ] Gestire solo questi errori realistici: Propagare l'errore negativo Port; nessun
+      silent READY.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -109,35 +116,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Boot normally, then temporarily disable the controller in a test branch
-and confirm Port init fails; restore it immediately.
-
----
-
-## Expected result
-
-One port found; invalid ID returns `NULL`; I2C device ready.
+Avviare normalmente, quindi disattivare temporaneamente il controller in un ramo di test
+e confermare Port init fallisce; ripristinarlo immediatamente.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Trovata una porta; ID non valido restituisce il dispositivo `NULL`; I2C pronto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `port: initialize port from core`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-030-08](TASK-030-08-test-port-success-and-invalid-ids.md) — Test Port success and invalid IDs
+[TASK-030-08](TASK-030-08-test-port-success-and-invalid-ids.md) — Provare Port con ID validi e non validi

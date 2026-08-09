@@ -1,143 +1,152 @@
-# TASK-120-06 — Remove the sampling loop from main and test cadence
+# TASK-120-06 — Rimuovere il loop da main e verificare la cadenza
 
-**Status:** ⬜ TODO  
-**Phase:** 120 — Runtime V0  
-**Depends on:** [TASK-120-05](TASK-120-05-integrate-runtime-with-core-and-config.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Remove the sampling loop from main and test cadence** and produce this focused outcome:
-
-Logger sample each second with short main.
+**Stato:** ⬜ TODO
+**Fase:** 120 — Runtime V0
+**Dipende da:** [TASK-120-05](TASK-120-05-integrate-runtime-with-core-and-config.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`src/main.c` and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Remove Manager read, Data publish, and periodic sleep from `main`; leave only Core boot/error handling. Flash and observe sequence/timestamps for at least ten samples, then verify stop prevents further samples.
+Logger campione ogni secondo con main corto.
 
 ---
 
-## Why
+## File da aprire
 
-Main must stop owning application behavior.
+`src/main.c` e la console seriale.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Rimuovi da `main` la lettura tramite Manager, la pubblicazione tramite Data e l'attesa
+periodica. Lascia soltanto l'avvio del Core e la gestione degli errori. Esegui il flash,
+osserva sequenza e timestamp di almeno dieci campioni, quindi verifica che lo stop
+impedisca la produzione di nuovi campioni.
+
+---
+
+## Perché
+
+Main deve smettere di possedere il comportamento dell'applicazione.
+
+---
+
+## Chi usa il risultato
 
 Core/Config/Runtime.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-BOOT then periodic timer.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL then K_TIMER/K_SEM/THREAD.
+BOOT poi periodica timer.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
 
-Main for setup; Runtime thread for reads.
+CHIAMATA DIRETTA, poi `k_timer` → `k_sem` → thread.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
+
+Principale per impostazione; Runtime thread per lettura.
+
+---
+
+## Chiamate e dipendenze
 
 Config -> Runtime; Runtime -> Manager -> Data.
 
 ---
 
-## Inputs
+## Input
 
-Internal config period/module.
-
----
-
-## Outputs
-
-Logger sample each second with short main.
+Configurazione interna period/module.
 
 ---
 
-## Errors to handle
+## Output
 
-Runtime start failure must make boot degraded/error.
-
----
-
-## Do NOT implement yet
-
-- Relay threshold or CBOR
+Logger campione ogni secondo con main corto.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `src/main.c` and the serial console.
-- [ ] Remove Manager read, Data publish, and periodic sleep from `main`
-- [ ] leave only Core boot/error handling. Flash and observe sequence/timestamps for at least ten samples, then verify stop prevents further samples.
-- [ ] Handle only these realistic errors: Runtime start failure must make boot degraded/error.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Il fallimento di avvio di Runtime deve rendere l'avvio degraded/error.
+
+---
+
+## Non implementare ancora
+
+- Soglia di relè o CBOR
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `src/main.c` e la console seriale.
+- [ ] Rimuovi gestore lettura, pubblicazione dati e sonno periodico da `main`
+- [ ] lasciare solo Core boot/error manipolazione. Flash e osservare sequence/timestamps
+      per almeno dieci campioni, quindi verificare arresto impedisce ulteriori campioni.
+- [ ] Gestire solo questi errori realistici: Runtime avvio guasto deve rendere l'avvio
+      degraded/error.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Measure ten timestamps; stop Runtime via temporary test and verify reads stop.
-
----
-
-## Expected result
-
-Runtime publishes one real sample about every 1000 ms while `main` performs no periodic work.
+Misurare dieci timestamp; fermare Runtime tramite test temporaneo e verificare le
+letture.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Runtime pubblica un campione reale ogni 1000 ms, mentre `main` non esegue lavori
+periodici.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `runtime: remove the sampling loop from main and test cadence`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-130-01](../130-relay-runtime-v1/TASK-130-01-define-the-relay-command-contract.md) — Define the Relay command contract
+[TASK-130-01](../130-relay-runtime-v1/TASK-130-01-define-the-relay-command-contract.md) — Definire il contratto dei comandi Relay

@@ -1,145 +1,154 @@
-# TASK-170-05 — Route Config assignments through Discovery
+# TASK-170-05 — Instradare le assegnazioni Config tramite Discovery
 
-**Status:** ⬜ TODO  
-**Phase:** 170 — Discovery  
-**Depends on:** [TASK-170-04](TASK-170-04-route-accepted-results-to-module-manager.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Route Config assignments through Discovery** and produce this focused outcome:
-
-Same SHT40 instance/readings.
+**Stato:** ⬜ TODO
+**Fase:** 170 — Discovery
+**Dipende da:** [TASK-170-04](TASK-170-04-route-accepted-results-to-module-manager.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/config/config.c`, Communication apply path, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Replace Config's direct Manager module assignment with a normalized manual Discovery result. Keep Runtime and service config directed to their own owners. Test valid, stale, invalid, and unknown-type results.
+Stesso SHT40 instance/readings.
 
 ---
 
-## Why
+## File da aprire
 
-Existing behavior is a regression oracle.
+`subsys/config/config.c`, Communication applicano il percorso e la console seriale.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Sostituire l'assegnazione diretta del Module Manager Config con un risultato di scoperta
+manuale normalizzato. Mantenere Runtime e la configurazione del servizio diretta ai
+rispettivi componenti responsabili. Verifica risultati validi, obsoleti, non validi e
+con tipo sconosciuto.
+
+---
+
+## Perché
+
+Il comportamento esistente è un oracolo di regressione.
+
+---
+
+## Chi usa il risultato
 
 Config/Communication -> Discovery -> Manager.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-CONFIG COMMAND.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL chain.
+COMANDO DI CONFIGURAZIONE.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
+
+Catena di CHIAMATE DIRETTE.
+
+---
+
+## Contesto di esecuzione
 
 Config/Communication thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Port validation and unchanged Manager API.
-
----
-
-## Inputs
-
-Manual result.
+Convalida Port e API Manager immutate.
 
 ---
 
-## Outputs
+## Input
 
-Same SHT40 instance/readings.
-
----
-
-## Errors to handle
-
-Stale generation, unsupported mode, Manager error propagation.
+Risultato manuale.
 
 ---
 
-## Do NOT implement yet
+## Output
+
+Stesso SHT40 instance/readings.
+
+---
+
+## Errori da gestire
+
+Generazione dello stato, modalità non supportata, propagazione degli errori Manager.
+
+---
+
+## Non implementare ancora
 
 - Async provider worker
-- Add K_WORK only when provider needs it
+- Aggiungi K_WORK solo quando il provider ne ha bisogno
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `subsys/config/config.c`, Communication apply path, and the serial console.
-- [ ] Replace Config's direct Manager module assignment with a normalized manual Discovery result.
-- [ ] Keep Runtime and service config directed to their own owners.
-- [ ] Test valid, stale, invalid, and unknown-type results.
-- [ ] Handle only these realistic errors: Stale generation, unsupported mode, Manager error propagation.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Aprire solo `subsys/config/config.c`, Communication applicare il percorso, e la
+      console seriale.
+- [ ] Sostituire l'assegnazione diretta del Module Manager Config con un risultato di
+      scoperta manuale normalizzato.
+- [ ] Mantieni Runtime e la configurazione del servizio diretta ai propri proprietari.
+- [ ] Prova risultati validi, obsoleti, non validi e con tipo sconosciuto.
+- [ ] Gestisci solo questi errori realistici: Generazione dello stadio, modalità non
+      supportata, propagazione degli errori Manager.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Apply same CBOR/manual assignment and compare status/measurement to before.
-
----
-
-## Expected result
-
-The existing manual configuration still creates and reads SHT40 while Manager remains provider-independent.
+Applicare la stessa assegnazione CBOR/manual e confrontare status/measurement a prima.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+La configurazione manuale esistente crea e legge SHT40 mentre Manager rimane
+indipendente dal provider.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `discovery: route config assignments through discovery`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-180-01](../180-multi-core/TASK-180-01-define-the-spaghetti-port-binding.md) — Define the Spaghetti Port binding
+[TASK-180-01](../180-multi-core/TASK-180-01-define-the-spaghetti-port-binding.md) — Definire il binding Spaghetti Port

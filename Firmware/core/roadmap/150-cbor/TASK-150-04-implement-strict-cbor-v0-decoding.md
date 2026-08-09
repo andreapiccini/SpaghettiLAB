@@ -1,101 +1,107 @@
-# TASK-150-04 — Implement strict CBOR V0 decoding
+# TASK-150-04 — Implementare la decodifica CBOR V0 rigorosa
 
-**Status:** ⬜ TODO  
-**Phase:** 150 — CBOR  
-**Depends on:** [TASK-150-03](TASK-150-03-enable-zcbor-and-add-the-codec-source.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Implement strict CBOR V0 decoding** and produce this focused outcome:
-
-Internal Config.
+**Stato:** ⬜ TODO
+**Fase:** 150 — CBOR
+**Dipende da:** [TASK-150-03](TASK-150-03-enable-zcbor-and-add-the-codec-source.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/config/config_cbor.c` and the V0 schema.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Decode into a temporary `spaghetti_config`, enforce every type, range, string bound, item count, version, and full input consumption, then call Config validation and copy to `out` only on complete success.
+Config interna.
 
 ---
 
-## Why
+## File da aprire
 
-zcbor module is confirmed installed at
-`/opt/zephyrproject/modules/lib/zcbor` with `CONFIG_ZCBOR` integration.
+`subsys/config/config_cbor.c` e lo schema V0.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Decodificare in una `spaghetti_config` temporanea, applicare ogni tipo, intervallo,
+stringa legata, numero di elementi, versione e consumo di ingresso completo, quindi
+chiamare la convalida Config e copiare a `out` solo dopo il successo completo.
+
+---
+
+## Perché
+
+Il modulo zcbor viene confermato installato a `/opt/zephyrproject/modules/lib/zcbor` con
+integrazione `CONFIG_ZCBOR`.
+
+---
+
+## Chi usa il risultato
 
 Communication.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-SET_CONFIG bytes.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+SET_CONFIG byte.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
 
 Communication/shell thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-zcbor decode functions then `spaghetti_config_validate`.
-
----
-
-## Inputs
-
-Exact V0 CBOR bytes.
+Le funzioni di decodifica zcbor poi `spaghetti_config_validate`.
 
 ---
 
-## Outputs
+## Input
 
-Internal Config.
-
----
-
-## Errors to handle
-
-All parse/bounds errors map to a stable Communication error;
-do not leave partially filled active state.
+Esatto V0 CBOR byte.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Canonical encoding requirement unless protocol demands it
+Config interna.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `subsys/config/config_cbor.c` and the V0 schema.
-- [ ] Decode into a temporary `spaghetti_config`, enforce every type, range, string bound, item count, version, and full input consumption, then call Config validation and copy to `out` only on complete success.
-- [ ] Handle only these realistic errors: All parse/bounds errors map to a stable Communication error; do not leave partially filled active state.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Tutti gli errori parse/bounds mappano un errore Communication stabile; non lasciare uno
+stato attivo parzialmente riempito.
+
+---
+
+## Non implementare ancora
+
+- Requisiti di codifica canonica a meno che il protocollo non lo richieda
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/config/config_cbor.c` e lo schema V0.
+- [ ] Decodificare in una `spaghetti_config` temporanea, applicare ogni tipo,
+      intervallo, stringa legata, numero di elementi, versione e consumo di ingresso
+      completo, quindi chiamare la convalida Config e copiare a `out` solo dopo il
+      successo completo.
+- [ ] Gestisci solo questi errori realistici: Tutti gli errori parse/bounds mappano un
+      errore Communication stabile; non lasciare uno stato attivo parzialmente riempito.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,35 +117,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Valid vector plus empty, truncated at every byte, wrong type, excess count,
-unknown version, trailing garbage.
-
----
-
-## Expected result
-
-Only valid vector produces Config.
+Vettore valido più vuoto, troncato ad ogni byte, tipo sbagliato, conteggio in eccesso,
+versione sconosciuta, spazzatura finale.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Solo il vettore valido produce Config.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `cbor: implement strict cbor v0 decoding`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-150-05](TASK-150-05-apply-cbor-through-communication.md) — Apply CBOR through Communication
+[TASK-150-05](TASK-150-05-apply-cbor-through-communication.md) — Applicare CBOR tramite Communication

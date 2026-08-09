@@ -1,100 +1,106 @@
-# TASK-140-02 — Declare and implement request dispatch
+# TASK-140-02 — Dichiarare e implementare il dispatch delle richieste
 
-**Status:** ⬜ TODO  
-**Phase:** 140 — Communication  
-**Depends on:** [TASK-140-01](TASK-140-01-define-bounded-communication-messages.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Declare and implement request dispatch** and produce this focused outcome:
-
-Versioned response/status.
+**Stato:** ⬜ TODO
+**Fase:** 140 — Communication
+**Dipende da:** [TASK-140-01](TASK-140-01-define-bounded-communication-messages.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`include/spaghetti/communication.h` and `subsys/communication/communication.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Declare Communication init and handle-request APIs plus one bounded response return/callback contract. Implement dispatch for GET_STATUS and SET_CONFIG placeholders with strict command, pointer, and length validation.
+Versione response/status.
 
 ---
 
-## Why
+## File da aprire
 
-Local Config works and can be invoked by external ingress.
-
----
-
-## Called / used by
-
-Shell transport adapter now; future other transports.
+`include/spaghetti/communication.h` e `subsys/communication/communication.c`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-COMMUNICATION RX.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL after transport reception.
+Dichiarare Communication init e handle-request API più una risposta limitata contratto
+return/callback. Implementare l'invio per i segnaposto GET_STATUS e SET_CONFIG con
+rigoroso comando, puntatore e convalida della lunghezza.
 
 ---
 
-## Execution context
+## Perché
+
+Config locale funziona e può essere invocato da un ingresso esterno.
+
+---
+
+## Chi usa il risultato
+
+Adattatore di trasporto Shell ora; futuri altri trasporti.
+
+---
+
+## Evento che attiva il codice
+
+RICEZIONE COMUNICAZIONE.
+
+---
+
+## Meccanismo di invocazione
+
+Chiamata diretta dopo la ricezione del trasporto.
+
+---
+
+## Contesto di esecuzione
 
 Communication worker/caller thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Core/Config/decoder contract.
-
----
-
-## Inputs
-
-Bounded command and payload.
+Contratto Core/Config/decoder.
 
 ---
 
-## Outputs
+## Input
 
-Versioned response/status.
-
----
-
-## Errors to handle
-
-Unknown command, oversized payload, invalid state.
+Comando limitato e carico utile.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- CBOR fields in Manager, BLE/Wi-Fi transports, OTA
+Versione response/status.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `include/spaghetti/communication.h` and `subsys/communication/communication.c`.
-- [ ] Declare Communication init and handle-request APIs plus one bounded response return/callback contract.
-- [ ] Implement dispatch for GET_STATUS and SET_CONFIG placeholders with strict command, pointer, and length validation.
-- [ ] Handle only these realistic errors: Unknown command, oversized payload, invalid state.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Comando sconosciuto, carico utile sovradimensionato, stato non valido.
+
+---
+
+## Non implementare ancora
+
+- Campi CBOR in Manager, Trasporti BLE/Wi-Fi, OTA
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/communication.h` e
+      `subsys/communication/communication.c`.
+- [ ] Dichiarare Communication init e handle-request API più una risposta limitata
+      contratto return/callback.
+- [ ] Implementa l'invio per i segnaposto GET_STATUS e SET_CONFIG con severi comandi,
+      puntatore e validazione della lunghezza.
+- [ ] Gestisci solo questi errori realistici: comando sconosciuto, payload
+      sovradimensionato, stato non valido.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +116,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Pure request dispatch with GET_STATUS.
-
----
-
-## Expected result
-
-Transport-free protocol API.
+Pura richiesta di invio con GET_STATUS.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Protocollo API senza trasporto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `communication: declare and implement request dispatch`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-140-03](TASK-140-03-enable-the-zephyr-shell.md) — Enable the Zephyr shell
+[TASK-140-03](TASK-140-03-enable-the-zephyr-shell.md) — Abilitare Zephyr Shell

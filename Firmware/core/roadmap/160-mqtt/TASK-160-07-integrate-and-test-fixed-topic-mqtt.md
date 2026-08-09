@@ -1,144 +1,155 @@
-# TASK-160-07 — Integrate and test fixed-topic MQTT
+# TASK-160-07 — Integrare e provare MQTT con topic fisso
 
-**Status:** ⬜ TODO  
-**Phase:** 160 — MQTT  
-**Depends on:** [TASK-160-06](TASK-160-06-queue-temperature-for-a-fixed-development-topic.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Integrate and test fixed-topic MQTT** and produce this focused outcome:
-
-One fixed topic payload.
+**Stato:** ⬜ TODO
+**Fase:** 160 — MQTT
+**Dipende da:** [TASK-160-06](TASK-160-06-queue-temperature-for-a-fixed-development-topic.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-`CMakeLists.txt`, `subsys/core/core.c`, MQTT service files, and the development broker.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add MQTT sources to CMake, initialize/start the service after network readiness, and observe one temperature topic at the broker. Test broker absence, reconnect, and a full outbound queue with the documented policy.
+Un carico fisso.
 
 ---
 
-## Why
+## File da aprire
 
-Network and Data independently work.
-
----
-
-## Called / used by
-
-Core starts; Data subscriber publishes.
+`CMakeLists.txt`, `subsys/core/core.c`, MQTT e il broker di sviluppo.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Aggiungere le sorgenti MQTT a CMake, initialize/start il servizio dopo la preparazione
+della rete, e osservare un argomento di temperatura presso il broker. L'assenza del
+broker di prova, riconnettersi, e una coda completa in uscita con la politica
+documentata.
+
+---
+
+## Perché
+
+Rete e dati funzionano in modo indipendente.
+
+---
+
+## Chi usa il risultato
+
+Inizia Core; Pubblica dati subscriber.
+
+---
+
+## Evento che attiva il codice
 
 DATA ARRIVAL/NETWORK EVENT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-ZBUS MSG SUBSCRIBER -> K_MSGQ -> MQTT THREAD -> socket.
-
----
-
-## Execution context
-
-Subscriber copies; dedicated MQTT thread performs I/O.
+ABBONAMENTO ZBUS MSG -> Socket K_MSGQ -> MQTT THREAD ->.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Zephyr MQTT/socket/poll APIs.
-
----
-
-## Inputs
-
-Temperature sample.
+Copie di subscriber; MQTT dedicato thread esegue I/O.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-One fixed topic payload.
-
----
-
-## Errors to handle
-
-Queue full, disconnected, DNS/connect/publish error, keepalive.
+API Zephyr MQTT/socket/poll.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Dynamic topics, TLS, QoS matrix, offline history
+Campione di temperatura.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `CMakeLists.txt`, `subsys/core/core.c`, MQTT service files, and the development broker.
-- [ ] Add MQTT sources to CMake, initialize/start the service after network readiness, and observe one temperature topic at the broker.
-- [ ] Test broker absence, reconnect, and a full outbound queue with the documented policy.
-- [ ] Handle only these realistic errors: Queue full, disconnected, DNS/connect/publish error, keepalive.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Un carico fisso.
+
+---
+
+## Errori da gestire
+
+Coda piena, disconnessa, errore DNS/connect/publish, conservativo.
+
+---
+
+## Non implementare ancora
+
+- Argomenti dinamici, TLS, matrice QoS, cronologia offline
+
+---
+
+## Procedura
+
+- [ ] Apri solo file di servizio `CMakeLists.txt`, `subsys/core/core.c`, MQTT e il
+      broker di sviluppo.
+- [ ] Aggiungere le sorgenti MQTT a CMake, initialize/start il servizio dopo la
+      disponibilità della rete, e osservare un argomento di temperatura presso il
+      broker.
+- [ ] Test broker assenza, riconnettersi, e una coda piena in uscita con la politica
+      documentata.
+- [ ] Gestisci solo questi errori realistici: Coda piena, disconnesso, errore
+      DNS/connect/publish, conservativo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Local broker subscriber receives value; stop/restart broker and verify
-Runtime sampling continues plus MQTT reconnects.
-
----
-
-## Expected result
-
-A real temperature reaches the fixed development topic and reconnect behavior is bounded.
+Il broker locale subscriber riceve valore; il broker stop/restart e verifica che il
+campionamento Runtime continui più le connessioni MQTT.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Una temperatura reale raggiunge l'argomento di sviluppo fisso e il comportamento di
+riconnettersi è limitato.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `mqtt: integrate and test fixed-topic mqtt`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-160-08](TASK-160-08-move-mqtt-settings-into-config.md) — Move MQTT settings into Config
+[TASK-160-08](TASK-160-08-move-mqtt-settings-into-config.md) — Spostare le impostazioni MQTT in Config

@@ -1,100 +1,104 @@
-# TASK-170-01 — Define Discovery result types
+# TASK-170-01 — Definire i tipi risultato di Discovery
 
-**Status:** ⬜ TODO  
-**Phase:** 170 — Discovery  
-**Depends on:** [TASK-160-08](../160-mqtt/TASK-160-08-move-mqtt-settings-into-config.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define Discovery result types** and produce this focused outcome:
-
-Normalized result.
+**Stato:** ⬜ TODO
+**Fase:** 170 — Discovery
+**Dipende da:** [TASK-160-08](../160-mqtt/TASK-160-08-move-mqtt-settings-into-config.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Risultato normalizzato.
+
+---
+
+## File da aprire
 
 `include/spaghetti/discovery.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define MANUAL/AUTO/HYBRID mode, a source enum independent of mode, and `spaghetti_discovery_result` containing Port, bounded type/config data, source, and generation. Keep ownership explicit.
-
----
-
-## Why
-
-Manual Config/Manager path already works and becomes the reference.
+Definire la modalità MANUAL/AUTO/HYBRID, un enum sorgente indipendente dalla modalità, e
+`spaghetti_discovery_result` contenente Port, dati limitati type/config, sorgente e
+generazione. Mantenere esplicita la proprietà.
 
 ---
 
-## Called / used by
+## Perché
 
-Communication/Config/manual provider; future providers.
-
----
-
-## Trigger
-
-CONFIG COMMAND/PROVIDER RESULT.
+Il percorso manuale Config/Manager funziona già e diventa il riferimento.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL initially.
-
----
-
-## Execution context
-
-Communication/Config caller thread.
+Communication/Config/manual provider; futuri provider.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Port/type/config value types only.
+CONFIG COMMAND/PROVIDER RISULTATO.
 
 ---
 
-## Inputs
+## Meccanismo di invocazione
+
+Chiamata diretta all'inizio.
+
+---
+
+## Contesto di esecuzione
+
+Communication/Config chiamante thread.
+
+---
+
+## Chiamate e dipendenze
+
+Solo i tipi di valore Port/type/config.
+
+---
+
+## Input
 
 Port 0/SHT40/manual/generation.
 
 ---
 
-## Outputs
+## Output
 
-Normalized result.
-
----
-
-## Errors to handle
-
-Invalid/stale/conflicting result.
+Risultato normalizzato.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- EEPROM, probe, LLM transport, or meaning AUTO=EEPROM
+Risultato Invalid/stale/conflicting.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `include/spaghetti/discovery.h`.
-- [ ] Define MANUAL/AUTO/HYBRID mode, a source enum independent of mode, and `spaghetti_discovery_result` containing Port, bounded type/config data, source, and generation.
-- [ ] Keep ownership explicit.
-- [ ] Handle only these realistic errors: Invalid/stale/conflicting result.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- EEPROM, sonda, trasporto LLM o significato AUTO=EEPROM
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/discovery.h`.
+- [ ] Definire la modalità MANUAL/AUTO/HYBRID, un enum sorgente indipendente dalla
+      modalità, e `spaghetti_discovery_result` contenente Port, dati type/config
+      limitati, sorgente e generazione.
+- [ ] Mantieni esplicita la proprieta'.
+- [ ] Gestisci solo questi errori realistici: risultato Invalid/stale/conflicting.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +114,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Ownership and generation review.
-
----
-
-## Expected result
-
-Provider-neutral result.
+Proprietà e revisione della generazione.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Risultato neutro del provider.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `discovery: define discovery result types`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-170-02](TASK-170-02-define-the-discovery-provider-api.md) — Define the Discovery provider API
+[TASK-170-02](TASK-170-02-define-the-discovery-provider-api.md) — Definire l’API del provider Discovery

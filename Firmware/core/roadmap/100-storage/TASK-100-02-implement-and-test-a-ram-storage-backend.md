@@ -1,106 +1,112 @@
-# TASK-100-02 — Implement and test a RAM Storage backend
+# TASK-100-02 — Implementare e provare il backend storage RAM
 
-**Status:** ⬜ TODO  
-**Phase:** 100 — Persistent Config  
-**Depends on:** [TASK-100-01](TASK-100-01-define-the-synchronous-storage-api.md)  
-**Estimated scope:** Small
+**Stato:** ⬜ TODO
+**Fase:** 100 — Config persistente
+**Dipende da:** [TASK-100-01](TASK-100-01-define-the-synchronous-storage-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Goal
+## Obiettivo
 
-Complete **Implement and test a RAM Storage backend** and produce this focused outcome:
+Questo task deve produrre un solo risultato verificabile:
 
 Found/not-found/corrupt/status.
 
 ---
 
-## Open
+## File da aprire
 
-Create `subsys/services/storage/storage.c` and a focused test call site.
-
----
-
-## Write / Modify
-
-Implement a fixed in-memory record with empty/not-found behavior, bounded copy-in/copy-out, version preservation, and overwrite semantics. Do not add flash code in this ticket.
+Creare `subsys/services/storage/storage.c` e un sito di chiamata di test focalizzato.
 
 ---
 
-## Why
+## Cosa scrivere o modificare
 
-Internal model is proven and small enough to version.
-
----
-
-## Called / used by
-
-Core/Config only.
+Implementare un record fisso in-memory con il comportamento empty/not-found, limitato
+copy-in/copy-out, la conservazione della versione e sovrascrivere la semantica. Non
+aggiungere codice per la memoria flash in questo task.
 
 ---
 
-## Trigger
+## Perché
 
-BOOT/VALID CONFIG UPDATE.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Il modello interno è collaudato e abbastanza piccolo per la versione.
 
 ---
 
-## Execution context
+## Chi usa il risultato
 
-Main/calling thread; never ISR.
-
----
-
-## Calls / dependencies
-
-Initially memory; later Zephyr Settings.
+Solo Core/Config.
 
 ---
 
-## Inputs
+## Evento che attiva il codice
+
+BOOT/VALID CONFIG AGGIORNAMENTO.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
+
+Main/calling thread; mai ISR.
+
+---
+
+## Chiamate e dipendenze
+
+Inizialmente memoria; successivamente Zephyr Settings.
+
+---
+
+## Input
 
 Config record/destination.
 
 ---
 
-## Outputs
+## Output
 
 Found/not-found/corrupt/status.
 
 ---
 
-## Errors to handle
+## Errori da gestire
 
-Missing record is normal; wrong size/version/corruption.
-
----
-
-## Do NOT implement yet
-
-- Measurement history or arbitrary blobs
+Il record mancante è normale; size/version/corruption sbagliato.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only Create `subsys/services/storage/storage.c` and a focused test call site.
-- [ ] Implement a fixed in-memory record with empty/not-found behavior, bounded copy-in/copy-out, version preservation, and overwrite semantics.
-- [ ] Do not add flash code in this ticket.
-- [ ] Handle only these realistic errors: Missing record is normal; wrong size/version/corruption.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Storia delle misurazioni o blob arbitrarie
+
+---
+
+## Procedura
+
+- [ ] Aprire solo Crea `subsys/services/storage/storage.c` e un sito di chiamata di test
+      focalizzato.
+- [ ] Implementare un record fisso in memoria con il comportamento empty/not-found,
+      limitato copy-in/copy-out, la conservazione della versione e sovrascrivere la
+      semantica.
+- [ ] Non aggiungere codice per la memoria flash in questo task.
+- [ ] Gestisci solo questi errori realistici: Il record mancante è normale;
+      size/version/corruption sbagliato.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -110,34 +116,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Write/read equality and wrong-version rejection.
-
----
-
-## Expected result
-
-Storage API behavior is proven before adding flash layout risk.
+Uguaglianza Write/read e rifiuto della versione errata.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il comportamento delle API di archiviazione è dimostrato prima di aggiungere il rischio
+di layout flash.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `persistent: implement and test a ram storage backend`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-100-03](TASK-100-03-verify-and-define-the-storage-partition.md) — Verify and define the storage partition
+[TASK-100-03](TASK-100-03-verify-and-define-the-storage-partition.md) — Verificare e definire la partizione di storage

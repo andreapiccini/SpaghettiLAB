@@ -1,101 +1,106 @@
-# TASK-110-05 — Publish real Manager samples
+# TASK-110-05 — Pubblicare i campioni reali del Manager
 
-**Status:** ⬜ TODO  
-**Phase:** 110 — Data / zbus  
-**Depends on:** [TASK-110-04](TASK-110-04-implement-data-initialization-and-publish.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Publish real Manager samples** and produce this focused outcome:
-
-Logger and test subscriber receive identical sequence.
+**Stato:** ⬜ TODO
+**Fase:** 110 — Data / zbus
+**Dipende da:** [TASK-110-04](TASK-110-04-implement-data-initialization-and-publish.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The Manager acquisition call site and `subsys/data/data.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-After a successful Manager read, construct `spaghetti_temperature_sample`, add timestamp and sequence, and call the Data publish API. Remove direct sensor-driver printing; the logger subscriber becomes the display owner.
+Logger e test subscriber ricevono sequenza identica.
 
 ---
 
-## Why
+## File da aprire
 
-Runtime/MQTT must consume Data, not SHT40 APIs.
-
----
-
-## Called / used by
-
-Temporary main acquisition loop; subscribers.
+Il sito di acquisizione del gestore e `subsys/data/data.c`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-DATA ARRIVAL.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL then ZBUS PUBLISH.
+Dopo aver letto con successo Manager, costruisci `spaghetti_temperature_sample`,
+aggiungi timestamp e sequenza e chiama l'API Data publish. Rimuovi il sensore
+diretto-driver; il logger subscriber diventa il proprietario del display.
 
 ---
 
-## Execution context
+## Perché
 
-Main publisher, subscriber threads.
-
----
-
-## Calls / dependencies
-
-Manager read and Data publish.
+Runtime/MQTT deve consumare i dati, non le API SHT40.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Real sample.
-
----
-
-## Outputs
-
-Logger and test subscriber receive identical sequence.
+Loop di acquisizione principale temporaneo; subscriber.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-Read failure publishes no valid sample; publish failure logged.
-
----
-
-## Do NOT implement yet
-
-- MQTT, PC streaming, generic Data routing
+ARRIVO DATI.
 
 ---
 
-## Steps
+## Meccanismo di invocazione
 
-- [ ] Open only The Manager acquisition call site and `subsys/data/data.c`.
-- [ ] After a successful Manager read, construct `spaghetti_temperature_sample`, add timestamp and sequence, and call the Data publish API.
-- [ ] Remove direct sensor-driver printing
-- [ ] the logger subscriber becomes the display owner.
-- [ ] Handle only these realistic errors: Read failure publishes no valid sample; publish failure logged.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Chiamate poi ZBUS Publish.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale publisher, subscriber.
+
+---
+
+## Chiamate e dipendenze
+
+Manager leggi e pubblichi i dati.
+
+---
+
+## Input
+
+Un vero campione.
+
+---
+
+## Output
+
+Logger e test subscriber ricevono sequenza identica.
+
+---
+
+## Errori da gestire
+
+Leggi il fallimento non pubblica alcun campione valido; pubblica il fallimento
+registrato.
+
+---
+
+## Non implementare ancora
+
+- MQTT, streaming PC, routing dati generico
+
+---
+
+## Procedura
+
+- [ ] Aprire solo il sito di acquisizione del gestore e `subsys/data/data.c`.
+- [ ] Dopo aver letto con successo Manager, costruisci `spaghetti_temperature_sample`,
+      aggiungi timestamp e sequenza e chiama l'API Data publish.
+- [ ] Rimuovere la stampa diretta del sensore-driver
+- [ ] il logger subscriber diventa il proprietario del display.
+- [ ] Gestisci solo questi errori realistici: Il fallimento della lettura non pubblica
+      alcun campione valido; pubblica il fallimento registrato.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,35 +116,37 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Run for multiple samples; verify monotonically increasing sequence in both
-consumers; intentionally pause a consumer to test pool/backpressure policy.
-
----
-
-## Expected result
-
-Every accepted test sample is independently delivered.
+Eseguire per più campioni; verificare la sequenza monotonicamente crescente in entrambi
+i consumatori; fermare intenzionalmente un consumatore per testare la politica
+pool/backpressure.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Ogni campione di prova accettato viene consegnato indipendentemente.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `data: publish real manager samples`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-110-06](TASK-110-06-test-zbus-fan-out-and-backpressure.md) — Test zbus fan-out and backpressure
+[TASK-110-06](TASK-110-06-test-zbus-fan-out-and-backpressure.md) — Provare fan-out e backpressure di zbus

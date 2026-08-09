@@ -1,100 +1,105 @@
-# TASK-070-04 — Implement Manager read
+# TASK-070-04 — Implementare la lettura nel Manager
 
-**Status:** ⬜ TODO  
-**Phase:** 070 — Module Manager  
-**Depends on:** [TASK-070-03](TASK-070-03-implement-manager-configure.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement Manager read** and produce this focused outcome:
-
-Instance ID and sample.
+**Stato:** ⬜ TODO
+**Fase:** 070 — Module Manager
+**Dipende da:** [TASK-070-03](TASK-070-03-implement-manager-configure.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Identificazione dell'istanza e campione.
+
+---
+
+## File da aprire
 
 `subsys/module_manager/module_manager.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Implement `spaghetti_module_manager_get_by_port()` and `spaghetti_module_manager_read()`. Validate ID, used state, READY state, output pointer, descriptor, and `read` operation before making one direct driver call.
-
----
-
-## Why
-
-One slot makes failure/ownership visible before adding complexity.
+Implementa `spaghetti_module_manager_get_by_port()` e `spaghetti_module_manager_read()`.
+Convalida ID, stato usato, stato READY, puntatore di uscita, descrittore e funzionamento
+`read` prima di effettuare una chiamata diretta driver.
 
 ---
 
-## Called / used by
+## Perché
 
-Main test/Runtime.
-
----
-
-## Trigger
-
-MODULE CONFIGURATION/READ.
+Uno slot rende failure/ownership visibile prima di aggiungere complessità.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL chain.
-
----
-
-## Execution context
-
-Main/calling thread.
+Principale test/Runtime.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
+
+MODULO CONFIGURATION/READ.
+
+---
+
+## Meccanismo di invocazione
+
+Catena di CHIAMATE DIRETTE.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale o thread chiamante.
+
+---
+
+## Chiamate e dipendenze
 
 `port_get` -> `registry_find` -> `driver->init/read`.
 
 ---
 
-## Inputs
+## Input
 
-Valid IDs and output pointers.
-
----
-
-## Outputs
-
-Instance ID and sample.
+ID validi e puntatori di output.
 
 ---
 
-## Errors to handle
+## Output
+
+Identificazione dell'istanza e campione.
+
+---
+
+## Errori da gestire
 
 `-EINVAL`, `-ENOENT`, `-ENOTSUP`, `-EBUSY`, driver errno.
 
 ---
 
-## Do NOT implement yet
+## Non implementare ancora
 
-- Threads, queues, replacement, callbacks
+- Threads, codes, replacement, callbacks
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `subsys/module_manager/module_manager.c`.
-- [ ] Implement `spaghetti_module_manager_get_by_port()` and `spaghetti_module_manager_read()`.
-- [ ] Validate ID, used state, READY state, output pointer, descriptor, and `read` operation before making one direct driver call.
-- [ ] Handle only these realistic errors: `-EINVAL`, `-ENOENT`, `-ENOTSUP`, `-EBUSY`, driver errno.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `subsys/module_manager/module_manager.c`.
+- [ ] Implementa `spaghetti_module_manager_get_by_port()` e
+      `spaghetti_module_manager_read()`.
+- [ ] Convalidate l'ID, lo stato usato, lo stato READY, il puntatore di uscita, il
+      descrittore e l'operazione `read` prima di effettuare una chiamata diretta driver.
+- [ ] Gestisci solo questi errori realistici: `-EINVAL`, `-ENOENT`, `-ENOTSUP`,
+      `-EBUSY`, driver errno.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +115,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Mentally trace rollback before compiling.
-
----
-
-## Expected result
-
-No partially READY instance after failure.
+Tracciare mentalmente il rollback prima di compilare.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessuna istanza parzialmente READY dopo il fallimento.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: implement manager read`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-070-05](TASK-070-05-integrate-manager-into-core-and-main.md) — Integrate Manager into Core and main
+[TASK-070-05](TASK-070-05-integrate-manager-into-core-and-main.md) — Integrare Manager con Core e main

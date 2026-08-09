@@ -1,100 +1,104 @@
-# TASK-070-02 — Implement the one-slot Manager state
+# TASK-070-02 — Implementare lo stato Manager con uno slot
 
-**Status:** ⬜ TODO  
-**Phase:** 070 — Module Manager  
-**Depends on:** [TASK-070-01](TASK-070-01-declare-the-module-manager-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement the one-slot Manager state** and produce this focused outcome:
-
-Instance ID and sample.
+**Stato:** ⬜ TODO
+**Fase:** 070 — Module Manager
+**Dipende da:** [TASK-070-01](TASK-070-01-declare-the-module-manager-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Identificazione dell'istanza e campione.
+
+---
+
+## File da aprire
 
 `subsys/module_manager/module_manager.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Create one private `spaghetti_module` slot plus a used flag. Implement `spaghetti_module_manager_init()` to clear all state and define strict ID/occupancy helpers without calling a driver yet.
-
----
-
-## Why
-
-One slot makes failure/ownership visible before adding complexity.
+Crea uno slot `spaghetti_module` privato più un flag usato. Implementa
+`spaghetti_module_manager_init()` per cancellare tutti gli stati e definire gli helper
+ID/occupancy severi senza chiamare driver ancora.
 
 ---
 
-## Called / used by
+## Perché
 
-Main test/Runtime.
-
----
-
-## Trigger
-
-MODULE CONFIGURATION/READ.
+Uno slot rende failure/ownership visibile prima di aggiungere complessità.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL chain.
-
----
-
-## Execution context
-
-Main/calling thread.
+Principale test/Runtime.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
+
+MODULO CONFIGURATION/READ.
+
+---
+
+## Meccanismo di invocazione
+
+Catena di CHIAMATE DIRETTE.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale o thread chiamante.
+
+---
+
+## Chiamate e dipendenze
 
 `port_get` -> `registry_find` -> `driver->init/read`.
 
 ---
 
-## Inputs
+## Input
 
-Valid IDs and output pointers.
-
----
-
-## Outputs
-
-Instance ID and sample.
+ID validi e puntatori di output.
 
 ---
 
-## Errors to handle
+## Output
+
+Identificazione dell'istanza e campione.
+
+---
+
+## Errori da gestire
 
 `-EINVAL`, `-ENOENT`, `-ENOTSUP`, `-EBUSY`, driver errno.
 
 ---
 
-## Do NOT implement yet
+## Non implementare ancora
 
-- Threads, queues, replacement, callbacks
+- Threads, codes, replacement, callbacks
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `subsys/module_manager/module_manager.c`.
-- [ ] Create one private `spaghetti_module` slot plus a used flag.
-- [ ] Implement `spaghetti_module_manager_init()` to clear all state and define strict ID/occupancy helpers without calling a driver yet.
-- [ ] Handle only these realistic errors: `-EINVAL`, `-ENOENT`, `-ENOTSUP`, `-EBUSY`, driver errno.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `subsys/module_manager/module_manager.c`.
+- [ ] Crea uno slot `spaghetti_module` privato più un flag usato.
+- [ ] Implementa `spaghetti_module_manager_init()` per cancellare tutto lo stato e
+      definire gli helper ID/occupancy rigorosi senza chiamare ancora driver.
+- [ ] Gestisci solo questi errori realistici: `-EINVAL`, `-ENOENT`, `-ENOTSUP`,
+      `-EBUSY`, driver errno.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +114,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Mentally trace rollback before compiling.
-
----
-
-## Expected result
-
-No partially READY instance after failure.
+Tracciare mentalmente il rollback prima di compilare.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Nessuna istanza parzialmente READY dopo il fallimento.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: implement the one-slot manager state`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-070-03](TASK-070-03-implement-manager-configure.md) — Implement Manager configure
+[TASK-070-03](TASK-070-03-implement-manager-configure.md) — Implementare la configurazione nel Manager

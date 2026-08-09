@@ -1,101 +1,104 @@
-# TASK-060-01 — Declare the Driver Registry API
+# TASK-060-01 — Dichiarare l’API di Driver Registry
 
-**Status:** ⬜ TODO  
-**Phase:** 060 — Driver Registry  
-**Depends on:** [TASK-050-06](../050-module-driver/TASK-050-06-exercise-sht40-through-the-operation-table.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Declare the Driver Registry API** and produce this focused outcome:
-
-Const descriptor or `NULL` for unknown.
+**Stato:** ⬜ TODO
+**Fase:** 060 — Driver Registry
+**Dipende da:** [TASK-050-06](../050-module-driver/TASK-050-06-exercise-sht40-through-the-operation-table.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Descrittore const o `NULL` per sconosciuto.
+
+---
+
+## File da aprire
 
 `include/spaghetti/driver_registry.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Declare `int spaghetti_driver_registry_init(void);`,
-`const struct spaghetti_module_driver *spaghetti_driver_registry_find(const char
-*type_id);`, and optionally `size_t spaghetti_driver_registry_count(void);`.
-
----
-
-## Why
-
-The tested SHT40 descriptor is ready to register.
+Dichiara `int spaghetti_driver_registry_init(void);`, `const struct
+spaghetti_module_driver *spaghetti_driver_registry_find(const char *type_id);` e
+opzionalmente `size_t spaghetti_driver_registry_count(void);`.
 
 ---
 
-## Called / used by
+## Perché
 
-Core initializes; Manager finds; Communication later counts.
-
----
-
-## Trigger
-
-BOOT/MODULE CONFIGURATION.
+Il descrittore SHT40 testato è pronto per essere registrato.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main/calling thread.
+Core inizializza; Manager trova; Communication conta successivamente.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Module Driver type.
-
----
-
-## Inputs
-
-Null-terminated bounded type ID.
+Configurazione BOOT/MODULE.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-Const descriptor or `NULL` for unknown.
-
----
-
-## Errors to handle
-
-Null/empty key and duplicate descriptors during init.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Runtime registration, hash table, iterable sections
+Thread principale o thread chiamante.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `include/spaghetti/driver_registry.h`.
-- [ ] Declare `int spaghetti_driver_registry_init(void);`, `const struct spaghetti_module_driver *spaghetti_driver_registry_find(const char *type_id);`, and optionally `size_t spaghetti_driver_registry_count(void);`.
-- [ ] Handle only these realistic errors: Null/empty key and duplicate descriptors during init.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Tipo di driver del modulo.
+
+---
+
+## Input
+
+ID null-terminato del tipo limitato.
+
+---
+
+## Output
+
+Descrittore const o `NULL` per sconosciuto.
+
+---
+
+## Errori da gestire
+
+Chiave Null/empty e descrittori duplicati durante l'init.
+
+---
+
+## Non implementare ancora
+
+- Registrazione Runtime, hash table, sezioni iterabili
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/driver_registry.h`.
+- [ ] Dichiara `int spaghetti_driver_registry_init(void);`, `const struct
+      spaghetti_module_driver *spaghetti_driver_registry_find(const char *type_id);` e
+      opzionalmente `size_t spaghetti_driver_registry_count(void);`.
+- [ ] Gestisci solo questi errori realistici: chiave Null/empty e descrittori duplicati
+      durante l'init.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +114,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-API review: Registry never initializes the driver.
-
----
-
-## Expected result
-
-Minimal immutable lookup contract.
+Recensione API: il registro non inizializza mai la driver.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Un contratto di ricerca minimo immutabile.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `driver: declare the driver registry api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-060-02](TASK-060-02-implement-the-fixed-driver-table.md) — Implement the fixed driver table
+[TASK-060-02](TASK-060-02-implement-the-fixed-driver-table.md) — Implementare la tabella statica dei driver

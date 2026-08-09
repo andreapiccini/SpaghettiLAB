@@ -1,143 +1,153 @@
-# TASK-130-07 — Test the Relay threshold and safe state
+# TASK-130-07 — Provare soglia e stato sicuro del Relay
 
-**Status:** ⬜ TODO  
-**Phase:** 130 — Relay + Runtime V1  
-**Depends on:** [TASK-130-06](TASK-130-06-evaluate-temperature-in-the-runtime-thread.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test the Relay threshold and safe state** and produce this focused outcome:
-
-Relay ON only for values strictly above threshold.
+**Stato:** ⬜ TODO
+**Fase:** 130 — Relay + Runtime V1
+**Dipende da:** [TASK-130-06](TASK-130-06-evaluate-temperature-in-the-runtime-thread.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The real Relay hardware, Runtime test input, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Inject or produce values below, equal to, and above 25 °C. Confirm strict-greater behavior, no repeated redundant command, safe init/deinit output, and a controlled error when the Relay module is unavailable.
+Relay ON solo per valori rigorosamente superiori alla soglia.
 
 ---
 
-## Why
+## File da aprire
 
-Both sensor Data and relay command work independently.
-
----
-
-## Called / used by
-
-Config loads; Runtime evaluates.
+L'hardware Relay reale, l'ingresso di test Runtime e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-DATA ARRIVAL.
+Inserisci o produci valori inferiori, uguali e superiori a 25 °C. Verifica il confronto
+strettamente maggiore, l'assenza di comandi ripetuti inutilmente, lo stato sicuro durante
+`init` e `deinit` e un errore controllato quando il modulo Relay non è disponibile.
 
 ---
 
-## Invocation mechanism
+## Perché
+
+Sia il sensore Data che il comando relè funzionano indipendentemente.
+
+---
+
+## Chi usa il risultato
+
+Carichi Config; Runtime valuta.
+
+---
+
+## Evento che attiva il codice
+
+ARRIVO DATI.
+
+---
+
+## Meccanismo di invocazione
 
 ZBUS MSG SUBSCRIBER -> Runtime THREAD -> DIRECT CALL.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Runtime thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Data subscriber and Manager command.
-
----
-
-## Inputs
-
-Temperature sample and one rule.
+Data subscriber e comando Manager.
 
 ---
 
-## Outputs
+## Input
 
-Relay ON only for values strictly above threshold.
-
----
-
-## Errors to handle
-
-Missing target/source, wrong channel, command failure.
+Campione di temperatura e una regola.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Generic operators/actions, hysteresis unless required for safe physical test, rule arrays, scripting
+Relay ON solo per valori rigorosamente superiori alla soglia.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only The real Relay hardware, Runtime test input, and the serial console.
-- [ ] Inject or produce values below, equal to, and above 25 °C.
-- [ ] Confirm strict-greater behavior, no repeated redundant command, safe init/deinit output, and a controlled error when the Relay module is unavailable.
-- [ ] Handle only these realistic errors: Missing target/source, wrong channel, command failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Manca target/source, canale sbagliato, comando fallito.
+
+---
+
+## Non implementare ancora
+
+- Generico operators/actions, isteresi a meno che non sia necessario per test fisici
+  sicuri, array di regole, scripting
+
+---
+
+## Procedura
+
+- [ ] Aprire solo l'hardware relè reale, l'ingresso di test Runtime e la console
+      seriale.
+- [ ] Inietti o produca valori inferiori, uguali o superiori a 25 °C.
+- [ ] Confermare un comportamento più severo, nessun comando ridondante ripetuto, uscita
+      init/deinit sicura e un errore controllato quando il modulo Relay non è
+      disponibile.
+- [ ] Gestisci solo questi errori realistici: Manca target/source, canale sbagliato,
+      errore di comando.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Inject 24.9, 25.0, 25.1 fixed-unit samples; expect no/no/one command.
-
----
-
-## Expected result
-
-Only temperatures above 25 °C command the configured Relay, which returns to its safe state on deinit.
+Inietti 24.9, 25.0, 25.1 campioni di unità fissa; attenda il comando no/no/one.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Solo temperature superiori ai 25 °C comandano il Relay configurato, che ritorna al suo
+stato di sicurezza su deinit.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `relay: test the relay threshold and safe state`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-140-01](../140-communication/TASK-140-01-define-bounded-communication-messages.md) — Define bounded Communication messages
+[TASK-140-01](../140-communication/TASK-140-01-define-bounded-communication-messages.md) — Definire messaggi Communication a dimensione limitata

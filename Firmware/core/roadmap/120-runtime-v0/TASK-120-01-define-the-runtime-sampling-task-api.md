@@ -1,101 +1,105 @@
-# TASK-120-01 — Define the Runtime sampling task API
+# TASK-120-01 — Definire l’API del task di campionamento Runtime
 
-**Status:** ⬜ TODO  
-**Phase:** 120 — Runtime V0  
-**Depends on:** [TASK-110-06](../110-data-zbus/TASK-110-06-test-zbus-fan-out-and-backpressure.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the Runtime sampling task API** and produce this focused outcome:
-
-Valid loaded task/status.
+**Stato:** ⬜ TODO
+**Fase:** 120 — Runtime V0
+**Dipende da:** [TASK-110-06](../110-data-zbus/TASK-110-06-test-zbus-fan-out-and-backpressure.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Valido caricato task/status.
+
+---
+
+## File da aprire
 
 `include/spaghetti/runtime.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define `spaghetti_runtime_sampling_task` with module ID, period milliseconds, and enabled flag. Declare Runtime init, load, start, and stop functions only; do not add a scripting language.
-
----
-
-## Why
-
-Config already contains a sample period and Data already distributes.
+Definire `spaghetti_runtime_sampling_task` con l'ID del modulo, i millisecondi del
+periodo e il flag abilitato. Dichiarare Runtime init, caricare, avviare e interrompere
+solo le funzioni; non aggiungere un linguaggio di scripting.
 
 ---
 
-## Called / used by
+## Perché
 
-Core/Config; Runtime owns task copy while loaded.
+Config contiene già un periodo di campionamento e i dati sono già distribuiti.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Core/Config; Runtime possiede una copia dell'attività durante il caricamento.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/CONFIG APPLY.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL for lifecycle.
-
----
-
-## Execution context
-
-Main/calling thread.
+Chiamata diretta per il ciclo di vita.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Module Manager/Data/Timer service later.
-
----
-
-## Inputs
-
-READY module ID and period 1000 ms.
+Thread principale o thread chiamante.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Valid loaded task/status.
-
----
-
-## Errors to handle
-
-Zero/overflow period, unknown module, already running.
+Servizio modulo Manager/Data/Timer più tardi.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Conditions, actions, graph, bytecode, multiple tasks
+ID modulo pronto e periodo 1000 ms.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `include/spaghetti/runtime.h`.
-- [ ] Define `spaghetti_runtime_sampling_task` with module ID, period milliseconds, and enabled flag.
-- [ ] Declare Runtime init, load, start, and stop functions only
-- [ ] do not add a scripting language.
-- [ ] Handle only these realistic errors: Zero/overflow period, unknown module, already running.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Valido caricato task/status.
+
+---
+
+## Errori da gestire
+
+Periodo Zero/overflow, modulo sconosciuto, già in esecuzione.
+
+---
+
+## Non implementare ancora
+
+- Condizioni, azioni, grafico, bytecode, attività multiple
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/runtime.h`.
+- [ ] Definisci `spaghetti_runtime_sampling_task` con l'ID del modulo, il periodo
+      millisecondi e il flag abilitato.
+- [ ] Dichiara solo le funzioni Runtime init, load, start e stop
+- [ ] non aggiungere una lingua di scripting.
+- [ ] Gestisci solo questi errori realistici: periodo Zero/overflow, modulo sconosciuto,
+      già in esecuzione.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +115,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Validate 1000; reject zero and unknown ID.
-
----
-
-## Expected result
-
-Minimal task contract.
+Convalidate 1000; rifiutate l'ID zero e sconosciuto.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Un contratto di lavoro minimo.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `runtime: define the runtime sampling task api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-120-02](TASK-120-02-implement-the-one-period-timer-service.md) — Implement the one-period Timer service
+[TASK-120-02](TASK-120-02-implement-the-one-period-timer-service.md) — Implementare timer e semaforo del periodo

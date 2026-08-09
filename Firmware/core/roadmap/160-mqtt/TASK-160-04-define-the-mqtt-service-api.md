@@ -1,100 +1,105 @@
-# TASK-160-04 — Define the MQTT service API
+# TASK-160-04 — Definire l’API del servizio MQTT
 
-**Status:** ⬜ TODO  
-**Phase:** 160 — MQTT  
-**Depends on:** [TASK-160-03](TASK-160-03-implement-network-readiness-signalling.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the MQTT service API** and produce this focused outcome:
-
-One fixed topic payload.
+**Stato:** ⬜ TODO
+**Fase:** 160 — MQTT
+**Dipende da:** [TASK-160-03](TASK-160-03-implement-network-readiness-signalling.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-Create `subsys/services/mqtt/mqtt.h`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Declare bounded `spaghetti_mqtt_init()`, `start()`, `publish_temperature()`, and `get_status()` APIs. Define copied endpoint/topic inputs, payload bounds, and service states without exposing Zephyr MQTT internals.
+Un carico fisso.
 
 ---
 
-## Why
+## File da aprire
 
-Network and Data independently work.
-
----
-
-## Called / used by
-
-Core starts; Data subscriber publishes.
+Crea `subsys/services/mqtt/mqtt.h`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Dichiarare le API `spaghetti_mqtt_init()` delimitate, `start()`, `publish_temperature()`
+e `get_status()`. Definire gli ingressi endpoint/topic copiati, i limiti di carico e gli
+stati di servizio senza esporre Zephyr MQTT interni.
+
+---
+
+## Perché
+
+Rete e dati funzionano in modo indipendente.
+
+---
+
+## Chi usa il risultato
+
+Inizia Core; Pubblica dati subscriber.
+
+---
+
+## Evento che attiva il codice
 
 DATA ARRIVAL/NETWORK EVENT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-ZBUS MSG SUBSCRIBER -> K_MSGQ -> MQTT THREAD -> socket.
-
----
-
-## Execution context
-
-Subscriber copies; dedicated MQTT thread performs I/O.
+ABBONAMENTO ZBUS MSG -> Socket K_MSGQ -> MQTT THREAD ->.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Zephyr MQTT/socket/poll APIs.
-
----
-
-## Inputs
-
-Temperature sample.
+Copie di subscriber; MQTT dedicato thread esegue I/O.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-One fixed topic payload.
-
----
-
-## Errors to handle
-
-Queue full, disconnected, DNS/connect/publish error, keepalive.
+API Zephyr MQTT/socket/poll.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Dynamic topics, TLS, QoS matrix, offline history
+Campione di temperatura.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only Create `subsys/services/mqtt/mqtt.h`.
-- [ ] Declare bounded `spaghetti_mqtt_init()`, `start()`, `publish_temperature()`, and `get_status()` APIs.
-- [ ] Define copied endpoint/topic inputs, payload bounds, and service states without exposing Zephyr MQTT internals.
-- [ ] Handle only these realistic errors: Queue full, disconnected, DNS/connect/publish error, keepalive.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Un carico fisso.
+
+---
+
+## Errori da gestire
+
+Coda piena, disconnessa, errore DNS/connect/publish, conservativo.
+
+---
+
+## Non implementare ancora
+
+- Argomenti dinamici, TLS, matrice QoS, cronologia offline
+
+---
+
+## Procedura
+
+- [ ] Apri solo Crea `subsys/services/mqtt/mqtt.h`.
+- [ ] Dichiarare le API `spaghetti_mqtt_init()`, `start()`, `publish_temperature()` e
+      `get_status()`.
+- [ ] Definisci gli ingressi endpoint/topic copiati, i limiti di carico e gli stati di
+      servizio senza esporre gli interni Zephyr MQTT.
+- [ ] Gestisci solo questi errori realistici: Coda piena, disconnesso, errore
+      DNS/connect/publish, conservativo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,35 +115,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Local broker subscriber receives value; stop/restart broker and verify
-Runtime sampling continues plus MQTT reconnects.
-
----
-
-## Expected result
-
-Known sample reaches known topic without blocking Runtime.
+Il broker locale subscriber riceve valore; il broker stop/restart e verifica che il
+campionamento Runtime continui più le connessioni MQTT.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il campione conosciuto raggiunge l'argomento conosciuto senza bloccare Runtime.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `mqtt: define the mqtt service api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-160-05](TASK-160-05-implement-the-mqtt-worker-and-client-state.md) — Implement the MQTT worker and client state
+[TASK-160-05](TASK-160-05-implement-the-mqtt-worker-and-client-state.md) — Implementare worker MQTT e stato del client

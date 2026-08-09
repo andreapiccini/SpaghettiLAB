@@ -1,143 +1,153 @@
-# TASK-040-09 — Flash and test the real SHT40
+# TASK-040-09 — Caricare e provare il sensore SHT40 reale
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-08](TASK-040-08-build-and-inspect-the-sht40-image.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Flash and test the real SHT40** and produce this focused outcome:
-
-Temperature and humidity once per second.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-08](TASK-040-08-build-and-inspect-the-sht40-image.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The connected SHT40 hardware, root `README.md`, and serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Flash the current image, observe plausible temperature and humidity once per second, then disconnect the sensor and verify the read path reports a controlled error. Restore the hardware after the test.
+Temperatura e umidità una volta al secondo.
 
 ---
 
-## Why
+## File da aprire
 
-Do not proceed to abstractions without real bus/sensor proof.
-
----
-
-## Called / used by
-
-Main test harness.
+L'hardware collegato SHT40, root `README.md` e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Esegui il flash dell'immagine corrente e osserva valori plausibili di temperatura e
+umidità una volta al
+secondo, quindi scollegare il sensore e verificare il percorso di lettura segnala un
+errore controllato. Ripristinare l'hardware dopo il test.
+
+---
+
+## Perché
+
+Non procedere alle astrazioni senza la prova bus/sensor reale.
+
+---
+
+## Chi usa il risultato
+
+Imbracatura di prova principale.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/PERIODIC TEST LOOP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL and `k_sleep`, not `K_TIMER` yet.
-
----
-
-## Execution context
-
-Main thread.
+DIRECT CALL e `k_sleep`, non `K_TIMER` ancora.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
+
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
 
 Temporary wrapper -> Sensor API -> I2C.
 
 ---
 
-## Inputs
+## Input
 
 Connected powered SHT40.
 
 ---
 
-## Outputs
+## Output
 
-Temperature and humidity once per second.
-
----
-
-## Errors to handle
-
-Init/read failure; log and retry only with a clear policy.
+Temperatura e umidità una volta al secondo.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- Runtime scheduling, zbus, MQTT
+Errore Init/read; log e riprova solo con una politica chiara.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only The connected SHT40 hardware, root `README.md`, and serial console.
-- [ ] Flash the current image, observe plausible temperature and humidity once per second, then disconnect the sensor and verify the read path reports a controlled error. Restore the hardware after the test.
-- [ ] Handle only these realistic errors: Init/read failure; log and retry only with a clear policy.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Programmazione Runtime, zbus, MQTT
+
+---
+
+## Procedura
+
+- [ ] Aprire solo l'hardware SHT40 connesso, il root `README.md` e la console seriale.
+- [ ] Esegui il flash dell'immagine corrente e osserva valori plausibili di temperatura
+      e umidità una
+      volta al secondo, quindi scollegare il sensore e verificare il percorso di lettura
+      segnala un errore controllato. Ripristinare l'hardware dopo il test.
+- [ ] Gestire solo questi errori realistici: Errore Init/read; registrare e riprovare
+      solo con una politica chiara.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Observe plausible temperature/humidity; disconnect sensor and verify a
-bounded error rather than crash/hang; reconnect/reset.
-
----
-
-## Expected result
-
-Real temperature and humidity are visible, and a missing sensor does not crash or reset the board.
+Osservare temperature/humidity plausibile; disconnettere il sensore e verificare un
+errore limitato piuttosto che crash/hang; reconnect/reset.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+La temperatura e l'umidità reali sono visibili, e un sensore mancante non si blocca o
+reimposta la scheda.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: flash and test the real sht40`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-050-01](../050-module-driver/TASK-050-01-define-the-minimal-module-instance.md) — Define the minimal module instance
+[TASK-050-01](../050-module-driver/TASK-050-01-define-the-minimal-module-instance.md) — Definire l’istanza minima di Module

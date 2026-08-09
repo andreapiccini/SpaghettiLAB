@@ -1,112 +1,117 @@
-# TASK-110-04 — Implement Data initialization and publish
+# TASK-110-04 — Inizializzare Data e pubblicare un messaggio
 
-**Status:** ⬜ TODO  
-**Phase:** 110 — Data / zbus  
-**Depends on:** [TASK-110-03](TASK-110-03-define-the-temperature-channel-and-subscribers.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement Data initialization and publish** and produce this focused outcome:
-
-Independent copy to both subscribers.
+**Stato:** ⬜ TODO
+**Fase:** 110 — Data / zbus
+**Dipende da:** [TASK-110-03](TASK-110-03-define-the-temperature-channel-and-subscribers.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/data/data.c` and `CMakeLists.txt`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Implement `spaghetti_data_init()` and `spaghetti_data_publish_temperature()` using `zbus_chan_pub()` with the caller-provided timeout. Add `data.c` to CMake and propagate validation/publish errors.
+Copia indipendente per entrambi gli subscriber.
 
 ---
 
-## Why
+## File da aprire
 
-Runtime automation should not silently miss an intermediate sample.
-
----
-
-## Called / used by
-
-Publisher and two test consumer threads.
+`subsys/data/data.c` e `CMakeLists.txt`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-DATA ARRIVAL.
-
----
-
-## Invocation mechanism
-
-ZBUS PUBLISH
+Implementa `spaghetti_data_init()` e `spaghetti_data_publish_temperature()` utilizzando
+`zbus_chan_pub()` con il timeout fornito dal chiamante. Aggiungi `data.c` a CMake e
+propaga gli errori validation/publish.
 
 ---
 
-## Execution context
+## Perché
 
-Publisher thread; consumers' dedicated test threads.
+L'automazione Runtime non dovrebbe perdere silenziosamente un campione intermedio.
 
 ---
 
-## Calls / dependencies
+## Chi usa il risultato
+
+Publisher e due thread di consumo di prova.
+
+---
+
+## Evento che attiva il codice
+
+ARRIVO DATI.
+
+---
+
+## Meccanismo di invocazione
+
+Published ZBUS
+
+---
+
+## Contesto di esecuzione
+
+Publisher thread; thread di prova dedicati ai consumatori.
+
+---
+
+## Chiamate e dipendenze
 
 `zbus_chan_pub`, `zbus_sub_wait_msg`.
 
 ---
 
-## Inputs
+## Input
 
-Sample copy.
-
----
-
-## Outputs
-
-Independent copy to both subscribers.
+Copia del campione.
 
 ---
 
-## Errors to handle
+## Output
 
-Validator rejection, allocation/pool exhaustion, timeout.
-
----
-
-## Do NOT implement yet
-
-- MQTT or Communication consumers
+Copia indipendente per entrambi gli subscriber.
 
 ---
 
-## Zephyr note
+## Errori da gestire
 
-The channel copies a bounded message. Do not publish a borrowed stack pointer for asynchronous consumption.
+Rifiuto del validatore, esaurimento allocation/pool, timeout.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `subsys/data/data.c` and `CMakeLists.txt`.
-- [ ] Implement `spaghetti_data_init()` and `spaghetti_data_publish_temperature()` using `zbus_chan_pub()` with the caller-provided timeout.
-- [ ] Add `data.c` to CMake and propagate validation/publish errors.
-- [ ] Handle only these realistic errors: Validator rejection, allocation/pool exhaustion, timeout.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Consumatori MQTT o Communication
+
+---
+
+## Orientamento Zephyr
+
+Il canale copia un messaggio limitato. Non pubblicare un puntatore di stack preso in
+prestito per il consumo asincrono.
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/data/data.c` e `CMakeLists.txt`.
+- [ ] Implementa `spaghetti_data_init()` e `spaghetti_data_publish_temperature()`
+      utilizzando `zbus_chan_pub()` con il timeout fornito dal chiamante.
+- [ ] Aggiungere `data.c` a CMake e propagare gli errori validation/publish.
+- [ ] Gestisci solo questi errori realistici: Rifiuto del validatore, esaurimento
+      allocation/pool, timeout.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -116,34 +121,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Publish one fake sample; each test consumer logs same sequence/value once.
-
----
-
-## Expected result
-
-Two independent receipts.
+Pubblicare un campione falso; ogni test consumer registra lo stesso sequence/value una
+volta.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Due ricevute indipendenti.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `data: implement data initialization and publish`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-110-05](TASK-110-05-publish-real-manager-samples.md) — Publish real Manager samples
+[TASK-110-05](TASK-110-05-publish-real-manager-samples.md) — Pubblicare i campioni reali del Manager

@@ -1,37 +1,35 @@
-# Phase 040 — SHT40 vertical slice
+# Fase 040 — Sezione verticale SHT40
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Read the real SHT40 quickly through Zephyr's temporary static sensor path.
+Leggere un sensore SHT40 reale usando inizialmente il driver Sensor di Zephyr.
 
-## Depends on
+## Dipende da
 
-[Phase 030 — Port](../030-port/README.md)
+[Fase 030 — Port](../030-port/README.md)
 
-## Visible result
+## Risultato visibile
 
-Real temperature and humidity values appear in the serial log.
+Temperatura e umidità reali compaiono nei log.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-040-01 — Inspect the installed SHT4x driver](TASK-040-01-inspect-the-installed-sht4x-driver.md)
-2. ⬜ [TASK-040-02 — Add the temporary SHT40 Devicetree node](TASK-040-02-add-the-temporary-sht40-devicetree-node.md)
-3. ⬜ [TASK-040-03 — Enable the Sensor API](TASK-040-03-enable-the-sensor-api.md)
-4. ⬜ [TASK-040-04 — Declare the temporary SHT40 wrapper API](TASK-040-04-declare-the-temporary-sht40-wrapper-api.md)
-5. ⬜ [TASK-040-05 — Implement the temporary SHT40 wrapper](TASK-040-05-implement-the-temporary-sht40-wrapper.md)
-6. ⬜ [TASK-040-06 — Add the SHT40 wrapper to CMake](TASK-040-06-add-the-sht40-wrapper-to-cmake.md)
-7. ⬜ [TASK-040-07 — Call the SHT40 wrapper from main](TASK-040-07-call-the-sht40-wrapper-from-main.md)
-8. ⬜ [TASK-040-08 — Build and inspect the SHT40 image](TASK-040-08-build-and-inspect-the-sht40-image.md)
-9. ⬜ [TASK-040-09 — Flash and test the real SHT40](TASK-040-09-flash-and-test-the-real-sht40.md)
+1. ⬜ [TASK-040-01 — Esaminare il driver SHT4x fornito da Zephyr](TASK-040-01-inspect-the-installed-sht4x-driver.md)
+2. ⬜ [TASK-040-02 — Aggiungere il nodo Devicetree temporaneo di SHT40](TASK-040-02-add-the-temporary-sht40-devicetree-node.md)
+3. ⬜ [TASK-040-03 — Abilitare l’API Sensor di Zephyr](TASK-040-03-enable-the-sensor-api.md)
+4. ⬜ [TASK-040-04 — Dichiarare l’API del wrapper temporaneo SHT40](TASK-040-04-declare-the-temporary-sht40-wrapper-api.md)
+5. ⬜ [TASK-040-05 — Implementare il wrapper temporaneo SHT40](TASK-040-05-implement-the-temporary-sht40-wrapper.md)
+6. ⬜ [TASK-040-06 — Aggiungere il wrapper SHT40 a CMake](TASK-040-06-add-the-sht40-wrapper-to-cmake.md)
+7. ⬜ [TASK-040-07 — Chiamare il wrapper SHT40 da main](TASK-040-07-call-the-sht40-wrapper-from-main.md)
+8. ⬜ [TASK-040-08 — Compilare e ispezionare l’immagine SHT40](TASK-040-08-build-and-inspect-the-sht40-image.md)
+9. ⬜ [TASK-040-09 — Caricare e provare il sensore SHT40 reale](TASK-040-09-flash-and-test-the-real-sht40.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Static SHT4x device is ready.
-- [ ] Real temperature is printed.
-- [ ] Real humidity is printed.
-- [ ] Missing sensor produces a controlled error.
-- [ ] Static node/wrapper are marked TEMPORARY SHORTCUT.
+- [ ] Il nodo temporaneo SHT40 corrisponde al binding installato.
+- [ ] Il wrapper controlla `device_is_ready()`.
+- [ ] Build e prova hardware restituiscono campioni plausibili.

@@ -1,104 +1,106 @@
-# TASK-010-01 — Define the Core public API
+# TASK-010-01 — Definire l’API pubblica di Core
 
-**Status:** ✅ DONE
-**Phase:** 010 — Core  
-**Depends on:** [TASK-000-02](../000-baseline/TASK-000-02-flash-and-observe-the-baseline.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the Core public API** and produce this focused outcome:
-
-Declaration contract only.
+**Stato:** ✅ DONE
+**Fase:** 010 — Core
+**Dipende da:** [TASK-000-02](../000-baseline/TASK-000-02-flash-and-observe-the-baseline.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Solo contratto di dichiarazione.
+
+---
+
+## File da aprire
 
 `include/spaghetti/core.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Add an include guard; declare
-`enum spaghetti_core_state { SPAGHETTI_CORE_UNINITIALIZED,
-SPAGHETTI_CORE_READY, SPAGHETTI_CORE_ERROR };`,
-`int spaghetti_core_init(void);`, and
-`enum spaghetti_core_state spaghetti_core_get_state(void);`.
-
----
-
-## Why
-
-All later subsystem initialization needs one coordinator.
+Aggiungere una protezione include; dichiarare `enum spaghetti_core_state {
+SPAGHETTI_CORE_UNINITIALIZED, SPAGHETTI_CORE_READY, SPAGHETTI_CORE_ERROR };`, `int
+spaghetti_core_init(void);`, e `enum spaghetti_core_state
+spaghetti_core_get_state(void);`.
 
 ---
 
-## Called / used by
+## Perché
 
-`src/main.c`; future Communication reads state.
-
----
-
-## Trigger
-
-BOOT.
+L'inizializzazione di tutti i sottosistemi successivi necessita di un coordinatore.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main Zephyr thread.
+`src/main.c`; futuro Communication legge stato.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-No lower subsystem yet.
-
----
-
-## Inputs
-
-None.
+AVVIO.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-Declaration contract only.
-
----
-
-## Errors to handle
-
-None in header; document negative errno convention.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Capability flags, Wi-Fi/BLE, subsystem arrays, threads
+Principale Zephyr thread.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [x] Open only `include/spaghetti/core.h`.
-- [x] Add an include guard
-- [x] declare `enum spaghetti_core_state { SPAGHETTI_CORE_UNINITIALIZED, SPAGHETTI_CORE_READY, SPAGHETTI_CORE_ERROR };`, `int spaghetti_core_init(void);`, and `enum spaghetti_core_state spaghetti_core_get_state(void);`.
-- [x] Handle only these realistic errors: None in header; document negative errno convention.
-- [x] Confirm no item from **Do NOT implement yet** was added
-- [x] Run the task test and compare it with **Expected result**
+Ancora nessun sottosistema inferiore.
+
+---
+
+## Input
+
+Nessuno.
+
+---
+
+## Output
+
+Solo contratto di dichiarazione.
+
+---
+
+## Errori da gestire
+
+Nessuna in header; documento negativo errno convenzione.
+
+---
+
+## Non implementare ancora
+
+- Opzioni di capacità, Wi-Fi/BLE, array di sottosistemi, thread
+
+---
+
+## Procedura
+
+- [x] Apri solo `include/spaghetti/core.h`.
+- [x] Aggiungi una protezione include
+- [x] dichiarare `enum spaghetti_core_state { SPAGHETTI_CORE_UNINITIALIZED,
+      SPAGHETTI_CORE_READY, SPAGHETTI_CORE_ERROR };`, `int spaghetti_core_init(void);` e
+      `enum spaghetti_core_state spaghetti_core_get_state(void);`.
+- [x] Gestire solo questi errori realistici: Nessuno in intestazione; documento
+      convenzione errno negativo.
+- [x] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [x] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -114,34 +116,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Review ownership: only Core may modify its state.
-
----
-
-## Expected result
-
-Small header with no board-specific field.
+Recensione proprietà: solo Core può modificare il suo stato.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [x] Required documentation or implementation file changed as specified
-- [x] Named type, function, configuration, or test exists
-- [x] Build succeeds when this task requires a build
-- [x] Task-specific test passes
-- [x] No unrelated functionality was added
+Piccola intestazione senza campo specifico.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [x] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [x] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [x] La build riesce quando il task la richiede
+- [x] La verifica specifica del task passa
+- [x] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `core: define the core public api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-010-02](TASK-010-02-implement-core-state-and-initialization.md) — Implement Core state and initialization
+[TASK-010-02](TASK-010-02-implement-core-state-and-initialization.md) — Implementare stato e inizializzazione di Core

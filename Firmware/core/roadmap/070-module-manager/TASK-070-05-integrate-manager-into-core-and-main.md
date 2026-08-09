@@ -1,111 +1,116 @@
-# TASK-070-05 — Integrate Manager into Core and main
+# TASK-070-05 — Integrare Manager con Core e main
 
-**Status:** ⬜ TODO  
-**Phase:** 070 — Module Manager  
-**Depends on:** [TASK-070-04](TASK-070-04-implement-manager-read.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Integrate Manager into Core and main** and produce this focused outcome:
-
-Instance READY and values.
+**Stato:** ⬜ TODO
+**Fase:** 070 — Module Manager
+**Dipende da:** [TASK-070-04](TASK-070-04-implement-manager-read.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`CMakeLists.txt`, `subsys/core/core.c`, and `src/main.c`.
+Questo task deve produrre un solo risultato verificabile:
+
+Intest READY e valori.
 
 ---
 
-## Write / Modify
+## File da aprire
 
-Add Manager source to CMake. Initialize it from Core after Registry. In `main`, remove the main-owned module object, configure Port 0 as `sht40`, retain the returned module ID, and read only through Manager.
+`CMakeLists.txt`, `subsys/core/core.c` e `src/main.c`.
 
-> [!WARNING]
-> TEMPORARY SHORTCUT
+---
+
+## Cosa scrivere o modificare
+
+Aggiungi sorgente Manager a CMake. Inizializzala da Core dopo il Registro. In `main`,
+rimuovi l'oggetto principale del modulo, configura Port 0 come `sht40`, mantieni l'ID
+del modulo restituito e leggi solo tramite Manager.
+
+> [!ATTENZIONE]
+> SHORTCUT TEMPORANEO
 >
-> The hardcoded Port 0/SHT40 assignment is intentionally temporary and will be removed in [TASK-090-05](../090-config/TASK-090-05-add-and-apply-one-hardcoded-c-config.md).
+> L'assegnazione hardcoded Port 0/SHT40 è intenzionalmente temporanea e verrà rimossa in
+  [TASK-090-05](../090-config/TASK-090-05-add-and-apply-one-hardcoded-c-config.md).
 
 
 ---
 
-## Why
+## Perché
 
-Internal Config can later call exactly this Manager API.
-
----
-
-## Called / used by
-
-Main test.
+Config interna può successivamente chiamare esattamente questa API Manager.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Test principale.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/PERIODIC LOOP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main thread.
+CHIAMATA DIRETTA.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Manager -> Registry -> driver -> current static sensor.
+Thread principale.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
+
+Module Manager -> Registro -> driver -> sensore statico di corrente.
+
+---
+
+## Input
 
 Port 0, `sht40`.
 
 ---
 
-## Outputs
+## Output
 
-Instance READY and values.
+Intest READY e valori.
 
 ---
 
-## Errors to handle
+## Errori da gestire
 
 Log exact configure/read errno.
 
 ---
 
-## Do NOT implement yet
+## Non implementare ancora
 
-- Config struct or CBOR
+- Struttura Config o CBOR
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `CMakeLists.txt`, `subsys/core/core.c`, and `src/main.c`.
-- [ ] Add Manager source to CMake. Initialize it from Core after Registry. In `main`, remove the main-owned module object, configure Port 0 as `sht40`, retain the returned module ID, and read only through Manager.
-- [ ] Handle only these realistic errors: Log exact configure/read errno.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `CMakeLists.txt`, `subsys/core/core.c` e `src/main.c`.
+- [ ] Aggiungi sorgente Manager a CMake. Inizializzala da Core dopo il Registro. In
+      `main`, rimuovi l'oggetto principale del modulo, configura Port 0 come `sht40`,
+      mantieni l'ID del modulo restituito e leggi solo tramite Manager.
+- [ ] Gestisci solo questi errori realistici: Log exact configure/read errno.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -115,35 +120,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Also request unknown type and occupied Port in controlled test, then
-restore valid path.
-
----
-
-## Expected result
-
-Real values now pass through Manager.
+Richiedi anche tipo sconosciuto e occupato Port in test controllato, quindi ripristina
+il percorso valido.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+I valori reali ora passano attraverso Manager.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: integrate manager into core and main`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-070-06](TASK-070-06-test-manager-success-and-rollback.md) — Test Manager success and rollback
+[TASK-070-06](TASK-070-06-test-manager-success-and-rollback.md) — Provare successo e rollback del Manager

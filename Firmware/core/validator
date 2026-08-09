@@ -946,7 +946,9 @@ def validate_roadmap_task(
     expected_phase = file_match.group("phase") if file_match else None
     expected_task = file_match.group("task") if file_match else None
     title_match = re.search(r"(?m)^# TASK-(\d{3})-(\d{2})\s+—\s+.+$", text)
-    phase_line_match = re.search(r"(?m)^\*\*Phase:\*\*\s+(\d{3})\s+—\s+.+$", text)
+    phase_line_match = re.search(
+        r"(?m)^\*\*(?:Phase|Fase):\*\*\s+(\d{3})\s+—\s+.+$", text
+    )
 
     if (
         expected_phase is None
@@ -962,11 +964,11 @@ def validate_roadmap_task(
             "TASK001",
             path,
             1,
-            "filename, H1 task ID, and **Phase:** metadata are not identical",
+            "filename, H1 task ID, and phase metadata are not identical",
         )
 
     status_match = re.search(
-        r"(?m)^\*\*Status:\*\*\s+"
+        r"(?m)^\*\*(?:Status|Stato):\*\*\s+"
         r"(⬜ TODO|🟨 IN PROGRESS|✅ DONE|⛔ BLOCKED)\s*$",
         text,
     )
@@ -976,7 +978,7 @@ def validate_roadmap_task(
             "TASK001",
             path,
             1,
-            "missing or invalid **Status:** metadata",
+            "missing or invalid task status metadata",
         )
         return
 
@@ -984,12 +986,12 @@ def validate_roadmap_task(
         (
             index
             for index, line in enumerate(lines)
-            if line.strip() == "## Completion checklist"
+            if line.strip() in {"## Completion checklist", "## Checklist di completamento"}
         ),
         None,
     )
     if checklist_start is None:
-        add(findings, "TASK001", path, 1, "missing ## Completion checklist section")
+        add(findings, "TASK001", path, 1, "missing task completion checklist section")
         return
 
     boxes: list[bool] = []

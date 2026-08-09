@@ -1,113 +1,125 @@
-# TASK-110-02 — Enable zbus message subscribers
+# TASK-110-02 — Abilitare i subscriber di zbus
 
-**Status:** ⬜ TODO  
-**Phase:** 110 — Data / zbus  
-**Depends on:** [TASK-110-01](TASK-110-01-define-the-temperature-sample-message.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Enable zbus message subscribers** and produce this focused outcome:
-
-Independent copy to both subscribers.
+**Stato:** ⬜ TODO
+**Fase:** 110 — Data / zbus
+**Dipende da:** [TASK-110-01](TASK-110-01-define-the-temperature-sample-message.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Copia indipendente per entrambi gli subscriber.
+
+---
+
+## File da aprire
 
 `prj.conf`.
 
 ---
 
-## Write / Modify
+## Orientamento Zephyr — zbus, channel e subscriber
 
-Enable `CONFIG_ZBUS=y` and `CONFIG_ZBUS_MSG_SUBSCRIBER=y`. Select only static/fixed message-buffer settings required by the installed Kconfig help; do not enable dynamic allocation by default.
-
----
-
-## Why
-
-Runtime automation should not silently miss an intermediate sample.
-
----
-
-## Called / used by
-
-Publisher and two test consumer threads.
+1. **Cos’è:** zbus è il bus di messaggi interno di Zephyr. Un channel definisce tipo del messaggio e osservatori; un message subscriber riceve una copia tramite una coda limitata.
+2. **A cosa serve:** Disaccoppia chi pubblica un campione dai consumer che lo elaborano a velocità diverse.
+3. **Quando viene usato:** Canali e subscriber sono dichiarati staticamente; pubblicazione e ricezione avvengono a runtime.
+4. **Build-time o runtime:** Strutture create a build-time, scambio dati a runtime.
+5. **Collegamento con questo task:** Data dovrà consegnare lo stesso campione al logger e a un secondo consumer senza condividere puntatori temporanei.
+6. **File reali coinvolti:** `prj.conf` in questo task; dichiarazioni di canale e subscriber arriveranno in `subsys/data/data.c` nel task successivo.
+7. **Cosa guardare nei file:** Controlla `CONFIG_ZBUS`, supporto message subscriber e capacità delle code nell’help Kconfig installato.
+8. **Cosa non modificare:** Non usare allocazione dinamica, non usare zbus automaticamente per lifecycle/comandi e non creare ancora consumer MQTT.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-DATA ARRIVAL.
-
----
-
-## Invocation mechanism
-
-ZBUS PUBLISH / ZBUS MESSAGE SUBSCRIBER.
+Abilita `CONFIG_ZBUS=y` e `CONFIG_ZBUS_MSG_SUBSCRIBER=y`. Seleziona solo le impostazioni
+del buffer di messaggi static/fixed richieste dall'aiuto Kconfig installato; non
+abilitare l'allocazione dinamica per impostazione predefinita.
 
 ---
 
-## Execution context
+## Perché
 
-Publisher thread; consumers' dedicated test threads.
+L'automazione Runtime non dovrebbe perdere silenziosamente un campione intermedio.
 
 ---
 
-## Calls / dependencies
+## Chi usa il risultato
+
+Publisher e due thread di consumo di prova.
+
+---
+
+## Evento che attiva il codice
+
+ARRIVO DATI.
+
+---
+
+## Meccanismo di invocazione
+
+Abbonamento al messaggio ZBUS Publish / ZBUS.
+
+---
+
+## Contesto di esecuzione
+
+Publisher thread; thread di prova dedicati ai consumatori.
+
+---
+
+## Chiamate e dipendenze
 
 `zbus_chan_pub`, `zbus_sub_wait_msg`.
 
 ---
 
-## Inputs
+## Input
 
-Sample copy.
-
----
-
-## Outputs
-
-Independent copy to both subscribers.
+Copia del campione.
 
 ---
 
-## Errors to handle
+## Output
 
-Validator rejection, allocation/pool exhaustion, timeout.
-
----
-
-## Do NOT implement yet
-
-- MQTT or Communication consumers
+Copia indipendente per entrambi gli subscriber.
 
 ---
 
-## Zephyr note
+## Errori da gestire
 
-zbus distributes data from one producer to multiple observers. It is appropriate for samples here, not automatically for lifecycle/control calls.
+Rifiuto del validatore, esaurimento allocation/pool, timeout.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `prj.conf`.
-- [ ] Enable `CONFIG_ZBUS=y` and `CONFIG_ZBUS_MSG_SUBSCRIBER=y`.
-- [ ] Select only static/fixed message-buffer settings required by the installed Kconfig help
-- [ ] do not enable dynamic allocation by default.
-- [ ] Handle only these realistic errors: Validator rejection, allocation/pool exhaustion, timeout.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Consumatori MQTT o Communication
+
+---
+
+
+## Procedura
+
+- [ ] Apri solo `prj.conf`.
+- [ ] Abilita `CONFIG_ZBUS=y` e `CONFIG_ZBUS_MSG_SUBSCRIBER=y`.
+- [ ] Seleziona solo le impostazioni del buffer di messaggi static/fixed richieste
+      dall'aiuto Kconfig installato
+- [ ] non abilitano l'allocazione dinamica per impostazione predefinita.
+- [ ] Gestisci solo questi errori realistici: Rifiuto del validatore, esaurimento
+      allocation/pool, timeout.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -117,34 +129,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Publish one fake sample; each test consumer logs same sequence/value once.
-
----
-
-## Expected result
-
-Two independent receipts.
+Pubblicare un campione falso; ogni test consumer registra lo stesso sequence/value una
+volta.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Due ricevute indipendenti.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `data: enable zbus message subscribers`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-110-03](TASK-110-03-define-the-temperature-channel-and-subscribers.md) — Define the temperature channel and subscribers
+[TASK-110-03](TASK-110-03-define-the-temperature-channel-and-subscribers.md) — Definire il canale temperatura e i subscriber

@@ -1,142 +1,152 @@
-# TASK-160-08 — Move MQTT settings into Config
+# TASK-160-08 — Spostare le impostazioni MQTT in Config
 
-**Status:** ⬜ TODO  
-**Phase:** 160 — MQTT  
-**Depends on:** [TASK-160-07](TASK-160-07-integrate-and-test-fixed-topic-mqtt.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Move MQTT settings into Config** and produce this focused outcome:
-
-Publish to configured topic.
+**Stato:** ⬜ TODO
+**Fase:** 160 — MQTT
+**Dipende da:** [TASK-160-07](TASK-160-07-integrate-and-test-fixed-topic-mqtt.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`include/spaghetti/config.h`, `subsys/config/config.c`, the CBOR schema/codec, and MQTT service files.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add only enabled flag, bounded broker endpoint, port, and bounded base topic to internal Config. Bump and validate the CBOR schema version, pass a copied MQTT config through its API, and delete every fixed endpoint/topic constant.
+Pubblica per configurare l'argomento.
 
 ---
 
-## Why
+## File da aprire
 
-Fixed-topic path is proven.
-
----
-
-## Called / used by
-
-Config applies to MQTT service.
+`include/spaghetti/config.h`, `subsys/config/config.c`, i file di servizio CBOR
+schema/codec e MQTT.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-CONFIG COMMAND.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL or MQTT command K_MSGQ for live reconnect.
+Aggiungi a Config solo flag, endpoint broker delimitato, porta e argomento base
+delimitato. Bump e valida la versione schema CBOR, passa una configurazione MQTT copiata
+attraverso la sua API, ed elimina ogni costante endpoint/topic fissa.
 
 ---
 
-## Execution context
+## Perché
 
-Config caller submits; MQTT thread reconnects.
-
----
-
-## Calls / dependencies
-
-Codec/Config/MQTT service.
+Il percorso a tema fisso è provato.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Valid bounded endpoint/topic.
-
----
-
-## Outputs
-
-Publish to configured topic.
+Config si applica al servizio MQTT.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-Invalid host/port/topic and live reconfiguration failure.
-
----
-
-## Do NOT implement yet
-
-- Secrets inside ordinary Config or OTA over MQTT
+COMANDO DI CONFIGURAZIONE.
 
 ---
 
-## Steps
+## Meccanismo di invocazione
 
-- [ ] Open only `include/spaghetti/config.h`, `subsys/config/config.c`, the CBOR schema/codec, and MQTT service files.
-- [ ] Add only enabled flag, bounded broker endpoint, port, and bounded base topic to internal Config. Bump and validate the CBOR schema version, pass a copied MQTT config through its API, and delete every fixed endpoint/topic constant.
-- [ ] Handle only these realistic errors: Invalid host/port/topic and live reconfiguration failure.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+DIRECT CALL o comando MQTT K_MSGQ per la riconnessione dal vivo.
+
+---
+
+## Contesto di esecuzione
+
+Il chiamante Config invia; MQTT thread si riconnette.
+
+---
+
+## Chiamate e dipendenze
+
+Servizio Codec/Config/MQTT.
+
+---
+
+## Input
+
+Valida limitata endpoint/topic.
+
+---
+
+## Output
+
+Pubblica per configurare l'argomento.
+
+---
+
+## Errori da gestire
+
+Non valido host/port/topic e non riuscita riconfigurazione in diretta.
+
+---
+
+## Non implementare ancora
+
+- Segreti interni normali Config o OTA sopra MQTT
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/config.h`, `subsys/config/config.c`, i file di
+      servizio CBOR schema/codec e MQTT.
+- [ ] Aggiungi a Config solo flag, endpoint broker delimitato, porta e argomento base
+      delimitato. Bump e valida la versione schema CBOR, passa una configurazione MQTT
+      copiata attraverso la sua API, ed elimina ogni costante endpoint/topic fissa.
+- [ ] Gestisci solo questi errori realistici: non valido host/port/topic e non riuscita
+      riconfigurazione dal vivo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Deploy a second topic and confirm next sample appears there.
-
----
-
-## Expected result
-
-The configured endpoint/topic reaches the broker and no fixed development MQTT setting remains.
+Distribuire un secondo argomento e confermare il prossimo campione appare lì.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+La configurazione endpoint/topic raggiunge il broker e non rimane alcuna impostazione di
+sviluppo fisso MQTT.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `mqtt: move mqtt settings into config`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-170-01](../170-discovery/TASK-170-01-define-discovery-result-types.md) — Define Discovery result types
+[TASK-170-01](../170-discovery/TASK-170-01-define-discovery-result-types.md) — Definire i tipi risultato di Discovery

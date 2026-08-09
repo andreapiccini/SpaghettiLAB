@@ -1,100 +1,105 @@
-# TASK-190-02 — Define the Power public API
+# TASK-190-02 — Definire l’API pubblica di Power
 
-**Status:** ⬜ TODO  
-**Phase:** 190 — Power  
-**Depends on:** [TASK-190-01](TASK-190-01-verify-controllable-power-hardware.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the Power public API** and produce this focused outcome:
-
-Lease/status and reference-counted state.
+**Stato:** ⬜ TODO
+**Fase:** 190 — Power
+**Dipende da:** [TASK-190-01](TASK-190-01-verify-controllable-power-hardware.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Lease/status e stato contato di riferimento.
+
+---
+
+## File da aprire
 
 `include/spaghetti/power.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define one resource ID/state contract and declare Power init, acquire, release, and get-status functions. Document owner identity, reference-count limits, thread-only calls, and underflow behavior.
-
----
-
-## Why
-
-Module lifecycle and multi-board static facts are stable.
+Definire una risorsa ID/state contratto e dichiarare Power init, acquisire, rilasciare,
+e get-status funzioni. identità del proprietario del documento, limiti di conteggio di
+riferimento, thread-solo chiamate, e underflow comportamento.
 
 ---
 
-## Called / used by
+## Perché
 
-Manager/driver lifecycle; Communication status.
-
----
-
-## Trigger
-
-MODULE CONFIGURATION/REMOVAL.
+Il ciclo di vita del modulo e i fatti statici multi-board sono stabili.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
+Ciclo di vita Manager/driver; stato Communication.
 
 ---
 
-## Execution context
+## Evento che attiva il codice
+
+MODULO CONFIGURATION/REMOVAL.
+
+---
+
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
 
 Manager/calling thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Port power control/Zephyr GPIO or PM based on real hardware.
-
----
-
-## Inputs
-
-Resource and owner ID.
+Port potenza control/Zephyr GPIO o PM basato su hardware reale.
 
 ---
 
-## Outputs
+## Input
 
-Lease/status and reference-counted state.
-
----
-
-## Errors to handle
-
-Unsupported resource, transition failure, underflow/double release.
+Identita' risorsa e proprietario.
 
 ---
 
-## Do NOT implement yet
+## Output
 
-- Battery policy, deep sleep, speculative wake sources, OTA
+Lease/status e stato contato di riferimento.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `include/spaghetti/power.h`.
-- [ ] Define one resource ID/state contract and declare Power init, acquire, release, and get-status functions.
-- [ ] Document owner identity, reference-count limits, thread-only calls, and underflow behavior.
-- [ ] Handle only these realistic errors: Unsupported resource, transition failure, underflow/double release.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Risorsa non supportata, fallimento della transizione, rilascio underflow/double.
+
+---
+
+## Non implementare ancora
+
+- Politica della batteria, sonno profondo, fonti speculative di veglia, OTA
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/power.h`.
+- [ ] Definire una risorsa ID/state contratto e dichiarare Power init, acquisire,
+      rilasciare, e get-status funzioni.
+- [ ] Identità del proprietario del documento, limiti di conteggio di riferimento,
+      chiamate thread-solo, e comportamento di sottoflusso.
+- [ ] Gestisci solo questi errori realistici: risorsa non supportata, guasto alla
+      transizione, rilascio underflow/double.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +115,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Ownership/reference-count design review.
-
----
-
-## Expected result
-
-Minimal real resource contract.
+Recensione di progettazione Ownership/reference-count.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Minima contratto di risorse reali.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `power: define the power public api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-190-03](TASK-190-03-implement-reference-counting-with-a-fake-backend.md) — Implement reference counting with a fake backend
+[TASK-190-03](TASK-190-03-implement-reference-counting-with-a-fake-backend.md) — Implementare il reference counting con backend finto

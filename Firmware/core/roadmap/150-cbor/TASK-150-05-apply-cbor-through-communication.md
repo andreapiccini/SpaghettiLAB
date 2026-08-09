@@ -1,107 +1,111 @@
-# TASK-150-05 — Apply CBOR through Communication
+# TASK-150-05 — Applicare CBOR tramite Communication
 
-**Status:** ⬜ TODO  
-**Phase:** 150 — CBOR  
-**Depends on:** [TASK-150-04](TASK-150-04-implement-strict-cbor-v0-decoding.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Apply CBOR through Communication** and produce this focused outcome:
-
-Applied SHT40 and 1000 ms acquisition.
+**Stato:** ⬜ TODO
+**Fase:** 150 — CBOR
+**Dipende da:** [TASK-150-04](TASK-150-04-implement-strict-cbor-v0-decoding.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/communication/communication.c` and `subsys/communication/communication_shell.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Make SET_CONFIG call the CBOR decoder and then `spaghetti_config_apply()`. Keep shell `apply` limited to bounded hex-to-byte conversion. Return distinct decode, semantic-validation, and apply errors.
+Acquisizione SHT40 applicata e 1000 ms.
 
 ---
 
-## Why
+## File da aprire
 
-Each downstream layer already works locally.
-
----
-
-## Called / used by
-
-PC/developer shell.
+`subsys/communication/communication.c` e `subsys/communication/communication_shell.c`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-COMMUNICATION RX.
-
----
-
-## Invocation mechanism
-
-SHELL COMMAND -> DIRECT CALL chain.
+Fai chiamare SET_CONFIG il decoder CBOR e poi `spaghetti_config_apply()`. Mantieni la
+shell `apply` limitata alla conversione esadecimale limitata. Restituisci decodifica
+separata, convalida semantica e applica errori.
 
 ---
 
-## Execution context
+## Perché
 
-Shell thread initially.
+Ogni strato a valle funziona già localmente.
 
 ---
 
-## Calls / dependencies
+## Chi usa il risultato
+
+Shell PC/developer.
+
+---
+
+## Evento che attiva il codice
+
+RICEZIONE COMUNICAZIONE.
+
+---
+
+## Meccanismo di invocazione
+
+SHELL COMMAND -> Catena di chiamata diretta.
+
+---
+
+## Contesto di esecuzione
+
+Shell thread inizialmente.
+
+---
+
+## Chiamate e dipendenze
 
 Communication -> codec -> Config -> Manager/Runtime.
 
 ---
 
-## Inputs
+## Input
 
-Valid encoded Port 0/SHT40 V0 configuration.
-
----
-
-## Outputs
-
-Applied SHT40 and 1000 ms acquisition.
+Configurazione valida codificata Port 0/SHT40 V0.
 
 ---
 
-## Errors to handle
+## Output
 
-Hex, decode, validation, apply failures independently.
-
----
-
-## Do NOT implement yet
-
-- Transport-specific logic in decoder or Manager CBOR access
+Acquisizione SHT40 applicata e 1000 ms.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `subsys/communication/communication.c` and `subsys/communication/communication_shell.c`.
-- [ ] Make SET_CONFIG call the CBOR decoder and then `spaghetti_config_apply()`.
-- [ ] Keep shell `apply` limited to bounded hex-to-byte conversion.
-- [ ] Return distinct decode, semantic-validation, and apply errors.
-- [ ] Handle only these realistic errors: Hex, decode, validation, apply failures independently.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Hex, decodificare, convalidare, applicare i guasti in modo indipendente.
+
+---
+
+## Non implementare ancora
+
+- Logica specifica per il trasporto nel decoder o nell'accesso Manager CBOR
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/communication/communication.c` e
+      `subsys/communication/communication_shell.c`.
+- [ ] Fai chiamare SET_CONFIG il decoder CBOR e poi `spaghetti_config_apply()`.
+- [ ] Mantenere la shell `apply` limitata alla conversione esadecimale limitata.
+- [ ] Restituisce decodifica distinta, convalida semantica e applica errori.
+- [ ] Gestisci solo questi errori realistici: Hex, decodifica, convalida, applica errori
+      in modo indipendente.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -111,34 +115,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Send valid V0 and malformed variants; query status afterward.
-
----
-
-## Expected result
-
-Valid CBOR configures SHT40; invalid bytes change no live state.
+Inviare le varianti V0 e malformate valide; successivamente lo stato della query.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Valido CBOR configura SHT40; byte non validi non cambiano stato live.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `cbor: apply cbor through communication`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-150-06](TASK-150-06-test-valid-and-invalid-cbor-payloads.md) — Test valid and invalid CBOR payloads
+[TASK-150-06](TASK-150-06-test-valid-and-invalid-cbor-payloads.md) — Provare payload CBOR validi e non validi

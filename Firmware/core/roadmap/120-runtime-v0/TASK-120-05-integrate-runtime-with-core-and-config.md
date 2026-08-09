@@ -1,99 +1,104 @@
-# TASK-120-05 — Integrate Runtime with Core and Config
+# TASK-120-05 — Integrare Runtime con Core e Config
 
-**Status:** ⬜ TODO  
-**Phase:** 120 — Runtime V0  
-**Depends on:** [TASK-120-04](TASK-120-04-implement-runtime-load-start-and-stop.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Integrate Runtime with Core and Config** and produce this focused outcome:
-
-Logger sample each second with short main.
+**Stato:** ⬜ TODO
+**Fase:** 120 — Runtime V0
+**Dipende da:** [TASK-120-04](TASK-120-04-implement-runtime-load-start-and-stop.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`CMakeLists.txt`, `subsys/core/core.c`, and `subsys/config/config.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Add Runtime and Timer sources. Initialize Runtime from Core. After Config applies the module assignment, resolve the module ID, load the 1000 ms sampling task, and start Runtime. Propagate every failure.
+Logger campione ogni secondo con main corto.
 
 ---
 
-## Why
+## File da aprire
 
-Main must stop owning application behavior.
+`CMakeLists.txt`, `subsys/core/core.c` e `subsys/config/config.c`.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Aggiungere sorgenti Runtime e Timer. Inizializzare Runtime da Core. Dopo Config applica
+l'assegnazione del modulo, risolvere l'ID del modulo, caricare l'attività di
+campionamento 1000 ms e avviare Runtime. Propagare ogni guasto.
+
+---
+
+## Perché
+
+Main deve smettere di possedere il comportamento dell'applicazione.
+
+---
+
+## Chi usa il risultato
 
 Core/Config/Runtime.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
-BOOT then periodic timer.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL then K_TIMER/K_SEM/THREAD.
+BOOT poi periodica timer.
 
 ---
 
-## Execution context
+## Meccanismo di invocazione
 
-Main for setup; Runtime thread for reads.
+CHIAMATA DIRETTA, poi `k_timer` → `k_sem` → thread.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
+
+Principale per impostazione; Runtime thread per lettura.
+
+---
+
+## Chiamate e dipendenze
 
 Config -> Runtime; Runtime -> Manager -> Data.
 
 ---
 
-## Inputs
+## Input
 
-Internal config period/module.
-
----
-
-## Outputs
-
-Logger sample each second with short main.
+Configurazione interna period/module.
 
 ---
 
-## Errors to handle
+## Output
 
-Runtime start failure must make boot degraded/error.
-
----
-
-## Do NOT implement yet
-
-- Relay threshold or CBOR
+Logger campione ogni secondo con main corto.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `CMakeLists.txt`, `subsys/core/core.c`, and `subsys/config/config.c`.
-- [ ] Add Runtime and Timer sources. Initialize Runtime from Core. After Config applies the module assignment, resolve the module ID, load the 1000 ms sampling task, and start Runtime. Propagate every failure.
-- [ ] Handle only these realistic errors: Runtime start failure must make boot degraded/error.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Il fallimento di avvio di Runtime deve rendere l'avvio degraded/error.
+
+---
+
+## Non implementare ancora
+
+- Soglia di relè o CBOR
+
+---
+
+## Procedura
+
+- [ ] Apri solo `CMakeLists.txt`, `subsys/core/core.c` e `subsys/config/config.c`.
+- [ ] Aggiungere sorgenti Runtime e Timer. Inizializzare Runtime da Core. Dopo Config
+      applica l'assegnazione del modulo, risolvere l'ID del modulo, caricare l'attività
+      di campionamento 1000 ms e avviare Runtime. Propagare ogni guasto.
+- [ ] Gestire solo questi errori realistici: Runtime avvio guasto deve rendere l'avvio
+      degraded/error.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -109,34 +114,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Measure ten timestamps; stop Runtime via temporary test and verify reads stop.
-
----
-
-## Expected result
-
-Automatic one-second samples without main loop logic.
+Misurare dieci timestamp; fermare Runtime tramite test temporaneo e verificare le
+letture.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Campioni automatici di un secondo senza logica del ciclo principale.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `runtime: integrate runtime with core and config`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-120-06](TASK-120-06-remove-the-sampling-loop-from-main-and-test-cadence.md) — Remove the sampling loop from main and test cadence
+[TASK-120-06](TASK-120-06-remove-the-sampling-loop-from-main-and-test-cadence.md) — Rimuovere il loop da main e verificare la cadenza

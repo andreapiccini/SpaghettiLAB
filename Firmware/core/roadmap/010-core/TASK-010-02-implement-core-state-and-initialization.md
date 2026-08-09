@@ -1,107 +1,113 @@
-# TASK-010-02 — Implement Core state and initialization
+# TASK-010-02 — Implementare stato e inizializzazione di Core
 
-**Status:** ⬜ TODO  
-**Phase:** 010 — Core  
-**Depends on:** [TASK-010-01](TASK-010-01-define-the-core-public-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement Core state and initialization** and produce this focused outcome:
-
-`0` and READY.
+**Stato:** ⬜ TODO
+**Fase:** 010 — Core
+**Dipende da:** [TASK-010-01](TASK-010-01-define-the-core-public-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+`0` e pronto.
+
+---
+
+## File da aprire
 
 `subsys/core/core.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Register a Zephyr log module. Implement `spaghetti_core_init()` so it sets the private state to `SPAGHETTI_CORE_READY`, logs `Spaghetti Core ready`, and returns `0`. Implement `spaghetti_core_get_state()` as a read-only getter.
-
----
-
-## Why
-
-It must link and run before dependencies are added.
+Registra un modulo di log Zephyr. Implementa `spaghetti_core_init()` in modo da
+impostare lo stato privato su `SPAGHETTI_CORE_READY`, registra `Spaghetti Core ready` e
+restituisce `0`. Implementa `spaghetti_core_get_state()` come getter in sola lettura.
 
 ---
 
-## Called / used by
+## Perché
 
-`main` and future diagnostics.
-
----
-
-## Trigger
-
-BOOT.
+Deve collegarsi ed eseguire prima di aggiungere dipendenze.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main thread/calling thread.
+`main` e diagnostica per il futuro.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Zephyr logging only.
-
----
-
-## Inputs
-
-None.
+AVVIO.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-`0` and READY.
-
----
-
-## Errors to handle
-
-None yet; keep an ERROR path ready for future dependencies.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Port or service initialization
-
----
-
-## Zephyr note
-
-Zephyr logging provides compile-time log levels and avoids ad-hoc console output. This ticket only needs one module registration and one readiness message.
+Principale thread/calling thread.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `subsys/core/core.c`.
-- [ ] Register a Zephyr log module.
-- [ ] Implement `spaghetti_core_init()` so it sets the private state to `SPAGHETTI_CORE_READY`, logs `Spaghetti Core ready`, and returns `0`.
-- [ ] Implement `spaghetti_core_get_state()` as a read-only getter.
-- [ ] Handle only these realistic errors: None yet; keep an ERROR path ready for future dependencies.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Solo logging Zephyr.
+
+---
+
+## Input
+
+Nessuno.
+
+---
+
+## Output
+
+`0` e pronto.
+
+---
+
+## Errori da gestire
+
+Nessuno ancora; mantenere un percorso ERROR pronto per future dipendenze.
+
+---
+
+## Non implementare ancora
+
+- Port o inizializzazione del servizio
+
+---
+
+## Orientamento Zephyr
+
+La logging Zephyr fornisce livelli di log a build-time ed evita
+l'output ad hoc sulla console. Questo task richiede soltanto un messaggio di log
+del modulo ed un messaggio di prontezza.
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/core/core.c`.
+- [ ] Registrare un modulo di log Zephyr.
+- [ ] Implementa `spaghetti_core_init()` in modo da impostare lo stato privato su
+      `SPAGHETTI_CORE_READY`, registra `Spaghetti Core ready` e restituisce `0`.
+- [ ] Implementa `spaghetti_core_get_state()` come getter in sola lettura.
+- [ ] Gestisci solo questi errori realistici: Nessuno ancora; mantieni pronto un
+      percorso ERROR per future dipendenze.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -117,34 +123,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Static inspection: state is private and getter does not mutate it.
-
----
-
-## Expected result
-
-Minimal implementation without loops or threads.
+Ispezione statica: lo stato è privato e il getter non muta.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Implementazione minima senza loop o thread.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `core: implement core state and initialization`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-010-03](TASK-010-03-add-core-to-the-application-build.md) — Add Core to the application build
+[TASK-010-03](TASK-010-03-add-core-to-the-application-build.md) — Aggiungere Core alla build dell’applicazione

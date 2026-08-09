@@ -1,106 +1,115 @@
-# TASK-080-03 — Implement direct-I2C SHT40 measurement
+# TASK-080-03 — Implementare la misura SHT40 direttamente su I2C
 
-**Status:** ⬜ TODO  
-**Phase:** 080 — Runtime-removable SHT40  
-**Depends on:** [TASK-080-02](TASK-080-02-pass-bounded-driver-configuration-through-manager.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Implement direct-I2C SHT40 measurement** and produce this focused outcome:
-
-Same real values as static driver path.
+**Stato:** ⬜ TODO
+**Fase:** 080 — SHT40 rimovibile a runtime
+**Dipende da:** [TASK-080-02](TASK-080-02-pass-bounded-driver-configuration-through-manager.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-`spaghetti_modules/sht40/sht40.c` and the exact SHT40 datasheet.
+Completa la misura **Implementazione diretta I2C SHT40** e produce questo risultato
+mirato:
 
----
-
-## Write / Modify
-
-Replace Sensor API fetch/get inside driver init/read with `spaghetti_port_i2c_device()` and the minimum `i2c_write`, `i2c_read`, or `i2c_write_read` transaction for the chosen measurement mode. Keep protocol constants traceable to datasheet sections.
+Stessi valori reali del percorso statico driver.
 
 ---
 
-## Why
+## File da aprire
 
-The standard Zephyr SHT4x driver requires static DT instantiation.
-
----
-
-## Called / used by
-
-Manager through driver ops.
+`spaghetti_modules/sht40/sht40.c` e l'esatta scheda tecnica SHT40.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-MODULE INIT/READ.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Sostituire il sensore API fetch/get all'interno di driver init/read con
+`spaghetti_port_i2c_device()` e la transazione `i2c_write`, `i2c_read` o
+`i2c_write_read` per la modalità di misura scelta. Mantenere costanti di protocollo
+tracciabili alle sezioni del foglio dati.
 
 ---
 
-## Execution context
+## Perché
 
-Manager/Runtime thread; bounded sleep if datasheet requires.
-
----
-
-## Calls / dependencies
-
-Port API and Zephyr I2C API.
+Lo standard Zephyr SHT4x driver richiede un'istantanea statica DT.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Port, runtime address, output sample.
-
----
-
-## Outputs
-
-Same real values as static driver path.
+Module Manager tramite driver ops.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-NACK, timeout, CRC, invalid raw response, removal during read.
-
----
-
-## Do NOT implement yet
-
-- Async I2C, heater modes, automatic probing
+MODULO INIT/READ.
 
 ---
 
-## Zephyr note
+## Meccanismo di invocazione
 
-Zephyr I2C calls may block and belong in thread context. The driver must use the Port-owned controller rather than instantiate a removable sensor in Devicetree.
+CHIAMATA DIRETTA.
 
 ---
 
-## Steps
+## Contesto di esecuzione
 
-- [ ] Open only `spaghetti_modules/sht40/sht40.c` and the exact SHT40 datasheet.
-- [ ] Replace Sensor API fetch/get inside driver init/read with `spaghetti_port_i2c_device()` and the minimum `i2c_write`, `i2c_read`, or `i2c_write_read` transaction for the chosen measurement mode.
-- [ ] Keep protocol constants traceable to datasheet sections.
-- [ ] Handle only these realistic errors: NACK, timeout, CRC, invalid raw response, removal during read.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Manager/Runtime thread; riposo limitato se necessario.
+
+---
+
+## Chiamate e dipendenze
+
+Port API e Zephyr I2C API.
+
+---
+
+## Input
+
+Port, indirizzo runtime, campione di uscita.
+
+---
+
+## Output
+
+Stessi valori reali del percorso statico driver.
+
+---
+
+## Errori da gestire
+
+NACK, timeout, CRC, risposta grezza non valida, rimozione durante la lettura.
+
+---
+
+## Non implementare ancora
+
+- Async I2C, modalità di riscaldamento, controllo automatico
+
+---
+
+## Orientamento Zephyr
+
+Le chiamate Zephyr I2C possono bloccare e appartenere al contesto thread. Lo driver deve
+utilizzare il controller di proprietà Port piuttosto che istigare un sensore rimovibile
+in Devicetree.
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `spaghetti_modules/sht40/sht40.c` e l'esatto foglio dati SHT40.
+- [ ] Sostituire il sensore API fetch/get all'interno di driver init/read con
+      `spaghetti_port_i2c_device()` e la transazione `i2c_write`, `i2c_read` o
+      `i2c_write_read` minima per la modalità di misura scelta.
+- [ ] Mantenere costanti di protocollo rintracciabili alle sezioni del foglio dati.
+- [ ] Gestisci solo questi errori realistici: NACK, timeout, CRC, risposta cruda non
+      valida, rimozione durante la lettura.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -116,35 +125,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Real reading and disconnected-sensor error; compare plausible values with
-Milestone 4 output.
-
----
-
-## Expected result
-
-Driver no longer calls Sensor API.
+Lettura reale ed errore del sensore disconnesso; confronta i valori plausibili con
+l'uscita Milestone 4.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il driver non chiama più l'API del sensore.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `runtime-removable: implement direct-i2c sht40 measurement`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-080-04](TASK-080-04-validate-crc-and-convert-sht40-samples.md) — Validate CRC and convert SHT40 samples
+[TASK-080-04](TASK-080-04-validate-crc-and-convert-sht40-samples.md) — Convalidare il CRC e convertire i campioni SHT40

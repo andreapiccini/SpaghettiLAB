@@ -1,106 +1,111 @@
-# TASK-020-05 — Inspect generated I2C configuration
+# TASK-020-05 — Controllare la configurazione I2C generata
 
-**Status:** ⬜ TODO  
-**Phase:** 020 — Current board / I2C  
-**Depends on:** [TASK-020-04](TASK-020-04-enable-zephyr-i2c-support.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Inspect generated I2C configuration** and produce this focused outcome:
-
-I2C API linked.
+**Stato:** ⬜ TODO
+**Fase:** 020 — Scheda attuale / I2C
+**Dipende da:** [TASK-020-04](TASK-020-04-enable-zephyr-i2c-support.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`build/zephyr/zephyr.dts` and `build/zephyr/.config`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-After a pristine build, confirm the selected controller is `okay`, the generated pins match the verified schematic, and `.config` contains `CONFIG_I2C=y`. Do not edit either generated file.
+API I2C collegate.
 
 ---
 
-## Why
+## File da aprire
 
-DTS describes hardware; Kconfig includes software support.
-
----
-
-## Called / used by
-
-Port and later SHT40.
+`build/zephyr/zephyr.dts` e `build/zephyr/.config`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Dopo una build pulita, confermare che il controller selezionato è `okay`,
+i pin generati corrispondono allo schema verificato, e `.config` contiene
+`CONFIG_I2C=y`. Non modificare né il file generato.
+
+---
+
+## Perché
+
+DTS descrive l'hardware; Kconfig include il supporto software.
+
+---
+
+## Chi usa il risultato
+
+Port e successivamente SHT40.
+
+---
+
+## Evento che attiva il codice
 
 BUILD.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME.
+BUILD-TIME.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
 Kconfig/CMake.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Installed ESP32 I2C driver.
+Installato ESP32 I2C driver.
 
 ---
 
-## Inputs
+## Input
 
 `CONFIG_I2C=y`.
 
 ---
 
-## Outputs
+## Output
 
-I2C API linked.
-
----
-
-## Errors to handle
-
-Unsatisfied controller dependency shown by Kconfig warning.
+API I2C collegate.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
+
+Dipendenza del controller insoddisfatta mostrata dall'avvertimento Kconfig.
+
+---
+
+## Non implementare ancora
 
 - `CONFIG_SENSOR`, zbus, MQTT
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `build/zephyr/zephyr.dts` and `build/zephyr/.config`.
-- [ ] After a pristine build, confirm the selected controller is `okay`, the generated pins match the verified schematic, and `.config` contains `CONFIG_I2C=y`.
-- [ ] Do not edit either generated file.
-- [ ] Handle only these realistic errors: Unsatisfied controller dependency shown by Kconfig warning.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Apri solo `build/zephyr/zephyr.dts` e `build/zephyr/.config`.
+- [ ] Dopo una build pulita, confermare che il controller selezionato è
+      `okay`, i pin generati corrispondono allo schema verificato, e `.config` contiene
+      `CONFIG_I2C=y`.
+- [ ] Non modificare né il file generato.
+- [ ] Gestisci solo questi errori realistici: dipendenze del controller insoddisfatta
+      mostrata da Kconfig warning.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -110,34 +115,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Search the generated DTS for the controller node and `.config` for `CONFIG_I2C=y`.
-
----
-
-## Expected result
-
-Generated configuration proves both the hardware node and I2C software are enabled.
+Cerca il DTS generato per il nodo del controller e `.config` per `CONFIG_I2C=y`.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+La configurazione generata dimostra che sia il nodo hardware che il software I2C sono
+abilitati.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `current: inspect generated i2c configuration`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-020-06](TASK-020-06-flash-the-i2c-baseline.md) — Flash the I2C baseline
+[TASK-020-06](TASK-020-06-flash-the-i2c-baseline.md) — Caricare e provare la baseline I2C

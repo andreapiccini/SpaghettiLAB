@@ -1,113 +1,126 @@
-# TASK-100-04 — Enable Zephyr Settings and its backend
+# TASK-100-04 — Abilitare Zephyr Settings e il relativo backend
 
-**Status:** ⬜ TODO  
-**Phase:** 100 — Persistent Config  
-**Depends on:** [TASK-100-03](TASK-100-03-verify-and-define-the-storage-partition.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Enable Zephyr Settings and its backend** and produce this focused outcome:
-
-Record restored after power cycle.
+**Stato:** ⬜ TODO
+**Fase:** 100 — Config persistente
+**Dipende da:** [TASK-100-03](TASK-100-03-verify-and-define-the-storage-partition.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Registrare ripristinato dopo il ciclo di potenza.
+
+---
+
+## File da aprire
 
 `prj.conf`.
 
 ---
 
-## Write / Modify
+## Orientamento Zephyr — Zephyr Settings, NVS e ZMS
 
-Enable `CONFIG_SETTINGS=y` and the one verified installed non-filesystem backend, such as `CONFIG_SETTINGS_NVS=y`, only after the storage partition exists. Add only backend dependencies required by Kconfig warnings/help.
+1. **Cos’è:** Settings è l’API key/value di Zephyr. NVS e ZMS sono backend che memorizzano quei valori su flash con organizzazioni diverse.
+2. **A cosa serve:** Separa il contratto con cui Config salva un record dal formato fisico usato nella partizione.
+3. **Quando viene usato:** Kconfig sceglie Settings e il backend durante la build; inizializzazione, lettura e scrittura avvengono a runtime.
+4. **Build-time o runtime:** Selezione a build-time, persistenza a runtime.
+5. **Collegamento con questo task:** La partizione `storage` è stata verificata nel task precedente; ora puoi collegarla a un backend reale.
+6. **File reali coinvolti:** `prj.conf`; la partizione resta nel file Devicetree/partition già definito.
+7. **Cosa guardare nei file:** Leggi l’help Kconfig delle opzioni `CONFIG_SETTINGS`, `CONFIG_SETTINGS_NVS` o dell’alternativa disponibile nella versione installata.
+8. **Cosa non modificare:** Non abilitare contemporaneamente backend casuali, non cambiare la partizione e non salvare ancora storico misure o segreti.
 
 ---
 
-## Why
+## Cosa scrivere o modificare
 
-Config read/write semantics already work without flash.
+Abilitare `CONFIG_SETTINGS=y` e il backend non basato su filesystem verificato nella versione installata,
+come `CONFIG_SETTINGS_NVS=y`, solo dopo l'esistenza della partizione di archiviazione.
+Aggiungere solo le dipendenze backend richieste da Kconfig warnings/help.
 
 ---
 
-## Called / used by
+## Perché
+
+La semantica Config read/write funziona già senza flash.
+
+---
+
+## Chi usa il risultato
 
 Core/Config.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BOOT/CONFIG COMMIT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL + SETTINGS CALLBACK.
-
----
-
-## Execution context
-
-Main/calling thread during synchronous load/save.
+Chiamata diretta + richiamo di posizione.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Zephyr Settings, chosen backend, real fixed partition.
-
----
-
-## Inputs
-
-Valid record and safe flash region.
+Main/calling thread durante il sincrono load/save.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Record restored after power cycle.
-
----
-
-## Errors to handle
-
-Missing/corrupt/full/I/O; never erase unrelated flash.
+Zephyr Settings, scelta backend, vera e propria partizione fissa.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Invent a partition size/address
-- derive from real flash
-
----
-
-## Zephyr note
-
-Settings is the key/value facade; NVS is one possible flash backend. Selection happens at build time through Kconfig.
+Record valido e regione flash sicura.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `prj.conf`.
-- [ ] Enable `CONFIG_SETTINGS=y` and the one verified installed non-filesystem backend, such as `CONFIG_SETTINGS_NVS=y`, only after the storage partition exists.
-- [ ] Add only backend dependencies required by Kconfig warnings/help.
-- [ ] Handle only these realistic errors: Missing/corrupt/full/I/O; never erase unrelated flash.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Registrare ripristinato dopo il ciclo di potenza.
+
+---
+
+## Errori da gestire
+
+Missing/corrupt/full/I/O; mai cancellare flash non correlati.
+
+---
+
+## Non implementare ancora
+
+- Inventare una partizione size/address
+- derivano da un reale flash
+
+---
+
+
+## Procedura
+
+- [ ] Apri solo `prj.conf`.
+- [ ] Abilitare `CONFIG_SETTINGS=y` e quello verificato installato non-filesystem
+      backend, come `CONFIG_SETTINGS_NVS=y`, solo dopo l'esistenza della partizione di
+      archiviazione.
+- [ ] Aggiungere solo le dipendenze backend richieste da Kconfig warnings/help.
+- [ ] Gestisci solo questi errori realistici: Missing/corrupt/full/I/O; mai cancellare
+      flash non correlati.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -117,35 +130,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Save assignment, power-cycle, load/apply; corrupt/version-mismatch test
-through a controlled test record, not random flash writes.
-
----
-
-## Expected result
-
-Config persists or falls back explicitly.
+Salva assegnazione, power-cycle, load/apply; corrupt/version-mismatch prova attraverso
+un record di prova controllato, non scrittura flash casuale.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Config persiste o ricade esplicitamente.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `persistent: enable zephyr settings and its backend`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-100-05](TASK-100-05-implement-the-settings-backed-storage-record.md) — Implement the Settings-backed Storage record
+[TASK-100-05](TASK-100-05-implement-the-settings-backed-storage-record.md) — Implementare il record persistente con Settings

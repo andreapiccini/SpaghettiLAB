@@ -1,144 +1,151 @@
-# TASK-070-06 — Test Manager success and rollback
+# TASK-070-06 — Provare successo e rollback del Manager
 
-**Status:** ⬜ TODO  
-**Phase:** 070 — Module Manager  
-**Depends on:** [TASK-070-05](TASK-070-05-integrate-manager-into-core-and-main.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test Manager success and rollback** and produce this focused outcome:
-
-Instance READY and values.
+**Stato:** ⬜ TODO
+**Fase:** 070 — Module Manager
+**Dipende da:** [TASK-070-05](TASK-070-05-integrate-manager-into-core-and-main.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`subsys/module_manager/module_manager.c`, `src/main.c`, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Test the valid Port 0/SHT40 path, an unknown type, an occupied Port, an invalid ID read, and a forced driver-init failure. Confirm each failed configure leaves the slot reusable.
+Intest READY e valori.
 
 ---
 
-## Why
+## File da aprire
 
-Internal Config can later call exactly this Manager API.
-
----
-
-## Called / used by
-
-Main test.
+`subsys/module_manager/module_manager.c`, `src/main.c` e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
+
+Prova il percorso Port 0/SHT40 valido, un tipo sconosciuto, uno Port occupato, una
+lettura ID non valida e un errore di init driver forzato. Confermare ogni configurazione
+non riuscita lascia lo slot riutilizzabile.
+
+---
+
+## Perché
+
+Config interna può successivamente chiamare esattamente questa API Manager.
+
+---
+
+## Chi usa il risultato
+
+Test principale.
+
+---
+
+## Evento che attiva il codice
 
 BOOT/PERIODIC LOOP.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main thread.
+CHIAMATA DIRETTA.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Manager -> Registry -> driver -> current static sensor.
+Thread principale.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
+
+Module Manager -> Registro -> driver -> sensore statico di corrente.
+
+---
+
+## Input
 
 Port 0, `sht40`.
 
 ---
 
-## Outputs
+## Output
 
-Instance READY and values.
+Intest READY e valori.
 
 ---
 
-## Errors to handle
+## Errori da gestire
 
 Log exact configure/read errno.
 
 ---
 
-## Do NOT implement yet
+## Non implementare ancora
 
-- Config struct or CBOR
+- Struttura Config o CBOR
 
 ---
 
-## Steps
+## Procedura
 
-- [ ] Open only `subsys/module_manager/module_manager.c`, `src/main.c`, and the serial console.
-- [ ] Test the valid Port 0/SHT40 path, an unknown type, an occupied Port, an invalid ID read, and a forced driver-init failure.
-- [ ] Confirm each failed configure leaves the slot reusable.
-- [ ] Handle only these realistic errors: Log exact configure/read errno.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [ ] Aprire solo `subsys/module_manager/module_manager.c`, `src/main.c` e la console
+      seriale.
+- [ ] Provare il percorso Port 0/SHT40 valido, un tipo sconosciuto, uno Port occupato,
+      una lettura ID non valida e un errore di init driver forzato.
+- [ ] Confermare ogni configurazione non riuscita lascia lo slot riutilizzabile.
+- [ ] Gestisci solo questi errori realistici: Log exact configure/read errno.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Also request unknown type and occupied Port in controlled test, then
-restore valid path.
-
----
-
-## Expected result
-
-Manager owns the only module instance, real reads work, and failed configuration rolls back completely.
+Richiedi anche tipo sconosciuto e occupato Port in test controllato, quindi ripristina
+il percorso valido.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Manager possiede l'unica istanza del modulo, il lavoro reale legge e la configurazione
+fallita torna completamente indietro.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: test manager success and rollback`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-080-01](../080-runtime-removable-sht40/TASK-080-01-define-the-sht40-runtime-configuration.md) — Define the SHT40 runtime configuration
+[TASK-080-01](../080-runtime-removable-sht40/TASK-080-01-define-the-sht40-runtime-configuration.md) — Definire la configurazione runtime di SHT40

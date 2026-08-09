@@ -1,34 +1,32 @@
-# Phase 110 — Data / zbus
+# Fase 110 — Data / zbus
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Publish immutable temperature samples to multiple consumers through zbus.
+Distribuire campioni immutabili a più consumer tramite zbus.
 
-## Depends on
+## Dipende da
 
-[Phase 100 — Persistent Config](../100-storage/README.md)
+[Fase 100 — Config persistente](../100-storage/README.md)
 
-## Visible result
+## Risultato visibile
 
-One real sample reaches both the logger and a second consumer.
+Un campione reale raggiunge logger e un secondo consumer.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-110-01 — Define the temperature sample message](TASK-110-01-define-the-temperature-sample-message.md)
-2. ⬜ [TASK-110-02 — Enable zbus message subscribers](TASK-110-02-enable-zbus-message-subscribers.md)
-3. ⬜ [TASK-110-03 — Define the temperature channel and subscribers](TASK-110-03-define-the-temperature-channel-and-subscribers.md)
-4. ⬜ [TASK-110-04 — Implement Data initialization and publish](TASK-110-04-implement-data-initialization-and-publish.md)
-5. ⬜ [TASK-110-05 — Publish real Manager samples](TASK-110-05-publish-real-manager-samples.md)
-6. ⬜ [TASK-110-06 — Test zbus fan-out and backpressure](TASK-110-06-test-zbus-fan-out-and-backpressure.md)
+1. ⬜ [TASK-110-01 — Definire il messaggio del campione di temperatura](TASK-110-01-define-the-temperature-sample-message.md)
+2. ⬜ [TASK-110-02 — Abilitare i subscriber di zbus](TASK-110-02-enable-zbus-message-subscribers.md)
+3. ⬜ [TASK-110-03 — Definire il canale temperatura e i subscriber](TASK-110-03-define-the-temperature-channel-and-subscribers.md)
+4. ⬜ [TASK-110-04 — Inizializzare Data e pubblicare un messaggio](TASK-110-04-implement-data-initialization-and-publish.md)
+5. ⬜ [TASK-110-05 — Pubblicare i campioni reali del Manager](TASK-110-05-publish-real-manager-samples.md)
+6. ⬜ [TASK-110-06 — Provare fan-out e backpressure di zbus](TASK-110-06-test-zbus-fan-out-and-backpressure.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Data message has explicit ownership and bounded size.
-- [ ] Logger receives fake and real samples.
-- [ ] Second consumer receives the same sequences.
-- [ ] Full-buffer behavior is observed/documented.
-- [ ] SHT40 knows nothing about consumers/MQTT.
+- [ ] Il messaggio contiene solo dati copiabili e con unità definite.
+- [ ] Canale e subscriber hanno capacità limitate.
+- [ ] Backpressure e code piene sono provate esplicitamente.

@@ -1,106 +1,110 @@
-# TASK-030-06 — Add Port to CMake
+# TASK-030-06 — Aggiungere Port alla build CMake
 
-**Status:** ⬜ TODO  
-**Phase:** 030 — Port  
-**Depends on:** [TASK-030-05](TASK-030-05-bind-port-0-to-the-i2c-device.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Add Port to CMake** and produce this focused outcome:
-
-`Port 0: I2C ready`-equivalent log.
+**Stato:** ⬜ TODO
+**Fase:** 030 — Port
+**Dipende da:** [TASK-030-05](TASK-030-05-bind-port-0-to-the-i2c-device.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Log equivalente a `Port 0: I2C ready`.
+
+---
+
+## File da aprire
 
 `CMakeLists.txt`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Add `subsys/port/port.c` to the existing `target_sources(app PRIVATE ...)` list. Make no other build-system changes.
-
----
-
-## Why
-
-SHT40 should not be added until Port reports the real controller ready.
+Aggiungere `subsys/port/port.c` all'elenco `target_sources(app PRIVATE ...)` esistente.
+Non apportare altre modifiche al sistema di compilazione.
 
 ---
 
-## Called / used by
+## Perché
 
-Build and Core.
-
----
-
-## Trigger
-
-BOOT.
+SHT40 non deve essere aggiunto fino a quando Port non segnala il controller reale
+pronto.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-BUILD TIME
+Costruisci e Core.
 
 ---
 
-## Execution context
+## Evento che attiva il codice
+
+AVVIO.
+
+---
+
+## Meccanismo di invocazione
+
+BUILD-TIME
+
+---
+
+## Contesto di esecuzione
 
 build time
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
 Port init/count/capability.
 
 ---
 
-## Inputs
+## Input
 
-Enabled controller from Milestone 2.
-
----
-
-## Outputs
-
-`Port 0: I2C ready`-equivalent log.
+Controllore abilitato da Milestone 2.
 
 ---
 
-## Errors to handle
+## Output
 
-Propagate negative Port error; no silent READY.
-
----
-
-## Do NOT implement yet
-
-- SHT40 or registry
+Log equivalente a `Port 0: I2C ready`.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `CMakeLists.txt`.
-- [ ] Add `subsys/port/port.c` to the existing `target_sources(app PRIVATE ...)` list.
-- [ ] Make no other build-system changes.
-- [ ] Handle only these realistic errors: Propagate negative Port error; no silent READY.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Propaga l'errore negativo Port; non è pronto silenzioso.
+
+---
+
+## Non implementare ancora
+
+- SHT40 o registro
+
+---
+
+## Procedura
+
+- [ ] Apri solo `CMakeLists.txt`.
+- [ ] Aggiungi `subsys/port/port.c` all'elenco `target_sources(app PRIVATE ...)`
+      esistente.
+- [ ] Non apportare altre modifiche al build-system.
+- [ ] Gestire solo questi errori realistici: Propagare l'errore negativo Port; nessun
+      silent READY.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
@@ -110,35 +114,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Boot normally, then temporarily disable the controller in a test branch
-and confirm Port init fails; restore it immediately.
-
----
-
-## Expected result
-
-One port found; invalid ID returns `NULL`; I2C device ready.
+Avviare normalmente, quindi disattivare temporaneamente il controller in un ramo di test
+e confermare Port init fallisce; ripristinarlo immediatamente.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Trovata una porta; ID non valido restituisce il dispositivo `NULL`; I2C pronto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `port: add port to cmake`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-030-07](TASK-030-07-initialize-port-from-core.md) — Initialize Port from Core
+[TASK-030-07](TASK-030-07-initialize-port-from-core.md) — Inizializzare Port da Core

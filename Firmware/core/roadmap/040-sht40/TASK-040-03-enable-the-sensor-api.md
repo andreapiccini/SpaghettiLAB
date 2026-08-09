@@ -1,106 +1,111 @@
-# TASK-040-03 — Enable the Sensor API
+# TASK-040-03 — Abilitare l’API Sensor di Zephyr
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-02](TASK-040-02-add-the-temporary-sht40-devicetree-node.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Enable the Sensor API** and produce this focused outcome:
-
-`0` and two sensor values.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-02](TASK-040-02-add-the-temporary-sht40-devicetree-node.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+`0` e due valori del sensore.
+
+---
+
+## File da aprire
 
 `prj.conf`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Add `CONFIG_SENSOR=y`. After configuration, confirm `CONFIG_SHT4X=y` is selected automatically by the enabled compatible node; do not force unrelated sensor drivers.
-
----
-
-## Why
-
-A working sensor result is the next vertical-slice proof.
+Aggiungi `CONFIG_SENSOR=y`. Dopo la configurazione, confermare `CONFIG_SHT4X=y` viene
+selezionato automaticamente dal nodo compatibile abilitato; non forzare i driver dei
+sensori non collegati.
 
 ---
 
-## Called / used by
+## Perché
 
-Temporary `main` test.
-
----
-
-## Trigger
-
-BOOT and periodic test call.
+Il risultato di un sensore di lavoro è la prossima prova di fetta verticale.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main thread.
+Prova temporanea `main`.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Zephyr Device and Sensor APIs.
-
----
-
-## Inputs
-
-Two output pointers.
+BOOT e chiamata periodica di prova.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-`0` and two sensor values.
-
----
-
-## Errors to handle
-
-`-EINVAL`, device not ready, fetch/get error.
+CHIAMATA DIRETTA.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- zbus, driver registry, own thread, heater
-
----
-
-## Zephyr note
-
-Kconfig selects the Sensor API and driver code at build time. The board overlay selects the concrete SHT4x device instance.
+Thread principale.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `prj.conf`.
-- [ ] Add `CONFIG_SENSOR=y`. After configuration, confirm `CONFIG_SHT4X=y` is selected automatically by the enabled compatible node
-- [ ] do not force unrelated sensor drivers.
-- [ ] Handle only these realistic errors: `-EINVAL`, device not ready, fetch/get error.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+API del dispositivo e del sensore Zephyr.
+
+---
+
+## Input
+
+Due puntatori di uscita.
+
+---
+
+## Output
+
+`0` e due valori del sensore.
+
+---
+
+## Errori da gestire
+
+`-EINVAL`, dispositivo non pronto, errore fetch/get.
+
+---
+
+## Non implementare ancora
+
+- zbus, registro driver, proprio thread, riscaldatore
+
+---
+
+## Orientamento Zephyr
+
+Kconfig seleziona il codice Sensor API e driver al momento della compilazione. La scheda
+overlay seleziona l'istanza del dispositivo SHT4x in cemento.
+
+---
+
+## Procedura
+
+- [ ] Apri solo `prj.conf`.
+- [ ] Aggiungi `CONFIG_SENSOR=y`. Dopo la configurazione, confermare `CONFIG_SHT4X=y`
+      viene selezionato automaticamente dal nodo compatibile abilitato
+- [ ] non forzano i driver dei sensori non collegati.
+- [ ] Gestisci solo questi errori realistici: `-EINVAL`, dispositivo non pronto, errore
+      fetch/get.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -116,34 +121,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Review every lower call's return value.
-
----
-
-## Expected result
-
-Thin wrapper, no loop.
+Esamina il valore di ritorno di ogni chiamata inferiore.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Sottile wrapper, senza loop.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: enable the sensor api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-04](TASK-040-04-declare-the-temporary-sht40-wrapper-api.md) — Declare the temporary SHT40 wrapper API
+[TASK-040-04](TASK-040-04-declare-the-temporary-sht40-wrapper-api.md) — Dichiarare l’API del wrapper temporaneo SHT40

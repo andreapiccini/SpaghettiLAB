@@ -1,34 +1,32 @@
-# Phase 190 — Power
+# Fase 190 — Power
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Add only a real, measured power resource with safe acquire/release ownership.
+Gestire una risorsa di alimentazione condivisa con ownership e rollback espliciti.
 
-## Depends on
+## Dipende da
 
-[Phase 180 — Multiple Core variants](../180-multi-core/README.md)
+[Fase 180 — Varianti Core multiple](../180-multi-core/README.md)
 
-## Visible result
+## Risultato visibile
 
-One power resource transitions correctly under two-owner and rollback tests.
+La risorsa cambia stato correttamente con due proprietari e durante gli errori.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-190-01 — Verify controllable power hardware](TASK-190-01-verify-controllable-power-hardware.md)
-2. ⬜ [TASK-190-02 — Define the Power public API](TASK-190-02-define-the-power-public-api.md)
-3. ⬜ [TASK-190-03 — Implement reference counting with a fake backend](TASK-190-03-implement-reference-counting-with-a-fake-backend.md)
-4. ⬜ [TASK-190-04 — Test Power ownership and rollback logic](TASK-190-04-test-power-ownership-and-rollback-logic.md)
-5. ⬜ [TASK-190-05 — Connect Power to the real control](TASK-190-05-connect-power-to-the-real-control.md)
-6. ⬜ [TASK-190-06 — Integrate Power with Manager and test hardware](TASK-190-06-integrate-power-with-manager-and-test-hardware.md)
+1. ⬜ [TASK-190-01 — Verificare l’hardware di alimentazione controllabile](TASK-190-01-verify-controllable-power-hardware.md)
+2. ⬜ [TASK-190-02 — Definire l’API pubblica di Power](TASK-190-02-define-the-power-public-api.md)
+3. ⬜ [TASK-190-03 — Implementare il reference counting con backend finto](TASK-190-03-implement-reference-counting-with-a-fake-backend.md)
+4. ⬜ [TASK-190-04 — Provare proprietà e rollback di Power](TASK-190-04-test-power-ownership-and-rollback-logic.md)
+5. ⬜ [TASK-190-05 — Collegare Power al controllo hardware reale](TASK-190-05-connect-power-to-the-real-control.md)
+6. ⬜ [TASK-190-06 — Integrare Power con Manager e provare l’hardware](TASK-190-06-integrate-power-with-manager-and-test-hardware.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Power hardware is real and documented.
-- [ ] Reference-count tests pass with two owners.
-- [ ] Manager rollback releases acquired power.
-- [ ] Real transitions are electrically verified.
-- [ ] No speculative sleep/battery/OTA functionality was added.
+- [ ] L’hardware controllabile è verificato prima del driver reale.
+- [ ] Il reference counting viene provato con backend finto.
+- [ ] Manager acquisisce e rilascia Power in ogni percorso di successo o errore.

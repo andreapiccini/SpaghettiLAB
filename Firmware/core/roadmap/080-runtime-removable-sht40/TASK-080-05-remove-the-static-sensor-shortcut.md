@@ -1,113 +1,121 @@
-# TASK-080-05 — Remove the static sensor shortcut
+# TASK-080-05 — Rimuovere la scorciatoia Sensor statica
 
-**Status:** ⬜ TODO  
-**Phase:** 080 — Runtime-removable SHT40  
-**Depends on:** [TASK-080-04](TASK-080-04-validate-crc-and-convert-sht40-samples.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Remove the static sensor shortcut** and produce this focused outcome:
-
-Same values with no static module DT node.
+**Stato:** ⬜ TODO
+**Fase:** 080 — SHT40 rimovibile a runtime
+**Dipende da:** [TASK-080-04](TASK-080-04-validate-crc-and-convert-sht40-samples.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`boards/esp32c3_devkitm_esp32c3.overlay`, `prj.conf`, `spaghetti_modules/sht40/sht40.h`, and `spaghetti_modules/sht40/sht40.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Delete the `sht40_test` Devicetree node, temporary test API, `DT_NODELABEL(sht40_test)`, and all `sensor_*` calls. Remove `CONFIG_SENSOR=y` if no other consumer needs it; retain `CONFIG_I2C=y` and the runtime address path.
+Stessi valori senza nodo statico del modulo DT.
 
 ---
 
-## Why
+## File da aprire
 
-Both paths were compared on real hardware.
-
----
-
-## Called / used by
-
-Build and final SHT40 driver.
+`boards/esp32c3_devkitm_esp32c3.overlay`, `prj.conf`, `spaghetti_modules/sht40/sht40.h`
+e `spaghetti_modules/sht40/sht40.c`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-REFACTOR AFTER HARDWARE PROOF.
-
----
-
-## Invocation mechanism
-
-BUILD TIME plus DIRECT CALL runtime path.
+Eliminare il nodo `sht40_test` Devicetree, il test temporaneo API,
+`DT_NODELABEL(sht40_test)` e tutte le chiamate `sensor_*`. Rimuovere `CONFIG_SENSOR=y`
+se nessun altro consumatore ne ha bisogno; mantenere `CONFIG_I2C=y` e il percorso di
+indirizzo runtime.
 
 ---
 
-## Execution context
+## Perché
+
+Entrambi i percorsi sono stati confrontati su hardware reale.
+
+---
+
+## Chi usa il risultato
+
+Costruisci e finali SHT40 driver.
+
+---
+
+## Evento che attiva il codice
+
+Refattore dopo la prova dura.
+
+---
+
+## Meccanismo di invocazione
+
+TEMPO DI COMPILAZIONE più DIRECT CALL runtime path.
+
+---
+
+## Contesto di esecuzione
 
 Build/main thread.
 
 ---
 
-## Calls / dependencies
+## Chiamate e dipendenze
 
-Port I2C only.
+Solo Port I2C.
 
 ---
 
-## Inputs
+## Input
 
 Runtime Port/address.
 
 ---
 
-## Outputs
+## Output
 
-Same values with no static module DT node.
-
----
-
-## Errors to handle
-
-Kconfig/source still depending on Sensor API.
+Stessi valori senza nodo statico del modulo DT.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- Custom Port DT binding
-
----
-
-## Zephyr note
-
-Removing the node proves removable identity is runtime state. The board Devicetree must continue to describe only the physical I2C controller and Port wiring.
+Kconfig/source dipende ancora dalle API del sensore.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `boards/esp32c3_devkitm_esp32c3.overlay`, `prj.conf`, `spaghetti_modules/sht40/sht40.h`, and `spaghetti_modules/sht40/sht40.c`.
-- [ ] Delete the `sht40_test` Devicetree node, temporary test API, `DT_NODELABEL(sht40_test)`, and all `sensor_*` calls.
-- [ ] Remove `CONFIG_SENSOR=y` if no other consumer needs it
-- [ ] retain `CONFIG_I2C=y` and the runtime address path.
-- [ ] Handle only these realistic errors: Kconfig/source still depending on Sensor API.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- Personalizzato Port DT binding
+
+---
+
+## Orientamento Zephyr
+
+La rimozione del nodo dimostra identità rimovibile è stato runtime. La scheda Devicetree
+deve continuare a descrivere solo il controller fisico I2C e il cablaggio Port.
+
+---
+
+## Procedura
+
+- [ ] Apri solo `boards/esp32c3_devkitm_esp32c3.overlay`, `prj.conf`,
+      `spaghetti_modules/sht40/sht40.h` e `spaghetti_modules/sht40/sht40.c`.
+- [ ] Eliminare il nodo `sht40_test` Devicetree, il test temporaneo API,
+      `DT_NODELABEL(sht40_test)` e tutte le chiamate `sensor_*`.
+- [ ] Rimuovere `CONFIG_SENSOR=y` se nessun altro consumatore ne ha bisogno
+- [ ] mantenere `CONFIG_I2C=y` e il percorso dell'indirizzo runtime.
+- [ ] Gestisci solo questi errori realistici: Kconfig/source a seconda delle API del
+      sensore.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -117,35 +125,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Search source/final DTS for `sht40_test` and static compatible; confirm
-none, then verify measurement.
-
----
-
-## Expected result
-
-Port 0/SHT40 is runtime-configured and working.
+Cerca source/final DTS per `sht40_test` e compatibile statico; non confermare nessuno,
+quindi verificare la misurazione.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Port 0/SHT40 è runtime-configurato e funzionante.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `runtime-removable: remove the static sensor shortcut`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-080-06](TASK-080-06-regression-test-the-runtime-sht40.md) — Regression-test the runtime SHT40
+[TASK-080-06](TASK-080-06-regression-test-the-runtime-sht40.md) — Eseguire il test di regressione di SHT40 runtime

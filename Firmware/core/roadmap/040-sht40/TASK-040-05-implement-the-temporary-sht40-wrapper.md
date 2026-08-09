@@ -1,108 +1,114 @@
-# TASK-040-05 — Implement the temporary SHT40 wrapper
+# TASK-040-05 — Implementare il wrapper temporaneo SHT40
 
-**Status:** ⬜ TODO  
-**Phase:** 040 — SHT40 vertical slice  
-**Depends on:** [TASK-040-04](TASK-040-04-declare-the-temporary-sht40-wrapper-api.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Implement the temporary SHT40 wrapper** and produce this focused outcome:
-
-`0` and two sensor values.
+**Stato:** ⬜ TODO
+**Fase:** 040 — Sezione verticale SHT40
+**Dipende da:** [TASK-040-04](TASK-040-04-declare-the-temporary-sht40-wrapper-api.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-Create `spaghetti_modules/sht40/sht40.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Obtain `DEVICE_DT_GET(DT_NODELABEL(sht40_test))`; implement init with `device_is_ready()`. Implement read with `sensor_sample_fetch()` followed by `sensor_channel_get()` for ambient temperature and humidity. Validate both output pointers and propagate each Zephyr error.
+`0` e due valori del sensore.
 
 ---
 
-## Why
+## File da aprire
 
-A working sensor result is the next vertical-slice proof.
-
----
-
-## Called / used by
-
-Temporary `main` test.
+Crea `spaghetti_modules/sht40/sht40.c`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-BOOT and periodic test call.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL.
+Ottenere `DEVICE_DT_GET(DT_NODELABEL(sht40_test))`; implementare init con
+`device_is_ready()`. Implementare leggere con `sensor_sample_fetch()` seguito da
+`sensor_channel_get()` per la temperatura ambiente e l'umidità. Convalidare sia i
+puntatori di uscita e propagare ogni errore Zephyr.
 
 ---
 
-## Execution context
+## Perché
 
-Main thread.
-
----
-
-## Calls / dependencies
-
-Zephyr Device and Sensor APIs.
+Il risultato di un sensore di lavoro è la prossima prova di fetta verticale.
 
 ---
 
-## Inputs
+## Chi usa il risultato
 
-Two output pointers.
-
----
-
-## Outputs
-
-`0` and two sensor values.
+Prova temporanea `main`.
 
 ---
 
-## Errors to handle
+## Evento che attiva il codice
 
-`-EINVAL`, device not ready, fetch/get error.
-
----
-
-## Do NOT implement yet
-
-- zbus, driver registry, own thread, heater
+BOOT e chiamata periodica di prova.
 
 ---
 
-## Zephyr note
+## Meccanismo di invocazione
 
-The Sensor API normalizes sensor channels through `struct sensor_value`. Keep this wrapper synchronous and do not add a thread.
+CHIAMATA DIRETTA.
 
 ---
 
-## Steps
+## Contesto di esecuzione
 
-- [ ] Open only Create `spaghetti_modules/sht40/sht40.c`.
-- [ ] Obtain `DEVICE_DT_GET(DT_NODELABEL(sht40_test))`
-- [ ] implement init with `device_is_ready()`.
-- [ ] Implement read with `sensor_sample_fetch()` followed by `sensor_channel_get()` for ambient temperature and humidity.
-- [ ] Validate both output pointers and propagate each Zephyr error.
-- [ ] Handle only these realistic errors: `-EINVAL`, device not ready, fetch/get error.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Thread principale.
+
+---
+
+## Chiamate e dipendenze
+
+API del dispositivo e del sensore Zephyr.
+
+---
+
+## Input
+
+Due puntatori di uscita.
+
+---
+
+## Output
+
+`0` e due valori del sensore.
+
+---
+
+## Errori da gestire
+
+`-EINVAL`, dispositivo non pronto, errore fetch/get.
+
+---
+
+## Non implementare ancora
+
+- zbus, registro driver, proprio thread, riscaldatore
+
+---
+
+## Orientamento Zephyr
+
+L'API del sensore normalizza i canali del sensore tramite `struct sensor_value`.
+Mantenere questo sincrono wrapper e non aggiungere thread.
+
+---
+
+## Procedura
+
+- [ ] Apri solo Crea `spaghetti_modules/sht40/sht40.c`.
+- [ ] Ottenere `DEVICE_DT_GET(DT_NODELABEL(sht40_test))`
+- [ ] implementare init con `device_is_ready()`.
+- [ ] Implementa la lettura con `sensor_sample_fetch()` seguita da
+      `sensor_channel_get()` per la temperatura ambiente e l'umidità.
+- [ ] Convalidare entrambi i puntatori di output e propagare ogni errore Zephyr.
+- [ ] Gestisci solo questi errori realistici: `-EINVAL`, dispositivo non pronto, errore
+      fetch/get.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -118,34 +124,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Review every lower call's return value.
-
----
-
-## Expected result
-
-Thin wrapper, no loop.
+Esamina il valore di ritorno di ogni chiamata inferiore.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Sottile wrapper, senza loop.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `sht40: implement the temporary sht40 wrapper`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-040-06](TASK-040-06-add-the-sht40-wrapper-to-cmake.md) — Add the SHT40 wrapper to CMake
+[TASK-040-06](TASK-040-06-add-the-sht40-wrapper-to-cmake.md) — Aggiungere il wrapper SHT40 a CMake

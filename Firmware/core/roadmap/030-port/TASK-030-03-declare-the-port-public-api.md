@@ -1,100 +1,105 @@
-# TASK-030-03 — Declare the Port public API
+# TASK-030-03 — Dichiarare l’API pubblica di Port
 
-**Status:** ⬜ TODO  
-**Phase:** 030 — Port  
-**Depends on:** [TASK-030-02](TASK-030-02-define-port-capabilities.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Declare the Port public API** and produce this focused outcome:
-
-Opaque const Port or `NULL`; boolean/device pointer.
+**Stato:** ⬜ TODO
+**Fase:** 030 — Port
+**Dipende da:** [TASK-030-02](TASK-030-02-define-port-capabilities.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Puntatore Port o `NULL`; Puntatore boolean/device.
+
+---
+
+## File da aprire
 
 `include/spaghetti/port.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Forward-declare `struct spaghetti_port` and `struct device`. Declare `spaghetti_port_init_all()`, `spaghetti_port_count()`, `spaghetti_port_get()`, `spaghetti_port_has_capability()`, and `spaghetti_port_i2c_device()` with the signatures in the long-form roadmap.
-
----
-
-## Why
-
-SHT40 code needs one verified abstraction immediately.
+Dichiara in anticipo `struct spaghetti_port` e `struct device`. Dichiara
+`spaghetti_port_init_all()`, `spaghetti_port_count()`, `spaghetti_port_get()`,
+`spaghetti_port_has_capability()` e `spaghetti_port_i2c_device()` con le firme nella
+roadmap a lungo termine.
 
 ---
 
-## Called / used by
+## Perché
 
-Core, SHT40 test driver; later Manager.
-
----
-
-## Trigger
-
-BOOT/LOOKUP/MODULE OPERATION.
+Il codice SHT40 ha bisogno di un'astrazione verificata immediatamente.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Main/calling thread.
+Core, SHT40 test driver; successivamente Manager.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Zephyr `struct device` declaration and basic types.
+Funzionamento BOOT/LOOKUP/MODULE.
 
 ---
 
-## Inputs
+## Meccanismo di invocazione
+
+CHIAMATA DIRETTA.
+
+---
+
+## Contesto di esecuzione
+
+Thread principale o thread chiamante.
+
+---
+
+## Chiamate e dipendenze
+
+Dichiarazione Zephyr `struct device` e tipi di base.
+
+---
+
+## Input
 
 Port ID/capability.
 
 ---
 
-## Outputs
+## Output
 
-Opaque const Port or `NULL`; boolean/device pointer.
-
----
-
-## Errors to handle
-
-Invalid ID/null port/not initialized.
+Puntatore Port o `NULL`; Puntatore boolean/device.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- SPI/GPIO/power, module occupancy, dynamic allocation
+ID/null port/not inizializzato.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `include/spaghetti/port.h`.
-- [ ] Forward-declare `struct spaghetti_port` and `struct device`.
-- [ ] Declare `spaghetti_port_init_all()`, `spaghetti_port_count()`, `spaghetti_port_get()`, `spaghetti_port_has_capability()`, and `spaghetti_port_i2c_device()` with the signatures in the long-form roadmap.
-- [ ] Handle only these realistic errors: Invalid ID/null port/not initialized.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- SPI/GPIO/power, occupazione moduli, allocazione dinamica
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/port.h`.
+- [ ] Dichiara in anticipo `struct spaghetti_port` e `struct device`.
+- [ ] Dichiara `spaghetti_port_init_all()`, `spaghetti_port_count()`,
+      `spaghetti_port_get()`, `spaghetti_port_has_capability()` e
+      `spaghetti_port_i2c_device()` con le firme nella roadmap a lungo termine.
+- [ ] Gestisci solo questi errori realistici: inizializzato ID/null port/not non valido.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +115,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Confirm no ESP32 or pin identifier is public.
-
----
-
-## Expected result
-
-Small API sufficient for one I2C vertical slice.
+Confermare che nessun identificativo ESP32 o pin è pubblico.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Piccola API sufficiente per una fetta verticale I2C.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `port: declare the port public api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-030-04](TASK-030-04-implement-the-private-port-descriptor.md) — Implement the private Port descriptor
+[TASK-030-04](TASK-030-04-implement-the-private-port-descriptor.md) — Implementare il descrittore privato di Port

@@ -1,100 +1,108 @@
-# TASK-020-01 — Verify the real I2C controller and pins
+# TASK-020-01 — Verificare controller e pin I2C reali
 
-**Status:** ⬜ TODO  
-**Phase:** 020 — Current board / I2C  
-**Depends on:** [TASK-010-07](../010-core/TASK-010-07-build-and-flash-the-core-boundary.md)
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Verify the real I2C controller and pins** and produce this focused outcome:
-
-Verified mapping, not guessed values.
+**Stato:** ⬜ TODO
+**Fase:** 020 — Scheda attuale / I2C
+**Dipende da:** [TASK-010-07](../010-core/TASK-010-07-build-and-flash-the-core-boundary.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The Core schematic, module connector schematic, and current ESP32-C3 board pinout.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Record the exact controller, SDA pin, SCL pin, pull-up arrangement, power rail, and board revision that physically reach the intended Spaghetti Port. Do not edit production files.
+Mappatura verificata, non valori indovinati.
 
 ---
 
-## Why
+## File da aprire
 
-I2C cannot be safely enabled without real wiring.
-
----
-
-## Called / used by
-
-Board overlay work.
+Lo schema Core, lo schema del connettore del modulo e l'attuale pinout della scheda
+ESP32-C3.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-HARDWARE BRING-UP.
+Annota il controller esatto, i pin SDA e SCL, le resistenze di pull-up, la linea di
+alimentazione e la revisione della scheda che raggiungono fisicamente le Spaghetti Port.
+Non modificare i
+file di produzione.
 
 ---
 
-## Invocation mechanism
+## Perché
+
+I2C non può essere attivato in modo sicuro senza un vero cablaggio.
+
+---
+
+## Chi usa il risultato
+
+La overlay della scheda funziona.
+
+---
+
+## Evento che attiva il codice
+
+Hardware Bring-up.
+
+---
+
+## Meccanismo di invocazione
 
 DESIGN/BUILD-TIME INPUT.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Developer review.
-
----
-
-## Calls / dependencies
-
-Schematic and ESP32-C3 board DTS.
+Revisione degli sviluppatori.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-Real controller and pins; whether pull-ups/power exist.
-
----
-
-## Outputs
-
-Verified mapping, not guessed values.
+Scheda Schematic ed ESP32-C3 DTS.
 
 ---
 
-## Errors to handle
+## Input
 
-Ambiguous revision/wiring: stop and resolve physically.
-
----
-
-## Do NOT implement yet
-
-- Custom board or Spaghetti binding
+Controllore reale e pin; se pull-ups/power esistono.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only The Core schematic, module connector schematic, and current ESP32-C3 board pinout.
-- [ ] Record the exact controller, SDA pin, SCL pin, pull-up arrangement, power rail, and board revision that physically reach the intended Spaghetti Port.
-- [ ] Do not edit production files.
-- [ ] Handle only these realistic errors: Ambiguous revision/wiring: stop and resolve physically.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Mappatura verificata, non valori indovinati.
+
+---
+
+## Errori da gestire
+
+Ambiguo revision/wiring: fermarsi e risolvere fisicamente.
+
+---
+
+## Non implementare ancora
+
+- Scheda personalizzata o Spaghetti binding
+
+---
+
+## Procedura
+
+- [ ] Apri solo lo schema Core, lo schema del connettore del modulo e l'attuale pinout
+      della scheda ESP32-C3.
+- [ ] Registrare il controller esatto, SDA pin, SCL pin, disposizione di trazione, power
+      rail, e revisione di bordo che raggiungono fisicamente gli Spaghetti Port
+      previsti.
+- [ ] Non modificare i file di produzione.
+- [ ] Gestire solo questi errori realistici: Ambiguous revision/wiring: fermare e
+      risolvere fisicamente.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +118,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Cross-check the mapping against the schematic and continuity information.
-
----
-
-## Expected result
-
-One unambiguous, revision-specific I2C mapping is recorded for the next task.
+Controllare la mappatura rispetto alle informazioni schematiche e di continuità.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Per il prossimo task viene registrata una mappatura I2C specifica per la revisione
+univoca.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `current: verify the real i2c controller and pins`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-020-02](TASK-020-02-inspect-the-current-generated-devicetree.md) — Inspect the current generated Devicetree
+[TASK-020-02](TASK-020-02-inspect-the-current-generated-devicetree.md) — Ispezionare il Devicetree generato

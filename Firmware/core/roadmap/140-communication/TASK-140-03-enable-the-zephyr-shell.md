@@ -1,114 +1,126 @@
-# TASK-140-03 — Enable the Zephyr shell
+# TASK-140-03 — Abilitare Zephyr Shell
 
-**Status:** ⬜ TODO  
-**Phase:** 140 — Communication  
-**Depends on:** [TASK-140-02](TASK-140-02-declare-and-implement-request-dispatch.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Enable the Zephyr shell** and produce this focused outcome:
-
-Core/modules/runtime status response.
+**Stato:** ⬜ TODO
+**Fase:** 140 — Communication
+**Dipende da:** [TASK-140-02](TASK-140-02-declare-and-implement-request-dispatch.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`prj.conf` and the existing console overlay.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Enable `CONFIG_SHELL=y` and verify the existing chosen shell UART remains `usb_serial`. Add only required shell dependencies reported by installed Kconfig; do not change the working console device.
+Risposta allo stato Core/modules/runtime.
 
 ---
 
-## Why
+## File da aprire
 
-No USB CDC/BLE/network transport must be invented.
-
----
-
-## Called / used by
-
-Developer/PC via USB serial.
+`prj.conf` e la console esistente overlay.
 
 ---
 
-## Trigger
+## Orientamento Zephyr — Zephyr Shell
 
-SHELL COMMAND / COMMUNICATION RX.
+1. **Cos’è:** Zephyr Shell è un sottosistema che interpreta comandi testuali e chiama handler C registrati.
+2. **A cosa serve:** Fornisce il primo trasporto locale per provare Communication senza introdurre subito rete o MQTT.
+3. **Quando viene usato:** Kconfig include Shell nella build; a runtime il relativo thread riceve caratteri dalla console e invoca gli handler.
+4. **Build-time o runtime:** Selezione a build-time, comandi a runtime.
+5. **Collegamento con questo task:** Il task abilita l’infrastruttura; l’adattatore Spaghetti LAB viene implementato nel task successivo.
+6. **File reali coinvolti:** `prj.conf` e l’overlay/configurazione della console già esistente.
+7. **Cosa guardare nei file:** Controlla `CONFIG_SHELL`, backend seriale selezionato e device console effettivo.
+8. **Cosa non modificare:** Non cambiare la console, non conservare `argv` dopo il ritorno dell’handler e non eseguire lavoro lungo o non limitato.
 
 ---
 
-## Invocation mechanism
+## Cosa scrivere o modificare
+
+Abilita `CONFIG_SHELL=y` e verifica la shell scelta esistente UART rimane `usb_serial`.
+Aggiungi solo le dipendenze richieste dalla shell riportate da Kconfig installata; non
+cambiare il dispositivo di lavoro della console.
+
+---
+
+## Perché
+
+Nessun trasporto USB CDC/BLE/network deve essere inventato.
+
+---
+
+## Chi usa il risultato
+
+Developer/PC via seriale USB.
+
+---
+
+## Evento che attiva il codice
+
+Commandera'/Comunicazione RX.
+
+---
+
+## Meccanismo di invocazione
 
 SHELL COMMAND -> DIRECT CALL.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Zephyr shell thread; safe for bounded parsing, but do not
-perform long blocking work while holding shell internals.
-
----
-
-## Calls / dependencies
-
-Zephyr Shell, Communication handler, Config/Status.
+Zephyr shell thread; sicuro per l'analisi delimitata, ma non eseguire un lungo lavoro di
+blocco durante la tenuta interna della shell.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-`spaghetti status` first.
-
----
-
-## Outputs
-
-Core/modules/runtime status response.
+Zephyr Shell, Communication Handler, Config/Status.
 
 ---
 
-## Errors to handle
+## Input
 
-Bad arguments, oversized hex, unavailable Config.
-
----
-
-## Do NOT implement yet
-
-- CBOR until Step 15, binary framing, authentication
+Prima `spaghetti status`.
 
 ---
 
-## Zephyr note
+## Output
 
-The Zephyr shell provides command parsing and runs handlers in shell thread context. Handlers may make bounded direct calls but must not retain transient argument pointers.
+Risposta allo stato Core/modules/runtime.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `prj.conf` and the existing console overlay.
-- [ ] Enable `CONFIG_SHELL=y` and verify the existing chosen shell UART remains `usb_serial`.
-- [ ] Add only required shell dependencies reported by installed Kconfig
-- [ ] do not change the working console device.
-- [ ] Handle only these realistic errors: Bad arguments, oversized hex, unavailable Config.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Argomenti sbagliati, esadecimale sovradimensionato, Config non disponibile.
+
+---
+
+## Non implementare ancora
+
+- CBOR fino al Passo 15, framing binario, autenticazione
+
+---
+
+
+## Procedura
+
+- [ ] Aprire solo `prj.conf` e la console esistente overlay.
+- [ ] Abilita `CONFIG_SHELL=y` e verifica l'attuale shell scelta UART rimane
+      `usb_serial`.
+- [ ] Aggiungi solo dipendenze di shell richieste segnalate da Kconfig installato
+- [ ] non cambiare il dispositivo di console di lavoro.
+- [ ] Gestisci solo questi errori realistici: Argomenti sbagliati, esagono
+      sovradimensionato, Config non disponibile.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
@@ -118,34 +130,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-From existing serial console run help, valid status, invalid command.
-
----
-
-## Expected result
-
-Shell command reaches transport-independent handler.
+Dalla console seriale esistente eseguire aiuto, stato valido, comando non valido.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il comando Shell raggiunge il gestore indipendente dal trasporto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `communication: enable the zephyr shell`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-140-04](TASK-140-04-implement-the-shell-transport-adapter.md) — Implement the shell transport adapter
+[TASK-140-04](TASK-140-04-implement-the-shell-transport-adapter.md) — Implementare l’adattatore di trasporto Shell

@@ -1,101 +1,107 @@
-# TASK-140-04 — Implement the shell transport adapter
+# TASK-140-04 — Implementare l’adattatore di trasporto Shell
 
-**Status:** ⬜ TODO  
-**Phase:** 140 — Communication  
-**Depends on:** [TASK-140-03](TASK-140-03-enable-the-zephyr-shell.md)  
-**Estimated scope:** Medium
-
----
-
-## Goal
-
-Complete **Implement the shell transport adapter** and produce this focused outcome:
-
-Core/modules/runtime status response.
+**Stato:** ⬜ TODO
+**Fase:** 140 — Communication
+**Dipende da:** [TASK-140-03](TASK-140-03-enable-the-zephyr-shell.md)
+**Impegno stimato:** Medio
 
 ---
 
-## Open
+## Obiettivo
 
-Create `subsys/communication/communication_shell.c`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Register `spaghetti status` and bounded `spaghetti apply <hex>` commands. Validate argument count, even hex length, character validity, and decoded maximum before constructing a Communication request and directly calling the handler.
+Risposta allo stato Core/modules/runtime.
 
 ---
 
-## Why
+## File da aprire
 
-No USB CDC/BLE/network transport must be invented.
-
----
-
-## Called / used by
-
-Developer/PC via USB serial.
+Crea `subsys/communication/communication_shell.c`.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-SHELL COMMAND / COMMUNICATION RX.
+Registrare `spaghetti status` e comandi `spaghetti apply <hex>` limitati. Convalidare il
+conteggio degli argomenti, anche la lunghezza esadecimale, la validità del carattere e
+decodificare il massimo prima di costruire una richiesta Communication e chiamare
+direttamente il gestore.
 
 ---
 
-## Invocation mechanism
+## Perché
+
+Nessun trasporto USB CDC/BLE/network deve essere inventato.
+
+---
+
+## Chi usa il risultato
+
+Developer/PC via seriale USB.
+
+---
+
+## Evento che attiva il codice
+
+Commandera'/Comunicazione RX.
+
+---
+
+## Meccanismo di invocazione
 
 SHELL COMMAND -> DIRECT CALL.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Zephyr shell thread; safe for bounded parsing, but do not
-perform long blocking work while holding shell internals.
-
----
-
-## Calls / dependencies
-
-Zephyr Shell, Communication handler, Config/Status.
+Zephyr shell thread; sicuro per l'analisi delimitata, ma non eseguire un lungo lavoro di
+blocco durante la tenuta interna della shell.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-`spaghetti status` first.
-
----
-
-## Outputs
-
-Core/modules/runtime status response.
+Zephyr Shell, Communication Handler, Config/Status.
 
 ---
 
-## Errors to handle
+## Input
 
-Bad arguments, oversized hex, unavailable Config.
-
----
-
-## Do NOT implement yet
-
-- CBOR until Step 15, binary framing, authentication
+Prima `spaghetti status`.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only Create `subsys/communication/communication_shell.c`.
-- [ ] Register `spaghetti status` and bounded `spaghetti apply <hex>` commands.
-- [ ] Validate argument count, even hex length, character validity, and decoded maximum before constructing a Communication request and directly calling the handler.
-- [ ] Handle only these realistic errors: Bad arguments, oversized hex, unavailable Config.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Risposta allo stato Core/modules/runtime.
+
+---
+
+## Errori da gestire
+
+Argomenti sbagliati, esadecimale sovradimensionato, Config non disponibile.
+
+---
+
+## Non implementare ancora
+
+- CBOR fino al Passo 15, framing binario, autenticazione
+
+---
+
+## Procedura
+
+- [ ] Apri solo Crea `subsys/communication/communication_shell.c`.
+- [ ] Registrati `spaghetti status` e comandi `spaghetti apply <hex>` limitati.
+- [ ] Convalidare il conteggio degli argomenti, anche la lunghezza esadecimale, la
+      validità del carattere e decodificare il massimo prima di costruire una richiesta
+      Communication e chiamare direttamente il gestore.
+- [ ] Gestisci solo questi errori realistici: Argomenti sbagliati, esagono
+      sovradimensionato, Config non disponibile.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -111,34 +117,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-From existing serial console run help, valid status, invalid command.
-
----
-
-## Expected result
-
-Shell command reaches transport-independent handler.
+Dalla console seriale esistente eseguire aiuto, stato valido, comando non valido.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il comando Shell raggiunge il gestore indipendente dal trasporto.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `communication: implement the shell transport adapter`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-140-05](TASK-140-05-initialize-communication-from-core.md) — Initialize Communication from Core
+[TASK-140-05](TASK-140-05-initialize-communication-from-core.md) — Inizializzare Communication da Core

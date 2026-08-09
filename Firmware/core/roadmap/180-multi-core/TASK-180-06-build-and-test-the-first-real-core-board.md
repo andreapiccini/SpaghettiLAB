@@ -1,142 +1,151 @@
-# TASK-180-06 — Build and test the first real Core board
+# TASK-180-06 — Compilare e provare la prima board Core reale
 
-**Status:** ⬜ TODO  
-**Phase:** 180 — Multiple Core variants  
-**Depends on:** [TASK-180-05](TASK-180-05-enumerate-devicetree-ports.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Build and test the first real Core board** and produce this focused outcome:
-
-Same Port 0/SHT40 behavior on custom board target.
+**Stato:** ⬜ TODO
+**Fase:** 180 — Varianti Core multiple
+**Dipende da:** [TASK-180-05](TASK-180-05-enumerate-devicetree-ports.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-Board files, generated DTS/config, and the connected Core hardware.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Select the new board through the existing `BOARD` environment/configuration path, run a pristine build, inspect generated Port nodes, flash, and repeat the SHT40/Relay paths without higher-layer changes.
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
 
 ---
 
-## Why
+## File da aprire
 
-The abstraction is already proven, so refactor has observable parity.
+File da tavolo, generato DTS/config, e l'hardware collegato Core.
 
 ---
 
-## Called / used by
+## Cosa scrivere o modificare
+
+Selezionare la nuova scheda attraverso il percorso `BOARD` environment/configuration
+esistente, eseguire una build pristine, ispezionare i nodi Port generati,
+flash, e ripetere i percorsi SHT40/Relay senza modifiche di livello superiore.
+
+---
+
+## Perché
+
+L'astrazione è già provata, in modo da refactor ha parità osservabile.
+
+---
+
+## Chi usa il risultato
 
 West/CMake/Port.
 
 ---
 
-## Trigger
+## Evento che attiva il codice
 
 BUILD/BOOT.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-BUILD TIME descriptors then BOOT DIRECT CALL.
-
----
-
-## Execution context
-
-Build tools/main thread.
+I descrittori del tempo ACQUISTO poi BOOT DIRECT CALL.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Generated macros and Device Model.
-
----
-
-## Inputs
-
-Real first-Core board description.
+Costruisci tools/main thread.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Same Port 0/SHT40 behavior on custom board target.
-
----
-
-## Errors to handle
-
-Board discovery, DTS validation, device readiness.
+Macro generate e Device Model.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- Copy all devkit definitions blindly or add second board guesses
+Vera prima descrizione della scheda Core.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only Board files, generated DTS/config, and the connected Core hardware.
-- [ ] Select the new board through the existing `BOARD` environment/configuration path, run a pristine build, inspect generated Port nodes, flash, and repeat the SHT40/Relay paths without higher-layer changes.
-- [ ] Handle only these realistic errors: Board discovery, DTS validation, device readiness.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Stesso comportamento Port 0/SHT40 sul target di board personalizzata.
+
+---
+
+## Errori da gestire
+
+Scoperta da tavolo, convalida DTS, prontezza del dispositivo.
+
+---
+
+## Non implementare ancora
+
+- Copia tutte le definizioni di devkit ciecamente o aggiungi indovina la seconda scheda
+
+---
+
+## Procedura
+
+- [ ] Aprire solo i file della scheda, generato DTS/config, e l'hardware collegato Core.
+- [ ] Selezionare la nuova scheda attraverso il percorso `BOARD`
+      environment/configuration esistente, eseguire una build pristine,
+      ispezionare i nodi Port generati, flash, e ripetere i percorsi SHT40/Relay senza
+      modifiche di livello superiore.
+- [ ] Gestisci solo questi errori realistici: Scoperta da tavolo, validazione DTS,
+      prontezza del dispositivo.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make pristine`
+SÌ — `make pristine`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Compare Port capability/status and real measurement with old devkit target.
-
----
-
-## Expected result
-
-The real board boots and exposes its actual Port count/capabilities through the unchanged public API.
+Confronta Port capability/status e misura reale con il vecchio obiettivo devkit.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Il vero scarponi da tavola ed espone la sua Port count/capabilities attraverso l'API
+pubblica inalterata.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `multiple: build and test the first real core board`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-180-07](TASK-180-07-build-a-second-core-variant.md) — Build a second Core variant
+[TASK-180-07](TASK-180-07-build-a-second-core-variant.md) — Compilare una seconda variante Core

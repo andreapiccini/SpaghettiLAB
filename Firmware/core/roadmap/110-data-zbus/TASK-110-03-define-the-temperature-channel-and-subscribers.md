@@ -1,100 +1,105 @@
-# TASK-110-03 — Define the temperature channel and subscribers
+# TASK-110-03 — Definire il canale temperatura e i subscriber
 
-**Status:** ⬜ TODO  
-**Phase:** 110 — Data / zbus  
-**Depends on:** [TASK-110-02](TASK-110-02-enable-zbus-message-subscribers.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the temperature channel and subscribers** and produce this focused outcome:
-
-Independent copy to both subscribers.
+**Stato:** ⬜ TODO
+**Fase:** 110 — Data / zbus
+**Dipende da:** [TASK-110-02](TASK-110-02-enable-zbus-message-subscribers.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Copia indipendente per entrambi gli subscriber.
+
+---
+
+## File da aprire
 
 `subsys/data/data.c`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define `spaghetti_temperature_chan` with `ZBUS_CHAN_DEFINE` and two `ZBUS_MSG_SUBSCRIBER_DEFINE` observers: one logger and one test consumer. Use the exact sample type, a small validator, and a bounded initial value.
-
----
-
-## Why
-
-Runtime automation should not silently miss an intermediate sample.
+Definire `spaghetti_temperature_chan` con `ZBUS_CHAN_DEFINE` e due osservatori
+`ZBUS_MSG_SUBSCRIBER_DEFINE`: uno per il logging e uno per il test. Usa il tipo di
+campione esatto, un piccolo validatore e un valore iniziale limitato.
 
 ---
 
-## Called / used by
+## Perché
 
-Publisher and two test consumer threads.
-
----
-
-## Trigger
-
-DATA ARRIVAL.
+L'automazione Runtime non dovrebbe perdere silenziosamente un campione intermedio.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-ZBUS PUBLISH / ZBUS MESSAGE SUBSCRIBER.
-
----
-
-## Execution context
-
-Publisher thread; consumers' dedicated test threads.
+Publisher e due thread di consumo di prova.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
+
+ARRIVO DATI.
+
+---
+
+## Meccanismo di invocazione
+
+Abbonamento al messaggio ZBUS Publish / ZBUS.
+
+---
+
+## Contesto di esecuzione
+
+Publisher thread; thread di prova dedicati ai consumatori.
+
+---
+
+## Chiamate e dipendenze
 
 `zbus_chan_pub`, `zbus_sub_wait_msg`.
 
 ---
 
-## Inputs
+## Input
 
-Sample copy.
-
----
-
-## Outputs
-
-Independent copy to both subscribers.
+Copia del campione.
 
 ---
 
-## Errors to handle
+## Output
 
-Validator rejection, allocation/pool exhaustion, timeout.
-
----
-
-## Do NOT implement yet
-
-- MQTT or Communication consumers
+Copia indipendente per entrambi gli subscriber.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `subsys/data/data.c`.
-- [ ] Define `spaghetti_temperature_chan` with `ZBUS_CHAN_DEFINE` and two `ZBUS_MSG_SUBSCRIBER_DEFINE` observers: one logger and one test consumer.
-- [ ] Use the exact sample type, a small validator, and a bounded initial value.
-- [ ] Handle only these realistic errors: Validator rejection, allocation/pool exhaustion, timeout.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Rifiuto del validatore, esaurimento allocation/pool, timeout.
+
+---
+
+## Non implementare ancora
+
+- Consumatori MQTT o Communication
+
+---
+
+## Procedura
+
+- [ ] Apri solo `subsys/data/data.c`.
+- [ ] Definire `spaghetti_temperature_chan` con `ZBUS_CHAN_DEFINE` e due osservatori
+      `ZBUS_MSG_SUBSCRIBER_DEFINE`: uno per il logging e uno per il test.
+- [ ] Utilizzare il tipo di campione esatto, un piccolo validatore e un valore iniziale
+      limitato.
+- [ ] Gestisci solo questi errori realistici: Rifiuto del validatore, esaurimento
+      allocation/pool, timeout.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +115,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Publish one fake sample; each test consumer logs same sequence/value once.
-
----
-
-## Expected result
-
-Two independent receipts.
+Pubblicare un campione falso; ogni test consumer registra lo stesso sequence/value una
+volta.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Due ricevute indipendenti.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `data: define the temperature channel and subscribers`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-110-04](TASK-110-04-implement-data-initialization-and-publish.md) — Implement Data initialization and publish
+[TASK-110-04](TASK-110-04-implement-data-initialization-and-publish.md) — Inizializzare Data e pubblicare un messaggio

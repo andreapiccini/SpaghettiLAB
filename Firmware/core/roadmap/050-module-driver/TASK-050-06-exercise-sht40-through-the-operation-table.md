@@ -1,149 +1,159 @@
-# TASK-050-06 — Exercise SHT40 through the operation table
+# TASK-050-06 — Usare SHT40 tramite la tabella operazioni
 
-**Status:** ⬜ TODO  
-**Phase:** 050 — Module + Module Driver  
-**Depends on:** [TASK-050-05](TASK-050-05-adapt-sht40-to-driver-operations.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Exercise SHT40 through the operation table** and produce this focused outcome:
-
-Same real values as Milestone 4.
+**Stato:** ⬜ TODO
+**Fase:** 050 — Module + Module Driver
+**Dipende da:** [TASK-050-05](TASK-050-05-adapt-sht40-to-driver-operations.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`src/main.c`, `CMakeLists.txt`, and the serial console.
+Questo task deve produrre un solo risultato verificabile:
+
+Stessi valori reali di Milestone 4.
 
 ---
 
-## Write / Modify
+## File da aprire
 
-Construct one temporary `spaghetti_module` in `main`, point it at Port 0 and `spaghetti_sht40_driver`, and replace direct wrapper calls with `driver->ops->init/read/deinit`. Preserve the one-second display loop.
+`src/main.c`, `CMakeLists.txt` e la console seriale.
 
-> [!WARNING]
-> TEMPORARY SHORTCUT
+---
+
+## Cosa scrivere o modificare
+
+Costruisci uno `spaghetti_module` temporaneo in `main`, puntalo a Port 0 e
+`spaghetti_sht40_driver`, e rimpiazza le chiamate wrapper dirette con
+`driver->ops->init/read/deinit`. Preserva il loop di visualizzazione di un secondo.
+
+> [!ATTENZIONE]
+> SHORTCUT TEMPORANEO
 >
-> The main-owned module instance is intentionally temporary and will be removed in [TASK-070-05](../070-module-manager/TASK-070-05-integrate-manager-into-core-and-main.md).
+> L'istanza principale del modulo è intenzionalmente temporanea e verrà rimossa in
+  [TASK-070-05](../070-module-manager/TASK-070-05-integrate-manager-into-core-and-main.md).
 
 
 ---
 
-## Why
+## Perché
 
-Registry should store a tested driver descriptor.
-
----
-
-## Called / used by
-
-Temporary main harness.
+Il registro deve memorizzare un descrittore driver testato.
 
 ---
 
-## Trigger
+## Chi usa il risultato
 
-BOOT/PERIODIC READ.
-
----
-
-## Invocation mechanism
-
-DIRECT CALL through operation table.
+Imbragatura principale temporanea.
 
 ---
 
-## Execution context
+## Evento che attiva il codice
 
-Main thread.
-
----
-
-## Calls / dependencies
-
-Temporary SHT4x Sensor wrapper.
+BOOT/PERIODIC LEGGERE.
 
 ---
 
-## Inputs
+## Meccanismo di invocazione
 
-Module with Port 0 and output sample.
-
----
-
-## Outputs
-
-Same real values as Milestone 4.
+Chiamata diretta attraverso il tavolo operatorio.
 
 ---
 
-## Errors to handle
+## Contesto di esecuzione
 
-Missing op, incompatible Port, prior sensor errors.
-
----
-
-## Do NOT implement yet
-
-- Registry/Manager lookup or zbus
+Thread principale.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `src/main.c`, `CMakeLists.txt`, and the serial console.
-- [ ] Construct one temporary `spaghetti_module` in `main`, point it at Port 0 and `spaghetti_sht40_driver`, and replace direct wrapper calls with `driver->ops->init/read/deinit`. Preserve the one-second display loop.
-- [ ] Handle only these realistic errors: Missing op, incompatible Port, prior sensor errors.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Sensore SHT4x temporaneo wrapper.
+
+---
+
+## Input
+
+Modulo con Port 0 e campione di uscita.
+
+---
+
+## Output
+
+Stessi valori reali di Milestone 4.
+
+---
+
+## Errori da gestire
+
+Op mancante, Port incompatibile, precedenti errori del sensore.
+
+---
+
+## Non implementare ancora
+
+- Cerca Registry/Manager o zbus
+
+---
+
+## Procedura
+
+- [ ] Aprire solo `src/main.c`, `CMakeLists.txt` e la console seriale.
+- [ ] Costruisci uno `spaghetti_module` temporaneo in `main`, puntalo a Port 0 e
+      `spaghetti_sht40_driver`, e rimpiazza le chiamate wrapper dirette con
+      `driver->ops->init/read/deinit`. Preserva il loop di visualizzazione di un
+      secondo.
+- [ ] Gestisci solo questi errori realistici: Op mancante, Port incompatibile, errori
+      precedenti del sensore.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Ensure main never calls `sensor_*` or SHT40 concrete functions directly;
-it calls operation pointers.
-
----
-
-## Expected result
-
-Real readings are unchanged and `main` no longer calls the SHT40 implementation API directly.
+Assicurarsi che le funzioni di calcestruzzo `sensor_*` o SHT40 non siano mai chiamate
+direttamente; chiama puntatori operativi.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Le letture reali sono immutate e `main` non chiama più direttamente l'API di
+implementazione SHT40.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: exercise sht40 through the operation table`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-060-01](../060-driver-registry/TASK-060-01-declare-the-driver-registry-api.md) — Declare the Driver Registry API
+[TASK-060-01](../060-driver-registry/TASK-060-01-declare-the-driver-registry-api.md) — Dichiarare l’API di Driver Registry

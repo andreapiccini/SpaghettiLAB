@@ -1,100 +1,107 @@
-# TASK-090-01 — Define the internal Config model
+# TASK-090-01 — Definire il modello interno di Config
 
-**Status:** ⬜ TODO  
-**Phase:** 090 — Internal Config  
-**Depends on:** [TASK-080-06](../080-runtime-removable-sht40/TASK-080-06-regression-test-the-runtime-sht40.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the internal Config model** and produce this focused outcome:
-
-Valid internal configuration.
+**Stato:** ⬜ TODO
+**Fase:** 090 — Config interna
+**Dipende da:** [TASK-080-06](../080-runtime-removable-sht40/TASK-080-06-regression-test-the-runtime-sht40.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Configurazione interna valida.
+
+---
+
+## File da aprire
 
 `include/spaghetti/config.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define fixed capacity limits plus `spaghetti_module_config`, `spaghetti_runtime_sampling_config`, and `spaghetti_config` with only version, bounded module assignments, verified I2C address, and one sample period. Declare validate and apply APIs.
-
----
-
-## Why
-
-CBOR must fill a proven model, not define architecture.
+Definire limiti di capacità fissi più `spaghetti_module_config`,
+`spaghetti_runtime_sampling_config`, `spaghetti_config` e `spaghetti_config` con solo
+versione, assegnazioni di moduli limitate, indirizzo I2C verificato, e un periodo di
+campionamento. Dichiarare convalidare e applicare API.
 
 ---
 
-## Called / used by
+## Perché
 
-Main test, future decoder/Communication, Manager/Runtime.
+CBOR deve riempire un modello collaudato, non definire l'architettura.
 
 ---
 
-## Trigger
+## Chi usa il risultato
+
+Test principale, futuro decoder/Communication, Manager/Runtime.
+
+---
+
+## Evento che attiva il codice
 
 CONFIG COMMAND/BOOT TEST.
 
 ---
 
-## Invocation mechanism
+## Meccanismo di invocazione
 
-DIRECT CALL.
-
----
-
-## Execution context
-
-Caller thread.
+CHIAMATA DIRETTA.
 
 ---
 
-## Calls / dependencies
+## Contesto di esecuzione
 
-Port/module IDs.
-
----
-
-## Inputs
-
-Version, Port 0/SHT40/address, 1000 ms.
+Thread chiamante.
 
 ---
 
-## Outputs
+## Chiamate e dipendenze
 
-Valid internal configuration.
-
----
-
-## Errors to handle
-
-Wrong version/count, duplicate port, empty type, zero period.
+ID Port/module.
 
 ---
 
-## Do NOT implement yet
+## Input
 
-- CBOR, MQTT fields, discovery policy, giant union
+Versione, Port 0/SHT40/address, 1000 ms.
 
 ---
 
-## Steps
+## Output
 
-- [ ] Open only `include/spaghetti/config.h`.
-- [ ] Define fixed capacity limits plus `spaghetti_module_config`, `spaghetti_runtime_sampling_config`, and `spaghetti_config` with only version, bounded module assignments, verified I2C address, and one sample period.
-- [ ] Declare validate and apply APIs.
-- [ ] Handle only these realistic errors: Wrong version/count, duplicate port, empty type, zero period.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Configurazione interna valida.
+
+---
+
+## Errori da gestire
+
+Sbagliato version/count, porta duplicata, tipo vuoto, periodo zero.
+
+---
+
+## Non implementare ancora
+
+- CBOR, MQTT campi, politica di scoperta, unione gigante
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/config.h`.
+- [ ] Definire limiti di capacità fissi più `spaghetti_module_config`,
+      `spaghetti_runtime_sampling_config` e `spaghetti_config` con una sola versione,
+      assegnazioni di moduli limitate, indirizzo I2C verificato e un periodo di
+      campionamento.
+- [ ] Dichiarare convalida e applicare API.
+- [ ] Gestisci solo questi errori realistici: Sbagliato version/count, porta duplicata,
+      tipo vuoto, periodo zero.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +117,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Ownership/lifetime review for type strings and arrays.
-
----
-
-## Expected result
-
-Small bounded config.
+Ownership/lifetime recensione per stringhe di tipo e array.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Piccola config delimitata.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `internal: define the internal config model`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-090-02](TASK-090-02-make-config-string-ownership-explicit.md) — Make Config string ownership explicit
+[TASK-090-02](TASK-090-02-make-config-string-ownership-explicit.md) — Rendere esplicita la proprietà delle stringhe Config

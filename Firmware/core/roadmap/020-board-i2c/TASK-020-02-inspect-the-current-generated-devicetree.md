@@ -1,107 +1,121 @@
-# TASK-020-02 — Inspect the current generated Devicetree
+# TASK-020-02 — Ispezionare il Devicetree generato
 
-**Status:** ⬜ TODO  
-**Phase:** 020 — Current board / I2C  
-**Depends on:** [TASK-020-01](TASK-020-01-verify-the-real-i2c-controller-and-pins.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Inspect the current generated Devicetree** and produce this focused outcome:
-
-Verified mapping, not guessed values.
+**Stato:** ⬜ TODO
+**Fase:** 020 — Scheda attuale / I2C
+**Dipende da:** [TASK-020-01](TASK-020-01-verify-the-real-i2c-controller-and-pins.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-`build/zephyr/zephyr.dts` and the installed ESP32-C3 DTS/pinctrl definitions inside `make shell`.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Locate the verified I2C controller label, its current status, and the installed ESP32-C3 pinctrl syntax. Record the exact node labels needed by the overlay; do not edit generated files.
+Mappatura verificata, non valori indovinati.
 
 ---
 
-## Why
+## File da aprire
 
-I2C cannot be safely enabled without real wiring.
-
----
-
-## Called / used by
-
-Board overlay work.
+`build/zephyr/zephyr.dts` e le definizioni di ESP32-C3 DTS/pinctrl installate
+all'interno di `make shell`.
 
 ---
 
-## Trigger
+## Orientamento Zephyr — Devicetree, DTS e DTSI
 
-HARDWARE BRING-UP.
+1. **Cos’è:** Il Devicetree è la descrizione gerarchica dell’hardware nota a Zephyr. I file `.dts` descrivono una board completa; i `.dtsi` sono frammenti inclusi e riutilizzati.
+2. **A cosa serve:** Permette alla build di sapere quali periferiche esistono, indirizzi, pin, stato e collegamenti senza codificarli negli algoritmi C.
+3. **Quando viene usato:** La board selezionata, i `.dtsi` del SoC e gli overlay dell’applicazione vengono uniti durante la build.
+4. **Build-time o runtime:** Build-time; il risultato genera macro e oggetti device usati poi a runtime.
+5. **Collegamento con questo task:** Prima di cambiare I2C devi vedere quale controller e quali label esistono davvero nella board ESP32-C3 selezionata.
+6. **File reali coinvolti:** `build/zephyr/zephyr.dts` è il risultato finale; i sorgenti originali sono indicati nei commenti del file e nella directory board di Zephyr.
+7. **Cosa guardare nei file:** Cerca `i2c`, `status`, le node label come `i2c0` e i riferimenti `pinctrl-*`.
+8. **Cosa non modificare:** Non modificare `build/zephyr/zephyr.dts`, i `.dts` o `.dtsi` installati da Zephyr; in questo task devi soltanto ispezionarli.
 
 ---
 
-## Invocation mechanism
+## Cosa scrivere o modificare
+
+Individuare l'etichetta del controller I2C verificata, il suo stato attuale e la
+sintassi ESP32-C3 pinctrl installata. Registrare le etichette esatte dei nodi necessarie
+per overlay; non modificare i file generati.
+
+---
+
+## Perché
+
+I2C non può essere attivato in modo sicuro senza un vero cablaggio.
+
+---
+
+## Chi usa il risultato
+
+La overlay della scheda funziona.
+
+---
+
+## Evento che attiva il codice
+
+Hardware Bring-up.
+
+---
+
+## Meccanismo di invocazione
 
 DESIGN/BUILD-TIME INPUT.
 
 ---
 
-## Execution context
+## Contesto di esecuzione
 
-Developer review.
-
----
-
-## Calls / dependencies
-
-Generated Zephyr Devicetree and installed ESP32-C3 DTS files.
+Revisione degli sviluppatori.
 
 ---
 
-## Inputs
+## Chiamate e dipendenze
 
-Real controller and pins; whether pull-ups/power exist.
-
----
-
-## Outputs
-
-Verified mapping, not guessed values.
+Generato Zephyr Devicetree e installato file ESP32-C3 DTS.
 
 ---
 
-## Errors to handle
+## Input
 
-Ambiguous revision/wiring: stop and resolve physically.
-
----
-
-## Do NOT implement yet
-
-- Custom board or Spaghetti binding
+Controllore reale e pin; se pull-ups/power esistono.
 
 ---
 
-## Zephyr note
+## Output
 
-Devicetree is a compile-time hardware description. `build/zephyr/zephyr.dts` is generated output and must only be inspected, never edited.
+Mappatura verificata, non valori indovinati.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only `build/zephyr/zephyr.dts` and the installed ESP32-C3 DTS/pinctrl definitions inside `make shell`.
-- [ ] Locate the verified I2C controller label, its current status, and the installed ESP32-C3 pinctrl syntax.
-- [ ] Record the exact node labels needed by the overlay
-- [ ] do not edit generated files.
-- [ ] Handle only these realistic errors: Ambiguous revision/wiring: stop and resolve physically.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Ambiguo revision/wiring: fermarsi e risolvere fisicamente.
+
+---
+
+## Non implementare ancora
+
+- Scheda personalizzata o Spaghetti binding
+
+---
+
+
+## Procedura
+
+- [ ] Aprire solo le definizioni `build/zephyr/zephyr.dts` e ESP32-C3 DTS/pinctrl
+      installate all'interno di `make shell`.
+- [ ] Individuare l'etichetta di controllo I2C verificata, il suo stato attuale e la
+      sintassi ESP32-C3 pinctrl installata.
+- [ ] Registrare le etichette esatte dei nodi richieste dalla overlay
+- [ ] non modificare i file generati.
+- [ ] Gestire solo questi errori realistici: Ambiguous revision/wiring: fermare e
+      risolvere fisicamente.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -117,34 +131,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Continuity/schematic cross-check where appropriate.
-
----
-
-## Expected result
-
-The controller and pinctrl labels are known and contain no guessed GPIO values.
+Controllo incrociato Continuity/schematic, se del caso.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+I controller e le etichette pinctrl sono noti e non contengono valori di GPIO
+ipotizzati.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `current: inspect the current generated devicetree`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-020-03](TASK-020-03-enable-the-i2c-node-in-the-board-overlay.md) — Enable the I2C node in the board overlay
+[TASK-020-03](TASK-020-03-enable-the-i2c-node-in-the-board-overlay.md) — Abilitare I2C nell’overlay della scheda

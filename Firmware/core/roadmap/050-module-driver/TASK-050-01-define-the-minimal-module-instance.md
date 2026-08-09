@@ -1,99 +1,107 @@
-# TASK-050-01 — Define the minimal module instance
+# TASK-050-01 — Definire l’istanza minima di Module
 
-**Status:** ⬜ TODO  
-**Phase:** 050 — Module + Module Driver  
-**Depends on:** [TASK-040-09](../040-sht40/TASK-040-09-flash-and-test-the-real-sht40.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the minimal module instance** and produce this focused outcome:
-
-Minimal runtime instance layout.
+**Stato:** ⬜ TODO
+**Fase:** 050 — Module + Module Driver
+**Dipende da:** [TASK-040-09](../040-sht40/TASK-040-09-flash-and-test-the-real-sht40.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Layout minimo di istanza runtime.
+
+---
+
+## File da aprire
 
 `include/spaghetti/module.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define `spaghetti_module_id_t`, the `UNINITIALIZED`, `READY`, and `ERROR` state values, and `struct spaghetti_module` with only ID, Port pointer, driver pointer, and private context pointer. Forward-declare Port and driver types to avoid cyclic includes.
-
----
-
-## Why
-
-Registry/Manager need a small common object, not the final huge model.
+Definire i valori di stato `spaghetti_module_id_t`, `UNINITIALIZED`, `READY` e `ERROR`,
+e `struct spaghetti_module` con solo ID, Port puntatore, driver puntatore e context
+puntatore al contesto privato. Dichiara in anticipo i tipi Port e driver per evitare
+dipendenze circolari tra gli header.
 
 ---
 
-## Called / used by
+## Perché
 
-Driver operations, Manager, Runtime later.
-
----
-
-## Trigger
-
-MODULE CONFIGURATION.
+Registry/Manager ha bisogno di un piccolo oggetto comune, non del modello finale enorme.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL object passing.
-
----
-
-## Execution context
-
-Calling thread.
+Operazioni con driver, Manager, Runtime in seguito.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Port/driver declarations only.
-
----
-
-## Inputs
-
-Manager-supplied fields.
+Configurazione del modulo.
 
 ---
 
-## Outputs
+## Meccanismo di invocazione
 
-Minimal runtime instance layout.
-
----
-
-## Errors to handle
-
-None in type; document invalid/null relationships.
+Call direct object passing.
 
 ---
 
-## Do NOT implement yet
+## Contesto di esecuzione
 
-- Names, discovery metadata, data queues, MQTT state
+Sto chiamando thread.
 
 ---
 
-## Steps
+## Chiamate e dipendenze
 
-- [ ] Open only `include/spaghetti/module.h`.
-- [ ] Define `spaghetti_module_id_t`, the `UNINITIALIZED`, `READY`, and `ERROR` state values, and `struct spaghetti_module` with only ID, Port pointer, driver pointer, and private context pointer. Forward-declare Port and driver types to avoid cyclic includes.
-- [ ] Handle only these realistic errors: None in type; document invalid/null relationships.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Solo dichiarazioni Port/driver.
+
+---
+
+## Input
+
+Campi forniti dal gestore.
+
+---
+
+## Output
+
+Layout minimo di istanza runtime.
+
+---
+
+## Errori da gestire
+
+Nessuna nel tipo; documento relazioni invalid/null.
+
+---
+
+## Non implementare ancora
+
+- Nomi, metadati di scoperta, code di dati, stato MQTT
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/module.h`.
+- [ ] Definire i valori di stato `spaghetti_module_id_t`, `UNINITIALIZED`, `READY` e
+      `ERROR`, e `struct spaghetti_module` con solo ID, Port puntatore, driver puntatore
+      e puntatore al contesto privato. Dichiara in anticipo i tipi Port e driver per
+      evitare dipendenze
+      cicliche.
+- [ ] Gestisci solo questi errori realistici: Nessuno nel tipo; documento relazioni
+      invalid/null.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -109,35 +117,36 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Ownership checklist: CREATED/OWNED/MODIFIED/DESTROYED by Manager; READ by
+Checklist di proprietà: CREATED/OWNED/MODIFIED/DESTROYED by Manager; READ by
 driver/Runtime/Communication.
 
 ---
 
-## Expected result
+## Risultato atteso
 
-Instance and type are clearly distinct.
-
----
-
-## Completion checklist
-
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+L'istanza e il tipo sono chiaramente distinti.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `module: define the minimal module instance`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-050-02](TASK-050-02-define-the-temporary-sample-contract.md) — Define the temporary sample contract
+[TASK-050-02](TASK-050-02-define-the-temporary-sample-contract.md) — Definire il contratto temporaneo del campione

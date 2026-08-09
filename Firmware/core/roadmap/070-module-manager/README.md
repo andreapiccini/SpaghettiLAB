@@ -1,34 +1,32 @@
-# Phase 070 — Module Manager
+# Fase 070 — Module Manager
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** ⬜ TODO
+**Stato:** ⬜ TODO
 
-## Goal
+## Obiettivo
 
-Give one Manager-owned module instance a complete configure and read lifecycle.
+Gestire configurazione, vita e lettura di un modulo in uno slot.
 
-## Depends on
+## Dipende da
 
-[Phase 060 — Driver Registry](../060-driver-registry/README.md)
+[Fase 060 — Driver Registry](../060-driver-registry/README.md)
 
-## Visible result
+## Risultato visibile
 
-A Manager call configures Port 0 as SHT40 and reads the real sensor.
+Una chiamata Manager configura Port 0 come SHT40 e legge il sensore.
 
-## Tasks
+## Task
 
-1. ⬜ [TASK-070-01 — Declare the Module Manager API](TASK-070-01-declare-the-module-manager-api.md)
-2. ⬜ [TASK-070-02 — Implement the one-slot Manager state](TASK-070-02-implement-the-one-slot-manager-state.md)
-3. ⬜ [TASK-070-03 — Implement Manager configure](TASK-070-03-implement-manager-configure.md)
-4. ⬜ [TASK-070-04 — Implement Manager read](TASK-070-04-implement-manager-read.md)
-5. ⬜ [TASK-070-05 — Integrate Manager into Core and main](TASK-070-05-integrate-manager-into-core-and-main.md)
-6. ⬜ [TASK-070-06 — Test Manager success and rollback](TASK-070-06-test-manager-success-and-rollback.md)
+1. ⬜ [TASK-070-01 — Dichiarare l’API di Module Manager](TASK-070-01-declare-the-module-manager-api.md)
+2. ⬜ [TASK-070-02 — Implementare lo stato Manager con uno slot](TASK-070-02-implement-the-one-slot-manager-state.md)
+3. ⬜ [TASK-070-03 — Implementare la configurazione nel Manager](TASK-070-03-implement-manager-configure.md)
+4. ⬜ [TASK-070-04 — Implementare la lettura nel Manager](TASK-070-04-implement-manager-read.md)
+5. ⬜ [TASK-070-05 — Integrare Manager con Core e main](TASK-070-05-integrate-manager-into-core-and-main.md)
+6. ⬜ [TASK-070-06 — Provare successo e rollback del Manager](TASK-070-06-test-manager-success-and-rollback.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Manager owns the only module instance.
-- [ ] Configure calls Port, Registry, then driver in that order.
-- [ ] Port 0/SHT40 reaches READY.
-- [ ] Unknown type and occupied Port fail cleanly.
-- [ ] Real read works through Manager.
+- [ ] Lo stato dello slot ha un solo proprietario.
+- [ ] Configurazioni fallite eseguono rollback.
+- [ ] Letture su slot non pronti falliscono in modo controllato.

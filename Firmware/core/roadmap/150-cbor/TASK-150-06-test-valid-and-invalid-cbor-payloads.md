@@ -1,143 +1,151 @@
-# TASK-150-06 — Test valid and invalid CBOR payloads
+# TASK-150-06 — Provare payload CBOR validi e non validi
 
-**Status:** ⬜ TODO  
-**Phase:** 150 — CBOR  
-**Depends on:** [TASK-150-05](TASK-150-05-apply-cbor-through-communication.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Test valid and invalid CBOR payloads** and produce this focused outcome:
-
-Applied SHT40 and 1000 ms acquisition.
+**Stato:** ⬜ TODO
+**Fase:** 150 — CBOR
+**Dipende da:** [TASK-150-05](TASK-150-05-apply-cbor-through-communication.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
 
-The codec test harness, USB shell, and serial console.
+Questo task deve produrre un solo risultato verificabile:
 
----
-
-## Write / Modify
-
-Test one valid V0 payload plus truncated input, wrong type, oversized string, unknown version, trailing bytes, invalid address, and Manager apply failure. Confirm failed payloads do not alter the active snapshot.
+Acquisizione SHT40 applicata e 1000 ms.
 
 ---
 
-## Why
+## File da aprire
 
-Each downstream layer already works locally.
-
----
-
-## Called / used by
-
-PC/developer shell.
+L'imbracatura di prova del codec, la shell USB e la console seriale.
 
 ---
 
-## Trigger
+## Cosa scrivere o modificare
 
-COMMUNICATION RX.
-
----
-
-## Invocation mechanism
-
-SHELL COMMAND -> DIRECT CALL chain.
+Provare un payload V0 valido più ingresso troncato, tipo errato, stringa oversize,
+versione sconosciuta, byte di completamento, indirizzo non valido e Manager applicare il
+guasto. Confermare payload falliti non modificare l'istantanea attiva.
 
 ---
 
-## Execution context
+## Perché
 
-Shell thread initially.
+Ogni strato a valle funziona già localmente.
 
 ---
 
-## Calls / dependencies
+## Chi usa il risultato
+
+Shell PC/developer.
+
+---
+
+## Evento che attiva il codice
+
+RICEZIONE COMUNICAZIONE.
+
+---
+
+## Meccanismo di invocazione
+
+SHELL COMMAND -> Catena di chiamata diretta.
+
+---
+
+## Contesto di esecuzione
+
+Shell thread inizialmente.
+
+---
+
+## Chiamate e dipendenze
 
 Communication -> codec -> Config -> Manager/Runtime.
 
 ---
 
-## Inputs
+## Input
 
-Valid encoded Port 0/SHT40 V0 configuration.
-
----
-
-## Outputs
-
-Applied SHT40 and 1000 ms acquisition.
+Configurazione valida codificata Port 0/SHT40 V0.
 
 ---
 
-## Errors to handle
+## Output
 
-Hex, decode, validation, apply failures independently.
-
----
-
-## Do NOT implement yet
-
-- Transport-specific logic in decoder or Manager CBOR access
+Acquisizione SHT40 applicata e 1000 ms.
 
 ---
 
-## Steps
+## Errori da gestire
 
-- [ ] Open only The codec test harness, USB shell, and serial console.
-- [ ] Test one valid V0 payload plus truncated input, wrong type, oversized string, unknown version, trailing bytes, invalid address, and Manager apply failure.
-- [ ] Confirm failed payloads do not alter the active snapshot.
-- [ ] Handle only these realistic errors: Hex, decode, validation, apply failures independently.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+Hex, decodificare, convalidare, applicare i guasti in modo indipendente.
+
+---
+
+## Non implementare ancora
+
+- Logica specifica per il trasporto nel decoder o nell'accesso Manager CBOR
+
+---
+
+## Procedura
+
+- [ ] Aprire solo l'imbracatura di test del codec, la shell USB e la console seriale.
+- [ ] Provare un payload V0 valido più ingresso troncato, tipo errato, stringa oversize,
+      versione sconosciuta, byte di completamento, indirizzo non valido e Manager
+      applicare il guasto.
+- [ ] Confermare che i payload falliti non alterano l'istantanea attiva.
+- [ ] Gestisci solo questi errori realistici: Hex, decodifica, convalida, applica errori
+      in modo indipendente.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
 ## Build
 
-YES — `make build`
+SÌ — `make build`
 
 ---
 
 ## Flash
 
-YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
+SÌ — eseguire `make flash`, poi `make screen`; passare `PORT=...` solo quando
+necessario.
 
 ---
 
-## Test
+## Verifica
 
-Send valid V0 and malformed variants; query status afterward.
-
----
-
-## Expected result
-
-A valid CBOR configuration applies through Communication; every malformed or invalid payload is atomic and rejected.
+Inviare le varianti V0 e malformate valide; successivamente lo stato della query.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Una configurazione CBOR valida si applica tramite Communication; ogni carico utile
+malformato o non valido è atomico e rifiutato.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `cbor: test valid and invalid cbor payloads`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-160-01](../160-mqtt/TASK-160-01-choose-the-development-network-path.md) — Choose the development network path
+[TASK-160-01](../160-mqtt/TASK-160-01-choose-the-development-network-path.md) — Scegliere il percorso di rete per lo sviluppo

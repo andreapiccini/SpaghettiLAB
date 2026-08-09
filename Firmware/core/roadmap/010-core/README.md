@@ -1,38 +1,33 @@
-# Phase 010 — Core
+# Fase 010 — Core
 
-[← Backlog index](../README.md) · [Long-form roadmap](../../IMPLEMENTATION_ROADMAP.md)
+[← Indice del backlog](../README.md)
 
-**Status:** 🟨 IN PROGRESS
+**Stato:** 🟨 IN PROGRESS
 
-## Goal
+## Obiettivo
 
-Introduce the smallest board-independent Core boot boundary.
+Introdurre il più piccolo confine di avvio indipendente dalla board.
 
-## Depends on
+## Dipende da
 
-[Phase 000 — Baseline](../000-baseline/README.md)
+[Fase 000 — Baseline](../000-baseline/README.md)
 
-## Visible result
+## Risultato visibile
 
-`main` boots through `spaghetti_core_init()` and the console reports Core readiness.
+`main` inizializza Core e App/Core producono log Zephyr distinti.
 
-## Tasks
+## Task
 
-1. ✅ [TASK-010-01 — Define the Core public API](TASK-010-01-define-the-core-public-api.md)
-2. ⬜ [TASK-010-02 — Implement Core state and initialization](TASK-010-02-implement-core-state-and-initialization.md)
-3. ⬜ [TASK-010-03 — Add Core to the application build](TASK-010-03-add-core-to-the-application-build.md)
-4. ⬜ [TASK-010-04 — Call Core from main](TASK-010-04-call-core-from-main.md)
-5. ⬜ [TASK-010-05 — Structure firmware logging](TASK-010-05-structure-firmware-logging.md)
-6. ⬜ [TASK-010-06 — Define component type and error conventions](TASK-010-06-define-component-type-and-error-conventions.md)
-7. ⬜ [TASK-010-07 — Build and flash the Core boundary](TASK-010-07-build-and-flash-the-core-boundary.md)
+1. ✅ [TASK-010-01 — Definire l’API pubblica di Core](TASK-010-01-define-the-core-public-api.md)
+2. ⬜ [TASK-010-02 — Implementare stato e inizializzazione di Core](TASK-010-02-implement-core-state-and-initialization.md)
+3. ⬜ [TASK-010-03 — Aggiungere Core alla build dell’applicazione](TASK-010-03-add-core-to-the-application-build.md)
+4. ⬜ [TASK-010-04 — Chiamare Core da main](TASK-010-04-call-core-from-main.md)
+5. ⬜ [TASK-010-05 — Organizzare i log del firmware](TASK-010-05-structure-firmware-logging.md)
+6. ⬜ [TASK-010-06 — Definire le convenzioni per tipi ed errori](TASK-010-06-define-component-type-and-error-conventions.md)
+7. ⬜ [TASK-010-07 — Compilare e provare il confine di Core](TASK-010-07-build-and-flash-the-core-boundary.md)
 
-## Phase completion gate
+## Criteri di completamento della fase
 
-- [ ] Core header is minimal and board-independent.
-- [ ] Core source is compiled by CMake.
-- [ ] `spaghetti_core_init()` returns zero.
-- [ ] Main and Core use separate Zephyr log modules with Kconfig levels.
-- [ ] No application-owned `printk` call remains.
-- [ ] Domain values use named component-owned types instead of anonymous integers.
-- [ ] Fallible APIs preserve Zephyr-compatible negative errno results.
-- [ ] Board boots and still prints uptime.
+- [ ] L’API pubblica Core resta indipendente dalla board.
+- [ ] Core è compilato e chiamato una sola volta da `main`.
+- [ ] Log, tipi ed errori seguono le convenzioni del progetto.

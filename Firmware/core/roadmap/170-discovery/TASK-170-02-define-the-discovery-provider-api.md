@@ -1,100 +1,104 @@
-# TASK-170-02 — Define the Discovery provider API
+# TASK-170-02 — Definire l’API del provider Discovery
 
-**Status:** ⬜ TODO  
-**Phase:** 170 — Discovery  
-**Depends on:** [TASK-170-01](TASK-170-01-define-discovery-result-types.md)  
-**Estimated scope:** Small
-
----
-
-## Goal
-
-Complete **Define the Discovery provider API** and produce this focused outcome:
-
-Normalized result.
+**Stato:** ⬜ TODO
+**Fase:** 170 — Discovery
+**Dipende da:** [TASK-170-01](TASK-170-01-define-discovery-result-types.md)
+**Impegno stimato:** Piccolo
 
 ---
 
-## Open
+## Obiettivo
+
+Questo task deve produrre un solo risultato verificabile:
+
+Risultato normalizzato.
+
+---
+
+## File da aprire
 
 `include/spaghetti/discovery.h`.
 
 ---
 
-## Write / Modify
+## Cosa scrivere o modificare
 
-Define the provider operation table and declare Discovery init, manual submission, and accepted-result sink registration. Do not add an asynchronous worker until a real provider requires it.
-
----
-
-## Why
-
-Manual Config/Manager path already works and becomes the reference.
+Definisci la tabella delle operazioni del provider e dichiara le API per inizializzare
+Discovery, presentare manualmente un risultato e registrare la callback che riceve i
+risultati accettati. Non aggiungere un worker asincrono finché un provider reale non lo
+richiede.
 
 ---
 
-## Called / used by
+## Perché
 
-Communication/Config/manual provider; future providers.
-
----
-
-## Trigger
-
-CONFIG COMMAND/PROVIDER RESULT.
+Il percorso manuale Config/Manager funziona già e diventa il riferimento.
 
 ---
 
-## Invocation mechanism
+## Chi usa il risultato
 
-DIRECT CALL initially.
-
----
-
-## Execution context
-
-Communication/Config caller thread.
+Communication/Config/manual provider; futuri provider.
 
 ---
 
-## Calls / dependencies
+## Evento che attiva il codice
 
-Port/type/config value types only.
+CONFIG COMMAND/PROVIDER RISULTATO.
 
 ---
 
-## Inputs
+## Meccanismo di invocazione
+
+Chiamata diretta all'inizio.
+
+---
+
+## Contesto di esecuzione
+
+Communication/Config chiamante thread.
+
+---
+
+## Chiamate e dipendenze
+
+Solo i tipi di valore Port/type/config.
+
+---
+
+## Input
 
 Port 0/SHT40/manual/generation.
 
 ---
 
-## Outputs
+## Output
 
-Normalized result.
-
----
-
-## Errors to handle
-
-Invalid/stale/conflicting result.
+Risultato normalizzato.
 
 ---
 
-## Do NOT implement yet
+## Errori da gestire
 
-- EEPROM, probe, LLM transport, or meaning AUTO=EEPROM
+Risultato Invalid/stale/conflicting.
 
 ---
 
-## Steps
+## Non implementare ancora
 
-- [ ] Open only `include/spaghetti/discovery.h`.
-- [ ] Define the provider operation table and declare Discovery init, manual submission, and accepted-result sink registration.
-- [ ] Do not add an asynchronous worker until a real provider requires it.
-- [ ] Handle only these realistic errors: Invalid/stale/conflicting result.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- EEPROM, sonda, trasporto LLM o significato AUTO=EEPROM
+
+---
+
+## Procedura
+
+- [ ] Apri solo `include/spaghetti/discovery.h`.
+- [ ] Definisci la tabella delle operazioni del provider e dichiara le API di
+      inizializzazione, presentazione manuale e registrazione della callback.
+- [ ] Non aggiungere un worker asincrono finché non lo richiede un vero provider.
+- [ ] Gestisci solo questi errori realistici: risultato Invalid/stale/conflicting.
+- [ ] Conferma che non sia stato aggiunto alcun elemento di **Non implementare ancora**
+- [ ] Esegui la verifica del task e confrontala con il **Risultato atteso**
 
 ---
 
@@ -110,34 +114,35 @@ NO
 
 ---
 
-## Test
+## Verifica
 
-Ownership and generation review.
-
----
-
-## Expected result
-
-Provider-neutral result.
+Proprietà e revisione della generazione.
 
 ---
 
-## Completion checklist
+## Risultato atteso
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+Risultato neutro del provider.
 
 ---
 
-## Commit suggestion
+## Checklist di completamento
+
+- [ ] La documentazione o il file di implementazione richiesto è stato modificato come
+      specificato
+- [ ] Il tipo, la funzione, la configurazione o il test indicato esiste
+- [ ] La build riesce quando il task la richiede
+- [ ] La verifica specifica del task passa
+- [ ] Non è stata aggiunta funzionalità estranea al task
+
+---
+
+## Commit suggerito
 
 `discovery: define the discovery provider api`
 
 ---
 
-## Next task
+## Task successivo
 
-[TASK-170-03](TASK-170-03-implement-manual-discovery-validation.md) — Implement manual Discovery validation
+[TASK-170-03](TASK-170-03-implement-manual-discovery-validation.md) — Implementare la validazione di Discovery manuale
