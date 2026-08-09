@@ -1,20 +1,26 @@
 #include <spaghetti/core.h>
+
 #include <zephyr/kernel.h>
-#include <zephyr/sys/printk.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(
+	spaghetti_app,
+	CONFIG_SPAGHETTI_APP_LOG_LEVEL
+);
 
 int main(void)
 {
 	int err = spaghetti_core_init();
 
 	if (err < 0) {
-		printk("Spaghetti Core initialization failed: %d\n", err);
+		LOG_ERR("Spaghetti Core initialization failed: %d", err);
 		return err;
 	}
 
-	printk("Hello from Spaghetti LAB!\n");
+	LOG_INF("Hello from Spaghetti LAB!");
 
 	for (;;) {
-		printk("uptime: %lld ms\n", k_uptime_get());
+		LOG_INF("uptime: %lld ms", k_uptime_get());
 		k_sleep(K_SECONDS(5));
 	}
 

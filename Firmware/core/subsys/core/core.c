@@ -1,7 +1,10 @@
 #include <spaghetti/core.h>
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(spaghetti_core, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(
+    spaghetti_core,
+    CONFIG_SPAGHETTI_CORE_LOG_LEVEL
+);
 
 static enum spaghetti_core_state core_state = SPAGHETTI_CORE_UNINITIALIZED;
 

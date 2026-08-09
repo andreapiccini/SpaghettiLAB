@@ -1,0 +1,9 @@
+module = SPAGHETTI_APP
+module-str = spaghetti_app
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_CORE
+module-str = spaghetti_core
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"
