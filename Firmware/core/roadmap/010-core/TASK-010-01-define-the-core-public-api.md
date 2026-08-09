@@ -93,12 +93,12 @@ None in header; document negative errno convention.
 
 ## Steps
 
-- [ ] Open only `include/spaghetti/core.h`.
-- [ ] Add an include guard
-- [ ] declare `enum spaghetti_core_state { SPAGHETTI_CORE_UNINITIALIZED, SPAGHETTI_CORE_READY, SPAGHETTI_CORE_ERROR };`, `int spaghetti_core_init(void);`, and `enum spaghetti_core_state spaghetti_core_get_state(void);`.
-- [ ] Handle only these realistic errors: None in header; document negative errno convention.
-- [ ] Confirm no item from **Do NOT implement yet** was added
-- [ ] Run the task test and compare it with **Expected result**
+- [x] Open only `include/spaghetti/core.h`.
+- [x] Add an include guard
+- [x] declare `enum spaghetti_core_state { SPAGHETTI_CORE_UNINITIALIZED, SPAGHETTI_CORE_READY, SPAGHETTI_CORE_ERROR };`, `int spaghetti_core_init(void);`, and `enum spaghetti_core_state spaghetti_core_get_state(void);`.
+- [x] Handle only these realistic errors: None in header; document negative errno convention.
+- [x] Confirm no item from **Do NOT implement yet** was added
+- [x] Run the task test and compare it with **Expected result**
 
 ---
 
@@ -128,11 +128,11 @@ Small header with no board-specific field.
 
 ## Completion checklist
 
-- [ ] Required documentation or implementation file changed as specified
-- [ ] Named type, function, configuration, or test exists
-- [ ] Build succeeds when this task requires a build
-- [ ] Task-specific test passes
-- [ ] No unrelated functionality was added
+- [x] Required documentation or implementation file changed as specified
+- [x] Named type, function, configuration, or test exists
+- [x] Build succeeds when this task requires a build
+- [x] Task-specific test passes
+- [x] No unrelated functionality was added
 
 ---
 
