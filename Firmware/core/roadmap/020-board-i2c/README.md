@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -18,10 +18,10 @@ Il Devicetree generato contiene il controller I2C reale, con pin e stato corrett
 
 ## Task
 
-1. ⬜ [TASK-020-01 — Verificare e abilitare I2C](TASK-020-01-verificare-e-abilitare-i2c.md)
+1. ✅ [TASK-020-01 — Verificare e abilitare I2C](TASK-020-01-verificare-e-abilitare-i2c.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Controller e pin sono verificati sullo schema reale.
-- [ ] L’overlay contiene soltanto dati hardware statici.
-- [ ] `CONFIG_I2C=y` e il nodo abilitato compaiono nei file generati.
+- [x] Controller e pin sono verificati sullo schema reale.
+- [x] L’overlay contiene soltanto dati hardware statici.
+- [x] `CONFIG_I2C=y` e il nodo abilitato compaiono nei file generati.

@@ -70,10 +70,10 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | Stato | Fase | Risultato visibile |
 |:---:|---|---|
 | ✅ | [000 — Baseline](000-baseline/README.md) | Il firmware Zephyr iniziale viene compilato, caricato e osservato sulla console. |
-| 🟨 | [010 — Core](010-core/README.md) | `main` avvia Core e la console mostra log strutturati. |
-| ⬜ | [020 — Scheda attuale / I2C](020-board-i2c/README.md) | Il DTS generato contiene il controller I2C reale e abilitato. |
-| ⬜ | [030 — Port](030-port/README.md) | Port 0 espone la capacità I2C e possiede un device Zephyr pronto. |
-| ⬜ | [040 — Sezione verticale INA219](040-ina219/README.md) | Bus voltage, current e power reali compaiono nei log. |
+| ✅ | [010 — Core](010-core/README.md) | `main` avvia Core e la console mostra log strutturati. |
+| ✅ | [020 — Scheda attuale / I2C](020-board-i2c/README.md) | Il DTS generato contiene il controller I2C reale e abilitato. |
+| ✅ | [030 — Port](030-port/README.md) | Port 0 espone la capacità I2C e possiede un device Zephyr pronto. |
+| ✅ | [040 — Sezione verticale INA219](040-ina219/README.md) | Bus voltage, current e power reali compaiono nei log. |
 | ⬜ | [050 — Module + Module Driver](050-module-driver/README.md) | INA219 viene usato soltanto tramite la tabella operazioni del driver. |
 | ⬜ | [060 — Driver Registry](060-driver-registry/README.md) | La ricerca di `ina219` riesce e un tipo sconosciuto fallisce correttamente. |
 | ⬜ | [070 — Module Manager](070-module-manager/README.md) | Il Manager configura Port 0 come INA219 e legge il sensore reale. |
@@ -92,4 +92,5 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 
 ## Da dove iniziare
 
-La baseline è completa. Apri ora [TASK-010-01 — Implementare il confine Core](010-core/TASK-010-01-implementare-il-confine-core.md).
+Le fasi 000–040 sono complete. Apri ora
+[TASK-050-01 — Introdurre Module e Module Driver](050-module-driver/TASK-050-01-introdurre-module-e-driver.md).

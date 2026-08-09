@@ -17,7 +17,7 @@ int main(void)
 {
 	k_sleep(K_SECONDS(5));
 	LOG_INF("Spaghetti LAB boot");
-	
+
 	const struct spaghetti_port *port;
 	const struct device *i2c;
 	struct sensor_value bus_voltage;

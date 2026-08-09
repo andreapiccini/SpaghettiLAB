@@ -1,6 +1,6 @@
 # TASK-020-01 — Verificare e abilitare I2C
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 020 — Scheda attuale / I2C
 
 ## Prima di scrivere: concetti Zephyr
@@ -115,12 +115,12 @@ rg -n "CONFIG_I2C=y" build/zephyr/.config
 
 ## Checklist di completamento
 
-- [ ] Verificare controller e pin I2C reali.
-- [ ] Ispezionare il Devicetree generato.
-- [ ] Abilitare I2C nell’overlay della scheda.
-- [ ] Abilitare il supporto I2C di Zephyr.
-- [ ] Controllare la configurazione I2C generata.
-- [ ] Caricare e provare la baseline I2C.
+- [x] Verificare controller e pin I2C reali.
+- [x] Ispezionare il Devicetree generato.
+- [x] Abilitare I2C nell’overlay della scheda.
+- [x] Abilitare il supporto I2C di Zephyr.
+- [x] Controllare la configurazione I2C generata.
+- [x] Caricare e provare la baseline I2C.
 
 ## Verifica finale
 

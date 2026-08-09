@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** 🟨 IN PROGRESS
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -18,10 +18,10 @@ Introdurre il più piccolo confine di avvio indipendente dalla board.
 
 ## Task
 
-1. 🟨 [TASK-010-01 — Implementare il confine Core](TASK-010-01-implementare-il-confine-core.md)
+1. ✅ [TASK-010-01 — Implementare il confine Core](TASK-010-01-implementare-il-confine-core.md)
 
 ## Criteri di completamento della fase
 
-- [ ] L’API pubblica Core resta indipendente dalla board.
-- [ ] Core è compilato e chiamato una sola volta da `main`.
-- [ ] Log, tipi ed errori seguono le convenzioni del progetto.
+- [x] L’API pubblica Core resta indipendente dalla board.
+- [x] Core è compilato e chiamato una sola volta da `main`.
+- [x] Log, tipi ed errori seguono le convenzioni del progetto.

@@ -22,6 +22,6 @@ Il firmware iniziale viene compilato, caricato e osservato sulla console seriale
 
 ## Criteri di completamento della fase
 
-- [ ] La build produce `build/zephyr/zephyr.bin`.
-- [ ] Il firmware viene caricato sulla scheda corretta.
-- [ ] La console mostra avvio e uptime a 115200 baud.
+- [x] La build produce `build/zephyr/zephyr.bin`.
+- [x] Il firmware viene caricato sulla scheda corretta.
+- [x] La console mostra avvio e uptime a 115200 baud.

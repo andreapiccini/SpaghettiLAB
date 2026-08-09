@@ -1,6 +1,6 @@
 # TASK-040-01 — Leggere il sensore INA219
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 040 — Sezione verticale INA219
 
 ## Cosa devo fare
@@ -163,11 +163,11 @@ L’esempio converte soltanto il log in mV, mA e mW.
 
 ## Checklist di completamento
 
-- [ ] Il modulo è INA219 a `0x40` con shunt `R100`.
-- [ ] Il nodo temporaneo contiene le proprietà mostrate.
-- [ ] `.config` contiene `CONFIG_SENSOR=y` e `CONFIG_INA219=y`.
-- [ ] Un fetch alimenta i tre channel get.
-- [ ] Gli output restano invariati in caso di errore.
+- [x] Il modulo è INA219 a `0x40` con shunt `R100`.
+- [x] Il nodo temporaneo contiene le proprietà mostrate.
+- [x] `.config` contiene `CONFIG_SENSOR=y` e `CONFIG_INA219=y`.
+- [x] Un fetch alimenta i tre channel get.
+- [x] Gli output restano invariati in caso di errore.
 
 ## Verifica e fine task
 

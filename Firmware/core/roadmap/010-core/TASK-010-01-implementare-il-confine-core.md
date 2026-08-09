@@ -1,6 +1,6 @@
 # TASK-010-01 — Implementare il confine Core
 
-**Stato:** 🟨 IN PROGRESS
+**Stato:** ✅ DONE
 **Fase:** 010 — Core
 
 ## Prima di scrivere: concetti Zephyr
@@ -253,11 +253,11 @@ LOG_INF("Core state: %d", spaghetti_core_get_state());
 ## Checklist di completamento
 
 - [x] Definire l’API pubblica di Core.
-- [ ] Implementare stato e inizializzazione di Core.
-- [ ] Aggiungere Core alla build dell’applicazione.
-- [ ] Chiamare Core da main.
-- [ ] Organizzare i log del firmware.
-- [ ] Compilare e provare il confine di Core.
+- [x] Implementare stato e inizializzazione di Core.
+- [x] Aggiungere Core alla build dell’applicazione.
+- [x] Chiamare Core da main.
+- [x] Organizzare i log del firmware.
+- [x] Compilare e provare il confine di Core.
 
 ## Verifica finale
 

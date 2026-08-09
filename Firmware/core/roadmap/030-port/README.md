@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -18,10 +18,10 @@ Port 0 espone capacità I2C e restituisce un device pronto.
 
 ## Task
 
-1. ⬜ [TASK-030-01 — Implementare Port 0](TASK-030-01-implementare-port-zero.md)
+1. ✅ [TASK-030-01 — Implementare Port 0](TASK-030-01-implementare-port-zero.md)
 
 ## Criteri di completamento della fase
 
-- [ ] ID e capacità Port hanno tipi pubblici chiari.
-- [ ] Il descrittore hardware resta privato.
-- [ ] ID non validi e device non pronti producono errori precisi.
+- [x] ID e capacità Port hanno tipi pubblici chiari.
+- [x] Il descrittore hardware resta privato.
+- [x] ID non validi e device non pronti producono errori precisi.

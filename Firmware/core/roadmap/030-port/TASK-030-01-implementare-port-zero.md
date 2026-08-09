@@ -1,6 +1,6 @@
 # TASK-030-01 — Implementare Port 0
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 030 — Port
 
 ## Prima di scrivere: concetti Zephyr
@@ -183,14 +183,14 @@ const struct device *i2c = spaghetti_port_i2c_device(port);
 
 ## Checklist di completamento
 
-- [ ] Definire l’identificatore di Port.
-- [ ] Definire le capacità di Port.
-- [ ] Dichiarare l’API pubblica di Port.
-- [ ] Implementare il descrittore privato di Port.
-- [ ] Associare Port 0 al device I2C.
-- [ ] Aggiungere Port alla build CMake.
-- [ ] Inizializzare Port da Core.
-- [ ] Provare Port con ID validi e non validi.
+- [x] Definire l’identificatore di Port.
+- [x] Definire le capacità di Port.
+- [x] Dichiarare l’API pubblica di Port.
+- [x] Implementare il descrittore privato di Port.
+- [x] Associare Port 0 al device I2C.
+- [x] Aggiungere Port alla build CMake.
+- [x] Inizializzare Port da Core.
+- [x] Provare Port con ID validi e non validi.
 
 ## Verifica finale
 
