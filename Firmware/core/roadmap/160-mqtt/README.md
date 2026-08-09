@@ -14,7 +14,7 @@ Aggiungere MQTT come consumer opzionale dei dati, senza spostare responsabilità
 
 ## Risultato visibile
 
-Un campione temperatura raggiunge un topic MQTT configurato.
+Un campione bus voltage/current/power raggiunge un topic MQTT configurato.
 
 ## Task
 

@@ -76,7 +76,7 @@ file `.dtsi` inclusi dalla stessa directory.
 
 Descrivi la MCU verificata, la console, il controller I2C, i nodi Port fisici, i
 riferimenti di capacità e il vero cablaggio power/presence. Mantieni le assegnazioni
-runtime SHT40/Relay fuori dal DTS.
+runtime INA219/Relay fuori dal DTS.
 
 ### Passo 5 — Enumerare i Port dal Devicetree
 
@@ -94,7 +94,7 @@ I file di `boards/spaghettilab/spaghettilab_core_v1/`,
 
 Selezionare la nuova scheda attraverso il percorso `BOARD` environment/configuration
 esistente, eseguire una build pristine, ispezionare i nodi Port generati,
-flash, e ripetere i percorsi SHT40/Relay senza modifiche di livello superiore.
+flash, e ripetere i percorsi INA219/Relay senza modifiche di livello superiore.
 
 ### Passo 7 — Compilare una seconda variante Core
 
@@ -189,7 +189,7 @@ make monitor
 
 **Controlla**
 
-Esegui build pristine per entrambe le board, controlla binding e nodi Port generati, poi prova SHT40/Relay sulla board reale. La ricerca di nomi board nel C comune deve essere vuota.
+Esegui build pristine per entrambe le board, controlla binding e nodi Port generati, poi prova INA219/Relay sulla board reale. La ricerca di nomi board nel C comune deve essere vuota.
 
 **Risultato atteso**
 

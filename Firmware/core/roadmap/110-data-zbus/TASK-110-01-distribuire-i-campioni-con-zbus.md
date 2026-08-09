@@ -3,166 +3,152 @@
 **Stato:** ⬜ TODO
 **Fase:** 110 — Data / zbus
 
-## Prima di scrivere: concetti Zephyr
+## Cosa devo fare
 
-### Abilitare i subscriber di zbus
+### 1. Definire il messaggio elettrico
 
-1. **Cos’è:** zbus è il bus di messaggi interno di Zephyr. Un channel definisce tipo del messaggio e osservatori; un message subscriber riceve una copia tramite una coda limitata.
-2. **A cosa serve:** Disaccoppia chi pubblica un campione dai consumer che lo elaborano a velocità diverse.
-3. **Quando viene usato:** Canali e subscriber sono dichiarati staticamente; pubblicazione e ricezione avvengono a runtime.
-4. **Build-time o runtime:** Strutture create a build-time, scambio dati a runtime.
-5. **Collegamento con questo task:** Data dovrà consegnare lo stesso campione al logger e a un secondo consumer senza condividere puntatori temporanei.
-6. **File reali coinvolti:** `prj.conf` in questo task; dichiarazioni di canale e subscriber arriveranno in `subsys/data/data.c` nel task successivo.
-7. **Cosa guardare nei file:** Controlla `CONFIG_ZBUS`, supporto message subscriber e capacità delle code nell’help Kconfig installato.
-8. **Cosa non modificare:** Non usare allocazione dinamica, non usare zbus automaticamente per lifecycle/comandi e non creare ancora consumer MQTT.
-
-### Inizializzare Data e pubblicare un messaggio
-
-Il canale copia un messaggio limitato. Non pubblicare un puntatore di stack preso in
-prestito per il consumo asincrono.
-
-## Perché lo facciamo
-
-zbus disaccoppia il produttore dai consumer copiando messaggi piccoli in risorse con capacità definita.
-
-## Implementazione guidata
-
-### Passo 1 — Definire il messaggio del campione di temperatura
-
-`include/spaghetti/data.h`.
-
-Definisci campi `spaghetti_temperature_sample` immutabili per l'ID del modulo sorgente,
-la temperatura a punto fisso o microunità, l'umidità se mantenuta, il timestamp, il
-numero di sequenza e i flag che indicano quali dati sono validi. Dichiara le API per
-inizializzare Data e pubblicare le
-API.
-
-### Passo 2 — Abilitare i subscriber di zbus
-
-`prj.conf`.
-
-Abilita `CONFIG_ZBUS=y` e `CONFIG_ZBUS_MSG_SUBSCRIBER=y`. Seleziona solo le impostazioni
-del buffer di messaggi static/fixed richieste dall'aiuto Kconfig installato; non
-abilitare l'allocazione dinamica per impostazione predefinita.
-
-### Passo 3 — Definire il canale temperatura e i subscriber
-
-`subsys/data/data.c`.
-
-Definire `spaghetti_temperature_chan` con `ZBUS_CHAN_DEFINE` e due osservatori
-`ZBUS_MSG_SUBSCRIBER_DEFINE`: uno per il logging e uno per il test. Usa il tipo di
-campione esatto, un piccolo validatore e un valore iniziale limitato.
-
-### Passo 4 — Inizializzare Data e pubblicare un messaggio
-
-`subsys/data/data.c` e `CMakeLists.txt`.
-
-Implementa `spaghetti_data_init()` e `spaghetti_data_publish_temperature()` utilizzando
-`zbus_chan_pub()` con il timeout fornito dal chiamante. Aggiungi `data.c` a CMake e
-propaga gli errori validation/publish.
-
-### Passo 5 — Pubblicare i campioni reali del Manager
-
-`src/main.c` e `subsys/data/data.c`.
-
-Dopo aver letto con successo Manager, costruisci `spaghetti_temperature_sample`,
-aggiungi timestamp e sequenza e chiama l'API Data publish. Rimuovi il sensore
-diretto-driver; il logger subscriber diventa il proprietario del display.
-
-### Passo 6 — Provare fan-out e backpressure di zbus
-
-`subsys/data/data.c`, `src/main.c` e la console seriale.
-
-Ricevere la stessa sequenza in logger e iscritti ai test. Riempire o bloccare un
-percorso subscriber limitato deliberatamente e verificare la politica timeout/error
-selezionata senza bloccare per sempre.
-
-### Contratti completi da scrivere
+Apri `include/spaghetti/data.h` e scrivi:
 
 ```c
-struct spaghetti_temperature_message {
+struct spaghetti_electrical_message {
 	spaghetti_module_id_t source_id;
-	int32_t temperature_millicelsius;
+	int32_t bus_voltage_microvolts;
+	int32_t current_microamps;
+	uint32_t power_microwatts;
 	int64_t timestamp_ms;
 	uint32_t sequence;
 };
+
 int spaghetti_data_init(void);
-int spaghetti_data_publish_temperature(
-	const struct spaghetti_temperature_message *message, k_timeout_t timeout);
+int spaghetti_data_publish_electrical(
+	const struct spaghetti_electrical_message *message,
+	k_timeout_t timeout);
 ```
 
-Il messaggio è pubblico, senza puntatori e copiabile: publisher lo possiede fino al
-ritorno, poi zbus possiede le copie. `source_id` identifica il Module; temperatura è in
-millesimi di °C; timestamp è uptime in ms; sequence cresce con wrap documentato.
-`message` è `const` perché Data non modifica l’input. `timeout` è passato per valore e
-limita l’attesa. Publish restituisce `0`, `-EINVAL` o gli errori di
-`zbus_chan_pub()`.
+La struct è pubblica, priva di puntatori e viene copiata:
 
-Definisci un canale statico e due `ZBUS_MSG_SUBSCRIBER_DEFINE` con code di capacità
-esplicita: logger e consumer di prova. `data_init()` azzera sequenza/diagnostica e
-restituisce `0` o `-EINVAL` per configurazione statica incoerente. Runtime/il test crea
-il messaggio sullo stack e pubblica; nessun consumer conserva il puntatore ricevuto.
+- `source_id` identifica l’istanza Module, non il tipo INA219;
+- voltage/current/power usano le stesse microunità di `spaghetti_sample`;
+- current è firmata perché INA219 è bidirezionale;
+- `timestamp_ms` è l’uptime Zephyr al momento della misura;
+- `sequence` cresce a ogni pubblicazione e può fare wrap da `UINT32_MAX` a zero.
 
-In `subsys/data/data.c` parti da questo template:
+`message` è un prestito `const` valido per la chiamata: Data lo legge e zbus ne copia
+il contenuto. `timeout` è un piccolo valore kernel passato per valore e limita l’attesa.
+La funzione restituisce `0`, `-EINVAL` o l’errno di `zbus_chan_pub()`.
+
+### 2. Abilitare zbus
+
+Apri `prj.conf` e aggiungi:
+
+```conf
+CONFIG_ZBUS=y
+CONFIG_ZBUS_MSG_SUBSCRIBER=y
+```
+
+zbus è il bus di messaggi interno di Zephyr. Un channel ha un tipo fisso; un message
+subscriber possiede una coda limitata che riceve copie. Le dichiarazioni sono statiche
+a build-time, mentre publish e receive avvengono a runtime.
+
+### 3. Creare canale e subscriber
+
+Apri `subsys/data/data.c` e aggiungi:
 
 ```c
-ZBUS_MSG_SUBSCRIBER_DEFINE(temperature_logger_subscriber);
-ZBUS_MSG_SUBSCRIBER_DEFINE(temperature_test_subscriber);
+ZBUS_MSG_SUBSCRIBER_DEFINE(electrical_logger_subscriber);
+ZBUS_MSG_SUBSCRIBER_DEFINE(electrical_test_subscriber);
 
 ZBUS_CHAN_DEFINE(
-	spaghetti_temperature_chan,
-	struct spaghetti_temperature_message,
+	spaghetti_electrical_chan,
+	struct spaghetti_electrical_message,
 	NULL,
 	NULL,
-	ZBUS_OBSERVERS(temperature_logger_subscriber,
-		       temperature_test_subscriber),
+	ZBUS_OBSERVERS(electrical_logger_subscriber,
+		       electrical_test_subscriber),
 	ZBUS_MSG_INIT(0)
 );
 ```
 
-Il canale conosce il tipo e copia l’intera struct. I due subscriber hanno code
-indipendenti; `NULL` indica che in questa fase non servono validator zbus o user data.
+Il channel copia l’intera struct. I subscriber hanno code indipendenti: un consumer
+lento non ottiene un puntatore allo stack del publisher. I `NULL` indicano che qui non
+servono validator zbus o user data; la validazione resta nell’API Data.
 
-Perché esiste ogni campo:
+### 4. Implementare init e publish
 
-- `source_id`: permette ai consumer di sapere quale Module ha prodotto il valore;
-- `temperature_millicelsius`: usa un intero per evitare floating point e dichiara
-  l’unità nel nome;
-- `timestamp_ms`: salva quando è avvenuta la lettura, usando uptime e non un orologio
-  civile non ancora configurato;
-- `sequence`: consente di rilevare messaggi persi o riordinati.
+Sempre in `subsys/data/data.c`, implementa:
 
-`spaghetti_data_init()` è chiamata da Core una volta; azzera i contatori e restituisce
-`0`. `publish_temperature(message, timeout)` è chiamata dal thread Runtime: valida il
-puntatore e `source_id`, poi chiama
-`zbus_chan_pub(&spaghetti_temperature_chan, message, timeout)`. Il puntatore è `const`
-perché Data legge e copia; `k_timeout_t` è passato per valore perché è un piccolo valore
-kernel. Propaga `-EINVAL`, `-EAGAIN` o `-ETIMEDOUT`.
+1. `spaghetti_data_init()`: azzera contatori/diagnostica privati e restituisce `0`;
+   Core la chiama una volta al boot e non modifica dati del chiamante.
+2. `spaghetti_data_publish_electrical(message, timeout)`: rifiuta `NULL`, poi chiama
+   `zbus_chan_pub(&spaghetti_electrical_chan, message, timeout)`. Non conserva il
+   puntatore. Propaga `-EAGAIN`/`-ETIMEDOUT` quando la coda non accetta entro il timeout.
 
-## Esempio d’uso
+Apri `CMakeLists.txt` e aggiungi `subsys/data/data.c` alle sorgenti; apri
+`subsys/core/core.c` e chiama `spaghetti_data_init()` durante il boot.
+
+### 5. Pubblicare il sample INA219 senza dipendenza concreta
+
+Apri il chiamante che esegue la lettura periodica (`src/main.c` fino alla fase 120).
+Dopo `spaghetti_module_manager_read()` riuscita, scrivi:
 
 ```c
-const struct spaghetti_temperature_message message = {
+const struct spaghetti_electrical_message message = {
 	.source_id = module_id,
-	.temperature_millicelsius = sample.temperature_millicelsius,
+	.bus_voltage_microvolts = sample.bus_voltage_microvolts,
+	.current_microamps = sample.current_microamps,
+	.power_microwatts = sample.power_microwatts,
 	.timestamp_ms = k_uptime_get(),
 	.sequence = sequence++,
 };
-int err = spaghetti_data_publish_temperature(&message, K_NO_WAIT);
+int err = spaghetti_data_publish_electrical(&message, K_NO_WAIT);
 ```
 
-## Checklist di completamento
+Il publisher possiede `message` sullo stack fino al ritorno. I subscriber ricevono
+copie. Data non include `ina219.h`: conosce solo il contratto elettrico pubblico.
 
-- [ ] Definire il messaggio del campione di temperatura.
-- [ ] Abilitare i subscriber di zbus.
-- [ ] Definire il canale temperatura e i subscriber.
-- [ ] Inizializzare Data e pubblicare un messaggio.
-- [ ] Pubblicare i campioni reali del Manager.
-- [ ] Provare fan-out e backpressure di zbus.
+Implementa il logger consumer perché estragga una copia dalla propria coda e chiami:
 
-## Verifica finale
+```c
+LOG_INF("electrical seq=%u bus=%d uV current=%d uA power=%u uW",
+	message.sequence,
+	message.bus_voltage_microvolts,
+	message.current_microamps,
+	message.power_microwatts);
+```
 
-**Comandi**
+### 6. Provare fan-out e coda piena
+
+Nel test/fake già usato dal progetto pubblica un messaggio noto e verifica che logger e
+test subscriber ricevano la stessa `sequence` e gli stessi tre valori. Poi sospendi un
+consumer, riempi la sua coda e pubblica con `K_NO_WAIT`: il producer non deve bloccarsi
+indefinitamente e il contatore diagnostico deve registrare il drop/errore scelto.
+
+## Perché è fatto così
+
+Runtime produce dati più velocemente o più lentamente dei consumer. Copie limitate
+evitano ownership ambigua e heap. Il messaggio descrive grandezze elettriche, quindi
+logger e MQTT non dipendono dal driver concreto INA219.
+
+## Come si usa
+
+Runtime legge un `spaghetti_sample`, crea il messaggio e chiama publish. Logger, test e
+più avanti MQTT ricevono ciascuno una copia dalla propria coda.
+
+## Concetto Zephyr da sapere
+
+`zbus_chan_pub()` copia il valore nel channel e notifica gli observer. Un message
+subscriber usa internamente una `k_msgq`: capacità e timeout devono essere finiti. Non
+pubblicare un puntatore a memoria temporanea come payload.
+
+## Checklist
+
+- [ ] Messaggio e API hanno le firme mostrate.
+- [ ] Tutte le unità sono dichiarate nei nomi dei campi.
+- [ ] Channel e due subscriber sono statici e limitati.
+- [ ] Data non include il driver INA219.
+- [ ] La policy di coda piena è verificata.
+
+## Verifica e fine task
 
 ```sh
 make validate
@@ -171,10 +157,7 @@ make flash
 make monitor
 ```
 
-**Controlla**
-
-Pubblica un campione noto e verifica copie identiche nei due consumer. Satura una coda con `K_NO_WAIT` e controlla errno/counter; poi pubblica campioni reali.
-
-**Risultato atteso**
-
-Entrambi i subscriber ricevono la stessa copia e la coda piena segue la policy documentata.
+Controlla copie identiche nei due consumer e righe reali con bus voltage/current/power.
+Satura una coda con `K_NO_WAIT`: Runtime deve continuare e il risultato deve seguire la
+policy documentata. Il task è finito quando Data espone soltanto il messaggio elettrico
+definito qui e nessun vecchio channel del modulo di esempio precedente.

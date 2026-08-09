@@ -90,14 +90,25 @@ stato privato, invoca il sink e fa rollback della copia se il sink fallisce.
 ## Esempio d’uso
 
 ```c
-const struct spaghetti_discovery_result result = {
+const struct spaghetti_ina219_config ina219_config = {
+	.i2c_address = 0x40U,
+	.shunt_milliohm = 100U,
+	.current_lsb_microamp = 200U,
+};
+struct spaghetti_discovery_result result = {
 	.port_id = 0U,
-	.type_id = "sht40",
+	.type_id = "ina219",
+	.config_size = sizeof(ina219_config),
 	.source = SPAGHETTI_DISCOVERY_SOURCE_CONFIG,
 	.generation = generation,
 };
+memcpy(result.config, &ina219_config, sizeof(ina219_config));
 int err = spaghetti_discovery_submit_manual(&result);
 ```
+
+`ina219_config` è una sorgente locale; `memcpy` rende Discovery proprietario dei byte
+prima della chiamata. Il sink inoltra `result.config` e `config_size` al Manager, che li
+usa soltanto durante `configure()`. Nessuno conserva un puntatore alla struct locale.
 
 ## Checklist di completamento
 

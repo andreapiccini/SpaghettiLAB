@@ -14,7 +14,7 @@ Associare un nome di tipo stabile al descrittore del relativo Module Driver.
 
 ## Risultato visibile
 
-La ricerca di `sht40` riesce; un tipo sconosciuto viene rifiutato.
+La ricerca di `ina219` riesce; un tipo sconosciuto viene rifiutato.
 
 ## Task
 

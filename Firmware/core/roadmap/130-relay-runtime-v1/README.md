@@ -14,7 +14,7 @@ Aggiungere un attuatore Relay e una regola di soglia deterministica.
 
 ## Risultato visibile
 
-Una temperatura sopra 25 °C comanda il Relay configurato.
+Una corrente sopra 500 mA comanda il Relay; sotto 450 mA applica lo stato opposto.
 
 ## Task
 

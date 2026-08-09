@@ -34,6 +34,10 @@ slot libero; chiamare `spaghetti_port_get()`; chiamare
 provvisorio; chiamare driver `init`; commit READY e ID di output solo in caso di
 successo. Cancellare lo slot su ogni guasto.
 
+In questa fase il driver standard INA219 usa ancora il nodo statico e non riceve una
+config runtime: chiama esattamente `driver->ops->init(&slot.module, NULL, 0U)`. La firma
+del Manager verrà estesa, in modo esplicito, nella fase 080.
+
 ### Passo 4 — Implementare la lettura nel Manager
 
 `subsys/module_manager/module_manager.c`.
@@ -47,20 +51,20 @@ Convalida ID, stato usato, stato READY, puntatore di uscita, descrittore e funzi
 `CMakeLists.txt`, `subsys/core/core.c` e `src/main.c`.
 
 Aggiungi sorgente Manager a CMake. Inizializzala da Core dopo il Registro. In `main`,
-rimuovi l'oggetto principale del modulo, configura Port 0 come `sht40`, mantieni l'ID
+rimuovi l'oggetto principale del modulo, configura Port 0 come `ina219`, mantieni l'ID
 del modulo restituito e leggi solo tramite Manager.
 
 > [!ATTENZIONE]
 > SCORCIATOIA TEMPORANEA
 >
-> L'assegnazione hardcoded Port 0/SHT40 è intenzionalmente temporanea e verrà rimossa in
+> L'assegnazione hardcoded Port 0/INA219 è intenzionalmente temporanea e verrà rimossa in
   [TASK-090-05](../090-config/TASK-090-01-implementare-config.md).
 
 ### Passo 6 — Provare successo e rollback del Manager
 
 `subsys/module_manager/module_manager.c`, `src/main.c` e la console seriale.
 
-Prova il percorso Port 0/SHT40 valido, un tipo sconosciuto, uno Port occupato, una
+Prova il percorso Port 0/INA219 valido, un tipo sconosciuto, uno Port occupato, una
 lettura ID non valida e un errore di init driver forzato. Confermare ogni configurazione
 non riuscita lascia lo slot riutilizzabile.
 
@@ -83,7 +87,7 @@ puntatore restituito da `get_by_port()` è un prestito `const` allo slot del Man
 valido finché lo slot non viene riconfigurato o rimosso.
 
 La struct slot privata contiene `bool used`, una `struct spaghetti_module` e il buffer
-context SHT40; Manager la possiede per tutta la vita del firmware. `configure()` opera
+context INA219; Manager la possiede per tutta la vita del firmware. `configure()` opera
 in ordine: valida output e slot libero, risolve Port e driver, verifica capacità,
 prepara uno slot provvisorio, chiama `driver->ops->init`, poi pubblica READY e `out_id`.
 Su ogni errore azzera lo slot. Restituisce `-EINVAL`, `-ENOENT`, `-EBUSY`, `-ENOTSUP`,
@@ -119,13 +123,13 @@ struct spaghetti_module_slot {
 dell’istanza; `alignment` forza l’allineamento adatto a qualunque tipo C e `bytes` è lo
 storage limitato posseduto dal Manager per tutta la lifetime dello slot. Assegna
 `module.context = slot.driver_context.bytes`. Definisci `SPAGHETTI_MODULE_CONTEXT_SIZE` con la size
-esatta richiesta dal solo SHT40 in questa fase e verifica a build-time che sia sufficiente.
+esatta richiesta dal solo INA219 in questa fase e verifica a build-time che sia sufficiente.
 
 ## Esempio d’uso
 
 ```c
 spaghetti_module_id_t module_id;
-int err = spaghetti_module_manager_configure(0U, "sht40", &module_id);
+int err = spaghetti_module_manager_configure(0U, "ina219", &module_id);
 if (err == 0) {
 	struct spaghetti_sample sample;
 	err = spaghetti_module_manager_read(module_id, &sample);

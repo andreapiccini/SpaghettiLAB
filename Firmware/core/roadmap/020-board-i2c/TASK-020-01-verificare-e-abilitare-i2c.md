@@ -25,7 +25,7 @@
 5. **Collegamento con questo task:** Il controller I2C esiste già nel SoC; qui devi abilitarlo e associargli soltanto i pin verificati nel task precedente.
 6. **File reali coinvolti:** `boards/esp32c3_devkitm_esp32c3.overlay`.
 7. **Cosa guardare nei file:** Confronta le label e la sintassi `pinctrl` con `build/zephyr/zephyr.dts` e con i file board installati.
-8. **Cosa non modificare:** Non inserire ancora il nodo SHT40, un’identità di modulo rimovibile o numeri dei pin copiati da un’altra board.
+8. **Cosa non modificare:** Non inserire ancora il nodo INA219, un’identità di modulo rimovibile o numeri dei pin copiati da un’altra board.
 
 ### Abilitare il supporto I2C di Zephyr
 

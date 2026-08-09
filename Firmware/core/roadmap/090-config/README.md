@@ -10,11 +10,11 @@ Definire, validare e applicare la più piccola configurazione interna del prodot
 
 ## Dipende da
 
-[Fase 080 — SHT40 rimovibile a runtime](../080-runtime-removable-sht40/README.md)
+[Fase 080 — INA219 rimovibile a runtime](../080-runtime-removable-ina219/README.md)
 
 ## Risultato visibile
 
-Una Config C assegna Port 0, SHT40 e il periodo di campionamento.
+Una Config C assegna Port 0, INA219, address/calibrazione e periodo di campionamento.
 
 ## Task
 

@@ -14,7 +14,7 @@ Gestire configurazione, vita e lettura di un modulo in uno slot.
 
 ## Risultato visibile
 
-Una chiamata Manager configura Port 0 come SHT40 e legge il sensore.
+Una chiamata Manager configura Port 0 come INA219 e legge il sensore.
 
 ## Task
 

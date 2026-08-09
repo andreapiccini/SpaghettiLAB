@@ -16,7 +16,7 @@
 7. **Cosa guardare nei file:** Verifica opzioni per interfaccia ESP32, networking, IPv4, TCP, socket e soltanto i servizi realmente necessari.
 8. **Cosa non modificare:** Non copiare una configurazione di esempio completa, non inserire credenziali nel repository e non considerare `CONFIG_*=y` prova di connessione.
 
-### Accodare la temperatura per un topic di sviluppo
+### Accodare il campione elettrico per un topic di sviluppo
 
 La message queue disaccoppia il consumo di zbus dal lavoro in socket. La connessione
 MQTT e l'elaborazione delle pubblicazioni appartengono alla thread, non ad una callback
@@ -60,8 +60,8 @@ scelto.
 
 Crea `subsys/services/mqtt/mqtt.h`.
 
-Dichiarare le API `spaghetti_mqtt_init()` delimitate, `start()`, `publish_temperature()`
-e `get_status()`. Definire gli ingressi endpoint/topic copiati, i limiti di carico e gli
+Dichiarare le API esatte `spaghetti_mqtt_init()`, `start()`, `stop()`, `publish()` e
+`get_status()` riportate più avanti. Definire endpoint/topic copiati, limiti del payload e gli
 stati di servizio senza esporre Zephyr MQTT interni.
 
 ### Passo 5 — Implementare worker MQTT e stato del client
@@ -72,13 +72,15 @@ Abilita `CONFIG_MQTT_LIB=y`. Implementa uno MQTT di proprietà thread con buffer
 fissi, elaborazione socket poll/input/live, backoff di connessione e stato
 connected/error esplicito. Non bloccare i produttori di dati.
 
-### Passo 6 — Accodare la temperatura per un topic di sviluppo
+### Passo 6 — Accodare il campione elettrico per un topic di sviluppo
 
 `subsys/services/mqtt/mqtt.c` e `subsys/data/data.c`.
 
-Crea uno `k_msgq` in uscita limitato. Crea MQTT subscriber format/copy carico di una
-temperatura e enqueue con una politica nonblocking/full definita. Pubblicalo su un
-argomento di sviluppo fisso dalla MQTT thread.
+Crea una `k_msgq` in uscita limitata. Il subscriber MQTT riceve
+`spaghetti_electrical_message`, formatta una copia JSON limitata come
+`{"bus_uv":12000000,"current_ua":125000,"power_uw":1500000}` e la accoda con
+`K_NO_WAIT`. Il thread MQTT la pubblica sul suffisso `electrical`; callback zbus e
+Runtime non devono eseguire socket I/O.
 
 > [!ATTENZIONE]
 > SCORCIATOIA TEMPORANEA
@@ -91,7 +93,7 @@ argomento di sviluppo fisso dalla MQTT thread.
 `CMakeLists.txt`, `subsys/core/core.c`, MQTT e il broker di sviluppo.
 
 Aggiungere le sorgenti MQTT a CMake, initialize/start il servizio dopo la preparazione
-della rete, e osservare un argomento di temperatura presso il broker. L'assenza del
+della rete, e osservare l’argomento elettrico presso il broker. Prova l’assenza del
 broker di prova, riconnettersi, e una coda completa in uscita con la politica
 documentata.
 
@@ -109,9 +111,9 @@ attraverso la sua API, ed elimina ogni costante endpoint/topic fissa.
 ```c
 #define SPAGHETTI_MQTT_HOST_SIZE 64U
 #define SPAGHETTI_MQTT_TOPIC_SIZE 96U
-#define SPAGHETTI_MQTT_PAYLOAD_SIZE 64U
+#define SPAGHETTI_MQTT_PAYLOAD_SIZE 128U
 struct spaghetti_mqtt_config { bool enabled; char host[64]; uint16_t port; char base_topic[96]; };
-struct spaghetti_mqtt_publication { char topic_suffix[32]; size_t payload_size; uint8_t payload[64]; };
+struct spaghetti_mqtt_publication { char topic_suffix[32]; size_t payload_size; uint8_t payload[128]; };
 enum spaghetti_mqtt_state { SPAGHETTI_MQTT_STOPPED, SPAGHETTI_MQTT_WAIT_NETWORK, SPAGHETTI_MQTT_CONNECTED, SPAGHETTI_MQTT_ERROR };
 struct spaghetti_mqtt_status { enum spaghetti_mqtt_state state; uint32_t queued; uint32_t published; uint32_t dropped; int last_error; };
 int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config);
@@ -135,7 +137,7 @@ Campi principali:
 - `port`: numero TCP passato per valore; usa 1883 nello sviluppo senza TLS;
 - `base_topic`: prefisso copiato, senza slash finale;
 - `topic_suffix`: parte relativa della singola pubblicazione;
-- `payload_size`: byte validi del payload, massimo 64;
+- `payload_size`: byte validi del payload, massimo 128;
 - `state` e contatori: snapshot diagnostica, non oggetti Zephyr esposti.
 
 `init(config)` valida e copia Config e crea coda/thread; `start()` accoda il comando di
@@ -167,7 +169,7 @@ risolve `config.host`, apre il socket e guida connect, input e keepalive.
 
 ```c
 struct spaghetti_mqtt_publication publication = {
-	.topic_suffix = "temperature",
+	.topic_suffix = "electrical",
 	.payload_size = payload_size,
 };
 memcpy(publication.payload, payload, payload_size);
@@ -181,7 +183,7 @@ int err = spaghetti_mqtt_publish(&publication);
 - [ ] Implementare la segnalazione di rete pronta.
 - [ ] Definire l’API del servizio MQTT.
 - [ ] Implementare worker MQTT e stato del client.
-- [ ] Accodare la temperatura per un topic di sviluppo.
+- [ ] Accodare il campione elettrico per un topic di sviluppo.
 - [ ] Integrare e provare MQTT con topic fisso.
 - [ ] Spostare le impostazioni MQTT in Config.
 

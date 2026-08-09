@@ -20,7 +20,7 @@ Dichiara le tre firme complete riportate più avanti, inclusa
 
 `subsys/driver_registry/driver_registry.c`.
 
-Crea un array di puntatore immutabile privato contenente `&spaghetti_sht40_driver`.
+Crea un array di puntatore immutabile privato contenente `&spaghetti_ina219_driver`.
 Implementa la ricerca esatta `spaghetti_driver_registry_find()` e il contatore
 con comportamento null-safe.
 
@@ -45,7 +45,7 @@ negativo prima che Core diventi READY.
 `src/main.c` e la console seriale. Inserisci qui la prova temporanea e rimuovila dopo
 aver registrato il risultato.
 
-Chiama `spaghetti_driver_registry_find("sht40")`, `find("does-not-exist")` e
+Chiama `spaghetti_driver_registry_find("ina219")`, `find("does-not-exist")` e
 `find(NULL)`. Log/assert un descrittore noto non-null e risultati invalid/unknown nulli,
 quindi preserva il percorso di lettura reale corrente.
 
@@ -61,7 +61,7 @@ size_t spaghetti_driver_registry_count(void);
 è `const` perché il Registry non la modifica. `find()` restituisce un descrittore
 immutabile con lifetime firmware oppure `NULL` per stringa nulla, vuota o sconosciuta.
 `count()` restituisce per valore una quantità infallibile. `init()` valida la tabella
-statica `{ &spaghetti_sht40_driver }`: nessun puntatore nullo, ID vuoto/duplicato,
+statica `{ &spaghetti_ina219_driver }`: nessun puntatore nullo, ID vuoto/duplicato,
 tabella ops nulla o operazione obbligatoria mancante; restituisce `0` o `-EINVAL`.
 Core chiama init prima del Manager.
 
@@ -80,7 +80,7 @@ Nel `.c` crea esattamente:
 
 ```c
 static const struct spaghetti_module_driver *const drivers[] = {
-	&spaghetti_sht40_driver,
+	&spaghetti_ina219_driver,
 };
 ```
 
@@ -91,7 +91,7 @@ puntatori nella tabella.
 
 ```c
 const struct spaghetti_module_driver *driver =
-	spaghetti_driver_registry_find("sht40");
+	spaghetti_driver_registry_find("ina219");
 if (driver == NULL) {
 	return -ENOENT;
 }
@@ -118,8 +118,8 @@ make monitor
 
 **Controlla**
 
-Prova init valido, `find("sht40")`, `find(NULL)` e tipo sconosciuto; inietta ID duplicato e ops incompleta. Fine con build, flash e lettura sensore ancora funzionante.
+Prova init valido, `find("ina219")`, `find(NULL)` e tipo sconosciuto; inietta ID duplicato e ops incompleta. Fine con build, flash e lettura sensore ancora funzionante.
 
 **Risultato atteso**
 
-Il descrittore `sht40` viene trovato; input nullo/sconosciuto e registry invalido sono rifiutati.
+Il descrittore `ina219` viene trovato; input nullo/sconosciuto e registry invalido sono rifiutati.

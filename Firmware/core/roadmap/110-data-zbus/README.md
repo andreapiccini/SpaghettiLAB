@@ -14,7 +14,7 @@ Distribuire campioni immutabili a più consumer tramite zbus.
 
 ## Risultato visibile
 
-Un campione reale raggiunge logger e un secondo consumer.
+Un campione bus voltage/current/power raggiunge logger e un secondo consumer.
 
 ## Task
 

@@ -6,15 +6,16 @@
 
 ## Obiettivo
 
-Separare l’identità del modulo dalle operazioni specifiche del driver SHT40.
+Separare l’identità del modulo dalle operazioni specifiche del driver INA219 e
+normalizzare bus voltage, current e power in un campione copiabile.
 
 ## Dipende da
 
-[Fase 040 — Sezione verticale SHT40](../040-sht40/README.md)
+[Fase 040 — Sezione verticale INA219](../040-ina219/README.md)
 
 ## Risultato visibile
 
-SHT40 viene usato soltanto tramite una tabella di operazioni.
+INA219 viene usato soltanto tramite una tabella di operazioni.
 
 ## Task
 
@@ -23,5 +24,5 @@ SHT40 viene usato soltanto tramite una tabella di operazioni.
 ## Criteri di completamento della fase
 
 - [ ] Instance, sample e tabella operazioni hanno contratti espliciti.
-- [ ] Il descrittore SHT40 è immutabile.
+- [ ] Il descrittore INA219 è immutabile.
 - [ ] Il chiamante non dipende più direttamente dal wrapper.

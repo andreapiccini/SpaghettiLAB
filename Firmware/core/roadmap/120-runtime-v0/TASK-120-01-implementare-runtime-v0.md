@@ -54,9 +54,12 @@ mantenere la callback senza operazioni I2C, Manager e Data.
 `subsys/runtime/runtime.c`.
 
 Crea un semaforo limitato e uno Runtime thread dedicato. Il thread attende con
-`k_sem_take()`, chiama direttamente Manager legge per il modulo caricato, converte il
-campione e pubblica attraverso i dati. Definisci esplicitamente la dimensione dello
-stack e la priorità.
+`k_sem_take()`, chiama `spaghetti_module_manager_read(task.module_id, &sample)`, copia
+`sample.bus_voltage_microvolts`, `sample.current_microamps` e
+`sample.power_microwatts` in `struct spaghetti_electrical_message`, aggiunge
+`k_uptime_get()` e sequence, poi chiama
+`spaghetti_data_publish_electrical(&message, K_NO_WAIT)`. Definisci esplicitamente la
+dimensione dello stack e la priorità.
 
 ### Passo 4 — Implementare caricamento, avvio e arresto di Runtime
 

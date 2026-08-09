@@ -73,19 +73,19 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | 🟨 | [010 — Core](010-core/README.md) | `main` avvia Core e la console mostra log strutturati. |
 | ⬜ | [020 — Scheda attuale / I2C](020-board-i2c/README.md) | Il DTS generato contiene il controller I2C reale e abilitato. |
 | ⬜ | [030 — Port](030-port/README.md) | Port 0 espone la capacità I2C e possiede un device Zephyr pronto. |
-| ⬜ | [040 — Sezione verticale SHT40](040-sht40/README.md) | Temperatura e umidità reali compaiono nei log. |
-| ⬜ | [050 — Module + Module Driver](050-module-driver/README.md) | SHT40 viene usato soltanto tramite la tabella operazioni del driver. |
-| ⬜ | [060 — Driver Registry](060-driver-registry/README.md) | La ricerca di `sht40` riesce e un tipo sconosciuto fallisce correttamente. |
-| ⬜ | [070 — Module Manager](070-module-manager/README.md) | Il Manager configura Port 0 come SHT40 e legge il sensore reale. |
-| ⬜ | [080 — SHT40 rimovibile a runtime](080-runtime-removable-sht40/README.md) | SHT40 resta utilizzabile senza scorciatoie Devicetree specifiche del sensore. |
-| ⬜ | [090 — Config interna](090-config/README.md) | Una configurazione C assegna Port 0, indirizzo SHT40 e periodo di campionamento. |
+| ⬜ | [040 — Sezione verticale INA219](040-ina219/README.md) | Bus voltage, current e power reali compaiono nei log. |
+| ⬜ | [050 — Module + Module Driver](050-module-driver/README.md) | INA219 viene usato soltanto tramite la tabella operazioni del driver. |
+| ⬜ | [060 — Driver Registry](060-driver-registry/README.md) | La ricerca di `ina219` riesce e un tipo sconosciuto fallisce correttamente. |
+| ⬜ | [070 — Module Manager](070-module-manager/README.md) | Il Manager configura Port 0 come INA219 e legge il sensore reale. |
+| ⬜ | [080 — INA219 rimovibile a runtime](080-runtime-removable-ina219/README.md) | INA219 resta utilizzabile senza scorciatoie Devicetree specifiche del sensore. |
+| ⬜ | [090 — Config interna](090-config/README.md) | Config assegna Port 0, address/calibrazione INA219 e periodo. |
 | ⬜ | [100 — Config persistente](100-storage/README.md) | La configurazione sopravvive al riavvio. |
-| ⬜ | [110 — Data / zbus](110-data-zbus/README.md) | Un campione reale raggiunge logger e un secondo consumer. |
+| ⬜ | [110 — Data / zbus](110-data-zbus/README.md) | Bus voltage/current/power raggiungono due consumer. |
 | ⬜ | [120 — Runtime V0](120-runtime-v0/README.md) | Runtime campiona ogni secondo mentre `main` esegue soltanto il boot. |
-| ⬜ | [130 — Relay + Runtime V1](130-relay-runtime-v1/README.md) | Una temperatura sopra 25 °C comanda il relay configurato. |
+| ⬜ | [130 — Relay + Runtime V1](130-relay-runtime-v1/README.md) | Una soglia di corrente con isteresi comanda il relay configurato. |
 | ⬜ | [140 — Communication](140-communication/README.md) | Un comando Shell locale legge lo stato e invia configurazioni. |
 | ⬜ | [150 — CBOR](150-cbor/README.md) | Un payload CBOR viene decodificato e applicato a Config. |
-| ⬜ | [160 — MQTT](160-mqtt/README.md) | Un campione raggiunge un topic MQTT configurato. |
+| ⬜ | [160 — MQTT](160-mqtt/README.md) | Il campione elettrico raggiunge il topic MQTT configurato. |
 | ⬜ | [170 — Discovery](170-discovery/README.md) | Discovery alimenta il Manager senza esporre il provider. |
 | ⬜ | [180 — Varianti Core multiple](180-multi-core/README.md) | Gli stessi livelli applicativi funzionano su due varianti Core. |
 | ⬜ | [190 — Power](190-power/README.md) | Una risorsa di alimentazione gestisce correttamente più proprietari e rollback. |

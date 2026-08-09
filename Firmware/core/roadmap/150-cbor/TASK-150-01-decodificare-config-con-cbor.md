@@ -34,13 +34,21 @@ spaghetti-config-v0 = {
   1: [module],
   2: sampling
 }
-module = { 0: 0, 1: "sht40", 2: 68 }
+module = {
+  0: 0,
+  1: "ina219",
+  2: 64,
+  3: 100,
+  4: 200
+}
 sampling = { 0: 1..86400000, 1: bool }
 ```
 
-Le chiavi `0`, `1` e `2` sono rispettivamente versione, moduli e sampling. Il solo
-modulo ammesso in V0 è Port 0, SHT40, indirizzo decimale 68 (`0x44`). Il periodo è in
-millisecondi da 1 a un giorno. Le mappe non accettano chiavi aggiuntive o duplicate.
+Le chiavi root `0`, `1` e `2` sono versione, moduli e sampling. Il solo modulo V0 è
+Port 0/INA219. Nella mappa module: `0` è Port, `1` type ID, `2` address I2C, `3` shunt
+in mΩ e `4` current LSB in µA. I valori baseline sono address 64 (`0x40`), shunt 100 e
+current LSB 200. Il periodo è da 1 ms a un giorno. Le mappe rifiutano chiavi extra o
+duplicate.
 
 ### Passo 2 — Dichiarare il confine del decoder Config
 
@@ -95,9 +103,10 @@ al chiamante e cambia solo dopo decodifica e validazione complete. Restituisce `
 `-EINVAL`, `-EMSGSIZE`, `-EBADMSG` o `-ENOTSUP`.
 
 Documenta nel task e nei test lo schema CBOR V0 come mappa con chiavi intere: `0`
-versione=1, `1` array moduli con port/type/address, `2` mappa sampling con period_ms ed
-enabled. Tutti i campi sono obbligatori; chiavi duplicate, sconosciute, tipi errati,
-trailing bytes e valori fuori limite falliscono. `config_codec.c` usa zcbor per
+versione=1, `1` array moduli con port/type/address/shunt/current LSB, `2` mappa sampling
+con period_ms ed enabled. Tutti i campi sono obbligatori; chiavi duplicate, sconosciute,
+tipi errati, address fuori `0x40`–`0x4F`, calibrazione nulla, trailing bytes e valori
+fuori limite falliscono. `config_codec.c` usa zcbor per
 riempire una variabile temporanea, chiama validate e copia in `out` solo al successo.
 Communication chiama decode e poi apply, mantenendo distinti i due errno.
 
@@ -109,6 +118,20 @@ buffer; chiama `spaghetti_config_validate(&temporary)`; infine assegna
 `*out = temporary`. Nessun ramo di errore deve scrivere `out`.
 
 ## Esempio d’uso
+
+Il payload baseline in notazione diagnostica CBOR è:
+
+```text
+{0: 1, 1: [{0: 0, 1: "ina219", 2: 64, 3: 100, 4: 200}],
+ 2: {0: 1000, 1: true}}
+```
+
+La codifica canonica da usare come vettore positivo è:
+
+```text
+a3 00 01 01 81 a5 00 00 01 66 69 6e 61 32 31 39
+02 18 40 03 18 64 04 18 c8 02 a2 00 19 03 e8 01 f5
+```
 
 ```c
 struct spaghetti_config decoded;
