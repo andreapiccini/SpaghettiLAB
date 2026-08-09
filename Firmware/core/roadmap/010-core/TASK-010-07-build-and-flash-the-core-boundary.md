@@ -111,7 +111,7 @@ YES — `make build`.
 
 ## Flash
 
-YES — use the host-specific workflow in the root `README.md`.
+YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
 
 ---
 

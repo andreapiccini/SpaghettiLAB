@@ -17,7 +17,7 @@ Boot greeting and uptime every five seconds at 115200 baud.
 
 ## Open
 
-Root `README.md`, section “Flash and monitor” for the host OS.
+Root `README.md`, section “Flash and serial console” for the host OS.
 
 ---
 
@@ -59,14 +59,15 @@ Host OS.
 
 ## Calls / dependencies
 
-macOS: existing `esptool ... 0x0 build/zephyr/zephyr.bin`;
-Linux: `make flash`, then `make monitor`.
+Run `make flash`, then `make screen` on Linux, macOS, or Windows. The active
+Zephyr build selects the flash runner; use `PORT=<device>` only when automatic
+detection is unavailable or ambiguous.
 
 ---
 
 ## Inputs
 
-Current serial port and built image.
+Built image and an automatically detected port or explicit `PORT`.
 
 ---
 
@@ -90,7 +91,7 @@ Busy/wrong port and bootloader entry failure.
 
 ## Steps
 
-- [x] Open only Root `README.md`, section “Flash and monitor” for the host OS.
+- [x] Open only Root `README.md`, section “Flash and serial console” for the host OS.
 - [x] Nothing.
 - [x] Handle only these realistic errors: Busy/wrong port and bootloader entry failure.
 - [x] Confirm no item from **Do NOT implement yet** was added
@@ -106,7 +107,7 @@ NO
 
 ## Flash
 
-YES — use the host-specific workflow in the root `README.md`.
+YES — run `make flash`, then `make screen`; pass `PORT=...` only when needed.
 
 ---
 

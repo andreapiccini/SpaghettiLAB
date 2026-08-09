@@ -11,10 +11,11 @@ The source code and generated `build/` directory stay on the host computer.
 - Docker Desktop with Docker Compose
 - An ESP32-C3 board connected over USB
 - About 15 GB of free disk space for the first Docker image build
-- `make` on Linux and macOS (optional, but used by the shortcuts below)
-- `esptool` on macOS and Windows for flashing from the host
+- `make` on Linux, macOS, or Windows for the common shortcuts below
+- The host flashing program required by the Zephyr runner selected for the board
+- `screen` on Linux/macOS, or PySerial on Windows, for the serial console
 
-Install `esptool` on macOS:
+The current ESP32-C3 build uses `esptool`. Install it on macOS:
 
 ```sh
 brew install esptool
@@ -24,6 +25,12 @@ Install it on Windows from PowerShell:
 
 ```powershell
 py -m pip install esptool
+```
+
+On Linux, install it with your package manager or in a Python environment:
+
+```sh
+python3 -m pip install esptool
 ```
 
 ## Quick start
@@ -63,77 +70,72 @@ The first image build can take a while because it downloads Zephyr, the West
 modules, the toolchain, and Espressif binary blobs. Docker caches completed
 steps, so later builds are much faster.
 
-## Flash and monitor
+## Flash and serial console
 
-### Linux
-
-Find the serial device:
-
-```sh
-ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null
-```
-
-The default is `/dev/ttyACM0`. To use another device, copy `.env.example` to
-`.env` and change `ESP32_PORT`.
+The same commands work on Linux, macOS, and Windows when `make` is available:
 
 ```sh
 make flash
-make monitor
+make screen
 ```
 
-Your user may need serial-port access. On many distributions, add the user to
-the `dialout` group and then sign out and back in:
+The commands select the port automatically when exactly one supported USB serial
+port is connected. List the detected ports with:
+
+```sh
+make ports
+```
+
+If more than one port is present, or automatic detection cannot identify it,
+provide the port explicitly. The same override is accepted by both commands:
+
+```sh
+make flash PORT=/dev/cu.usbserial-110
+make screen PORT=/dev/cu.usbserial-110
+```
+
+To keep the selection, copy `.env.example` to `.env` and set `PORT` there.
+A value passed on the command line takes precedence over `.env`.
+
+Linux example:
+
+```sh
+make flash PORT=/dev/ttyACM0
+make screen PORT=/dev/ttyACM0
+```
+
+Windows example from a terminal that provides `make`:
+
+```powershell
+make flash PORT=COM3
+make screen PORT=COM3
+```
+
+Override the console or flashing speed only when necessary:
+
+```sh
+make screen BAUD=9600
+make flash FLASH_BAUD=115200
+```
+
+On Linux and macOS, exit `screen` with `Ctrl-A`, then `\`, then `y`. On
+Windows, miniterm exits with `Ctrl-]`. Only one program can use the serial port
+at a time, so close the console before flashing.
+
+`tools/device.py` reads `build/zephyr/runners.yaml`; the microcontroller and
+flash parameters therefore come from the active Zephyr build rather than from
+the Makefile. It directly supports the generated Espressif runner. Other
+Zephyr runners are delegated to a compatible host `west` installation and may
+require their own host utility or debug-probe driver. A board without a serial
+console can still be flashed by its runner, but `make screen` naturally requires
+a serial port.
+
+On Linux, your user may need serial-port access. On many distributions, add the
+user to the `dialout` group and then sign out and back in:
 
 ```sh
 sudo usermod -aG dialout "$USER"
 ```
-
-### macOS
-
-Docker Desktop does not normally expose the USB serial device to the container,
-so build in Docker and flash from macOS.
-
-Find the port:
-
-```sh
-ls /dev/cu.usbmodem* /dev/cu.usbserial* 2>/dev/null
-```
-
-Flash the board, replacing the example port if needed:
-
-```sh
-esptool --chip esp32c3 --port /dev/cu.usbmodem1101 --baud 460800 \
-  write-flash --flash-mode dio --flash-freq 80m --flash-size 4MB \
-  0x0 build/zephyr/zephyr.bin
-```
-
-Open the serial console:
-
-```sh
-screen /dev/cu.usbmodem1101 115200
-```
-
-To exit `screen`, press `Ctrl-A`, then `K`, then `Y`.
-
-### Windows
-
-Build in Docker and flash from PowerShell. Find the board's COM port in
-**Device Manager > Ports (COM & LPT)**, then replace `COM3` below if needed:
-
-```powershell
-py -m esptool --chip esp32c3 --port COM3 --baud 460800 write-flash --flash-mode dio --flash-freq 80m --flash-size 4MB 0x0 build/zephyr/zephyr.bin
-```
-
-Open the serial console:
-
-```powershell
-py -m serial.tools.miniterm COM3 115200
-```
-
-Press `Ctrl-]` to close the monitor.
-
-Only one program can use the serial port at a time. Close the monitor before
-flashing again.
 
 ## Common commands
 
@@ -144,13 +146,19 @@ flashing again.
 | `make build` | Run an incremental firmware build |
 | `make pristine` | Reconfigure and rebuild from scratch |
 | `make shell` | Open a shell in the Zephyr environment |
-| `make flash` | Flash the board from a native Linux host |
-| `make monitor` | Open the serial monitor from a native Linux host |
+| `make ports` | List host USB serial ports detected automatically |
+| `make flash [PORT=...]` | Flash using the runner selected by the build |
+| `make screen [PORT=...]` | Open the serial console at 115200 baud |
+| `make monitor [PORT=...]` | Alias for `make screen` |
 | `make clean` | Remove the CMake build artifacts |
 
 Useful Windows equivalents:
 
 ```powershell
+# Flash and open the console without make
+py -3 tools/device.py flash
+py -3 tools/device.py screen
+
 # Open the Zephyr shell
 docker compose run --rm dev
 
@@ -173,12 +181,13 @@ docker compose run --rm dev west build -d build -t pristine
 ├── dts/bindings/spaghetti/                 project Devicetree schemas
 ├── templates/firmware/                     copyable implementation skeletons
 ├── validator                               pre-build firmware convention checker
+├── tools/device.py                         host port detection, flash, and console helper
 ├── FILE_MAP.md                             what to read before each kind of change
 ├── prj.conf                                Zephyr/Kconfig settings
 ├── CMakeLists.txt                          build configuration
 ├── Dockerfile                              Zephyr development image
 ├── compose.yaml                            common container configuration
-├── compose.linux.yaml                      Linux USB passthrough
+├── compose.linux.yaml                      optional manual Linux USB passthrough
 └── Makefile                                command shortcuts
 ```
 
@@ -231,6 +240,13 @@ code.
 
 Close `screen`, miniterm, IDE serial monitors, and any other program using the
 same port.
+
+### No serial port is detected
+
+Run `make ports`, reconnect the board with a data-capable USB cable, and try a
+different direct USB port. If several devices are listed, select one with
+`PORT=...`. Automatic detection deliberately refuses to guess between multiple
+devices.
 
 ### `esptool` cannot connect
 

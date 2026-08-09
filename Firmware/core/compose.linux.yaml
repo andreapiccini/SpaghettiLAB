@@ -1,6 +1,6 @@
-# Optional USB passthrough for flashing from a Linux host.
+# Optional USB passthrough for running west flash manually inside Docker on Linux.
 # Usage: docker compose -f compose.yaml -f compose.linux.yaml run --rm dev
 services:
   dev:
     devices:
-      - ${ESP32_PORT:-/dev/ttyACM0}:${ESP32_PORT:-/dev/ttyACM0}
+      - ${PORT:-/dev/ttyACM0}:${PORT:-/dev/ttyACM0}

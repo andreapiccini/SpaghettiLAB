@@ -1,11 +1,19 @@
+-include .env
+
 COMPOSE := docker compose
-LINUX_COMPOSE := $(COMPOSE) -f compose.yaml -f compose.linux.yaml
 VALIDATOR_QUIET_VALUES := 1 true yes on
 VALIDATOR_IS_QUIET := $(filter $(VALIDATOR_QUIET_VALUES),$(VALIDATOR_QUIET))
 VALIDATOR_FLAGS := $(if $(VALIDATOR_IS_QUIET),--quiet,)
 VALIDATOR_ENV := $(if $(VALIDATOR_IS_QUIET),SPAGHETTI_VALIDATOR_QUIET=1 ,)
+HOST_PYTHON := python3
+ifeq ($(OS),Windows_NT)
+HOST_PYTHON := py -3
+endif
+PORT_ARG := $(if $(strip $(PORT)),--port "$(PORT)",)
+BAUD ?= 115200
+FLASH_BAUD ?= 460800
 
-.PHONY: image shell validate build pristine flash monitor clean
+.PHONY: image shell validate build pristine flash screen monitor ports clean
 
 image:
 	@$(COMPOSE) build
@@ -35,13 +43,16 @@ pristine:
 		SPAGHETTI_VALIDATOR_ALREADY_RUN=1 $(VALIDATOR_ENV)west build \
 			-p auto -b "$$BOARD" -d build .'
 
-# USB passthrough in compose.linux.yaml is supported on a native Linux host.
 flash:
-	@$(LINUX_COMPOSE) run --rm --entrypoint west dev \
-		flash -d build --reset-type watchdog-reset
+	@$(HOST_PYTHON) tools/device.py flash $(PORT_ARG) --baud "$(FLASH_BAUD)"
 
-monitor:
-	@$(LINUX_COMPOSE) run --rm --entrypoint west dev espressif monitor
+screen:
+	@$(HOST_PYTHON) tools/device.py screen $(PORT_ARG) --baud "$(BAUD)"
+
+monitor: screen
+
+ports:
+	@$(HOST_PYTHON) tools/device.py ports
 
 clean:
 	@$(COMPOSE) run --rm --entrypoint west dev build -d build -t pristine

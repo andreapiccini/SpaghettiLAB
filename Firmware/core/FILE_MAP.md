@@ -63,6 +63,7 @@ flowchart TD
 | File | Contains | Read before / modify when |
 |---|---|---|
 | `README.md` | Supported hosts, Docker workflow, build/flash commands, navigation, licensing summary | First checkout; environment, build, flash, or documentation navigation changes |
+| `tools/device.py` | Cross-platform serial-port discovery, Zephyr runner selection, host flashing, and console launch | Changing `make flash`, `make screen`, port detection, or support for another flash runner |
 | `ARCHITECTURE.md` | Generic ownership, boundaries, static/runtime split, data/control flow | Any new component, dependency, shared state, protocol adapter, or lifecycle change |
 | `FIRMWARE_IMPLEMENTATION_GUIDE.md` | Normative code/API/type/memory/thread/logging/testing rules | Before writing or reviewing firmware code |
 | `FILE_MAP.md` | This reading map and file-purpose catalog | When deciding what must be read for a task |
@@ -73,7 +74,7 @@ flowchart TD
 | `Makefile` | Portable shortcuts around Docker Compose and West | Changing developer commands; not firmware behavior |
 | `Dockerfile` | Versioned Zephyr workspace, SDK dependencies, blobs, container defaults | Changing Zephyr/toolchain/dependency versions |
 | `compose.yaml` | Source mount, image, environment, ccache, interactive container | Changing common container execution on all hosts |
-| `compose.linux.yaml` | Linux-only USB serial passthrough | Changing native Linux flash/monitor behavior |
+| `compose.linux.yaml` | Optional USB passthrough for manual container flashing on Linux | Changing advanced Linux container/device behavior |
 | `.env.example` | Documented local environment-variable examples without secrets | Adding a developer-selectable port/board setting |
 | `.gitignore` | Files that Git must not track | Adding a generated, secret, cache, editor, or build artifact family |
 | `.dockerignore` | Files excluded from Docker build context | Changing what the image build needs from the repository |
