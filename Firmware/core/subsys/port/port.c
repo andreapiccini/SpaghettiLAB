@@ -1,10 +1,13 @@
 #include <spaghetti/port.h>
-
 #include <errno.h>
-
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/sys/util.h>
+
+LOG_MODULE_REGISTER(
+    spaghetti_port,
+    CONFIG_SPAGHETTI_PORT_LOG_LEVEL
+);
 
 struct spaghetti_port {
 	spaghetti_port_id_t id;
