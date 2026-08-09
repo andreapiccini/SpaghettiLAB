@@ -3,7 +3,11 @@
 **Stato:** ⬜ TODO
 **Fase:** 090 — Config interna
 
-## Cosa devo fare
+## Perché lo facciamo
+
+Config valida un intero snapshot prima di modificare i componenti e conserva copie proprie dei dati ricevuti.
+
+## Implementazione guidata
 
 ### Passo 1 — Definire il modello interno di Config
 
@@ -92,13 +96,34 @@ precedente se un componente fallisce. Il chiamante è Core al boot e Communicati
 seguito. La configurazione iniziale contiene Port 0, `sht40`, indirizzo verificato,
 periodo 1000 ms ed enabled=true.
 
-## Perché è fatto così
+Significato dei campi:
 
-Config valida un intero snapshot prima di modificare i componenti e conserva copie proprie dei dati ricevuti.
+- `version`: rifiuta snapshot prodotti con uno schema incompatibile;
+- `module_count`: limita gli elementi validi dell’array senza heap;
+- `modules`: array posseduto da Config; ogni elemento lega Port, tipo e config driver;
+- `type_id`: array interno, non `const char *`, perché Config deve possedere la stringa;
+- `sampling.period_ms`: intervallo in millisecondi, maggiore di zero;
+- `sampling.enabled`: separa configurazione presente e campionamento attivo.
 
-## Come si usa
+`spaghetti_config_validate(candidate)` controlla, in ordine: puntatore, versione,
+count, terminazione `type_id`, Port duplicati, tipo supportato, config SHT40 e periodo.
+Non chiama componenti e non modifica lo snapshot corrente.
 
-Boot, Communication e Storage forniscono snapshot completi. Config valida, applica a Manager/Runtime e conserva una copia soltanto dopo il successo.
+`spaghetti_config_apply(candidate)` è chiamata da Core e poi Communication. Chiama
+validate, salva una copia del vecchio stato, configura Manager, carica Runtime e solo
+dopo copia `candidate` nello stato corrente. Se un passaggio fallisce ripristina in
+ordine inverso e restituisce l’errno originale; se fallisce anche il rollback registra
+l’errore e restituisce `-EIO`.
+
+## Esempio d’uso
+
+```c
+struct spaghetti_config candidate = make_default_config();
+int err = spaghetti_config_validate(&candidate);
+if (err == 0) {
+	err = spaghetti_config_apply(&candidate);
+}
+```
 
 ## Checklist di completamento
 
@@ -109,6 +134,21 @@ Boot, Communication e Storage forniscono snapshot completi. Config valida, appli
 - [ ] Aggiungere e applicare una Config C statica.
 - [ ] Provare validazione e applicazione di Config.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Prova versione, count, stringa, Port duplicato e periodo invalidi senza modifiche live. Inietta un errore Manager/Runtime e verifica rollback; poi applica Port 0/SHT40/1000 ms.
+
+**Risultato atteso**
+
+La Config valida viene applicata; candidati invalidi e apply falliti non cambiano lo stato attivo.

@@ -3,7 +3,39 @@
 **Stato:** ⬜ TODO
 **Fase:** 040 — Sezione verticale SHT40
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Esaminare il driver SHT4x fornito da Zephyr
+
+L'API del sensore Zephyr richiede un dispositivo staticamente istanziato Devicetree. Ciò
+è accettabile per il lancio ma non per il modello finale del modulo rimovibile.
+
+### Aggiungere il nodo Devicetree temporaneo di SHT40
+
+1. **Cos’è:** Un binding YAML descrive quali proprietà sono valide per una famiglia di nodi Devicetree. La proprietà `compatible` seleziona il binding e permette a Zephyr di creare l’istanza del driver corretto.
+2. **A cosa serve:** Collega temporaneamente l’indirizzo I2C reale al driver SHT4x già fornito da Zephyr.
+3. **Quando viene usato:** Binding e nodo vengono validati ed elaborati durante la build; il driver risultante viene inizializzato al boot.
+4. **Build-time o runtime:** Definizione a build-time, device utilizzato a runtime.
+5. **Collegamento con questo task:** Serve a provare verticalmente il sensore prima di rimuovere questa associazione statica nella fase 080.
+6. **File reali coinvolti:** `boards/esp32c3_devkitm_esp32c3.overlay`; consulta il binding SHT4x trovato nel task precedente dentro il workspace Zephyr.
+7. **Cosa guardare nei file:** Nel binding controlla valore `compatible`, proprietà richieste e significato di `reg`; nell’overlay aggiungi il nodo figlio al bus I2C.
+8. **Cosa non modificare:** Non creare un binding Spaghetti LAB, non copiare proprietà non previste e non trasformare questa assegnazione temporanea in architettura definitiva.
+
+### Abilitare l’API Sensor di Zephyr
+
+Kconfig seleziona il codice Sensor API e driver al momento della compilazione. La scheda
+overlay seleziona l'istanza del dispositivo SHT4x in cemento.
+
+### Implementare il wrapper temporaneo SHT40
+
+L'API del sensore normalizza i canali del sensore tramite `struct sensor_value`.
+Mantenere questo sincrono wrapper e non aggiungere thread.
+
+## Perché lo facciamo
+
+La prova verticale separa subito problemi elettrici, I2C e driver prima di introdurre le astrazioni Module.
+
+## Implementazione guidata
 
 ### Passo 1 — Esaminare il driver SHT4x fornito da Zephyr
 
@@ -120,41 +152,25 @@ perché la funzione scrive i risultati. `read()` restituisce `-EINVAL` per `NULL
 propaga gli errori Sensor. Usa variabili temporanee e copia entrambi gli output solo
 dopo fetch e lettura di entrambi i canali riusciti.
 
-## Perché è fatto così
+Implementa le due funzioni così:
 
-La prova verticale separa subito problemi elettrici, I2C e driver prima di introdurre le astrazioni Module.
+1. `spaghetti_sht40_test_init()` è chiamata da `main()` dopo Core. Non modifica dati
+   del chiamante: controlla `device_is_ready(sht40_device)` e restituisce `0` oppure
+   `-ENODEV`.
+2. `spaghetti_sht40_test_read(temperature, humidity)` è chiamata una volta per ciclo.
+   Controlla entrambi i puntatori, esegue `sensor_sample_fetch()`, legge temperatura e
+   umidità in due variabili locali, poi copia le variabili negli output. I puntatori
+   sono usati perché servono due risultati; non sono `const` perché vengono scritti e
+   non vengono conservati dopo il ritorno. Restituisce `-EINVAL` per `NULL` e propaga
+   invariato ogni errno delle API Sensor.
 
-## Come si usa
+## Esempio d’uso
 
-`main` inizializza il wrapper una volta e gli passa due `struct sensor_value` di sua proprietà a ogni lettura.
-
-## Concetto Zephyr da sapere
-
-### Esaminare il driver SHT4x fornito da Zephyr
-
-L'API del sensore Zephyr richiede un dispositivo staticamente istanziato Devicetree. Ciò
-è accettabile per il lancio ma non per il modello finale del modulo rimovibile.
-
-### Aggiungere il nodo Devicetree temporaneo di SHT40
-
-1. **Cos’è:** Un binding YAML descrive quali proprietà sono valide per una famiglia di nodi Devicetree. La proprietà `compatible` seleziona il binding e permette a Zephyr di creare l’istanza del driver corretto.
-2. **A cosa serve:** Collega temporaneamente l’indirizzo I2C reale al driver SHT4x già fornito da Zephyr.
-3. **Quando viene usato:** Binding e nodo vengono validati ed elaborati durante la build; il driver risultante viene inizializzato al boot.
-4. **Build-time o runtime:** Definizione a build-time, device utilizzato a runtime.
-5. **Collegamento con questo task:** Serve a provare verticalmente il sensore prima di rimuovere questa associazione statica nella fase 080.
-6. **File reali coinvolti:** `boards/esp32c3_devkitm_esp32c3.overlay`; consulta il binding SHT4x trovato nel task precedente dentro il workspace Zephyr.
-7. **Cosa guardare nei file:** Nel binding controlla valore `compatible`, proprietà richieste e significato di `reg`; nell’overlay aggiungi il nodo figlio al bus I2C.
-8. **Cosa non modificare:** Non creare un binding Spaghetti LAB, non copiare proprietà non previste e non trasformare questa assegnazione temporanea in architettura definitiva.
-
-### Abilitare l’API Sensor di Zephyr
-
-Kconfig seleziona il codice Sensor API e driver al momento della compilazione. La scheda
-overlay seleziona l'istanza del dispositivo SHT4x in cemento.
-
-### Implementare il wrapper temporaneo SHT40
-
-L'API del sensore normalizza i canali del sensore tramite `struct sensor_value`.
-Mantenere questo sincrono wrapper e non aggiungere thread.
+```c
+struct sensor_value temperature;
+struct sensor_value humidity;
+int err = spaghetti_sht40_test_read(&temperature, &humidity);
+```
 
 ## Checklist di completamento
 
@@ -168,6 +184,21 @@ Mantenere questo sincrono wrapper e non aggiungere thread.
 - [ ] Compilare e ispezionare l’immagine SHT40.
 - [ ] Caricare e provare il sensore SHT40 reale.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Esegui validator e build pristine; controlla nodo e Kconfig generati. Flasha e registra almeno dieci letture plausibili senza reset o errori I2C.
+
+**Risultato atteso**
+
+Il device SHT40 è ready e dieci letture reali producono temperatura e umidità plausibili.

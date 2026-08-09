@@ -3,16 +3,44 @@
 **Stato:** ⬜ TODO
 **Fase:** 150 — CBOR
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Abilitare zcbor e aggiungere il sorgente codec
+
+1. **Cos’è:** zcbor è la libreria integrata da Zephyr per codificare e decodificare CBOR con stato e buffer limitati.
+2. **A cosa serve:** Trasforma bytes di Communication nel modello Config senza parser testuale o allocazioni non controllate.
+3. **Quando viene usato:** Kconfig e CMake includono la libreria a build-time; il decoder opera a runtime su un buffer ricevuto.
+4. **Build-time o runtime:** Integrazione a build-time, decodifica a runtime.
+5. **Collegamento con questo task:** Lo schema V0 è già definito; questo task prepara il sorgente che lo implementerà.
+6. **File reali coinvolti:** `prj.conf`, `CMakeLists.txt` e il nuovo `subsys/config/config_cbor.c`.
+7. **Cosa guardare nei file:** Controlla l’opzione zcbor disponibile, gli header installati e l’inclusione del nuovo sorgente nel target `app`.
+8. **Cosa non modificare:** Non copiare una seconda versione di zcbor, non accettare campi extra e non applicare Config direttamente dal decoder.
+
+## Perché lo facciamo
+
+Il decoder traduce bytes non fidati in Config senza applicarla; validazione e commit restano responsabilità di Config.
+
+## Implementazione guidata
 
 ### Passo 1 — Documentare lo schema CBOR V0
 
-Crea `subsys/config/spaghetti_config_v0.cddl` o documenta lo schema esatto equivalente
-accanto al codec.
+Crea `subsys/config/spaghetti_config_v0.cddl`.
 
-Descrivi un oggetto limitato in versione contenente Port 0, tipo `sht40`, indirizzo
-verificato e periodo 1000 ms. Correggi chiavi esatte o ordine array e rifiuti dati
-aggiuntivi non specificati.
+Scrivi questo schema esatto:
+
+```cddl
+spaghetti-config-v0 = {
+  0: 1,
+  1: [module],
+  2: sampling
+}
+module = { 0: 0, 1: "sht40", 2: 68 }
+sampling = { 0: 1..86400000, 1: bool }
+```
+
+Le chiavi `0`, `1` e `2` sono rispettivamente versione, moduli e sampling. Il solo
+modulo ammesso in V0 è Port 0, SHT40, indirizzo decimale 68 (`0x44`). Il periodo è in
+millisecondi da 1 a un giorno. Le mappe non accettano chiavi aggiuntive o duplicate.
 
 ### Passo 2 — Dichiarare il confine del decoder Config
 
@@ -73,26 +101,22 @@ trailing bytes e valori fuori limite falliscono. `config_codec.c` usa zcbor per
 riempire una variabile temporanea, chiama validate e copia in `out` solo al successo.
 Communication chiama decode e poi apply, mantenendo distinti i due errno.
 
-## Perché è fatto così
+Implementa `spaghetti_config_decode_cbor()` in ordine: valida i tre argomenti; crea
+`struct spaghetti_config temporary = {0}`; inizializza lo stato zcbor sul buffer;
+apre la mappa root; decodifica le chiavi nell’ordine previsto verificandone valori e
+numero; chiude tutte le collezioni; verifica che il cursore sia esattamente a fine
+buffer; chiama `spaghetti_config_validate(&temporary)`; infine assegna
+`*out = temporary`. Nessun ramo di errore deve scrivere `out`.
 
-Il decoder traduce bytes non fidati in Config senza applicarla; validazione e commit restano responsabilità di Config.
+## Esempio d’uso
 
-## Come si usa
-
-Communication passa payload e lunghezza al decoder; solo dopo una decodifica completa chiama `spaghetti_config_apply()`.
-
-## Concetto Zephyr da sapere
-
-### Abilitare zcbor e aggiungere il sorgente codec
-
-1. **Cos’è:** zcbor è la libreria integrata da Zephyr per codificare e decodificare CBOR con stato e buffer limitati.
-2. **A cosa serve:** Trasforma bytes di Communication nel modello Config senza parser testuale o allocazioni non controllate.
-3. **Quando viene usato:** Kconfig e CMake includono la libreria a build-time; il decoder opera a runtime su un buffer ricevuto.
-4. **Build-time o runtime:** Integrazione a build-time, decodifica a runtime.
-5. **Collegamento con questo task:** Lo schema V0 è già definito; questo task prepara il sorgente che lo implementerà.
-6. **File reali coinvolti:** `prj.conf`, `CMakeLists.txt` e il nuovo `subsys/config/config_cbor.c`.
-7. **Cosa guardare nei file:** Controlla l’opzione zcbor disponibile, gli header installati e l’inclusione del nuovo sorgente nel target `app`.
-8. **Cosa non modificare:** Non copiare una seconda versione di zcbor, non accettare campi extra e non applicare Config direttamente dal decoder.
+```c
+struct spaghetti_config decoded;
+int err = spaghetti_config_decode_cbor(payload, payload_size, &decoded);
+if (err == 0) {
+	err = spaghetti_config_apply(&decoded);
+}
+```
 
 ## Checklist di completamento
 
@@ -103,6 +127,21 @@ Communication passa payload e lunghezza al decoder; solo dopo una decodifica com
 - [ ] Applicare CBOR tramite Communication.
 - [ ] Provare payload CBOR validi e non validi.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Aggiungi vettori per payload valido, troncato, chiave mancante/extra/duplicata, tipo errato, limite superato e trailing bytes. `out` resta invariato su ogni errore; prova apply via Shell.
+
+**Risultato atteso**
+
+Solo il CBOR V0 completo produce Config; ogni errore lascia `out` e stato attivo invariati.

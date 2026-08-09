@@ -3,7 +3,24 @@
 **Stato:** ⬜ TODO
 **Fase:** 080 — SHT40 rimovibile a runtime
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Implementare la misura SHT40 direttamente su I2C
+
+Le chiamate Zephyr I2C possono bloccare e appartenere al contesto thread. Lo driver deve
+utilizzare il controller di proprietà Port piuttosto che istigare un sensore rimovibile
+in Devicetree.
+
+### Rimuovere la scorciatoia Sensor statica
+
+La rimozione del nodo dimostra identità rimovibile è stato runtime. La scheda Devicetree
+deve continuare a descrivere solo il controller fisico I2C e il cablaggio Port.
+
+## Perché lo facciamo
+
+Il tipo di sensore è una scelta runtime; nel Devicetree resta soltanto il controller fisicamente saldato.
+
+## Implementazione guidata
 
 ### Passo 1 — Definire la configurazione runtime di SHT40
 
@@ -81,26 +98,22 @@ verifica separatamente i due CRC-8 e solo allora converte temperatura e umidità
 unità di `spaghetti_sample`. Propaga errori I2C e restituisce `-EBADMSG` per CRC errato.
 Rimuovi nodo SHT40, `CONFIG_SENSOR`, wrapper temporaneo e ogni chiamata Sensor.
 
-## Perché è fatto così
+La nuova `configure` è chiamata da Config. Gli ID e `driver_config_size` sono passati
+per valore; `type_id` e `driver_config` sono prestiti `const`; `out_id` è l’unico
+output. Manager valida `driver_config != NULL`, size non nulla e compatibile con il
+driver, poi passa gli stessi dati a `ops->init`; scrive l’ID solo dopo init riuscita.
 
-Il tipo di sensore è una scelta runtime; nel Devicetree resta soltanto il controller fisicamente saldato.
+Nel driver SHT40 mantieni le firme `sht40_init`, `sht40_read` e `sht40_deinit` della
+fase 050. `init` copia `spaghetti_sht40_config` nel context; `read` usa soltanto quella
+copia; `deinit` azzera il context. Nessuna funzione conserva il puntatore Config.
 
-## Come si usa
+## Esempio d’uso
 
-Config passa al Manager una copia limitata di `spaghetti_sht40_config`; il driver usa il device I2C del Port e non un nodo sensore statico.
-
-## Concetto Zephyr da sapere
-
-### Implementare la misura SHT40 direttamente su I2C
-
-Le chiamate Zephyr I2C possono bloccare e appartenere al contesto thread. Lo driver deve
-utilizzare il controller di proprietà Port piuttosto che istigare un sensore rimovibile
-in Devicetree.
-
-### Rimuovere la scorciatoia Sensor statica
-
-La rimozione del nodo dimostra identità rimovibile è stato runtime. La scheda Devicetree
-deve continuare a descrivere solo il controller fisico I2C e il cablaggio Port.
+```c
+const struct spaghetti_sht40_config config = { .i2c_address = 0x44U };
+int err = spaghetti_module_manager_configure(
+	0U, "sht40", &config, sizeof(config), &module_id);
+```
 
 ## Checklist di completamento
 
@@ -111,6 +124,21 @@ deve continuare a descrivere solo il controller fisico I2C e il cablaggio Port.
 - [ ] Rimuovere la scorciatoia Sensor statica.
 - [ ] Eseguire il test di regressione di SHT40 runtime.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Esegui ricerca globale: nessun nodo SHT40, API Sensor o wrapper temporaneo deve restare. Prova indirizzo/size invalidi, errore I2C e CRC; poi dieci letture hardware valide.
+
+**Risultato atteso**
+
+SHT40 funziona via I2C diretto e non resta alcuna dipendenza Sensor o nodo sensore statico.

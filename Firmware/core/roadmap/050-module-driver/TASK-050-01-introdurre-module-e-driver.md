@@ -3,7 +3,11 @@
 **Stato:** ⬜ TODO
 **Fase:** 050 — Module + Module Driver
 
-## Cosa devo fare
+## Perché lo facciamo
+
+L’istanza appartiene al Manager, mentre il descrittore immutabile decide quali operazioni esegue il driver concreto.
+
+## Implementazione guidata
 
 ### Passo 1 — Definire l’istanza minima di Module
 
@@ -16,8 +20,7 @@ dipendenze circolari tra gli header.
 
 ### Passo 2 — Definire il contratto temporaneo del campione
 
-`include/spaghetti/data.h` o `include/spaghetti/module_driver.h`, scegliendo una
-posizione e documentandola.
+`include/spaghetti/module.h`.
 
 Definire solo i campi di temperatura e umidità necessari dall'attuale SHT40 letto come
 `struct spaghetti_sample`. Non aggiungere canali generalizzati, mappe dei metadati o
@@ -83,6 +86,16 @@ Manager possiede ogni istanza e il buffer privato indicato da `context`; Port e 
 sono prestiti `const` con lifetime firmware. Il campione è pubblico e copiabile; le
 unità sono millesimi di °C e millesimi di percentuale relativa.
 
+Significato dei campi di `spaghetti_module`:
+
+- `id`: identifica un’istanza runtime, non un tipo di sensore;
+- `state`: impedisce read prima di init o dopo un errore;
+- `port`: puntatore perché il Port è posseduto dal catalogo Port; `const` impedisce al
+  driver di modificarne il descrittore;
+- `driver`: puntatore al descrittore condiviso e immutabile, valido per tutto il firmware;
+- `context`: puntatore modificabile allo storage privato della singola istanza; Manager
+  possiede storage e lifetime, il driver ne interpreta il contenuto.
+
 In `include/spaghetti/module_driver.h` definisci:
 
 ```c
@@ -105,13 +118,22 @@ di dati della dimensione errata. `out` è del chiamante e cambia solo al success
 Descrittore, stringa e tabella operazioni SHT40 sono immutabili e statici. Il chiamante
 è il futuro Manager; SHT40 implementa init/read/deinit e propaga errno negativi.
 
-## Perché è fatto così
+Le tre callback hanno questo comportamento:
 
-L’istanza appartiene al Manager, mentre il descrittore immutabile decide quali operazioni esegue il driver concreto.
+1. `init(module, config, config_size)` valida puntatori e dimensione, inizializza il
+   context e porta `module->state` a READY solo al successo. `module` non è `const`
+   perché cambia stato; `config` è `const` e preso in prestito; la size è per valore.
+2. `read(module, out)` richiede READY, legge il sensore e scrive `out` solo al successo.
+   Il chiamante possiede `out`; il driver non ne conserva il puntatore.
+3. `deinit(module)` rende il context inutilizzabile e riporta lo stato a
+   UNINITIALIZED. Restituisce `0` o un errno negativo e non libera heap.
 
-## Come si usa
+## Esempio d’uso
 
-Il chiamante conserva `struct spaghetti_module`; invoca `module->driver->ops->read(module, out)` e il driver usa il Port contenuto nell’istanza.
+```c
+struct spaghetti_sample sample;
+int err = module.driver->ops->read(&module, &sample);
+```
 
 ## Checklist di completamento
 
@@ -122,6 +144,21 @@ Il chiamante conserva `struct spaghetti_module`; invoca `module->driver->ops->re
 - [ ] Adattare SHT40 alle operazioni del driver.
 - [ ] Usare SHT40 tramite la tabella operazioni.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Esegui validator/build e leggi SHT40 esclusivamente tramite `driver->ops`. Prova puntatori nulli e operazione mancante. Fine quando non restano chiamate al wrapper dal chiamante.
+
+**Risultato atteso**
+
+La lettura SHT40 passa soltanto dalla tabella operazioni e mantiene ownership e stato coerenti.

@@ -3,11 +3,40 @@
 **Stato:** ⬜ TODO
 **Fase:** 190 — Power
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Verificare l’hardware di alimentazione controllabile
+
+1. **Cos’è:** In questa fase `Power` è un componente Spaghetti LAB che controlla una rail o enable fisico. Non è ancora il sottosistema Zephyr di sospensione, deep sleep o device power management.
+2. **A cosa serve:** Evita di confondere ownership di una risorsa elettrica condivisa con il risparmio energetico globale del sistema.
+3. **Quando viene usato:** Prima si verifica lo schema e si misura l’hardware; il controllo runtime verrà implementato nei task successivi.
+4. **Build-time o runtime:** Verifica hardware ora; gestione a runtime più avanti.
+5. **Collegamento con questo task:** Devi provare che esista davvero una risorsa comandabile prima di definire API e algoritmi.
+6. **File reali coinvolti:** schematico esterno della board, `dts/bindings/spaghetti/spaghettilab,port.yaml`, DTS della board sotto `boards/spaghettilab/` e `roadmap/190-power/README.md` per annotare la misura.
+7. **Cosa guardare nei file:** Identifica segnale enable, polarità, stato al reset, rail alimentate, limiti e comportamento misurabile.
+8. **Cosa non modificare:** Non abilitare opzioni Zephyr PM, non inventare wake source/deep sleep e non creare un driver se la rail non è controllabile.
+
+### Implementare il reference counting con backend finto
+
+Utilizzare il mutex solo intorno alle transizioni di stato corto. Non chiamare mai
+questo blocco API da ISR o timer contesto di callback.
+
+### Collegare Power al controllo hardware reale
+
+Devicetree identifica il controllo fisico; il sottosistema Power possiede lo stato di
+riferimento runtime e la politica di transizione.
+
+## Perché lo facciamo
+
+Il conteggio dei proprietari accende alla prima acquisizione e spegne all’ultimo rilascio, mantenendo rollback verificabile.
+
+## Implementazione guidata
 
 ### Passo 1 — Verificare l’hardware di alimentazione controllabile
 
-Il vero schema della scheda, Port binding, scheda DTS, e hardware misurato.
+Apri lo schematico esterno della revisione reale,
+`dts/bindings/spaghetti/spaghettilab,port.yaml`, il `.dts` della board selezionata e
+`roadmap/190-power/README.md`, dove registrerai segnale, polarità e misure.
 
 Identificare una risorsa di energia fisicamente controllabile, controllare la polarità,
 stato di avvio sicuro, Port interessati, limiti elettrici, e il comportamento
@@ -32,7 +61,8 @@ valido.
 
 ### Passo 4 — Provare proprietà e rollback di Power
 
-`subsys/power/power.c` e un'imbracatura di prova fake-backend focalizzata.
+`subsys/power/power.c`; crea `tests/power/CMakeLists.txt`, `tests/power/prj.conf` e
+`tests/power/src/main.c` per il backend finto.
 
 Esercizio di due proprietari acquiring/releasing in entrambi gli ordini,
 duplicate/invalid rilascia, overflow border, fake on failure, e fake off failure.
@@ -43,8 +73,8 @@ Confermare i conti e lo stato rimangono coerenti dopo ogni errore.
 Port binding/board DTS e `subsys/power/power.c`.
 
 Aggiungere il riferimento di potenza verificato alla descrizione dell'hardware statico e
-implementare veri e propri ganci on/off tramite Port o l'appropriato Zephyr
-GPIO/runtime-PM API. Preservare la polarità sicura misurata e propagare gli errori di
+implementare i ganci on/off con `struct gpio_dt_spec` e `gpio_pin_set_dt()`. Non usare
+runtime PM: questa fase controlla una linea enable fisica. Preservare la polarità sicura misurata e propagare gli errori di
 transizione.
 
 ### Passo 6 — Integrare Power con Manager e provare l’hardware
@@ -78,40 +108,54 @@ limitata degli owner e mutex; Power la possiede per tutto il firmware. Acquire r
 owner duplicato e overflow, accende solo su 0→1 e registra owner solo dopo successo.
 Release rifiuta owner assente/underflow, spegne solo su 1→0 e conserva ownership se lo
 spegnimento fallisce. Tutte le API sono thread-only e restituiscono errno precisi.
-Prima usa hook fake in test; collega GPIO/runtime-PM solo dopo aver verificato polarità,
+Prima usa hook fake in test; collega il `gpio_dt_spec` solo dopo aver verificato polarità,
 safe state e risorsa reale nello schema. Manager acquisisce prima di driver init e
 rilascia dopo deinit o in ogni rollback.
 
-## Perché è fatto così
+Significato di stato e campi:
 
-Il conteggio dei proprietari accende alla prima acquisizione e spegne all’ultimo rilascio, mantenendo rollback verificabile.
+- STARTING/STOPPING rendono osservabile una transizione mentre il mutex è posseduto;
+- ERROR conserva un guasto hardware che non può essere rappresentato come ON/OFF;
+- `reference_count` è il numero di owner distinti, non il numero di chiamate;
+- `last_error` conserva l’errno dell’ultima transizione fallita.
 
-## Come si usa
+`init()` valida ogni `gpio_dt_spec`, configura il safe state e azzera owner/count.
+`acquire(id, owner)` è chiamata dal Manager prima di driver init: valida ID/owner,
+blocca il mutex, rifiuta duplicati, esegue power-on solo con count zero, registra owner
+e incrementa. `release` esegue il percorso inverso e non cancella owner/count se
+power-off fallisce. `get_status(id, out)` copia uno snapshot sotto mutex; `out` è del
+chiamante e cambia solo al successo.
 
-Manager acquisisce Power prima di `driver->init` e lo rilascia dopo `deinit` o in ogni rollback.
+In `subsys/power/power.c` crea:
 
-## Concetto Zephyr da sapere
+```c
+#define SPAGHETTI_POWER_MAX_OWNERS 8U
 
-### Verificare l’hardware di alimentazione controllabile
+struct spaghetti_power_resource {
+	spaghetti_power_resource_id_t id;
+	struct gpio_dt_spec enable;
+	enum spaghetti_power_state state;
+	spaghetti_power_owner_id_t owners[SPAGHETTI_POWER_MAX_OWNERS];
+	uint16_t reference_count;
+	int last_error;
+	struct k_mutex lock;
+};
+```
 
-1. **Cos’è:** In questa fase `Power` è un componente Spaghetti LAB che controlla una rail o enable fisico. Non è ancora il sottosistema Zephyr di sospensione, deep sleep o device power management.
-2. **A cosa serve:** Evita di confondere ownership di una risorsa elettrica condivisa con il risparmio energetico globale del sistema.
-3. **Quando viene usato:** Prima si verifica lo schema e si misura l’hardware; il controllo runtime verrà implementato nei task successivi.
-4. **Build-time o runtime:** Verifica hardware ora; gestione a runtime più avanti.
-5. **Collegamento con questo task:** Devi provare che esista davvero una risorsa comandabile prima di definire API e algoritmi.
-6. **File reali coinvolti:** Schema reale, binding Port, DTS della board e note di misura; nessun nuovo file Zephyr in questo task.
-7. **Cosa guardare nei file:** Identifica segnale enable, polarità, stato al reset, rail alimentate, limiti e comportamento misurabile.
-8. **Cosa non modificare:** Non abilitare opzioni Zephyr PM, non inventare wake source/deep sleep e non creare un driver se la rail non è controllabile.
+`id` identifica la rail; `enable` copia controller, pin e flag dal Devicetree, mentre
+il device GPIO resta posseduto da Zephyr; `owners` impedisce doppie acquisizioni;
+`reference_count` indica quanti elementi sono validi; `lock` serializza due thread.
+Power possiede struct, array e mutex fino allo spegnimento.
 
-### Implementare il reference counting con backend finto
+## Esempio d’uso
 
-Utilizzare il mutex solo intorno alle transizioni di stato corto. Non chiamare mai
-questo blocco API da ISR o timer contesto di callback.
-
-### Collegare Power al controllo hardware reale
-
-Devicetree identifica il controllo fisico; il sottosistema Power possiede lo stato di
-riferimento runtime e la politica di transizione.
+```c
+int err = spaghetti_power_acquire(resource_id, owner_id);
+if (err == 0) {
+	/* Usa la risorsa. */
+	(void)spaghetti_power_release(resource_id, owner_id);
+}
+```
 
 ## Checklist di completamento
 
@@ -122,6 +166,21 @@ riferimento runtime e la politica di transizione.
 - [ ] Collegare Power al controllo hardware reale.
 - [ ] Integrare Power con Manager e provare l’hardware.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Con backend fake prova due owner in entrambi gli ordini, duplicato, underflow, overflow e fallimenti on/off. Poi misura first-on/final-off reale e inietta init driver fallita per verificare il rilascio.
+
+**Risultato atteso**
+
+First-acquire/final-release comandano una sola transizione e ogni errore mantiene owner e count coerenti.

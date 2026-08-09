@@ -3,7 +3,30 @@
 **Stato:** ⬜ TODO
 **Fase:** 100 — Config persistente
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Verificare e definire la partizione di storage
+
+Le partizioni Flash sono un layout hardware di tempo di compilazione. Un offset errato
+può sovrascrivere il firmware, quindi i confini di partizione e DTS generati devono
+essere ispezionati prima dell'uso.
+
+### Abilitare Zephyr Settings e il relativo backend
+
+1. **Cos’è:** Settings è l’API key/value di Zephyr. NVS e ZMS sono backend che memorizzano quei valori su flash con organizzazioni diverse.
+2. **A cosa serve:** Separa il contratto con cui Config salva un record dal formato fisico usato nella partizione.
+3. **Quando viene usato:** Kconfig sceglie Settings e il backend durante la build; inizializzazione, lettura e scrittura avvengono a runtime.
+4. **Build-time o runtime:** Selezione a build-time, persistenza a runtime.
+5. **Collegamento con questo task:** La partizione `storage` è stata verificata nel task precedente; ora puoi collegarla a un backend reale.
+6. **File reali coinvolti:** `prj.conf`; la partizione resta nel file Devicetree/partition già definito.
+7. **Cosa guardare nei file:** Leggi l’help Kconfig delle opzioni `CONFIG_SETTINGS`, `CONFIG_SETTINGS_NVS` o dell’alternativa disponibile nella versione installata.
+8. **Cosa non modificare:** Non abilitare contemporaneamente backend casuali, non cambiare la partizione e non salvare ancora storico misure o segreti.
+
+## Perché lo facciamo
+
+La persistenza salva il modello Config già validato; non introduce un secondo modello di configurazione.
+
+## Implementazione guidata
 
 ### Passo 1 — Definire l’API di storage sincrono
 
@@ -15,7 +38,8 @@ proprietario buffer/snapshot esplicito e codici di ritorno realistici.
 
 ### Passo 2 — Implementare e provare il backend storage RAM
 
-Creare `subsys/services/storage/storage.c` e un sito di chiamata di test focalizzato.
+Crea `subsys/services/storage/storage.c`; usa `src/main.c` per la prova temporanea del
+backend RAM.
 
 Implementare un record fisso in-memory con il comportamento empty/not-found, limitato
 copy-in/copy-out, la conservazione della versione e sovrascrivere la semantica. Non
@@ -23,12 +47,14 @@ aggiungere codice per la memoria flash in questo task.
 
 ### Passo 3 — Verificare e definire la partizione di storage
 
-Il layout flash della scheda verificato e il file di partizione overlay/Devicetree
-appropriato.
+Apri in sola lettura `build/zephyr/zephyr.dts` e modifica
+`boards/esp32c3_devkitm_esp32c3.overlay` soltanto se la partizione già ereditata dalla
+board non coincide con i dati sotto.
 
-Ispezionare le partizioni flash correnti, selezionare una regione reale non sovrapposta
-e definisci una partizione fissa `storage` usando il binding già fornito da Zephyr. Non
-indovinare un indirizzo o una dimensione.
+Verifica nel DTS generato `storage_partition: partition@3b0000`, label `storage` e
+`reg = <0x3b0000 0x30000>`. La flash è 4 MiB; questa regione termina a `0x3e0000`, dove
+inizia la partizione scratch, quindi non si sovrappone. Se il DTS generato è diverso,
+fermati: non aggiungere una seconda partizione e non inventare offset.
 
 ### Passo 4 — Abilitare Zephyr Settings e il relativo backend
 
@@ -81,32 +107,29 @@ il backend flash realmente supportato; nel DTS usa una sola partizione verificat
 sovrapposta. Core inizializza Storage, tratta `-ENOENT` come primo avvio, altrimenti
 valida/applica Config. Scrivi solo dopo apply riuscito.
 
-## Perché è fatto così
+Campi e funzioni, senza scelte lasciate aperte:
 
-La persistenza salva il modello Config già validato; non introduce un secondo modello di configurazione.
+- `magic`: usa una costante a 32 bit documentata per distinguere il record da bytes
+  casuali; non cambia tra due build compatibili;
+- `version`: deve coincidere con `SPAGHETTI_CONFIG_VERSION`;
+- `config`: snapshot completo posseduto dal record, senza puntatori esterni.
 
-## Come si usa
+`spaghetti_storage_init()` è chiamata da Core al boot; inizializza Settings, registra
+l’handler e carica il subtree `SPAGHETTI_STORAGE_CONFIG_KEY`. Restituisce `0` o propaga
+l’errno backend. `read_config(out)` valida `out`, controlla record presente, magic e
+versione, poi copia Config; usa `-EINVAL`, `-ENOENT` e `-EBADMSG`. `write_config(config)`
+valida il puntatore, costruisce un record locale e chiama `settings_save_one()`; il
+puntatore `const` non viene conservato.
 
-Core inizializza Storage, legge il record `config`, lo valida e lo applica; dopo un commit Config scrive il nuovo snapshot.
+## Esempio d’uso
 
-## Concetto Zephyr da sapere
-
-### Verificare e definire la partizione di storage
-
-Le partizioni Flash sono un layout hardware di tempo di compilazione. Un offset errato
-può sovrascrivere il firmware, quindi i confini di partizione e DTS generati devono
-essere ispezionati prima dell'uso.
-
-### Abilitare Zephyr Settings e il relativo backend
-
-1. **Cos’è:** Settings è l’API key/value di Zephyr. NVS e ZMS sono backend che memorizzano quei valori su flash con organizzazioni diverse.
-2. **A cosa serve:** Separa il contratto con cui Config salva un record dal formato fisico usato nella partizione.
-3. **Quando viene usato:** Kconfig sceglie Settings e il backend durante la build; inizializzazione, lettura e scrittura avvengono a runtime.
-4. **Build-time o runtime:** Selezione a build-time, persistenza a runtime.
-5. **Collegamento con questo task:** La partizione `storage` è stata verificata nel task precedente; ora puoi collegarla a un backend reale.
-6. **File reali coinvolti:** `prj.conf`; la partizione resta nel file Devicetree/partition già definito.
-7. **Cosa guardare nei file:** Leggi l’help Kconfig delle opzioni `CONFIG_SETTINGS`, `CONFIG_SETTINGS_NVS` o dell’alternativa disponibile nella versione installata.
-8. **Cosa non modificare:** Non abilitare contemporaneamente backend casuali, non cambiare la partizione e non salvare ancora storico misure o segreti.
+```c
+struct spaghetti_config config;
+int err = spaghetti_storage_read_config(&config);
+if (err == -ENOENT) {
+	config = default_config;
+}
+```
 
 ## Checklist di completamento
 
@@ -117,6 +140,21 @@ essere ispezionati prima dell'uso.
 - [ ] Implementare il record persistente con Settings.
 - [ ] Caricare Config all’avvio e provare la persistenza.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Prova backend RAM con record assente, round-trip e versione errata. Poi build pristine, verifica partizione, salva, spegni/riaccendi e controlla Config applicata; corruzione deve essere deterministica.
+
+**Risultato atteso**
+
+La Config valida sopravvive al power-cycle; record assente, incompatibile o corrotto è gestito.

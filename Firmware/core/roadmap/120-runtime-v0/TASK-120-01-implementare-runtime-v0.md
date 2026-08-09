@@ -3,7 +3,35 @@
 **Stato:** ⬜ TODO
 **Fase:** 120 — Runtime V0
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Implementare timer e semaforo del periodo
+
+1. **Cos’è:** `k_timer` genera una scadenza periodica; `k_sem` è un semaforo che trasferisce il segnale a un thread autorizzato a bloccare ed eseguire I/O.
+2. **A cosa serve:** La callback del timer resta breve e il lavoro I2C viene eseguito fuori dal contesto di scadenza.
+3. **Quando viene usato:** Il timer chiama la callback alla scadenza; la callback esegue `k_sem_give()`, mentre il thread attende con `k_sem_take()`.
+4. **Build-time o runtime:** Runtime.
+5. **Collegamento con questo task:** Runtime deve campionare periodicamente senza eseguire Manager o I2C dentro la callback.
+6. **File reali coinvolti:** `subsys/services/timer/timer.h` e `subsys/services/timer/timer.c`.
+7. **Cosa guardare nei file:** Controlla inizializzazione, periodo, start/stop, semaforo ricevuto e assenza di operazioni bloccanti nella callback.
+8. **Cosa non modificare:** Non leggere sensori, non pubblicare su zbus e non chiamare Manager dalla callback di `k_timer`.
+
+### Implementare il thread di campionamento Runtime
+
+1. **Cos’è:** Un thread Zephyr è un contesto schedulabile con entry function, stack e priorità espliciti.
+2. **A cosa serve:** Esegue il lavoro che può attendere o bloccare, come `k_sem_take()`, lettura I2C e pubblicazione del campione.
+3. **Quando viene usato:** Viene creato/avviato secondo la scelta del task e resta in attesa del semaforo tra due campionamenti.
+4. **Build-time o runtime:** Runtime.
+5. **Collegamento con questo task:** È il proprietario del ciclo di campionamento che prima viveva in `main`.
+6. **File reali coinvolti:** `subsys/runtime/runtime.c`; eventuali dimensione stack e priorità configurabili appartengono al Kconfig del componente.
+7. **Cosa guardare nei file:** Individua entry function, stack, priorità, attesa, uscita/stop e gestione degli errori.
+8. **Cosa non modificare:** Non scegliere priorità casuali, non usare busy-wait e non passare al thread puntatori con durata insufficiente.
+
+## Perché lo facciamo
+
+Timer e semaforo separano la scadenza breve dal thread che può bloccare su I2C e zbus.
+
+## Implementazione guidata
 
 ### Passo 1 — Definire l’API del task di campionamento Runtime
 
@@ -82,37 +110,53 @@ Il semaforo è prestato ma deve avere lifetime firmware perché la callback lo c
 La callback fa soltanto `k_sem_give()`. Il thread Runtime possiede lettura, costruzione
 messaggio e publish; stack e priorità sono costanti Kconfig documentate.
 
-## Perché è fatto così
+Sequenza delle API Runtime:
 
-Timer e semaforo separano la scadenza breve dal thread che può bloccare su I2C e zbus.
+1. `spaghetti_runtime_init()` è chiamata da Core al boot. Inizializza semaforo, timer,
+   stato privato e thread; non avvia il periodo. Restituisce `0` o `-EIO`.
+2. `spaghetti_runtime_load(task)` è chiamata da Config mentre Runtime è fermo. Valida
+   puntatore, ID, periodo ed enabled, quindi copia l’intera struct; usa `-EINVAL`,
+   `-ENOENT` e `-EBUSY`.
+3. `spaghetti_runtime_start()` non riceve parametri: usa la copia caricata, avvia timer
+   e imposta RUNNING. Restituisce `-ENOENT` senza task e `-EALREADY` se già attivo.
+4. `spaghetti_runtime_stop(timeout)` ferma nuove scadenze e aspetta la conferma del
+   thread per non restituire durante un’I/O. `timeout` è per valore e limita l’attesa;
+   usa `-ETIMEDOUT` se il thread non si ferma.
 
-## Come si usa
+Lo stato privato contiene la copia del task, enum STOPPED/RUNNING/STOPPING, `k_sem`,
+`k_timer` e flag di uscita. Runtime possiede questi oggetti per tutto il firmware.
 
-Core inizializza Runtime; Config carica il task; il timer dà il semaforo e il thread esegue Manager read → Data publish.
+Il collegamento timer → semaforo deve avere questa forma:
 
-## Concetto Zephyr da sapere
+```c
+K_SEM_DEFINE(runtime_tick_sem, 0, 1);
 
-### Implementare timer e semaforo del periodo
+static void runtime_timer_expiry(struct k_timer *timer)
+{
+	ARG_UNUSED(timer);
+	k_sem_give(&runtime_tick_sem);
+}
 
-1. **Cos’è:** `k_timer` genera una scadenza periodica; `k_sem` è un semaforo che trasferisce il segnale a un thread autorizzato a bloccare ed eseguire I/O.
-2. **A cosa serve:** La callback del timer resta breve e il lavoro I2C viene eseguito fuori dal contesto di scadenza.
-3. **Quando viene usato:** Il timer chiama la callback alla scadenza; la callback esegue `k_sem_give()`, mentre il thread attende con `k_sem_take()`.
-4. **Build-time o runtime:** Runtime.
-5. **Collegamento con questo task:** Runtime deve campionare periodicamente senza eseguire Manager o I2C dentro la callback.
-6. **File reali coinvolti:** `subsys/services/timer/timer.h` e `subsys/services/timer/timer.c`.
-7. **Cosa guardare nei file:** Controlla inizializzazione, periodo, start/stop, semaforo ricevuto e assenza di operazioni bloccanti nella callback.
-8. **Cosa non modificare:** Non leggere sensori, non pubblicare su zbus e non chiamare Manager dalla callback di `k_timer`.
+K_TIMER_DEFINE(runtime_timer, runtime_timer_expiry, NULL);
+```
 
-### Implementare il thread di campionamento Runtime
+Il count massimo 1 fonde due scadenze se il thread è ancora occupato, evitando una
+coda illimitata. La callback non chiama I2C, Manager o Data. Il thread esegue
+`k_sem_take(&runtime_tick_sem, K_FOREVER)`, poi read e publish.
 
-1. **Cos’è:** Un thread Zephyr è un contesto schedulabile con entry function, stack e priorità espliciti.
-2. **A cosa serve:** Esegue il lavoro che può attendere o bloccare, come `k_sem_take()`, lettura I2C e pubblicazione del campione.
-3. **Quando viene usato:** Viene creato/avviato secondo la scelta del task e resta in attesa del semaforo tra due campionamenti.
-4. **Build-time o runtime:** Runtime.
-5. **Collegamento con questo task:** È il proprietario del ciclo di campionamento che prima viveva in `main`.
-6. **File reali coinvolti:** `subsys/runtime/runtime.c`; eventuali dimensione stack e priorità configurabili appartengono al Kconfig del componente.
-7. **Cosa guardare nei file:** Individua entry function, stack, priorità, attesa, uscita/stop e gestione degli errori.
-8. **Cosa non modificare:** Non scegliere priorità casuali, non usare busy-wait e non passare al thread puntatori con durata insufficiente.
+## Esempio d’uso
+
+```c
+const struct spaghetti_runtime_sampling_task task = {
+	.module_id = module_id,
+	.period_ms = 1000U,
+	.enabled = true,
+};
+int err = spaghetti_runtime_load(&task);
+if (err == 0) {
+	err = spaghetti_runtime_start();
+}
+```
 
 ## Checklist di completamento
 
@@ -123,6 +167,21 @@ Core inizializza Runtime; Config carica il task; il timer dà il semaforo e il t
 - [ ] Integrare Runtime con Core e Config.
 - [ ] Rimuovere il loop da main e verificare la cadenza.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Flasha e misura timestamp di almeno dieci campioni: periodo 1000 ms entro la tolleranza documentata. Stop deve fermare nuovi campioni; callback timer senza I/O verificata staticamente.
+
+**Risultato atteso**
+
+Runtime produce un campione ogni 1000 ms e stop termina la produzione entro il timeout.

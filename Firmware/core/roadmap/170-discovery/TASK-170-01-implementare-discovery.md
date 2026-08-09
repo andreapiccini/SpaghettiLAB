@@ -3,7 +3,11 @@
 **Stato:** ⬜ TODO
 **Fase:** 170 — Discovery
 
-## Cosa devo fare
+## Perché lo facciamo
+
+Discovery propone assegnazioni normalizzate, ma soltanto Manager crea e possiede le istanze Module.
+
+## Implementazione guidata
 
 ### Passo 1 — Definire i tipi risultato di Discovery
 
@@ -55,6 +59,10 @@ enum spaghetti_discovery_mode { SPAGHETTI_DISCOVERY_MANUAL, SPAGHETTI_DISCOVERY_
 enum spaghetti_discovery_source { SPAGHETTI_DISCOVERY_SOURCE_CONFIG, SPAGHETTI_DISCOVERY_SOURCE_PROVIDER };
 struct spaghetti_discovery_result { spaghetti_port_id_t port_id; char type_id[16]; size_t config_size; uint8_t config[32]; enum spaghetti_discovery_source source; uint32_t generation; };
 typedef int (*spaghetti_discovery_sink_t)(const struct spaghetti_discovery_result *result, void *user_data);
+struct spaghetti_discovery_provider_ops {
+	int (*run)(spaghetti_port_id_t port_id, k_timeout_t timeout,
+		   struct spaghetti_discovery_result *out);
+};
 int spaghetti_discovery_init(spaghetti_discovery_sink_t sink, void *user_data);
 int spaghetti_discovery_submit_manual(const struct spaghetti_discovery_result *result);
 ```
@@ -67,13 +75,29 @@ valida Port, terminazione type, config_size, source e generation, rifiuta stale 
 `-ESTALE`, poi invoca il sink. Il sink costruisce la richiesta Manager; Discovery non
 possiede slot né chiama driver direttamente.
 
-## Perché è fatto così
+`port_id` identifica il connettore; `type_id` e `config` sono array perché Discovery
+deve possedere una proposta completa; `config_size` limita i byte validi; `source`
+distingue Config da provider; `generation` respinge risultati vecchi. La callback sink
+riceve un risultato `const` preso in prestito e lo deve copiare se serve oltre il
+ritorno. La callback provider `run` riceve Port e timeout per valore e scrive un output
+del chiamante solo al successo. In questa fase implementa soltanto MANUAL: non creare
+un provider automatico o un thread.
 
-Discovery propone assegnazioni normalizzate, ma soltanto Manager crea e possiede le istanze Module.
+`init(sink, user_data)` azzera le generation per Port e conserva callback/context;
+`submit_manual(result)` valida tutto, confronta generation, copia il risultato nello
+stato privato, invoca il sink e fa rollback della copia se il sink fallisce.
 
-## Come si usa
+## Esempio d’uso
 
-Config crea un risultato MANUAL; Discovery lo valida e invoca il sink, che inoltra la richiesta al Module Manager.
+```c
+const struct spaghetti_discovery_result result = {
+	.port_id = 0U,
+	.type_id = "sht40",
+	.source = SPAGHETTI_DISCOVERY_SOURCE_CONFIG,
+	.generation = generation,
+};
+int err = spaghetti_discovery_submit_manual(&result);
+```
 
 ## Checklist di completamento
 
@@ -83,6 +107,21 @@ Config crea un risultato MANUAL; Discovery lo valida e invoca il sink, che inolt
 - [ ] Inviare i risultati accettati al Module Manager.
 - [ ] Instradare le assegnazioni Config tramite Discovery.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Prova risultato valido, Port/type/config invalidi, generazione obsoleta e sink che fallisce. Manager deve cambiare solo per il risultato accettato; nessun provider entra nel Manager.
+
+**Risultato atteso**
+
+Solo risultati validi e non obsoleti raggiungono Manager; Discovery non possiede istanze.

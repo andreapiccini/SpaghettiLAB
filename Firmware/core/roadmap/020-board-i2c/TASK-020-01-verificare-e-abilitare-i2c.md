@@ -3,77 +3,7 @@
 **Stato:** ⬜ TODO
 **Fase:** 020 — Scheda attuale / I2C
 
-## Cosa devo fare
-
-### Passo 1 — Verificare controller e pin I2C reali
-
-Lo schema Core, lo schema del connettore del modulo e l'attuale pinout della scheda
-ESP32-C3.
-
-Annota il controller esatto, i pin SDA e SCL, le resistenze di pull-up, la linea di
-alimentazione e la revisione della scheda che raggiungono fisicamente le Spaghetti Port.
-Non modificare i
-file di produzione.
-
-### Passo 2 — Ispezionare il Devicetree generato
-
-`build/zephyr/zephyr.dts` e le definizioni di ESP32-C3 DTS/pinctrl installate
-all'interno di `make shell`.
-
-Individuare l'etichetta del controller I2C verificata, il suo stato attuale e la
-sintassi ESP32-C3 pinctrl installata. Registrare le etichette esatte dei nodi necessarie
-per overlay; non modificare i file generati.
-
-### Passo 3 — Abilitare I2C nell’overlay della scheda
-
-`boards/esp32c3_devkitm_esp32c3.overlay`.
-
-Aggiungi o ridefinisci il vero controller I2C e il suo vero pinctrl. Solo modello concettuale:
-
-```dts
-/* I2C_CONTROLLER and I2C_PINCTRL are placeholders resolved in Step 2.1. */
-&I2C_CONTROLLER {
-    status = "okay";
-    clock-frequency = <I2C_BITRATE_STANDARD>;
-    pinctrl-0 = <&I2C_PINCTRL>;
-    pinctrl-names = "default";
-};
-```
-
-Definire il corrispondente gruppo ESP32 pinctrl utilizzando la sintassi già utilizzata
-dall'ESP32-C3 DTS/bindings installato; non copiare numeri dei pin da un'altra scheda.
-
-### Passo 4 — Abilitare il supporto I2C di Zephyr
-
-`prj.conf`.
-
-Aggiungi `CONFIG_I2C=y`. Questo compila in modo permanente le API generiche del
-controller I2C richieste dalle porte I2C.
-
-### Passo 5 — Controllare la configurazione I2C generata
-
-`build/zephyr/zephyr.dts` e `build/zephyr/.config`.
-
-Dopo una build pulita, confermare che il controller selezionato è `okay`,
-i pin generati corrispondono allo schema verificato, e `.config` contiene
-`CONFIG_I2C=y`. Non modificare né il file generato.
-
-### Passo 6 — Caricare e provare la baseline I2C
-
-`README.md` e la console seriale.
-
-Non aggiungere codice. Lanciare l'immagine generata dalla build pulita e verificare che il controller
-non utilizzato non abbia rotto l'avvio o la console USB.
-
-## Perché è fatto così
-
-Controller e pin sono fatti hardware statici; descriverli nel Devicetree evita numeri GPIO nel codice C.
-
-## Come si usa
-
-La build genera `zephyr.dts`; la fase Port userà `DEVICE_DT_GET(DT_NODELABEL(i2c0))` e `device_is_ready()` a runtime.
-
-## Concetto Zephyr da sapere
+## Prima di scrivere: concetti Zephyr
 
 ### Ispezionare il Devicetree generato
 
@@ -102,6 +32,87 @@ La build genera `zephyr.dts`; la fase Port userà `DEVICE_DT_GET(DT_NODELABEL(i2
 `CONFIG_I2C=y` compila il generico Zephyr I2C API e il controller selezionato driver.
 Non descrive pin e non è configurazione runtime.
 
+## Perché lo facciamo
+
+Controller e pin sono fatti hardware statici; descriverli nel Devicetree evita numeri GPIO nel codice C.
+
+## Implementazione guidata
+
+### Passo 1 — Verificare controller e pin I2C reali
+
+Apri `boards/esp32c3_devkitm_esp32c3.overlay` e lo schematico della revisione hardware
+fisicamente collegata. Lo schematico è l’unico input esterno: se non è disponibile,
+marca il task BLOCKED.
+
+Conferma i dati già presenti nell’overlay: controller `i2c0`, SDA GPIO3, SCL GPIO4,
+open-drain e pull-up. Annota anche tensione e revisione. Se lo schematico non coincide,
+usa i dati dello schematico e aggiorna coerentemente snippet e verifiche del task prima
+di scrivere codice C.
+
+### Passo 2 — Ispezionare il Devicetree generato
+
+`build/zephyr/zephyr.dts` e le definizioni di ESP32-C3 DTS/pinctrl installate
+all'interno di `make shell`.
+
+Individuare l'etichetta del controller I2C verificata, il suo stato attuale e la
+sintassi ESP32-C3 pinctrl installata. Registrare le etichette esatte dei nodi necessarie
+per overlay; non modificare i file generati.
+
+### Passo 3 — Abilitare I2C nell’overlay della scheda
+
+`boards/esp32c3_devkitm_esp32c3.overlay`.
+
+Aggiungi o mantieni questo blocco concreto:
+
+```dts
+&pinctrl {
+	spaghetti_i2c0_default: spaghetti_i2c0_default {
+		group1 {
+			pinmux = <I2C0_SDA_GPIO3>, <I2C0_SCL_GPIO4>;
+			bias-pull-up;
+			drive-open-drain;
+			output-high;
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&spaghetti_i2c0_default>;
+	pinctrl-names = "default";
+};
+```
+
+### Passo 4 — Abilitare il supporto I2C di Zephyr
+
+`prj.conf`.
+
+Aggiungi `CONFIG_I2C=y`. Questo compila in modo permanente le API generiche del
+controller I2C richieste dalle porte I2C.
+
+### Passo 5 — Controllare la configurazione I2C generata
+
+`build/zephyr/zephyr.dts` e `build/zephyr/.config`.
+
+Dopo una build pulita, confermare che il controller selezionato è `okay`,
+i pin generati corrispondono allo schema verificato, e `.config` contiene
+`CONFIG_I2C=y`. Non modificare né il file generato.
+
+### Passo 6 — Caricare e provare la baseline I2C
+
+`README.md` e la console seriale.
+
+Non aggiungere codice. Lanciare l'immagine generata dalla build pulita e verificare che il controller
+non utilizzato non abbia rotto l'avvio o la console USB.
+
+## Esempio d’uso
+
+```sh
+rg -n "i2c0|spaghetti_i2c0_default|I2C0_(SDA|SCL)" build/zephyr/zephyr.dts
+rg -n "CONFIG_I2C=y" build/zephyr/.config
+```
+
 ## Checklist di completamento
 
 - [ ] Verificare controller e pin I2C reali.
@@ -111,6 +122,21 @@ Non descrive pin e non è configurazione runtime.
 - [ ] Controllare la configurazione I2C generata.
 - [ ] Caricare e provare la baseline I2C.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Esegui `make pristine`; controlla `i2c0`, pin e `status = "okay"` in `build/zephyr/zephyr.dts` e `CONFIG_I2C=y` in `.config`. Flasha: boot e console devono restare stabili.
+
+**Risultato atteso**
+
+Il DTS generato contiene `i2c0` su GPIO3/GPIO4 e `.config` contiene `CONFIG_I2C=y`.

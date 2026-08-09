@@ -3,17 +3,18 @@
 **Stato:** ⬜ TODO
 **Fase:** 070 — Module Manager
 
-## Cosa devo fare
+## Perché lo facciamo
+
+Il Manager è l’unico proprietario degli slot e rende configurazione e rollback atomici per i chiamanti.
+
+## Implementazione guidata
 
 ### Passo 1 — Dichiarare l’API di Module Manager
 
 `include/spaghetti/module_manager.h`.
 
-Dichiarare `int spaghetti_module_manager_init(void);`, `int
-spaghetti_module_manager_configure(spaghetti_port_id_t port_id, const char *type_id,
-spaghetti_module_id_t *out_id);`, `const struct spaghetti_module
-*spaghetti_module_manager_get_by_port(...)` e `int
-spaghetti_module_manager_read(spaghetti_module_id_t id, struct spaghetti_sample *out);`.
+Scrivi le quattro firme complete mostrate nella sezione “Contratti completi da
+scrivere”; non usare prototipi con `...`.
 
 ### Passo 2 — Implementare lo stato Manager con uno slot
 
@@ -88,13 +89,48 @@ prepara uno slot provvisorio, chiama `driver->ops->init`, poi pubblica READY e `
 Su ogni errore azzera lo slot. Restituisce `-EINVAL`, `-ENOENT`, `-EBUSY`, `-ENOTSUP`,
 `-ENOMEM` o l’errno del driver. `read()` valida READY e inoltra a `ops->read`.
 
-## Perché è fatto così
+Completa le altre funzioni senza deduzioni:
 
-Il Manager è l’unico proprietario degli slot e rende configurazione e rollback atomici per i chiamanti.
+1. `spaghetti_module_manager_init()` azzera lo slot e restituisce `0`; Core la chiama
+   dopo Port e Registry, una sola volta al boot.
+2. `configure(port_id, type_id, out_id)` riceve gli ID per valore perché sono piccoli;
+   `type_id` è `const` e valido per la chiamata; `out_id` è un puntatore perché la
+   funzione restituisce sia status sia ID. Non scrivere `*out_id` prima del commit.
+3. `get_by_port(port_id)` non modifica stato; restituisce un puntatore `const` allo
+   slot o `NULL`. Il puntatore resta valido fino a riconfigurazione/rimozione e non deve
+   essere conservato più a lungo.
+4. `read(id, out)` è chiamata da Runtime o dal test. `out` è del chiamante, non è
+   `const` perché viene scritto e resta invariato se la validazione o il driver fallisce.
 
-## Come si usa
+La struct slot privata è:
 
-Config o il test chiamano `configure`; Runtime chiama `read`; il Manager valida lo slot e inoltra la chiamata al driver.
+```c
+struct spaghetti_module_slot {
+	bool used;
+	struct spaghetti_module module;
+	union {
+		max_align_t alignment;
+		uint8_t bytes[SPAGHETTI_MODULE_CONTEXT_SIZE];
+	} driver_context;
+};
+```
+
+`used` distingue slot libero e occupato; `module` contiene lo stato pubblico
+dell’istanza; `alignment` forza l’allineamento adatto a qualunque tipo C e `bytes` è lo
+storage limitato posseduto dal Manager per tutta la lifetime dello slot. Assegna
+`module.context = slot.driver_context.bytes`. Definisci `SPAGHETTI_MODULE_CONTEXT_SIZE` con la size
+esatta richiesta dal solo SHT40 in questa fase e verifica a build-time che sia sufficiente.
+
+## Esempio d’uso
+
+```c
+spaghetti_module_id_t module_id;
+int err = spaghetti_module_manager_configure(0U, "sht40", &module_id);
+if (err == 0) {
+	struct spaghetti_sample sample;
+	err = spaghetti_module_manager_read(module_id, &sample);
+}
+```
 
 ## Checklist di completamento
 
@@ -105,6 +141,21 @@ Config o il test chiamano `configure`; Runtime chiama `read`; il Manager valida 
 - [ ] Integrare Manager con Core e main.
 - [ ] Provare successo e rollback del Manager.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Prova configure/read riusciti, Port occupato, tipo sconosciuto, capacità incompatibile e init driver fallita. Dopo ogni errore lo slot deve essere libero e gli output invariati.
+
+**Risultato atteso**
+
+Configure e read funzionano; ogni errore lascia lo slot libero e gli output invariati.

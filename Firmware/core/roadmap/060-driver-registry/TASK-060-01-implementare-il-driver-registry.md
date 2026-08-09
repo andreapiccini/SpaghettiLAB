@@ -3,22 +3,25 @@
 **Stato:** ⬜ TODO
 **Fase:** 060 — Driver Registry
 
-## Cosa devo fare
+## Perché lo facciamo
+
+Una tabella fissa rende la scelta del driver deterministica, validabile al boot e priva di heap.
+
+## Implementazione guidata
 
 ### Passo 1 — Dichiarare l’API di Driver Registry
 
 `include/spaghetti/driver_registry.h`.
 
-Dichiara `int spaghetti_driver_registry_init(void);`, `const struct
-spaghetti_module_driver *spaghetti_driver_registry_find(const char *type_id);` e
-opzionalmente `size_t spaghetti_driver_registry_count(void);`.
+Dichiara le tre firme complete riportate più avanti, inclusa
+`size_t spaghetti_driver_registry_count(void);`.
 
 ### Passo 2 — Implementare la tabella statica dei driver
 
 `subsys/driver_registry/driver_registry.c`.
 
 Crea un array di puntatore immutabile privato contenente `&spaghetti_sht40_driver`.
-Implementa la stringa esatta `spaghetti_driver_registry_find()` e il contatore opzionale
+Implementa la ricerca esatta `spaghetti_driver_registry_find()` e il contatore
 con comportamento null-safe.
 
 ### Passo 3 — Convalidare le voci del registry
@@ -39,7 +42,8 @@ negativo prima che Core diventi READY.
 
 ### Passo 5 — Provare la ricerca di driver noti e sconosciuti
 
-`src/main.c` o una posizione temporanea di test focalizzato e la console seriale.
+`src/main.c` e la console seriale. Inserisci qui la prova temporanea e rimuovila dopo
+aver registrato il risultato.
 
 Chiama `spaghetti_driver_registry_find("sht40")`, `find("does-not-exist")` e
 `find(NULL)`. Log/assert un descrittore noto non-null e risultati invalid/unknown nulli,
@@ -61,13 +65,37 @@ statica `{ &spaghetti_sht40_driver }`: nessun puntatore nullo, ID vuoto/duplicat
 tabella ops nulla o operazione obbligatoria mancante; restituisce `0` o `-EINVAL`.
 Core chiama init prima del Manager.
 
-## Perché è fatto così
+Implementazione funzione per funzione:
 
-Una tabella fissa rende la scelta del driver deterministica, validabile al boot e priva di heap.
+1. `spaghetti_driver_registry_init()` non riceve parametri perché valida la tabella
+   privata. Scorre ogni voce, poi confronta ogni coppia di `type_id`; non modifica i
+   descrittori. Restituisce `0` o `-EINVAL` al primo errore.
+2. `spaghetti_driver_registry_find(type_id)` è chiamata dal Manager durante configure.
+   Controlla `NULL` e stringa vuota, esegue confronti esatti e restituisce il puntatore
+   `const` trovato o `NULL`. Non copia né conserva la stringa.
+3. `spaghetti_driver_registry_count()` è usata dai diagnostici; restituisce
+   `ARRAY_SIZE(drivers)` per valore, non modifica nulla e non può fallire.
 
-## Come si usa
+Nel `.c` crea esattamente:
 
-Core inizializza il registry; Manager risolve un `type_id` con `spaghetti_driver_registry_find()` e non modifica il descrittore restituito.
+```c
+static const struct spaghetti_module_driver *const drivers[] = {
+	&spaghetti_sht40_driver,
+};
+```
+
+Il primo `const` protegge il descrittore puntato; il secondo impedisce di cambiare i
+puntatori nella tabella.
+
+## Esempio d’uso
+
+```c
+const struct spaghetti_module_driver *driver =
+	spaghetti_driver_registry_find("sht40");
+if (driver == NULL) {
+	return -ENOENT;
+}
+```
 
 ## Checklist di completamento
 
@@ -77,6 +105,21 @@ Core inizializza il registry; Manager risolve un `type_id` con `spaghetti_driver
 - [ ] Inizializzare Driver Registry da Core.
 - [ ] Provare la ricerca di driver noti e sconosciuti.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Prova init valido, `find("sht40")`, `find(NULL)` e tipo sconosciuto; inietta ID duplicato e ops incompleta. Fine con build, flash e lettura sensore ancora funzionante.
+
+**Risultato atteso**
+
+Il descrittore `sht40` viene trovato; input nullo/sconosciuto e registry invalido sono rifiutati.

@@ -3,7 +3,24 @@
 **Stato:** ⬜ TODO
 **Fase:** 130 — Relay + Runtime V1
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Valutare la temperatura nel thread Runtime
+
+1. **Cos’è:** `k_msgq` è una coda Zephyr a capacità e dimensione elemento fisse; copia ogni messaggio nel proprio buffer.
+2. **A cosa serve:** Permette a un producer di consegnare dati a un thread consumer senza condividere memoria temporanea.
+3. **Quando viene usato:** Il producer inserisce a runtime; il thread Runtime attende o estrae secondo il timeout scelto.
+4. **Build-time o runtime:** Runtime.
+5. **Collegamento con questo task:** Il message subscriber di zbus usa una coda per consegnare campioni temperatura al thread che valuta la soglia.
+6. **File reali coinvolti:** `subsys/runtime/runtime.c` e le dichiarazioni zbus in `subsys/data/data.c`.
+7. **Cosa guardare nei file:** Controlla dimensione elemento, profondità, timeout e comportamento quando la coda è piena.
+8. **Cosa non modificare:** Non inserire puntatori a stack, non usare una coda non limitata e non comandare il Relay dalla callback zbus.
+
+## Perché lo facciamo
+
+Il relay resta un Module; Runtime applica una sola regola deterministica senza comandare direttamente l’hardware.
+
+## Implementazione guidata
 
 ### Passo 1 — Definire il contratto dei comandi Relay
 
@@ -95,26 +112,32 @@ Runtime possiede una sola copia della regola. Per ogni campione della sorgente, 
 confronto strettamente `>`: sopra soglia invia `relay_on_above`, alla soglia o sotto
 invia il valore opposto; evita scritture duplicate mantenendo l’ultimo comando.
 
-## Perché è fatto così
+Dettaglio campi:
 
-Il relay resta un Module; Runtime applica una sola regola deterministica senza comandare direttamente l’hardware.
+- `command.type` distingue SET da futuri comandi senza interpretare un bool isolato;
+- `relay_on` è lo stato logico richiesto, indipendente dal livello GPIO;
+- `active_high` traduce ON nel livello elettrico corretto;
+- `safe_on` decide lo stato imposto durante init, deinit ed errori;
+- `source_id` e `relay_id` legano regola e istanze Manager;
+- `threshold_millicelsius` usa la stessa unità del messaggio Data;
+- `relay_on_above` decide l’azione nel ramo strettamente sopra soglia.
 
-## Come si usa
+`spaghetti_module_manager_command(id, command)` è chiamata dal thread Runtime; valida
+puntatore, ID, READY e callback, poi inoltra sincronicamente. L’ID è per valore, il
+comando è un prestito `const` e non viene conservato. `load_threshold_rule(rule)` è
+chiamata da Config solo a Runtime fermo; valida entrambi i Module e copia la struct.
+Entrambe restituiscono `0` o errno negativi precisi (`-EINVAL`, `-ENOENT`, `-ENOTSUP`,
+`-EBUSY` e errori GPIO/driver).
 
-Runtime confronta il campione con 25 °C e chiama `spaghetti_module_manager_command()`; il Manager inoltra SET al driver Relay.
+## Esempio d’uso
 
-## Concetto Zephyr da sapere
-
-### Valutare la temperatura nel thread Runtime
-
-1. **Cos’è:** `k_msgq` è una coda Zephyr a capacità e dimensione elemento fisse; copia ogni messaggio nel proprio buffer.
-2. **A cosa serve:** Permette a un producer di consegnare dati a un thread consumer senza condividere memoria temporanea.
-3. **Quando viene usato:** Il producer inserisce a runtime; il thread Runtime attende o estrae secondo il timeout scelto.
-4. **Build-time o runtime:** Runtime.
-5. **Collegamento con questo task:** Il message subscriber di zbus usa una coda per consegnare campioni temperatura al thread che valuta la soglia.
-6. **File reali coinvolti:** `subsys/runtime/runtime.c` e le dichiarazioni zbus in `subsys/data/data.c`.
-7. **Cosa guardare nei file:** Controlla dimensione elemento, profondità, timeout e comportamento quando la coda è piena.
-8. **Cosa non modificare:** Non inserire puntatori a stack, non usare una coda non limitata e non comandare il Relay dalla callback zbus.
+```c
+const struct spaghetti_command command = {
+	.type = SPAGHETTI_COMMAND_RELAY_SET,
+	.relay_on = true,
+};
+int err = spaghetti_module_manager_command(relay_id, &command);
+```
 
 ## Checklist di completamento
 
@@ -126,6 +149,21 @@ Runtime confronta il campione con 25 °C e chiama `spaghetti_module_manager_comm
 - [ ] Valutare la temperatura nel thread Runtime.
 - [ ] Provare soglia e stato sicuro del Relay.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Con fake GPIO prova safe state, polarità, deinit ed errori; poi verifica sotto soglia, esattamente 25 °C e sopra soglia. Nessun comando duplicato e rollback sempre sicuro.
+
+**Risultato atteso**
+
+Il relay parte/termina sicuro e segue il confronto strettamente maggiore di 25 °C.

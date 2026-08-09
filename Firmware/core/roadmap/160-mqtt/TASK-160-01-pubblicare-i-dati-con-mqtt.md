@@ -3,12 +3,36 @@
 **Stato:** ⬜ TODO
 **Fase:** 160 — MQTT
 
-## Cosa devo fare
+## Prima di scrivere: concetti Zephyr
+
+### Abilitare la configurazione di rete minima
+
+1. **Cos’è:** Lo stack di rete Zephyr comprende interfaccia, gestione eventi, IPv4, TCP, socket e servizi opzionali come DHCP e DNS.
+2. **A cosa serve:** Fornisce a MQTT una connessione IP senza incorporare dettagli del driver Wi-Fi nel servizio MQTT.
+3. **Quando viene usato:** Kconfig include i sottosistemi durante la build; interfaccia, indirizzo e socket diventano utilizzabili a runtime dopo gli eventi corretti.
+4. **Build-time o runtime:** Selezione a build-time, connettività a runtime.
+5. **Collegamento con questo task:** Il percorso di rete scelto nel task precedente determina quali sole opzioni devono essere abilitate.
+6. **File reali coinvolti:** `prj.conf`; per capire le dipendenze usa l’help Kconfig della versione Zephyr installata.
+7. **Cosa guardare nei file:** Verifica opzioni per interfaccia ESP32, networking, IPv4, TCP, socket e soltanto i servizi realmente necessari.
+8. **Cosa non modificare:** Non copiare una configurazione di esempio completa, non inserire credenziali nel repository e non considerare `CONFIG_*=y` prova di connessione.
+
+### Accodare la temperatura per un topic di sviluppo
+
+La message queue disaccoppia il consumo di zbus dal lavoro in socket. La connessione
+MQTT e l'elaborazione delle pubblicazioni appartengono alla thread, non ad una callback
+zbus.
+
+## Perché lo facciamo
+
+Il worker MQTT possiede socket e reconnessione; Runtime si limita ad accodare copie limitate dei campioni.
+
+## Implementazione guidata
 
 ### Passo 1 — Scegliere il percorso di rete per lo sviluppo
 
-L'ambiente di rete target, l'endpoint broker, la origine delle credenziali e
-`subsys/services/mqtt/README.md`.
+Apri `prj.conf` e `subsys/services/mqtt/README.md`. Il percorso di sviluppo fissato da
+questo task è Wi-Fi station ESP32, indirizzo ottenuto con DHCPv4 e broker risolto con
+DNS. SSID e password devono arrivare da configurazione locale non versionata.
 
 Registrare se il test utilizza Wi-Fi, DHCP o IPv4, indirizzo DNS o broker numerico, e
 come vengono fornite le credenziali di sviluppo senza commettere segreti. Non modificare
@@ -18,13 +42,15 @@ il firmware in questo task, che serve soltanto a documentare la decisione.
 
 `prj.conf`.
 
-Abilitare le opzioni di rete ESP32 installate richieste dal percorso scelto: Wi-Fi,
-rete, IPv4, TCP, socket, rete management/events e DHCP/DNS solo se necessario. Risolvere
-solo autentiche dipendenze Kconfig.
+Aggiungi `CONFIG_NETWORKING=y`, `CONFIG_WIFI=y`, `CONFIG_WIFI_ESP32=y`,
+`CONFIG_NET_IPV4=y`, `CONFIG_NET_TCP=y`, `CONFIG_NET_SOCKETS=y`,
+`CONFIG_NET_DHCPV4=y` e `CONFIG_DNS_RESOLVER=y`. Se il nome ESP32 differisce nella
+versione installata, individua il simbolo selezionato dal driver della board in
+`build/zephyr/.config`; non sostituirlo con un driver di un altro chip.
 
 ### Passo 3 — Implementare la segnalazione di rete pronta
 
-La sorgente dell'adattatore di rete sotto `subsys/services/mqtt/`.
+`subsys/services/mqtt/mqtt.c`.
 
 Registrare i callback necessari per la gestione della rete, tracciare lo stato link/IP e
 segnalare il futuro MQTT worker solo dopo `NET_EVENT_IPV4_ADDR_ADD` o l'equivalente
@@ -102,32 +128,51 @@ possiede `mqtt_client`, buffers, socket, DNS, connect, keepalive e reconnessione
 limitata. Gli eventi di rete segnalano il worker e non eseguono socket I/O. Dopo la
 prova con endpoint/topic fissi, aggiungi host/porta/topic a Config e rimuovi le costanti.
 
-## Perché è fatto così
+Campi principali:
 
-Il worker MQTT possiede socket e reconnessione; Runtime si limita ad accodare copie limitate dei campioni.
+- `enabled`: consente di compilare MQTT ma lasciarlo fermo da Config;
+- `host`: array posseduto dal servizio dopo la copia, sempre NUL-terminato;
+- `port`: numero TCP passato per valore; usa 1883 nello sviluppo senza TLS;
+- `base_topic`: prefisso copiato, senza slash finale;
+- `topic_suffix`: parte relativa della singola pubblicazione;
+- `payload_size`: byte validi del payload, massimo 64;
+- `state` e contatori: snapshot diagnostica, non oggetti Zephyr esposti.
 
-## Come si usa
+`init(config)` valida e copia Config e crea coda/thread; `start()` accoda il comando di
+connessione; `stop(timeout)` ferma reconnessione e attende ack; `publish(publication)`
+valida e copia con `K_NO_WAIT`; `get_status(out)` copia sotto lock breve. I puntatori di
+input sono `const` e prestati; `out` è scritto dal servizio e resta del chiamante.
+Socket, `mqtt_client` e buffer restano privati di `mqtt.c`.
 
-Il subscriber Data crea una pubblicazione limitata e la mette in coda; soltanto il thread MQTT usa DNS, socket e client MQTT.
+In `mqtt.c` registra la readiness IPv4 con una callback di questa forma:
 
-## Concetto Zephyr da sapere
+```c
+static void network_event_handler(struct net_mgmt_event_callback *callback,
+				  uint64_t event,
+				  struct net_if *iface)
+{
+	ARG_UNUSED(callback);
+	ARG_UNUSED(iface);
+	if (event == NET_EVENT_IPV4_ADDR_ADD) {
+		k_sem_give(&network_ready_sem);
+	}
+}
+```
 
-### Abilitare la configurazione di rete minima
+Zephyr possiede i puntatori della callback; MQTT li prende in prestito e non li
+conserva. La callback segnala soltanto il semaforo. Il thread MQTT attende il semaforo,
+risolve `config.host`, apre il socket e guida connect, input e keepalive.
 
-1. **Cos’è:** Lo stack di rete Zephyr comprende interfaccia, gestione eventi, IPv4, TCP, socket e servizi opzionali come DHCP e DNS.
-2. **A cosa serve:** Fornisce a MQTT una connessione IP senza incorporare dettagli del driver Wi-Fi nel servizio MQTT.
-3. **Quando viene usato:** Kconfig include i sottosistemi durante la build; interfaccia, indirizzo e socket diventano utilizzabili a runtime dopo gli eventi corretti.
-4. **Build-time o runtime:** Selezione a build-time, connettività a runtime.
-5. **Collegamento con questo task:** Il percorso di rete scelto nel task precedente determina quali sole opzioni devono essere abilitate.
-6. **File reali coinvolti:** `prj.conf`; per capire le dipendenze usa l’help Kconfig della versione Zephyr installata.
-7. **Cosa guardare nei file:** Verifica opzioni per interfaccia ESP32, networking, IPv4, TCP, socket e soltanto i servizi realmente necessari.
-8. **Cosa non modificare:** Non copiare una configurazione di esempio completa, non inserire credenziali nel repository e non considerare `CONFIG_*=y` prova di connessione.
+## Esempio d’uso
 
-### Accodare la temperatura per un topic di sviluppo
-
-La message queue disaccoppia il consumo di zbus dal lavoro in socket. La connessione
-MQTT e l'elaborazione delle pubblicazioni appartengono alla thread, non ad una callback
-zbus.
+```c
+struct spaghetti_mqtt_publication publication = {
+	.topic_suffix = "temperature",
+	.payload_size = payload_size,
+};
+memcpy(publication.payload, payload, payload_size);
+int err = spaghetti_mqtt_publish(&publication);
+```
 
 ## Checklist di completamento
 
@@ -140,6 +185,21 @@ zbus.
 - [ ] Integrare e provare MQTT con topic fisso.
 - [ ] Spostare le impostazioni MQTT in Config.
 
-## Verifica e fine task
+## Verifica finale
+
+**Comandi**
+
+```sh
+make validate
+make pristine
+make flash
+make monitor
+```
+
+**Controlla**
 
 Prova rete assente, broker fermo, riconnessione e coda piena mentre Runtime continua a campionare. Il broker deve ricevere topic/payload configurati; nessuna credenziale va nei log o nel repository.
+
+**Risultato atteso**
+
+MQTT si riconnette senza bloccare Runtime e pubblica sul topic configurato senza segreti nei log.
