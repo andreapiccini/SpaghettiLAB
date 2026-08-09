@@ -15,6 +15,9 @@ LOG_MODULE_REGISTER(
 
 int main(void)
 {
+	k_sleep(K_SECONDS(5));
+	LOG_INF("Spaghetti LAB boot");
+	
 	const struct spaghetti_port *port;
 	const struct device *i2c;
 	struct sensor_value bus_voltage;
@@ -41,15 +44,19 @@ int main(void)
 		return err;
 	}
 
-	err = spaghetti_ina219_test_read(&bus_voltage, &current, &power);
+	for (;;) {
+		err = spaghetti_ina219_test_read(&bus_voltage, &current, &power);
 
-	if (err == 0) {
-		LOG_INF("INA219 bus=%lld mV current=%lld mA power=%lld mW",
-			(long long)sensor_value_to_milli(&bus_voltage),
-			(long long)sensor_value_to_milli(&current),
-			(long long)sensor_value_to_milli(&power));
-	} else {
-		LOG_ERR("INA219 read failed: %d", err);
+		if (err == 0) {
+			LOG_INF("INA219 bus=%lld mV current=%lld mA power=%lld mW",
+				(long long)sensor_value_to_milli(&bus_voltage),
+				(long long)sensor_value_to_milli(&current),
+				(long long)sensor_value_to_milli(&power));
+		} else {
+			LOG_ERR("INA219 read failed: %d", err);
+		}
+
+		k_sleep(K_SECONDS(1));
 	}
 
 	return 0;
