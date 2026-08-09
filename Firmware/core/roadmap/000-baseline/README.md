@@ -18,8 +18,7 @@ Il firmware iniziale viene compilato, caricato e osservato sulla console seriale
 
 ## Task
 
-1. ✅ [TASK-000-01 — Compilare l’applicazione senza modifiche](TASK-000-01-build-the-untouched-application.md)
-2. ✅ [TASK-000-02 — Caricare e osservare la baseline](TASK-000-02-flash-and-observe-the-baseline.md)
+1. ✅ [TASK-000-01 — Verificare build, flash e console](TASK-000-01-verificare-la-baseline.md)
 
 ## Criteri di completamento della fase
 

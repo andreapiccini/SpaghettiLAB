@@ -18,12 +18,7 @@ Una chiamata Manager configura Port 0 come SHT40 e legge il sensore.
 
 ## Task
 
-1. ⬜ [TASK-070-01 — Dichiarare l’API di Module Manager](TASK-070-01-declare-the-module-manager-api.md)
-2. ⬜ [TASK-070-02 — Implementare lo stato Manager con uno slot](TASK-070-02-implement-the-one-slot-manager-state.md)
-3. ⬜ [TASK-070-03 — Implementare la configurazione nel Manager](TASK-070-03-implement-manager-configure.md)
-4. ⬜ [TASK-070-04 — Implementare la lettura nel Manager](TASK-070-04-implement-manager-read.md)
-5. ⬜ [TASK-070-05 — Integrare Manager con Core e main](TASK-070-05-integrate-manager-into-core-and-main.md)
-6. ⬜ [TASK-070-06 — Provare successo e rollback del Manager](TASK-070-06-test-manager-success-and-rollback.md)
+1. ⬜ [TASK-070-01 — Implementare il Module Manager](TASK-070-01-implementare-il-module-manager.md)
 
 ## Criteri di completamento della fase
 

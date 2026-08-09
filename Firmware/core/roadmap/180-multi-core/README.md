@@ -18,13 +18,7 @@ Lo stesso firmware applicativo viene compilato per due varianti Core.
 
 ## Task
 
-1. ⬜ [TASK-180-01 — Definire il binding Spaghetti Port](TASK-180-01-define-the-spaghetti-port-binding.md)
-2. ⬜ [TASK-180-02 — Convalidare il binding di Port](TASK-180-02-validate-the-port-binding.md)
-3. ⬜ [TASK-180-03 — Creare la prima definizione board Spaghetti LAB](TASK-180-03-create-the-first-real-spaghetti-board-skeleton.md)
-4. ⬜ [TASK-180-04 — Spostare i dati hardware verificati nel DTS della board](TASK-180-04-move-verified-hardware-facts-into-board-dts.md)
-5. ⬜ [TASK-180-05 — Enumerare i Port dal Devicetree](TASK-180-05-enumerate-devicetree-ports.md)
-6. ⬜ [TASK-180-06 — Compilare e provare la prima board Core reale](TASK-180-06-build-and-test-the-first-real-core-board.md)
-7. ⬜ [TASK-180-07 — Compilare una seconda variante Core](TASK-180-07-build-a-second-core-variant.md)
+1. ⬜ [TASK-180-01 — Supportare più varianti Core](TASK-180-01-supportare-piu-varianti-core.md)
 
 ## Criteri di completamento della fase
 

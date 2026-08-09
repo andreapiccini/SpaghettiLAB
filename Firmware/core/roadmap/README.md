@@ -27,7 +27,7 @@ la build e mostra un warning se stato e checkbox non coincidono. Non modifica
 mai i file. `⛔ BLOCKED` è un'eccezione manuale ammessa anche con checklist
 incompleta.
 
-Ogni task deve rispettare questo schema:
+La roadmap contiene un task autosufficiente per fase. Ogni task deve rispettare questo schema:
 
 ```text
 roadmap/<NNN-nome-fase>/TASK-<stesso-NNN>-<NN>-nome-task.md
@@ -92,5 +92,4 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 
 ## Da dove iniziare
 
-La baseline è completa. Continua dal primo task non completato della
-[fase 010 — Core](010-core/README.md).
+La baseline è completa. Apri ora [TASK-010-01 — Implementare il confine Core](010-core/TASK-010-01-implementare-il-confine-core.md).

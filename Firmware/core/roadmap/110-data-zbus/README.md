@@ -18,12 +18,7 @@ Un campione reale raggiunge logger e un secondo consumer.
 
 ## Task
 
-1. ⬜ [TASK-110-01 — Definire il messaggio del campione di temperatura](TASK-110-01-define-the-temperature-sample-message.md)
-2. ⬜ [TASK-110-02 — Abilitare i subscriber di zbus](TASK-110-02-enable-zbus-message-subscribers.md)
-3. ⬜ [TASK-110-03 — Definire il canale temperatura e i subscriber](TASK-110-03-define-the-temperature-channel-and-subscribers.md)
-4. ⬜ [TASK-110-04 — Inizializzare Data e pubblicare un messaggio](TASK-110-04-implement-data-initialization-and-publish.md)
-5. ⬜ [TASK-110-05 — Pubblicare i campioni reali del Manager](TASK-110-05-publish-real-manager-samples.md)
-6. ⬜ [TASK-110-06 — Provare fan-out e backpressure di zbus](TASK-110-06-test-zbus-fan-out-and-backpressure.md)
+1. ⬜ [TASK-110-01 — Distribuire i campioni con zbus](TASK-110-01-distribuire-i-campioni-con-zbus.md)
 
 ## Criteri di completamento della fase
 
