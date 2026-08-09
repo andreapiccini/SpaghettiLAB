@@ -1,4 +1,5 @@
 #include <spaghetti/core.h>
+#include <spaghetti/port.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(
@@ -10,6 +11,8 @@ static enum spaghetti_core_state core_state = SPAGHETTI_CORE_UNINITIALIZED;
 
 int spaghetti_core_init(void)
 {
+	spaghetti_port_init_all();
+
 	core_state = SPAGHETTI_CORE_READY;
 
 	LOG_INF("Spaghetti Core ready");

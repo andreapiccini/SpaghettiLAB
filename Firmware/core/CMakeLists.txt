@@ -25,4 +25,7 @@ target_sources(app PRIVATE
   subsys/port/port.c
 )
 
-target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/)
+target_include_directories(app PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/ina219
+)
