@@ -84,7 +84,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [070 — Module Manager](070-module-manager/README.md) | Il Manager gestisce più endpoint simultanei sulla stessa Port. |
 | ✅ | [080 — INA219 rimovibile a runtime](080-runtime-removable-ina219/README.md) | Due INA219 condividono Port 0 con address e context runtime distinti. |
 | ✅ | [090 — Config interna](090-config/README.md) | Config riconcilia Module per key e accetta Port ripetute con endpoint distinti. |
-| ⬜ | [100 — Config persistente](100-storage/README.md) | La configurazione sopravvive al riavvio. |
+| ✅ | [100 — Config persistente](100-storage/README.md) | La configurazione sopravvive al riavvio. |
 | ⬜ | [110 — Data / zbus](110-data-zbus/README.md) | Bus voltage/current/power raggiungono due consumer. |
 | ⬜ | [120 — Runtime V0](120-runtime-v0/README.md) | Runtime campiona ogni secondo mentre `main` esegue soltanto il boot. |
 | ⬜ | [130 — Relay + Runtime V1](130-relay-runtime-v1/README.md) | Una soglia di corrente con isteresi comanda il relay configurato. |

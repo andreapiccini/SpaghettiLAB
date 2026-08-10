@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -21,10 +21,10 @@ runtime precedenti.
 
 ## Task
 
-1. ⬜ [TASK-100-01 — Rendere Config persistente](TASK-100-01-rendere-config-persistente.md)
+1. ✅ [TASK-100-01 — Rendere Config persistente](TASK-100-01-rendere-config-persistente.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Il contratto storage è provato prima con backend RAM.
-- [ ] La partizione flash non si sovrappone ad altre regioni.
-- [ ] Record assente o corrotto ha un comportamento deterministico.
+- [x] Il contratto storage è provato prima con backend RAM.
+- [x] La partizione flash non si sovrappone ad altre regioni.
+- [x] Record assente o corrotto ha un comportamento deterministico.

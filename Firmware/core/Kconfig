@@ -22,6 +22,10 @@ module = SPAGHETTI_CONFIG
 module-str = spaghetti_config
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_STORAGE
+module-str = spaghetti_storage
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"

@@ -1,6 +1,6 @@
 # TASK-100-01 — Rendere Config persistente
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 100 — Config persistente
 
 ## Prima di scrivere: concetti Zephyr
@@ -33,7 +33,9 @@ Salva key, Port, type e driver config di ogni elemento. Non salva
 
 ### Passo 1 — Definire l’API di storage sincrono
 
-Crea `subsys/services/storage/storage.h`.
+Crea `include/spaghetti/storage.h`. L'header deve stare nell'area pubblica perché Core,
+che è un altro componente, usa questa API. Il record fisico resta invece privato in
+`subsys/services/storage/storage.c`.
 
 Dichiara `spaghetti_storage_init()`, `spaghetti_storage_read_config()` e
 `spaghetti_storage_write_config()` intorno a un record fisso versione. Definisci
@@ -92,14 +94,23 @@ due endpoint devono essere ricostruiti.
 
 ### Contratti completi da scrivere
 
-In `subsys/services/storage/storage.h` dichiara:
+In `include/spaghetti/storage.h` dichiara:
 
 ```c
 #define SPAGHETTI_STORAGE_CONFIG_KEY "config"
-struct spaghetti_storage_record { uint32_t magic; uint32_t version; struct spaghetti_config config; };
 int spaghetti_storage_init(void);
 int spaghetti_storage_read_config(struct spaghetti_config *out);
 int spaghetti_storage_write_config(const struct spaghetti_config *config);
+```
+
+In `subsys/services/storage/storage.c` definisci il record privato:
+
+```c
+struct spaghetti_storage_record {
+	uint32_t magic;
+	uint32_t version;
+	struct spaghetti_config config;
+};
 ```
 
 Il record è privato di Storage, copiabile e valido solo durante read/write; `magic` e
@@ -143,13 +154,13 @@ if (err == -ENOENT) {
 
 ## Checklist di completamento
 
-- [ ] Definire l’API di storage sincrono.
-- [ ] Implementare e provare il backend storage RAM.
-- [ ] Verificare e definire la partizione di storage.
-- [ ] Abilitare Zephyr Settings e il relativo backend.
-- [ ] Implementare il record persistente con Settings.
-- [ ] Caricare Config all’avvio e provare la persistenza.
-- [ ] Ripristinare due Module sulla stessa Port usando key, non vecchi runtime ID.
+- [x] Definire l’API di storage sincrono.
+- [x] Implementare e provare il backend storage RAM.
+- [x] Verificare e definire la partizione di storage.
+- [x] Abilitare Zephyr Settings e il relativo backend.
+- [x] Implementare il record persistente con Settings.
+- [x] Caricare Config all’avvio e provare la persistenza.
+- [x] Ripristinare due Module sulla stessa Port usando key, non vecchi runtime ID.
 
 ## Verifica finale
 

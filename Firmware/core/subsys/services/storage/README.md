@@ -1,199 +1,87 @@
-# Storage service
+# Storage
 
 [← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md)
 
-Storage is an optional persistence adapter for small bounded records such as Config snapshots. Its API is independent of the selected flash backend and never exposes Zephyr Settings/NVS internals to callers.
+Storage è l'adapter che conserva su flash l'ultimo snapshot Config applicato con
+successo. Gli altri componenti non vedono Settings, NVS, offset flash o record fisici.
 
-## What this component owns
+## Responsabilità
 
-- Record namespace, version envelope, size limits, and backend serialization.
-- Atomic write/replace behavior and corruption diagnostics.
-- Private Zephyr Settings or other backend context.
+Storage possiede una copia RAM del record caricato, il suo envelope con magic/versione
+e lo stato del backend. Non valida il significato hardware della Config e non salva
+Module ID runtime, puntatori, context dei driver, misure o segreti.
 
-## What this component does not own
+## File
 
-- Config semantics, module instances, measurement history, credentials policy, or flash partition placement.
-- Writes from ISR or unbounded blobs.
-
-## Files
-
-| File | Role |
+| File | Ruolo |
 |---|---|
-| `storage.h` | Bounded read/write/delete/status contract. |
-| `storage.c` | Backend adapter, version envelope, and synchronization. |
-| Board partition DTS | Real non-overlapping storage region. |
-| `prj.conf` | Selected Zephyr Settings backend options. |
+| `include/spaghetti/storage.h` | API pubblica usata da Core e Config. |
+| `subsys/services/storage/storage.c` | Record privato e adapter Settings/NVS. |
+| `prj.conf` | Abilita Flash, Settings, NVS e CRC dei dati. |
+| `tests/storage/` | Backend RAM simulato e test del contratto. |
 
-## Data model
+## API
 
-| Type / object | Owner | Meaning |
-|---|---|---|
-| Record key | Caller/Storage contract | Bounded stable namespace key. |
-| Record envelope | Storage | Magic/schema version, payload length, generation, checksum when used. |
-| Backend state | Storage | Initialized/mounted/error state and private handler context. |
-| Storage status | Storage | Read/write/delete/corruption counters and last error. |
+```c
+int spaghetti_storage_init(void);
+int spaghetti_storage_read_config(struct spaghetti_config *out);
+int spaghetti_storage_write_config(const struct spaghetti_config *config);
+```
 
-## API contract
+`spaghetti_storage_init()` inizializza Settings/NVS e carica la chiave `config`.
+Record assente o corrotto non rendono inutilizzabile Storage: una successiva read
+restituisce rispettivamente `-ENOENT` o `-EBADMSG`, così Core può restare nello stato
+vuoto sicuro.
 
-### `int spaghetti_storage_init(void)`
+`spaghetti_storage_read_config()` restituisce una copia posseduta dal chiamante e non
+accede nuovamente alla flash. L'output resta invariato in caso di errore.
 
-**Purpose:** Initialize the selected backend and load its metadata/handlers.
+`spaghetti_storage_write_config()` costruisce un record completamente azzerato, copia
+solo campi e byte usati e chiama `settings_save_one()` in modo sincrono. Aggiorna la
+copia RAM soltanto dopo il successo del backend.
 
-**Parameters**
+## Record e flusso
 
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
+Il record privato contiene:
 
-**Returns:** `0` when reads/writes are available.
-
-**Errors:** Missing/overlapping partition, backend mount/init failure, or invalid static limits.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** Zephyr Settings/backend initialization and load.
-
-### `int spaghetti_storage_read(const char *key, void *buffer, size_t capacity, size_t *out_size)`
-
-**Purpose:** Read one complete bounded record into caller storage.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `key` | NUL-terminated key below maximum length. |
-| `buffer` | Caller-owned destination. |
-| `capacity` | Destination capacity. |
-| `out_size` | Actual decoded payload size. |
-
-**Returns:** `0` on a valid record.
-
-**Errors:** Invalid args/key, not found, insufficient capacity, corruption, unsupported version, or backend I/O error.
-
-**Execution context:** Calling thread.
-
-**Calls:** Selected backend read.
-
-### `int spaghetti_storage_write(const char *key, const void *data, size_t size)`
-
-**Purpose:** Atomically replace one bounded versioned record.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `key` | Bounded key. |
-| `data` | Caller-owned payload copied during the call. |
-| `size` | Payload bytes up to configured maximum. |
-
-**Returns:** `0` only after durable backend acceptance.
-
-**Errors:** Invalid args/size, no space, wear/backend failure, or serialization conflict.
-
-**Execution context:** Calling thread; may block on flash.
-
-**Calls:** Selected backend save/write.
-
-### `int spaghetti_storage_delete(const char *key)`
-
-**Purpose:** Remove one record idempotently according to the documented policy.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `key` | Bounded record key. |
-
-**Returns:** `0` when absent after the call.
-
-**Errors:** Invalid key or backend delete failure.
-
-**Execution context:** Calling thread.
-
-**Calls:** Selected backend delete.
-
-### `int spaghetti_storage_get_status(struct spaghetti_storage_status *out)`
-
-**Purpose:** Copy backend state and diagnostics.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `out` | Caller-owned destination. |
-
-**Returns:** `0` with coherent status.
-
-**Errors:** Invalid output or uninitialized Storage.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-## How it works
+- magic `0x53504754`, che identifica un record Spaghetti;
+- versione uguale a `SPAGHETTI_CONFIG_VERSION`;
+- una `struct spaghetti_config` completa e senza puntatori.
 
 ```mermaid
 sequenceDiagram
-    participant Config
+    participant Core
     participant Storage
-    participant Settings as Zephyr Settings
+    participant Settings
+    participant NVS
     participant Flash
-    Config->>Storage: write("config", encoded record)
-    Storage->>Storage: add version envelope
-    Storage->>Settings: save_one(...)
-    Settings->>Flash: bounded persistent write
-    Flash-->>Storage: status
-    Storage-->>Config: durable success or error
+    Core->>Storage: spaghetti_storage_init()
+    Storage->>Settings: settings_subsys_init()
+    Storage->>Settings: settings_load_subtree("config")
+    Settings->>NVS: legge il valore
+    NVS->>Flash: verifica record e CRC
+    Flash-->>Storage: record, assente o errore
+    Core->>Storage: spaghetti_storage_read_config()
 ```
 
-## Practical example
+Al primo avvio Core continua senza Config. `main` applica la Config iniziale con due
+INA219 sulla Port 0 e solo dopo il successo la salva. Ai boot successivi Core carica,
+valida e applica lo snapshot prima di diventare READY. Le key vengono ripristinate;
+gli ID runtime non sono persistiti e possono cambiare.
 
-Config encodes generation 12 into a bounded record and writes key `config`. At boot, Storage reads and validates the envelope; Config then validates semantics before applying it. A corrupt record yields an error and safe default path.
+## Zephyr e partizione
 
-## Zephyr integration
+Zephyr Settings è la facciata key/value; NVS è il backend flash selezionato a
+build-time. Nel DTS generato della ESP32-C3 il backend trova automaticamente
+`storage_partition` a offset `0x3b0000`, dimensione `0x30000`. La regione termina a
+`0x3e0000`, dove comincia `scratch_partition`, quindi non è stato necessario modificare
+l'overlay.
 
-- Zephyr Settings is the key/value facade; NVS is one possible non-filesystem flash backend.
-- Settings load callbacks provide bytes in the loading thread; copy/decode them into bounded Storage state.
-- Flash partition layout is static Devicetree and must be verified against firmware regions.
+`CONFIG_NVS_DATA_CRC=y` aggiunge la verifica CRC-32 dei dati. Magic, versione,
+dimensione esatta e validazione semantica Config coprono gli altri casi incompatibili.
 
-## Configuration templates
+## Ownership e concorrenza
 
-### `prj.conf` using Settings + NVS
-
-```ini
-CONFIG_FLASH=y
-CONFIG_FLASH_MAP=y
-CONFIG_NVS=y
-CONFIG_SETTINGS=y
-CONFIG_SETTINGS_NVS=y
-```
-
-### Fixed partition example
-
-```dts
-&flash0 {
-    partitions {
-        compatible = "fixed-partitions";
-        #address-cells = <1>;
-        #size-cells = <1>;
-
-        storage_partition: partition@f8000 {
-            label = "storage";
-            reg = <0x000f8000 0x00008000>;
-        };
-    };
-};
-```
-
-The numeric address and size are an example, not portable defaults. Replace
-them with values checked against the selected board's generated flash layout.
-
-## Ownership and concurrency
-
-Storage serializes backend operations in thread context. Callers retain input ownership until a synchronous write returns. No flash call occurs from ISR or timer callback.
-
-## Contract guarantees
-
-- A successful read returns one complete, version-compatible record.
-- A failed/corrupt record is never presented as valid Config.
-- Record sizes and keys are bounded.
+Input e output sono prestati soltanto per la durata della chiamata. Storage conserva
+esclusivamente copie owned e bounded. Un mutex serializza init, read e write; non viene
+usato heap e le API non sono chiamabili da ISR.

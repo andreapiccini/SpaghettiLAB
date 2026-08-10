@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <string.h>
 
 #include <zephyr/kernel.h>
@@ -8,6 +9,7 @@
 #include <spaghetti/config.h>
 #include <spaghetti/core.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/storage.h>
 
 LOG_MODULE_REGISTER(spaghetti_app, CONFIG_SPAGHETTI_APP_LOG_LEVEL);
 
@@ -75,9 +77,19 @@ static int run_config_bringup(void)
 	struct spaghetti_config initial_config;
 	int err;
 
-	build_two_ina219_config(&initial_config);
-	err = spaghetti_config_apply(&initial_config);
-	if (err < 0) {
+	err = spaghetti_config_get_snapshot(&initial_config);
+	if (err == -ENOENT) {
+		build_two_ina219_config(&initial_config);
+		err = spaghetti_config_apply(&initial_config);
+		if (err < 0) {
+			return err;
+		}
+
+		err = spaghetti_storage_write_config(&initial_config);
+		if (err < 0) {
+			return err;
+		}
+	} else if (err < 0) {
 		return err;
 	}
 
