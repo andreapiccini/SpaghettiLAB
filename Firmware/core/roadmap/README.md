@@ -22,10 +22,11 @@ Lo stato deriva dalle checkbox presenti in `## Checklist di completamento`:
 | Alcune voci selezionate | 🟨 IN PROGRESS |
 | Tutte le voci selezionate | ✅ DONE |
 
-Lo stato viene aggiornato manualmente. Il validator controlla ogni task durante
-la build e mostra un warning se stato e checkbox non coincidono. Non modifica
-mai i file. `⛔ BLOCKED` è un'eccezione manuale ammessa anche con checklist
-incompleta.
+Lo stato viene aggiornato manualmente. I task non fanno parte della compilazione e
+quindi non vengono scanditi dal validator durante `make build`. Per controllarli usa
+`./validator roadmap`; verrà mostrato un warning se stato e checkbox non coincidono.
+Il validator non modifica mai i file. `⛔ BLOCKED` è un'eccezione manuale ammessa anche
+con checklist incompleta.
 
 La roadmap contiene un task autosufficiente per fase. Ogni task deve rispettare questo schema:
 
@@ -89,6 +90,8 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ⬜ | [170 — Discovery](170-discovery/README.md) | Discovery alimenta il Manager senza esporre il provider. |
 | ⬜ | [180 — Varianti Core multiple](180-multi-core/README.md) | Gli stessi livelli applicativi funzionano su due varianti Core. |
 | ⬜ | [190 — Power](190-power/README.md) | Una risorsa di alimentazione gestisce correttamente più proprietari e rollback. |
+| ⬜ | [200 — Engine completo](200-engine/README.md) | Il Core carica Config, avvia i componenti e accetta riconfigurazioni senza reboot. |
+| ⬜ | [210 — Finalizzazione](210-finalizzazione/README.md) | Nessuna scorciatoia temporanea rimane e il sistema completo supera la matrice end-to-end. |
 
 ## Da dove iniziare
 

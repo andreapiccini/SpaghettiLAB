@@ -3,7 +3,6 @@
 COMPOSE := docker compose
 VALIDATOR_QUIET_VALUES := 1 true yes on
 VALIDATOR_IS_QUIET := $(filter $(VALIDATOR_QUIET_VALUES),$(VALIDATOR_QUIET))
-VALIDATOR_FLAGS := $(if $(VALIDATOR_IS_QUIET),--quiet,)
 VALIDATOR_ENV := $(if $(VALIDATOR_IS_QUIET),SPAGHETTI_VALIDATOR_QUIET=1 ,)
 HOST_PYTHON := python3
 ifeq ($(OS),Windows_NT)
@@ -22,25 +21,25 @@ shell:
 	@$(COMPOSE) run --rm --entrypoint /bin/bash dev
 
 validate:
-	@$(COMPOSE) run --rm --entrypoint python3 dev validator $(VALIDATOR_FLAGS)
+	@$(COMPOSE) run --rm --entrypoint sh dev -lc \
+		'SPAGHETTI_VALIDATOR_QUIET=$(if $(VALIDATOR_IS_QUIET),1,0) west build \
+			-p auto -b "$$BOARD" -d build -t spaghetti_validator .'
 
 build:
 	@$(COMPOSE) run --rm --entrypoint sh dev -lc \
 		'set -e; \
-		python3 validator $(VALIDATOR_FLAGS); \
 		if [ -d build ] && [ ! -f build/build.ninja ]; then \
 			echo "Incomplete build directory detected; regenerating."; \
 			cmake -E remove_directory build; \
 		fi; \
-		SPAGHETTI_VALIDATOR_ALREADY_RUN=1 $(VALIDATOR_ENV)west build \
+		$(VALIDATOR_ENV)west build \
 			-p auto -b "$$BOARD" -d build .'
 
 pristine:
 	@$(COMPOSE) run --rm --entrypoint sh dev -lc \
 		'set -e; \
-		python3 validator $(VALIDATOR_FLAGS); \
 		cmake -E remove_directory build; \
-		SPAGHETTI_VALIDATOR_ALREADY_RUN=1 $(VALIDATOR_ENV)west build \
+		$(VALIDATOR_ENV)west build \
 			-p auto -b "$$BOARD" -d build .'
 
 flash:

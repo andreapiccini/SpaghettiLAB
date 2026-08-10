@@ -31,25 +31,23 @@ the [implementation guide](FIRMWARE_IMPLEMENTATION_GUIDE.md).
 
 ```mermaid
 flowchart LR
-    MAKE["make build"] --> VALIDATOR["validator"]
-    WEST["direct west build"] --> CMAKE["CMake safety target"]
-    CMAKE --> VALIDATOR
+    MAKE["make build"] --> WEST["West / CMake configure"]
+    WEST --> CMAKE["CMake target app <br/> evaluated SOURCES + INCLUDE_DIRECTORIES"]
+    CMAKE --> VALIDATOR["validator <br/> compiled sources + local included headers"]
     VALIDATOR -->|"errors, warnings, or clean"| COMPILE["West / Zephyr compilation"]
     VALIDATOR -->|"validator cannot run"| STOP["Build stops <br/> check the tool"]
 ```
 
-`make build` and `make pristine` run the validator synchronously before starting
-West. Source-style findings never stop West, CMake, Ninja, or compilation.
+`make build` and `make pristine` let CMake evaluate the real `app` target first.
+CMake then passes the resulting source and include-directory lists to the validator
+before compilation. Source-style findings never stop Ninja or compilation.
 Only an operational failure, such as an invalid invocation or a broken validator
 executable, stops the chained command. This prevents the build from silently
 claiming that validation ran when it did not.
 
-`CMakeLists.txt` also makes the validator a dependency of the application target
-as a safety net for direct `west build` use. It has the same report-only policy.
-
-After the Makefile check succeeds, it passes
-`SPAGHETTI_VALIDATOR_ALREADY_RUN=1` to West so the CMake safety target does not
-repeat the same full scan.
+`CMakeLists.txt` makes the validator a dependency of the application target, so a
+direct `west build` uses exactly the same evaluated scope and report-only policy.
+There is no earlier recursive scan and no duplicate validator execution.
 
 ## Commands
 
@@ -71,21 +69,25 @@ Run the same checker in the project container:
 make validate
 ```
 
+This command configures CMake when needed and runs only the
+`spaghetti_validator` target. It does not compile firmware objects.
+
 Run a normal build without printing convention findings or their summary:
 
 ```sh
 make build VALIDATOR_QUIET=1
 ```
 
-The validator still scans every file. `VALIDATOR_QUIET=1` silences only its
+The validator still checks every file in the evaluated application scope.
+`VALIDATOR_QUIET=1` silences only its
 normal convention report; compiler, linker, West, and real validator execution
 errors remain visible. The same flag works with `make validate` and
 `make pristine`. The accepted true values are `1`, `true`, `yes`, and `on`.
 
-Without `make` (for example on Windows), run the same container command:
+Without `make` (for example on Windows), run the same CMake-backed target:
 
 ```powershell
-docker compose run --rm --entrypoint python3 dev validator
+docker compose run --rm dev sh -lc 'west build -p auto -b "$BOARD" -d build -t spaghetti_validator .'
 ```
 
 Check only selected files or directories while editing:
@@ -95,9 +97,10 @@ Check only selected files or directories while editing:
 ./validator subsys/core
 ```
 
-An explicit path performs local checks. Run the default whole-project scan
-before committing because cross-file checks, such as ensuring every declared log
-module has one registration elsewhere, require the complete scope.
+An explicit path performs local checks and intentionally bypasses CMake scope.
+Run `make validate` before committing because cross-file checks, such as ensuring
+every declared log module has one registration elsewhere, require the complete
+compiled application scope.
 
 Enable an explicit blocking quality gate:
 
@@ -165,28 +168,33 @@ documentation findings attached to it.
 
 ## Validated scope
 
-By default, `validator` scans project-owned build inputs under:
+During `make validate`, `make build`, `make pristine`, or direct `west build`, CMake
+passes the evaluated `SOURCES` and `INCLUDE_DIRECTORIES` properties of target `app`.
+The validator checks:
 
 ```text
-src/
-include/
-subsys/
-spaghetti_modules/
-boards/
-dts/
-tests/
-roadmap/*/TASK-*.md
-CMakeLists.txt
-Kconfig
-prj.conf
+every existing project-owned C/C++ source in app.SOURCES
+every project-owned header reached recursively by #include
 ```
 
-Supported file types include C/C++ headers and sources, Devicetree files,
-bindings, Kconfig, CMake, and configuration fragments.
+Files merely present under `src/`, `subsys/`, `spaghetti_modules/`, `tests/`, or
+`roadmap/` are not part of the default scope. A source enters the scope only when
+CMake adds it to `app`; a header enters only when a scoped source/header includes it.
+This matches the application compilation graph and prevents incomplete future files
+from producing findings before they are added to the build.
+
+Running `./validator` directly parses the root `CMakeLists.txt` declarations and
+follows the same local include graph. `make validate` is authoritative when CMake
+conditionals or generator expressions select sources, because it passes their
+evaluated result rather than parsing them as text.
+
+Devicetree, Kconfig, CMake, YAML, and roadmap task rules remain available for
+explicit-path checks, for example `./validator roadmap/200-engine` or
+`./validator boards/spaghettilab`.
 
 It excludes:
 
-- `build/` and `build-*` generated artifacts;
+- `build/` and `build-*` generated artifacts and generated/system headers;
 - `.git/`, `.west/`, caches, and Python bytecode;
 - `LICENSES/` third-party license texts;
 - `templates/`, because placeholders are intentionally not complete firmware.

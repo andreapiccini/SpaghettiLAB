@@ -6,26 +6,16 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shlex
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 PROJECT_ROOT = Path(__file__).resolve().parent
 ROADMAP_ROOT = PROJECT_ROOT / "roadmap"
-
-SOURCE_ROOTS = (
-    "src",
-    "include",
-    "subsys",
-    "spaghetti_modules",
-    "boards",
-    "dts",
-    "tests",
-)
-ROOT_FILES = ("CMakeLists.txt", "Kconfig", "prj.conf")
 EXCLUDED_DIRS = {
     ".git",
     ".west",
@@ -388,26 +378,148 @@ def is_excluded(path: Path) -> bool:
     return any(part in EXCLUDED_DIRS or part.startswith("build-") for part in relative.parts)
 
 
+def split_cmake_arguments(body: str) -> list[str]:
+    without_comments = re.sub(r"(?m)#.*$", "", body)
+    return shlex.split(without_comments, comments=False, posix=True)
+
+
+def cmake_calls(text: str) -> list[tuple[str, str]]:
+    calls: list[tuple[str, str]] = []
+    call_start = re.compile(r"(?im)^\s*([a-z_][a-z0-9_]*)\s*\(")
+    offset = 0
+
+    while match := call_start.search(text, offset):
+        depth = 1
+        index = match.end()
+        in_quote = False
+        escaped = False
+        while index < len(text) and depth > 0:
+            character = text[index]
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_quote = not in_quote
+            elif not in_quote and character == "(":
+                depth += 1
+            elif not in_quote and character == ")":
+                depth -= 1
+            index += 1
+        if depth != 0:
+            raise ValueError(f"unterminated CMake call: {match.group(1)}")
+        calls.append((match.group(1).lower(), text[match.end() : index - 1]))
+        offset = index
+
+    return calls
+
+
+def resolve_cmake_path(value: str) -> Path | None:
+    if not value or value.startswith("$") or "$<" in value:
+        return None
+    expanded = value.replace("${CMAKE_CURRENT_SOURCE_DIR}", str(PROJECT_ROOT))
+    path = Path(expanded)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    return path.resolve()
+
+
+def declared_cmake_scope() -> tuple[list[Path], list[Path]]:
+    cmake_path = PROJECT_ROOT / "CMakeLists.txt"
+    try:
+        text = cmake_path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ValueError(f"cannot read CMakeLists.txt: {error}") from error
+
+    sources: list[Path] = []
+    include_dirs: list[Path] = []
+    visibility = {"PRIVATE", "PUBLIC", "INTERFACE"}
+
+    for command, body in cmake_calls(text):
+        arguments = split_cmake_arguments(body)
+        if command == "target_sources" and arguments and arguments[0] == "app":
+            values = arguments[1:]
+        elif (
+            command in {"target_sources_ifdef", "target_sources_ifndef"}
+            and len(arguments) > 1
+            and arguments[1] == "app"
+        ):
+            values = arguments[2:]
+        elif (
+            command == "target_include_directories"
+            and arguments
+            and arguments[0] == "app"
+        ):
+            for value in arguments[1:]:
+                if value in visibility:
+                    continue
+                path = resolve_cmake_path(value)
+                if path is not None and path.is_dir() and not is_excluded(path):
+                    include_dirs.append(path)
+            continue
+        else:
+            continue
+
+        for value in values:
+            if value in visibility:
+                continue
+            path = resolve_cmake_path(value)
+            if path is not None and path.is_file() and not is_excluded(path):
+                sources.append(path)
+
+    if not sources:
+        raise ValueError("CMakeLists.txt declares no source files for target 'app'")
+    return sources, include_dirs
+
+
+def local_include_graph(sources: Sequence[Path], include_dirs: Sequence[Path]) -> list[Path]:
+    include_pattern = re.compile(r'^\s*#\s*include\s*([<"])([^>"]+)[>"]', re.MULTILINE)
+    queue = list(sources)
+    found: set[Path] = set()
+    search_roots = [PROJECT_ROOT / "include", PROJECT_ROOT, *include_dirs]
+
+    while queue:
+        path = queue.pop()
+        path = path.resolve()
+        if path in found or is_excluded(path) or not path.is_file():
+            continue
+        found.add(path)
+        if path.suffix.lower() not in C_SUFFIXES:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for match in include_pattern.finditer(text):
+            delimiter, include_name = match.groups()
+            candidates = []
+            if delimiter == '"':
+                candidates.append(path.parent / include_name)
+            candidates.extend(root / include_name for root in search_roots)
+            for candidate in candidates:
+                resolved = candidate.resolve()
+                if resolved.is_file() and not is_excluded(resolved):
+                    queue.append(resolved)
+                    break
+
+    return sorted(path for path in found if is_supported(path))
+
+
+def decode_cmake_list(value: str, directories: bool = False) -> list[Path]:
+    paths: list[Path] = []
+    for item in value.split("|"):
+        path = resolve_cmake_path(item)
+        if path is None:
+            continue
+        correct_kind = path.is_dir() if directories else path.is_file()
+        if correct_kind and not is_excluded(path):
+            paths.append(path)
+    return paths
+
+
 def default_files() -> list[Path]:
-    candidates: list[Path] = []
-    for root_name in SOURCE_ROOTS:
-        root = PROJECT_ROOT / root_name
-        if root.exists():
-            candidates.extend(path for path in root.rglob("*") if path.is_file())
-    candidates.extend(PROJECT_ROOT / name for name in ROOT_FILES if (PROJECT_ROOT / name).is_file())
-    if ROADMAP_ROOT.exists():
-        candidates.extend(
-            path
-            for path in ROADMAP_ROOT.rglob("*.md")
-            if path.is_file() and is_roadmap_task_candidate(path)
-        )
-    return sorted(
-        {
-            path.resolve()
-            for path in candidates
-            if is_supported(path) and not is_excluded(path)
-        }
-    )
+    sources, include_dirs = declared_cmake_scope()
+    return local_include_graph(sources, include_dirs)
 
 
 def explicit_files(values: Sequence[str]) -> list[Path]:
@@ -1172,7 +1284,18 @@ def parse_arguments(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument(
         "paths",
         nargs="*",
-        help="files/directories to validate; defaults to firmware source roots",
+        help="files/directories to validate; defaults to target app sources from CMake",
+    )
+    parser.add_argument(
+        "--cmake-sources",
+        metavar="LIST",
+        help="pipe-separated source list evaluated by CMake for target app",
+    )
+    parser.add_argument(
+        "--cmake-includes",
+        metavar="LIST",
+        default="",
+        help="pipe-separated include directories evaluated by CMake for target app",
     )
     parser.add_argument(
         "--strict",
@@ -1203,13 +1326,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     environment_quiet = os.environ.get("SPAGHETTI_VALIDATOR_QUIET") == "1"
     quiet = args.quiet or environment_quiet
 
-    if os.environ.get("SPAGHETTI_VALIDATOR_ALREADY_RUN") == "1" and not args.paths:
-        if not quiet:
-            print("Spaghetti LAB validator: already completed before West; CMake check skipped.")
-        return 0
-
     try:
-        paths = explicit_files(args.paths) if args.paths else default_files()
+        if args.paths and args.cmake_sources is not None:
+            raise ValueError("explicit paths and --cmake-sources cannot be combined")
+        if args.cmake_sources is not None:
+            sources = decode_cmake_list(args.cmake_sources)
+            include_dirs = decode_cmake_list(args.cmake_includes, directories=True)
+            if not sources:
+                raise ValueError("CMake provided no existing source files for target 'app'")
+            paths = local_include_graph(sources, include_dirs)
+        else:
+            paths = explicit_files(args.paths) if args.paths else default_files()
     except ValueError as error:
         print(f"validator: {error}", file=sys.stderr)
         return 2

@@ -4,9 +4,22 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/sensor.h>
 #include <spaghetti/port.h>
+#include <spaghetti/module_driver.h>
 
 static const struct device *const ina219_device =
 	DEVICE_DT_GET(DT_NODELABEL(ina219_test));
+
+static const struct spaghetti_module_driver_ops ina219_ops = {
+	.init = spaghetti_ina219_init,
+	.read = spaghetti_ina219_read,
+	.deinit = spaghetti_ina219_deinit,
+};
+
+const struct spaghetti_module_driver spaghetti_ina219_driver = {
+	.type_id = "ina219",
+	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.ops = &ina219_ops,
+};
 
 int spaghetti_ina219_init(struct spaghetti_module *module,
 							const void *config,
