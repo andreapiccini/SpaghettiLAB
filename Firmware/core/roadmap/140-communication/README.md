@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -20,10 +20,10 @@ Lo stato elenca zero o più Module per Port con key, ID, tipo ed endpoint.
 
 ## Task
 
-1. ⬜ [TASK-140-01 — Aggiungere la comunicazione Shell](TASK-140-01-aggiungere-la-comunicazione-shell.md)
+1. ✅ [TASK-140-01 — Aggiungere la comunicazione Shell](TASK-140-01-aggiungere-la-comunicazione-shell.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Messaggi e buffer hanno dimensioni massime.
-- [ ] Il dispatch non dipende dalla Shell.
-- [ ] Input malformati vengono rifiutati senza modificare lo stato.
+- [x] Messaggi e buffer hanno dimensioni massime.
+- [x] Il dispatch non dipende dalla Shell.
+- [x] Input malformati vengono rifiutati senza modificare lo stato.

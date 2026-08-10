@@ -37,6 +37,8 @@ target_sources(app PRIVATE
   subsys/data/data.c
   subsys/services/timer/timer.c
   subsys/runtime/runtime.c
+  subsys/communication/communication.c
+  subsys/communication/communication_shell.c
 )
 
 get_target_property(APP_SRCS app SOURCES)

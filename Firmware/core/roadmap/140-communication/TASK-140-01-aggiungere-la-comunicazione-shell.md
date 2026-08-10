@@ -1,6 +1,6 @@
 # TASK-140-01 — Aggiungere la comunicazione Shell
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 140 — Communication
 
 ## Prima di scrivere: concetti Zephyr
@@ -147,13 +147,13 @@ int err = spaghetti_communication_handle_request(&request, &response);
 
 ## Checklist di completamento
 
-- [ ] Definire messaggi Communication a dimensione limitata.
-- [ ] Dichiarare e implementare il dispatch delle richieste.
-- [ ] GET_STATUS rappresenta zero o più Module per Port.
-- [ ] Abilitare Zephyr Shell.
-- [ ] Implementare l’adattatore di trasporto Shell.
-- [ ] Inizializzare Communication da Core.
-- [ ] Provare stato e input Shell non valido.
+- [x] Definire messaggi Communication a dimensione limitata.
+- [x] Dichiarare e implementare il dispatch delle richieste.
+- [x] GET_STATUS rappresenta zero o più Module per Port.
+- [x] Abilitare Zephyr Shell.
+- [x] Implementare l’adattatore di trasporto Shell.
+- [x] Inizializzare Communication da Core.
+- [x] Provare stato e input Shell non valido con test nativo.
 
 ## Verifica finale
 
@@ -173,3 +173,8 @@ Dalla Shell prova status, comando sconosciuto, hex dispari/non valido e payload 
 **Risultato atteso**
 
 La Shell produce risposte limitate e nessun input malformato modifica Config.
+
+**Verifica eseguita:** validator e build pristine ESP32-C3 superati; test nativo
+Communication/Shell superato. `SET_CONFIG` restituisce intenzionalmente
+`response.status = -ENOTSUP` fino al task 150, che introduce il decoder CBOR; in
+questa fase nessun payload opaco viene interpretato o applicato.

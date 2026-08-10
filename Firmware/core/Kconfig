@@ -34,6 +34,10 @@ module = SPAGHETTI_RUNTIME
 module-str = spaghetti_runtime
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_COMMUNICATION
+module-str = spaghetti_communication
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"

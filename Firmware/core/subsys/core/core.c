@@ -5,6 +5,7 @@
 #include <zephyr/logging/log.h>
 
 #include <spaghetti/config.h>
+#include <spaghetti/communication.h>
 #include <spaghetti/data.h>
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_manager.h>
@@ -99,6 +100,13 @@ int spaghetti_core_init(void)
 	ret = load_persisted_config();
 	if (ret < 0) {
 		core_state = SPAGHETTI_CORE_ERROR;
+		return ret;
+	}
+
+	ret = spaghetti_communication_init();
+	if (ret < 0) {
+		core_state = SPAGHETTI_CORE_ERROR;
+		LOG_ERR("Communication initialization failed: err=%d", ret);
 		return ret;
 	}
 
