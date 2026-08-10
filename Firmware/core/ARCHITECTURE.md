@@ -241,6 +241,166 @@ flowchart TB
 The operation table keeps callers generic: the Manager calls `init`, `read`,
 `command`, or `deinit` without including a concrete driver implementation.
 
+## Example: lifecycle of a runtime module
+
+The following example follows one INA219 connected to Port 0 from physical
+connection to a measurement requested by Runtime. Port 0 is part of the static
+Core hardware, while the INA219 type, its I2C address, and the live Module
+instance are runtime state. The example uses address `0x40`, the address carried
+by this module's validated runtime configuration; it is not a removable INA219
+node permanently declared in the Core Devicetree.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / physical event
+    participant Config
+    participant Discovery
+    participant Manager as Module Manager
+    participant Registry as Driver Registry
+    participant Port as Port 0
+    participant Module as spaghetti_module
+    participant Driver as INA219 Module Driver
+    participant Hardware as INA219 at 0x40
+    participant Runtime
+
+    User->>Port: connect INA219 to physical Port 0
+    alt Explicit configuration
+        Config->>Manager: request type "ina219", Port 0, address 0x40
+    else Optional discovery
+        Discovery->>Manager: propose type "ina219", Port 0, address 0x40
+    end
+    Manager->>Registry: find("ina219")
+    Registry-->>Manager: &spaghetti_ina219_driver
+    Manager->>Port: resolve Port 0 and check required capabilities
+    Port-->>Manager: Port exists, READY, I2C supported
+    Manager->>Module: create provisional struct spaghetti_module
+    Manager->>Driver: driver->ops->init(&module, config, config_size)
+    Driver->>Port: spaghetti_port_i2c_device(module->port)
+    Port-->>Driver: stable Zephyr I2C device
+    Driver->>Hardware: initialize through I2C using address 0x40
+    Hardware-->>Driver: success
+    Driver-->>Manager: 0
+    Manager->>Module: commit state READY
+    Runtime->>Manager: spaghetti_module_manager_read(module_id, &sample)
+    Manager->>Module: verify that the instance is READY
+    Manager->>Driver: module->driver->ops->read(&module, &sample)
+    Driver->>Port: obtain and use the Port I2C device
+    Driver->>Hardware: read bus voltage, current, and power registers
+    Hardware-->>Driver: raw register values
+    Driver-->>Manager: spaghetti_sample
+    Manager-->>Runtime: spaghetti_sample
+```
+
+1. **The physical connection uses Port 0.** The user connects the INA219 to the
+   I2C lines exposed by Port 0. The Port represents the connector and the bus
+   capability already described for this Core; connecting a module does not
+   change Devicetree and, by itself, does not imply automatic discovery.
+
+   See also:
+
+   - [Port](subsys/port/README.md)
+   - [Board support](boards/spaghettilab/README.md)
+
+2. **Config or Discovery identifies the requested module.** Config can provide
+   the validated assignment explicitly. An optional Discovery strategy can
+   instead propose the same normalized information: type `"ina219"`, Port 0,
+   and I2C address `0x40`. Discovery identifies a candidate; it does not create
+   or own the Module. Only one of these paths is needed for a given request.
+
+   See also:
+
+   - [Config](subsys/config/README.md)
+   - [Discovery](subsys/discovery/README.md)
+
+3. **Module Manager receives the request.** The Manager is the lifecycle owner.
+   It validates the request, rejects an unavailable or already assigned Port,
+   and coordinates lookup, initialization, commit, later reads, and removal.
+   No caller creates a live Module directly.
+
+   See also:
+
+   - [Module Manager](subsys/module_manager/README.md)
+
+4. **Driver Registry resolves the type.** The Manager asks for `"ina219"`.
+   Registry returns `&spaghetti_ina219_driver`, a pointer to the immutable
+   descriptor compiled into the firmware. Registry owns descriptors, not live
+   instances; an unknown type makes configuration fail before hardware access.
+
+   See also:
+
+   - [Driver Registry](subsys/driver_registry/README.md)
+
+5. **Module Manager verifies Port capabilities.** The INA219 descriptor requires
+   I2C. The Manager resolves Port 0, checks that it is ready, and confirms that
+   `SPAGHETTI_PORT_CAP_I2C` is present. This prevents calling an I2C driver on an
+   incompatible connector.
+
+   See also:
+
+   - [Port](subsys/port/README.md)
+   - [External module drivers](spaghetti_modules/README.md)
+
+6. **Module Manager creates a provisional Module.** It fills one private
+   `struct spaghetti_module` slot with its ID, Port pointer, driver pointer,
+   initial state, and per-instance context. The Manager owns this structure for
+   the whole connection lifetime; Runtime and other callers refer to it by ID
+   and do not retain writable pointers to it.
+
+   See also:
+
+   - [Public Module interfaces](include/spaghetti/README.md)
+   - [Module Manager](subsys/module_manager/README.md)
+
+7. **The Module Driver initializes the instance.** The Manager calls
+   `driver->ops->init(&module, config, config_size)`. The INA219 driver validates
+   its configuration, asks the Port for the stable Zephyr I2C device, and uses
+   the runtime address `0x40` for the device transaction. It keeps only
+   per-instance protocol state in the Module context; it does not own the Port
+   or the Zephyr device.
+
+   See also:
+
+   - [External module drivers](spaghetti_modules/README.md)
+   - [Port](subsys/port/README.md)
+
+8. **The Module becomes READY only after successful initialization.** When
+   `init()` returns `0`, the Manager commits the provisional slot and publishes
+   its ID in state `SPAGHETTI_MODULE_READY`. If initialization fails, it discards
+   the provisional instance and leaves Port 0 available instead of exposing a
+   half-initialized Module.
+
+   See also:
+
+   - [Module Manager](subsys/module_manager/README.md)
+   - [Public Module interfaces](include/spaghetti/README.md)
+
+9. **Runtime requests one reading through Module Manager.** Runtime schedules
+   the product behavior and calls
+   `spaghetti_module_manager_read(module_id, &sample)`. It knows the Module ID
+   and the generic sample contract, but it does not know INA219 registers or
+   which Zephyr I2C controller is behind Port 0.
+
+   See also:
+
+   - [Runtime](subsys/runtime/README.md)
+   - [Module Manager](subsys/module_manager/README.md)
+
+10. **The driver reads through Port and returns a generic sample.** The Manager
+    verifies that the instance is READY, then calls
+    `module->driver->ops->read(&module, &sample)`. The INA219 driver obtains the
+    I2C device from `module->port`, reads bus voltage, current, and power, and
+    converts the result into `struct spaghetti_sample`. The sample returns
+    through the Manager to Runtime and can then enter the generic Data path;
+    hardware-specific register details do not escape the driver.
+
+    See also:
+
+    - [External module drivers](spaghetti_modules/README.md)
+    - [Port](subsys/port/README.md)
+    - [Data](subsys/data/README.md)
+    - [Runtime](subsys/runtime/README.md)
+
 ## Driver Registry and Module Manager
 
 The Registry and Manager have different jobs:
