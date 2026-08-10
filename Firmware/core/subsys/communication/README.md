@@ -49,10 +49,14 @@ with `memcpy` into `spaghetti_communication_status_payload` before reading them.
 
 ## SET_CONFIG
 
-In phase 140, SET_CONFIG validates and carries 1–256 opaque bytes but returns
-`response.status = -ENOTSUP`. It deliberately does not guess their format or modify
-Config. Phase 150 adds the documented CBOR decoder and connects decode → validate →
-apply at this exact dispatch point.
+SET_CONFIG accepts 1–256 CBOR bytes. Communication decodes them into a temporary
+`spaghetti_config`, then calls `spaghetti_config_apply()` only when decoding and
+semantic validation succeed. A decode failure cannot reach apply; an apply or rollback
+failure is returned unchanged in `response.status`. The dispatch return remains `0`
+because the request envelope itself was valid.
+
+The decoder does not retain request bytes and Config does not know about CBOR or the
+Shell. This keeps the same dispatch usable by future MQTT and other transports.
 
 ## Shell adapter
 
@@ -80,7 +84,10 @@ flowchart LR
     ADAPTER --> REQUEST["generic request"]
     REQUEST --> DISPATCH["Communication dispatch"]
     DISPATCH --> MANAGER["bounded status queries"]
+    DISPATCH --> CODEC["CBOR decode and Config validation"]
+    CODEC --> CONFIG["transactional Config apply"]
     DISPATCH --> RESPONSE["correlated response"]
+    CONFIG --> RESPONSE
     RESPONSE --> ADAPTER
 ```
 

@@ -12,6 +12,8 @@
 #include <zephyr/sys/util.h>
 
 #include <spaghetti/core.h>
+#include <spaghetti/config.h>
+#include <spaghetti/config_codec.h>
 #include <spaghetti/module.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
@@ -174,7 +176,13 @@ int spaghetti_communication_handle_request(
 			result.payload_size = 0U;
 		}
 	} else {
-		result.status = -ENOTSUP;
+		struct spaghetti_config candidate;
+
+		result.status = spaghetti_config_decode_cbor(
+			request->payload, request->payload_size, &candidate);
+		if (result.status == 0) {
+			result.status = spaghetti_config_apply(&candidate);
+		}
 	}
 
 	*response = result;

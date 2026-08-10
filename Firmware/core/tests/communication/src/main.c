@@ -7,6 +7,7 @@
 #include <zephyr/ztest.h>
 
 #include <spaghetti/communication.h>
+#include <spaghetti/config_codec.h>
 #include <spaghetti/core.h>
 #include <spaghetti/module.h>
 #include <spaghetti/module_manager.h>
@@ -16,6 +17,35 @@
 
 static bool report_no_modules;
 static bool report_long_type_id;
+static int decode_error;
+static int apply_error;
+static uint32_t decode_count;
+static uint32_t apply_count;
+
+int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
+				 struct spaghetti_config *out)
+{
+	++decode_count;
+	if ((bytes == NULL) || (length == 0U) || (out == NULL)) {
+		return -EINVAL;
+	}
+	if (decode_error < 0) {
+		return decode_error;
+	}
+
+	const struct spaghetti_config decoded = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+	};
+
+	*out = decoded;
+	return 0;
+}
+
+int spaghetti_config_apply(const struct spaghetti_config *candidate)
+{
+	++apply_count;
+	return (candidate != NULL) ? apply_error : -EINVAL;
+}
 
 enum spaghetti_core_state spaghetti_core_get_state(void)
 {
@@ -180,10 +210,26 @@ ZTEST(communication, test_bounded_dispatch_status_and_hex_validation)
 	zassert_equal(request.payload_size, 2U);
 	zassert_equal(request.payload[0], 0x00U);
 	zassert_equal(request.payload[1], 0xAFU);
+	decode_error = -EBADMSG;
 	zassert_ok(spaghetti_communication_handle_request(&request, &response));
 	zassert_equal(response.correlation_id, 8U);
-	zassert_equal(response.status, -ENOTSUP);
+	zassert_equal(response.status, -EBADMSG);
 	zassert_equal(response.payload_size, 0U);
+	zassert_equal(decode_count, 1U);
+	zassert_equal(apply_count, 0U);
+
+	decode_error = 0;
+	apply_error = -EIO;
+	zassert_ok(spaghetti_communication_handle_request(&request, &response));
+	zassert_equal(response.status, -EIO);
+	zassert_equal(decode_count, 2U);
+	zassert_equal(apply_count, 1U);
+
+	apply_error = 0;
+	zassert_ok(spaghetti_communication_handle_request(&request, &response));
+	zassert_ok(response.status);
+	zassert_equal(decode_count, 3U);
+	zassert_equal(apply_count, 2U);
 }
 
 ZTEST_SUITE(communication, NULL, NULL, NULL, NULL, NULL);

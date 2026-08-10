@@ -2,75 +2,70 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-Config è il desired state validato del firmware. Tutte le sorgenti future, come
-Storage, Shell o CBOR, devono prima costruire la stessa `struct spaghetti_config`:
-solo dopo una validazione completa Config modifica i Module vivi.
+Config owns the validated desired state of the firmware. Storage, Communication,
+and the CBOR codec construct the same bounded `struct spaghetti_config`; live Modules
+change only after complete validation.
 
-## Responsabilità
+## Responsibilities
 
-Config possiede una copia bounded dell'ultimo snapshot applicato con successo.
-Ogni Module desiderato contiene una key stabile, una Port condivisibile, il type ID
-del driver e una copia dei byte di configurazione del driver. Config non possiede le
-istanze vive, i context dei driver, i sample o il formato persistente.
+Config owns a copy of the last successfully applied snapshot. Each desired Module
+contains a stable key, a shareable Port, a driver type ID, and copied concrete driver
+bytes. Config does not own live Module instances, driver contexts, samples, or wire
+formats.
 
-La relazione Port → Module è 1:N. Due INA219 sulla Port 0 sono validi se usano, per
-esempio, gli endpoint I2C `0x40` e `0x41`. La stessa key o lo stesso endpoint sulla
-stessa Port costituiscono invece una collisione.
+The Port-to-Module relation is 1:N. Two INA219 Modules on Port 0 are valid at distinct
+I2C endpoints such as `0x40` and `0x41`. A repeated stable key or the same endpoint on
+the same Port is a collision.
 
-## File
+## Files and API
 
-| File | Ruolo |
+| File | Role |
 |---|---|
-| `include/spaghetti/config.h` | Schema bounded e API pubblica. |
-| `subsys/config/config.c` | Validazione, riconciliazione e rollback. |
-| `tests/config/src/main.c` | Test nativo della transazione. |
-
-## API
+| `include/spaghetti/config.h` | Bounded desired-state model and transaction API. |
+| `include/spaghetti/config_codec.h` | Bounded CBOR decode boundary. |
+| `subsys/config/config.c` | Validation, reconciliation, commit, and rollback. |
+| `subsys/config/config_cbor.c` | Strict wire V0 decoder. |
+| `subsys/config/spaghetti_config_v0.cddl` | Authoritative wire V0 schema. |
+| `tests/config/src/main.c` | Native transaction tests. |
+| `tests/config_codec/src/main.c` | Native codec and boundary tests. |
 
 ```c
+int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
+				 struct spaghetti_config *out);
 int spaghetti_config_validate(const struct spaghetti_config *candidate);
 int spaghetti_config_apply(const struct spaghetti_config *candidate);
 int spaghetti_config_get_snapshot(struct spaghetti_config *out);
 ```
 
-`spaghetti_config_validate()` è pura: verifica versione, limiti, key, Port, driver,
-capability, configurazioni concrete, endpoint, sorgente di sampling e riferimenti
-della regola senza toccare l'hardware o il Manager. La sorgente deve supportare
-`read`; il target della regola deve supportare `command`.
+`spaghetti_config_decode_cbor()` accepts 1–256 borrowed bytes, parses into a temporary
+snapshot, calls `spaghetti_config_validate()`, and copies to `out` only on complete
+success. It never applies Config. The wire V0 version is `1`; it maps explicit fields
+into the current internal `SPAGHETTI_CONFIG_VERSION`, so the persistent C struct is
+never treated as a network ABI. V0 supports INA219 and sampling; the later threshold
+rule remains disabled when a V0 payload is decoded.
 
-`spaghetti_config_apply()` riconcilia per key. Mantiene intatti i Module invariati,
-rimuove quelli assenti o cambiati e configura quelli nuovi. Pubblica la copia del
-candidato soltanto dopo il successo completo. Se un'operazione fallisce, elimina le
-istanze appena aggiunte e ricrea quelle precedenti che aveva rimosso.
+`spaghetti_config_validate()` checks version, bounds, keys, Ports, drivers,
+capabilities, concrete configuration, endpoint conflicts, sampling, and threshold
+references without hardware I/O. The sampling source must support `read`; the rule
+target must support `command`.
 
-`spaghetti_config_get_snapshot()` scrive una copia coerente nel buffer del chiamante.
-Prima del primo apply riuscito restituisce `-ENOENT`; in caso di errore non modifica
-l'output.
+`spaghetti_config_apply()` reconciles by stable key and publishes only after success.
+On failure it removes new instances and restores the previous Modules and Runtime
+state. `spaghetti_config_get_snapshot()` returns a coherent caller-owned copy and
+leaves its output unchanged when no Config has been applied.
 
-## Flusso
+## Flow and ownership
 
 ```mermaid
 flowchart LR
-    INPUT["Defaults / Storage / comando"] --> TEMP["Config temporanea"]
-    TEMP --> VALIDATE["Validazione completa"]
-    VALIDATE -->|"errore"| REJECT["Nessuna modifica"]
-    VALIDATE -->|"valida"| APPLY["Riconcilia per key"]
-    APPLY -->|"successo"| COMMIT["Pubblica snapshot"]
-    APPLY -->|"errore"| ROLLBACK["Ripristina Module precedenti"]
+    INPUT["Storage / Communication bytes"] --> DECODE["temporary decoded Config"]
+    DECODE --> VALIDATE["complete validation"]
+    VALIDATE -->|"error"| REJECT["no output or live-state change"]
+    VALIDATE -->|"valid"| APPLY["reconcile by stable key"]
+    APPLY -->|"success"| COMMIT["publish owned snapshot"]
+    APPLY -->|"error"| ROLLBACK["restore previous Modules and Runtime"]
 ```
 
-I campi `sampling.source_key`, `threshold_rule.source_key` e
-`threshold_rule.relay_key` restano key persistenti. Durante apply Config ferma
-Runtime, riconcilia i Module, risolve le tre key in ID runtime READY e carica task e
-regola. Un rollback ripristina anche il precedente stato Runtime.
-
-Lo schema corrente è `SPAGHETTI_CONFIG_VERSION == 2`: la versione è aumentata perché
-la struct persistente ora contiene la regola di soglia. Un record V1 viene rifiutato
-come incompatibile invece di essere interpretato con un layout errato.
-
-## Proprietà e concorrenza
-
-Lo snapshot non contiene puntatori: stringhe e configurazioni dei driver sono copie
-possedute da Config per tutta la durata dello snapshot corrente. Gli input sono
-prestati soltanto durante la chiamata. Un mutex serializza apply e lettura dello
-snapshot; le risorse restano statiche e non viene usato heap.
+The snapshot contains no pointers. Config copies strings and concrete driver bytes;
+decoder and caller buffers are borrowed only during each call. A mutex serializes
+apply and snapshot reads. All storage is statically bounded and no heap is used.

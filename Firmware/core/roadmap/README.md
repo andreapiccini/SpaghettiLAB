@@ -89,7 +89,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [120 — Runtime V0](120-runtime-v0/README.md) | Runtime campiona ogni secondo mentre `main` esegue soltanto il boot. |
 | ✅ | [130 — Relay + Runtime V1](130-relay-runtime-v1/README.md) | Una soglia di corrente con isteresi comanda il relay configurato. |
 | ✅ | [140 — Communication](140-communication/README.md) | Un comando Shell locale legge lo stato e invia configurazioni. |
-| ⬜ | [150 — CBOR](150-cbor/README.md) | Un payload CBOR viene decodificato e applicato a Config. |
+| ✅ | [150 — CBOR](150-cbor/README.md) | Un payload CBOR viene decodificato e applicato a Config. |
 | ⬜ | [160 — MQTT](160-mqtt/README.md) | Il campione elettrico raggiunge il topic MQTT configurato. |
 | ⬜ | [170 — Discovery](170-discovery/README.md) | Discovery emette più risultati per Port e invalida una key alla volta. |
 | ⬜ | [180 — Varianti Core multiple](180-multi-core/README.md) | Gli stessi livelli applicativi funzionano su due varianti Core. |

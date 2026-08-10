@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -19,10 +19,10 @@ duplicati e payload incompleti vengono rifiutati.
 
 ## Task
 
-1. ⬜ [TASK-150-01 — Decodificare Config con CBOR](TASK-150-01-decodificare-config-con-cbor.md)
+1. ✅ [TASK-150-01 — Decodificare Config con CBOR](TASK-150-01-decodificare-config-con-cbor.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Lo schema V0 è documentato prima del decoder.
-- [ ] Il decoder non applica direttamente la configurazione.
-- [ ] Limiti, campi obbligatori e valori sconosciuti sono provati.
+- [x] Lo schema V0 è documentato prima del decoder.
+- [x] Il decoder non applica direttamente la configurazione.
+- [x] Limiti, campi obbligatori e valori sconosciuti sono provati.

@@ -26,6 +26,7 @@ This directory contains contracts shared between firmware components. Headers ex
 | `module_driver.h` | Immutable driver descriptor and operation table. |
 | `module_manager.h` | Module lifecycle and operation routing. |
 | `config.h` | Validated desired-state model. |
+| `config_codec.h` | Bounded CBOR-to-Config decode contract. |
 | `data.h` | Normalized values and events. |
 | `runtime.h` | Autonomous behavior contract. |
 | `communication.h` | Transport-independent request/response boundary. |

@@ -33,6 +33,7 @@ target_sources(app PRIVATE
   subsys/driver_registry/driver_registry.c
   subsys/module_manager/module_manager.c
   subsys/config/config.c
+  subsys/config/config_cbor.c
   subsys/services/storage/storage.c
   subsys/data/data.c
   subsys/services/timer/timer.c

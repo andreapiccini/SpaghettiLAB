@@ -1,6 +1,6 @@
 # TASK-150-01 — Decodificare Config con CBOR
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 150 — CBOR
 
 ## Prima di scrivere: concetti Zephyr
@@ -158,13 +158,13 @@ if (err == 0) {
 
 ## Checklist di completamento
 
-- [ ] Documentare lo schema CBOR V0.
-- [ ] Dichiarare il confine del decoder Config.
-- [ ] Abilitare zcbor e aggiungere il sorgente codec.
-- [ ] Implementare la decodifica CBOR V0 rigorosa.
-- [ ] Applicare CBOR tramite Communication.
-- [ ] Provare payload CBOR validi e non validi.
-- [ ] Accettare due Module sulla stessa Port e distinguere key/address.
+- [x] Documentare lo schema CBOR V0.
+- [x] Dichiarare il confine del decoder Config.
+- [x] Abilitare zcbor e aggiungere il sorgente codec.
+- [x] Implementare la decodifica CBOR V0 rigorosa.
+- [x] Applicare CBOR tramite Communication.
+- [x] Provare payload CBOR validi e non validi.
+- [x] Accettare due Module sulla stessa Port e distinguere key/address.
 
 ## Verifica finale
 
@@ -184,3 +184,8 @@ Aggiungi vettori per payload valido, troncato, chiave mancante/extra/duplicata, 
 **Risultato atteso**
 
 Solo il CBOR V0 completo produce Config; ogni errore lascia `out` e stato attivo invariati.
+
+**Verifica eseguita:** validator superato, build pristine ESP32-C3 completata e test
+nativi Config codec/Communication superati. La versione wire V0 `1` viene tradotta
+nella versione interna corrente `SPAGHETTI_CONFIG_VERSION`; i campi introdotti dopo
+V0, come la regola di soglia, restano disabilitati.
