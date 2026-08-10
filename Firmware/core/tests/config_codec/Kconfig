@@ -1,0 +1,3 @@
+mainmenu "Spaghetti Config codec tests"
+
+source "Kconfig.zephyr"
