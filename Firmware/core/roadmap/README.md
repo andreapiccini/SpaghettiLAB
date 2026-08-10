@@ -81,7 +81,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [040 — Sezione verticale INA219](040-ina219/README.md) | Bus voltage, current e power reali compaiono nei log. |
 | ⬜ | [050 — Module + Module Driver](050-module-driver/README.md) | Module distingue key, ID runtime, Port ed endpoint; INA219 usa la operation table. |
 | ⬜ | [060 — Driver Registry](060-driver-registry/README.md) | La ricerca di `ina219` riesce e un tipo sconosciuto fallisce correttamente. |
-| ⬜ | [070 — Module Manager](070-module-manager/README.md) | Il Manager gestisce più endpoint simultanei sulla stessa Port. |
+| ✅ | [070 — Module Manager](070-module-manager/README.md) | Il Manager gestisce più endpoint simultanei sulla stessa Port. |
 | ⬜ | [080 — INA219 rimovibile a runtime](080-runtime-removable-ina219/README.md) | Due INA219 condividono Port 0 con address e context runtime distinti. |
 | ⬜ | [090 — Config interna](090-config/README.md) | Config riconcilia Module per key e accetta Port ripetute con endpoint distinti. |
 | ⬜ | [100 — Config persistente](100-storage/README.md) | La configurazione sopravvive al riavvio. |

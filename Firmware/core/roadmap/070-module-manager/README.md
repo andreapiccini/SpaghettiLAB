@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -14,15 +14,16 @@ Gestire un pool statico di Module, consentendo più endpoint sulla stessa Port.
 
 ## Risultato visibile
 
-Due chiamate configurano INA219 `0x40` e `0x41` sulla stessa Port 0 e li leggono per ID.
+Tre istanze fake con endpoint `0x40`, `0x41` e `0x44` condividono Port 0 e vengono
+gestite per ID/key senza collisioni false.
 
 ## Task
 
-1. ⬜ [TASK-070-01 — Implementare il Module Manager](TASK-070-01-implementare-il-module-manager.md)
+1. ✅ [TASK-070-01 — Implementare il Module Manager](TASK-070-01-implementare-il-module-manager.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Gli slot hanno un solo proprietario e non contengono un context universale.
-- [ ] Key ed endpoint duplicati falliscono; Port ripetute sono accettate.
-- [ ] Configurazioni fallite eseguono rollback.
-- [ ] Letture su slot non pronti falliscono in modo controllato.
+- [x] Gli slot hanno un solo proprietario e non contengono un context universale.
+- [x] Key ed endpoint duplicati falliscono; Port ripetute sono accettate.
+- [x] Configurazioni fallite eseguono rollback.
+- [x] Letture su slot non pronti falliscono in modo controllato.

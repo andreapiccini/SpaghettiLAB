@@ -1,6 +1,6 @@
 # TASK-070-01 — Implementare il Module Manager
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 070 — Module Manager
 
 ## Cosa devo fare
@@ -171,22 +171,29 @@ int err = spaghetti_module_manager_configure(&request, &id);
 
 ## Checklist di completamento
 
-- [ ] Rimuovere controllo Port occupata e context buffer globale.
-- [ ] Dichiarare request/snapshot con key ed endpoint.
-- [ ] Implementare pool statico indipendente dalle Port.
-- [ ] Configure accetta stessa Port con endpoint diversi.
-- [ ] Get-by-key e list-by-port sostituiscono get-by-port singolare.
-- [ ] Remove e rollback preservano i fratelli sulla stessa Port.
-- [ ] Testare tre endpoint, duplicati, capacità ed errori.
+- [x] Rimuovere controllo Port occupata e context buffer globale.
+- [x] Dichiarare request/snapshot con key ed endpoint.
+- [x] Implementare pool statico indipendente dalle Port.
+- [x] Configure accetta stessa Port con endpoint diversi.
+- [x] Get-by-key e list-by-port sostituiscono get-by-port singolare.
+- [x] Remove e rollback preservano i fratelli sulla stessa Port.
+- [x] Testare tre endpoint, duplicati, capacità ed errori.
 
 ## Verifica e fine task
 
 ```sh
 make validate
 make pristine
+docker compose run --rm --entrypoint sh dev -lc \
+	'west build -p always -b native_sim/native/64 \
+	-d build-tests/module_manager tests/module_manager -t run'
 make flash
 make monitor
 ```
 
 Il task termina quando tre Module fake condividono Port 0, `list_by_port()` restituisce
 tre snapshot e la rimozione del secondo lascia primo e terzo READY.
+
+Verifica automatica completata con Zephyr 4.4 su `native_sim/native/64`: 1 suite,
+1 test, 100% PASS. La verifica hardware resta facoltativa per questo task e appartiene
+alla fase 080 per le due istanze INA219 reali.
