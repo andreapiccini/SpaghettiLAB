@@ -6,7 +6,7 @@
 
 ## Obiettivo
 
-Separare l’identità del modulo dalle operazioni specifiche del driver INA219 e
+Separare key stabile, ID runtime, Port condivisa ed endpoint dalle operazioni INA219 e
 normalizzare bus voltage, current e power in un campione copiabile.
 
 ## Dipende da
@@ -25,4 +25,5 @@ INA219 viene usato soltanto tramite una tabella di operazioni.
 
 - [ ] Instance, sample e tabella operazioni hanno contratti espliciti.
 - [ ] Il descrittore INA219 è immutabile.
+- [ ] L’endpoint distingue più istanze dello stesso driver sulla stessa Port.
 - [ ] Il chiamante non dipende più direttamente dal wrapper.

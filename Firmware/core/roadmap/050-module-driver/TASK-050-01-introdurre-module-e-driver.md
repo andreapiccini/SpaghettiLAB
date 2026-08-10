@@ -3,76 +3,61 @@
 **Stato:** ⬜ TODO
 **Fase:** 050 — Module + Module Driver
 
-## Perché lo facciamo
+## Cosa devo fare
 
-L’istanza appartiene al Manager, mentre il descrittore immutabile decide quali operazioni esegue il driver concreto.
+### 1. Definire identità runtime, chiave stabile ed endpoint
 
-## Implementazione guidata
+Apri `include/spaghetti/module.h`. Prima dichiara in avanti `struct spaghetti_port` e
+`struct spaghetti_module_driver`, poi scrivi:
 
-### Passo 1 — Definire l’istanza minima di Module
+```c
+typedef uint8_t spaghetti_module_id_t;
+typedef uint32_t spaghetti_module_key_t;
 
-`include/spaghetti/module.h`.
+enum spaghetti_module_state {
+	SPAGHETTI_MODULE_UNINITIALIZED,
+	SPAGHETTI_MODULE_READY,
+	SPAGHETTI_MODULE_ERROR,
+};
 
-Definire i valori di stato `spaghetti_module_id_t`, `UNINITIALIZED`, `READY` e `ERROR`,
-e `struct spaghetti_module` con solo ID, Port puntatore, driver puntatore e context
-puntatore al contesto privato. Dichiara in anticipo i tipi Port e driver per evitare
-dipendenze circolari tra gli header.
+enum spaghetti_module_endpoint_kind {
+	SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE,
+	SPAGHETTI_ENDPOINT_I2C_ADDRESS,
+	SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT,
+};
 
-### Passo 2 — Definire il contratto temporaneo del campione
+struct spaghetti_module_endpoint {
+	enum spaghetti_module_endpoint_kind kind;
+	uint32_t value;
+};
 
-`include/spaghetti/module.h`.
+struct spaghetti_module {
+	spaghetti_module_id_t id;
+	spaghetti_module_key_t key;
+	enum spaghetti_module_state state;
+	const struct spaghetti_port *port;
+	const struct spaghetti_module_driver *driver;
+	struct spaghetti_module_endpoint endpoint;
+	void *context;
+};
+```
 
-Definisci `struct spaghetti_sample` con bus voltage, current e power nelle microunità
-indicate più avanti. In questa prima versione il tipo è concreto e senza puntatori: non
-aggiungere mappe di metadati o un sistema generico di canali.
+- `id` è l’handle runtime assegnato dal futuro Manager e può cambiare al reboot;
+- `key` è nonzero, arriva da Config e identifica stabilmente un elemento desiderato;
+- `port` è un prestito `const` al catalogo hardware e può essere condiviso da molti
+  Module;
+- `endpoint` distingue le istanze sulla stessa Port: per INA219 contiene l’indirizzo
+  I2C 7-bit;
+- `driver` punta al descrittore immutabile condiviso fra tutte le istanze dello stesso
+  tipo;
+- `context` è opaco e sarà posseduto dal pool statico del driver concreto, non dal
+  Manager. In questa fase temporanea può restare `NULL`.
 
-### Passo 3 — Definire la tabella operazioni di Module Driver
+Non aggiungere `occupied` alla Port e non usare `port_id` come Module ID.
 
-`include/spaghetti/module_driver.h`.
+### 2. Definire sample e operazioni driver
 
-Definire puntatori `spaghetti_module_driver_ops` con campi sincroni `init`, `read` e
-`deinit`. Definire i campi `spaghetti_module_driver` immutabili `type_id`,
-`required_capabilities` e `ops`. Modulo e tipi di campioni in avanti, invece di creare
-include ciclici.
-
-### Passo 4 — Dichiarare il descrittore del driver INA219
-
-`spaghetti_modules/ina219/ina219.h`.
-
-Dichiarare l'immutabile descrittore esportato `extern const struct
-spaghetti_module_driver spaghetti_ina219_driver;`. Mantenere l'API temporanea porta-up
-fino a quando il percorso operation-table è dimostrato.
-
-### Passo 5 — Adattare INA219 alle operazioni del driver
-
-`spaghetti_modules/ina219/ina219.c`.
-
-Implementa le chiamate INA219 `init`, `read` e `deinit` intorno al dispositivo statico
-Zephyr INA219 già funzionante. Definisci la tabella delle operazioni private ed esporta
-il descrittore con il tipo di ID `ina219` e la capacità I2C. Mantenere le chiamate
-sincrone e propagare gli errori API del sensore. In questa fase temporanea `init()`
-accetta soltanto `config == NULL` e `config_size == 0U`; address e calibrazione arrivano
-ancora dal nodo Devicetree della fase 040. La fase 080 sostituirà questo contratto con
-la configurazione runtime.
-
-### Passo 6 — Usare INA219 tramite la tabella operazioni
-
-`src/main.c`, `CMakeLists.txt` e la console seriale.
-
-Costruisci uno `spaghetti_module` temporaneo in `main`, puntalo a Port 0 e
-`spaghetti_ina219_driver`, e rimpiazza le chiamate wrapper dirette con
-`driver->ops->init/read/deinit`. Preserva il loop di visualizzazione di un secondo.
-
-> [!ATTENZIONE]
-> SCORCIATOIA TEMPORANEA
->
-> L'istanza principale del modulo è intenzionalmente temporanea e verrà rimossa in
-  [TASK-070-05](../070-module-manager/TASK-070-01-implementare-il-module-manager.md).
-
-### Contratti completi da scrivere
-
-In `include/spaghetti/module.h` definisci `typedef uint8_t spaghetti_module_id_t`,
-`enum spaghetti_module_state` con UNINITIALIZED, READY ed ERROR, e:
+Sempre in `module.h` conserva il sample elettrico copiabile:
 
 ```c
 struct spaghetti_sample {
@@ -80,85 +65,100 @@ struct spaghetti_sample {
 	int32_t current_microamps;
 	uint32_t power_microwatts;
 };
-struct spaghetti_module {
-	spaghetti_module_id_t id;
-	enum spaghetti_module_state state;
-	const struct spaghetti_port *port;
-	const struct spaghetti_module_driver *driver;
-	void *context;
-};
 ```
 
-Manager possiede ogni istanza e il buffer privato indicato da `context`; Port e driver
-sono prestiti `const` con lifetime firmware. Il campione è pubblico e copiabile; le
-unità sono µV, µA e µW. `bus_voltage_microvolts` è firmato per uniformare i controlli
-di conversione anche se INA219 produce una tensione bus non negativa;
-`current_microamps` è firmato perché INA219 misura corrente bidirezionale;
-`power_microwatts` è non firmato perché il relativo registro INA219 non ha segno.
-
-Significato dei campi di `spaghetti_module`:
-
-- `id`: identifica un’istanza runtime, non un tipo di sensore;
-- `state`: impedisce read prima di init o dopo un errore;
-- `port`: puntatore perché il Port è posseduto dal catalogo Port; `const` impedisce al
-  driver di modificarne il descrittore;
-- `driver`: puntatore al descrittore condiviso e immutabile, valido per tutto il firmware;
-- `context`: puntatore modificabile allo storage privato della singola istanza; Manager
-  possiede storage e lifetime, il driver ne interpreta il contenuto.
-
-In `include/spaghetti/module_driver.h` definisci:
+Apri `include/spaghetti/module_driver.h` e scrivi:
 
 ```c
 struct spaghetti_module_driver_ops {
-	int (*init)(struct spaghetti_module *module, const void *config, size_t config_size);
-	int (*read)(struct spaghetti_module *module, struct spaghetti_sample *out);
+	int (*validate_config)(const void *config, size_t config_size);
+	int (*describe_endpoint)(const void *config, size_t config_size,
+				 struct spaghetti_module_endpoint *out);
+	int (*init)(struct spaghetti_module *module,
+		    const void *config, size_t config_size);
+	int (*read)(struct spaghetti_module *module,
+		    struct spaghetti_sample *out);
 	int (*deinit)(struct spaghetti_module *module);
 };
+
 struct spaghetti_module_driver {
 	const char *type_id;
 	uint32_t required_capabilities;
 	const struct spaghetti_module_driver_ops *ops;
 };
+```
+
+`validate_config()` e `describe_endpoint()` sono pure: non toccano hardware, Module o
+context. Il Manager le userà prima del commit. `init()` può modificare Module/context;
+`read()` scrive l’output solo al successo; `deinit()` rilascia soltanto quella istanza.
+
+### 3. Adattare temporaneamente INA219
+
+Apri `spaghetti_modules/ina219/ina219.h` e dichiara soltanto qui:
+
+```c
 extern const struct spaghetti_module_driver spaghetti_ina219_driver;
 ```
 
-`module` è modificabile perché init/deinit aggiornano stato e context; `config` è un
-buffer preso in prestito e letto solo durante init, mentre `config_size` impedisce cast
-di dati della dimensione errata. `out` è del chiamante e cambia solo al successo.
-Descrittore, stringa e tabella operazioni INA219 sono immutabili e statici. Il chiamante
-è il futuro Manager; INA219 implementa init/read/deinit e propaga errno negativi.
+Apri `spaghetti_modules/ina219/ina219.c`. Aggiungi le due callback pure. Poiché fino al
+task 080 INA219 proviene ancora dal nodo Devicetree statico, entrambe accettano solo
+`config == NULL` e `config_size == 0U`; `describe_endpoint()` scrive endpoint I2C e
+l’indirizzo del nodo statico. Marca questo ramo `TEMPORARY SHORTCUT`.
 
-Le tre callback hanno questo comportamento:
-
-1. `init(module, config, config_size)` valida `module`, Port, driver e context; in questa
-   fase richiede `config == NULL` e size zero, controlla il device INA219 statico e porta
-   `module->state` a READY solo al successo. `module` non è `const` perché cambia stato.
-2. `read(module, out)` richiede READY, esegue un solo fetch, legge voltage/current/power
-   in `sensor_value` locali, usa `sensor_value_to_micro()`, controlla i range dei tre
-   campi e scrive `out` solo al successo. Il chiamante possiede `out`; il driver non ne
-   conserva il puntatore.
-3. `deinit(module)` rende il context inutilizzabile e riporta lo stato a
-   UNINITIALIZED. Restituisce `0` o un errno negativo e non libera heap.
-
-## Esempio d’uso
+Definisci la tabella e il descrittore:
 
 ```c
-struct spaghetti_sample sample;
-int err = module.driver->ops->read(&module, &sample);
+static const struct spaghetti_module_driver_ops ina219_ops = {
+	.validate_config = ina219_validate_config,
+	.describe_endpoint = ina219_describe_endpoint,
+	.init = spaghetti_ina219_init,
+	.read = spaghetti_ina219_read,
+	.deinit = spaghetti_ina219_deinit,
+};
+
+const struct spaghetti_module_driver spaghetti_ina219_driver = {
+	.type_id = "ina219",
+	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.ops = &ina219_ops,
+};
+```
+
+Il descrittore non contiene address o stato mutabile: lo stesso oggetto servirà in
+seguito INA219 `0x40` e `0x41` contemporaneamente.
+
+### 4. Usare la tabella operazioni nel main temporaneo
+
+Apri `src/main.c` e costruisci una sola istanza di bring-up con `key = 1U`, Port 0,
+driver INA219 ed endpoint restituito da `describe_endpoint()`. Chiama nell’ordine
+validate, describe, init, read e deinit. Questa singola istanza dimostra il contratto,
+non limita la Port: il task 070 la sostituirà con il pool Manager.
+
+## Perché è fatto così
+
+Port, chiave, runtime ID ed endpoint rispondono a domande diverse. Separarli permette a
+tre Module di condividere Port 0 senza confondere le loro identità. Le callback pure
+consentono di scoprire collisioni prima di accedere all’hardware. Il context opaco evita
+che il Manager conosca la dimensione privata di ogni driver.
+
+## Come si usa
+
+```c
+struct spaghetti_module_endpoint endpoint;
+int err = spaghetti_ina219_driver.ops->describe_endpoint(NULL, 0U, &endpoint);
+if (err == 0) {
+	err = spaghetti_ina219_driver.ops->read(&module, &sample);
+}
 ```
 
 ## Checklist di completamento
 
-- [ ] Definire l’istanza minima di Module.
-- [ ] Definire il contratto temporaneo del campione.
-- [ ] Definire la tabella operazioni di Module Driver.
-- [ ] Dichiarare il descrittore del driver INA219.
-- [ ] Adattare INA219 alle operazioni del driver.
-- [ ] Usare INA219 tramite la tabella operazioni.
+- [ ] Module distingue ID runtime, key stabile, Port ed endpoint.
+- [ ] Port è documentata come riferimento condivisibile.
+- [ ] Driver espone validate/describe/init/read/deinit.
+- [ ] Il descrittore INA219 non contiene stato per istanza.
+- [ ] Il main temporaneo usa soltanto la operation table.
 
-## Verifica finale
-
-**Comandi**
+## Verifica e fine task
 
 ```sh
 make validate
@@ -167,10 +167,5 @@ make flash
 make monitor
 ```
 
-**Controlla**
-
-Esegui validator/build e leggi INA219 esclusivamente tramite `driver->ops`. Prova puntatori nulli e operazione mancante. Fine quando non restano chiamate al wrapper dal chiamante.
-
-**Risultato atteso**
-
-La lettura INA219 passa soltanto dalla tabella operazioni e mantiene ownership e stato coerenti.
+Controlla endpoint `I2C_ADDRESS/0x40`, lettura reale e gestione dei puntatori nulli.
+Il task termina quando non esiste alcuna regola “un Module per Port” nei tipi pubblici.

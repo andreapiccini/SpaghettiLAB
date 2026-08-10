@@ -14,7 +14,8 @@ Decodificare un payload CBOR V0 rigoroso nel modello Config interno.
 
 ## Risultato visibile
 
-Un payload CBOR valido viene applicato; payload incompleti o extra vengono rifiutati.
+Un payload CBOR con due key/indirizzi sulla stessa Port viene applicato; key o endpoint
+duplicati e payload incompleti vengono rifiutati.
 
 ## Task
 

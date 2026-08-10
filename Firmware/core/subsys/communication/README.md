@@ -145,7 +145,10 @@ flowchart LR
 
 ## Practical example
 
-`spaghetti status` from a USB shell and an HTTP `GET /status` request both become `GET_STATUS`. Dispatch calls the same Core getter and returns the same response model; only framing differs.
+`spaghetti status` from a USB shell and an HTTP `GET /status` request both become
+`GET_STATUS`. Dispatch returns a bounded list of zero or more Modules for each Port;
+every entry contains stable key, runtime ID, driver type, normalized endpoint, and
+state. It never returns a singular "Module of Port". Only transport framing differs.
 
 ## Zephyr integration
 
@@ -193,3 +196,4 @@ Dispatch is synchronous unless a command explicitly returns accepted/pending. Tr
 - A transport cannot bypass validation or mutate component internals.
 - Every retained request/event byte is copied into bounded storage.
 - Adding or removing an adapter does not alter Manager, Config, Data, or Runtime contracts.
+- Status and commands identify a Module by key or runtime ID, never by Port alone.

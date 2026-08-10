@@ -6,7 +6,7 @@
 
 ## Obiettivo
 
-Tradurre risultati di discovery in assegnazioni accettate dal Module Manager.
+Tradurre zero o più risultati per Port in eventi per key accettati dal Module Manager.
 
 ## Dipende da
 
@@ -14,7 +14,7 @@ Tradurre risultati di discovery in assegnazioni accettate dal Module Manager.
 
 ## Risultato visibile
 
-Un provider manuale configura un modulo senza entrare nel Manager.
+Un provider manuale configura due Module distinti sulla stessa Port senza possederli.
 
 ## Task
 
@@ -25,3 +25,4 @@ Un provider manuale configura un modulo senza entrare nel Manager.
 - [ ] Tipi risultato e ownership sono espliciti.
 - [ ] Il provider non modifica direttamente lo stato del Manager.
 - [ ] Risultati invalidi o duplicati vengono rifiutati.
+- [ ] Generazione e invalidazione sono per key, non per Port.

@@ -13,7 +13,7 @@ Runtime executes autonomous product behavior using generic module IDs, Data valu
 ## What this component does not own
 
 - Module instances, bus transactions, persistent Config, or transport protocols.
-- Concrete SHT40/Relay implementation types.
+- Concrete INA219/Relay implementation types or I2C addresses.
 
 ## Files
 
@@ -28,7 +28,8 @@ Runtime executes autonomous product behavior using generic module IDs, Data valu
 
 | Type / object | Owner | Meaning |
 |---|---|---|
-| Sampling task | Runtime | Source module ID, period, enabled flag, and next execution state. |
+| Sampling task in Config | Config | Stable source module key, period, and enabled flag. |
+| Active sampling task | Runtime | Resolved runtime module ID, period, enabled flag, and next execution state. |
 | Threshold rule | Runtime | Source value selector, comparison, target module, and command. |
 | Runtime event | Queue then Runtime | Bounded timer/data/control event. |
 | Runtime status | Runtime | Running state, last error, counters, and queue depth. |
@@ -161,7 +162,12 @@ sequenceDiagram
 
 ## Practical example
 
-A 1000 ms task reads module 3. A rule compares its generic temperature value with 25 °C and commands module 7 ON. Runtime references IDs and value types; it never includes sensor or relay headers.
+Config asks to sample stable key 10 every 1000 ms. During apply, Config calls
+`spaghetti_module_manager_get_by_key(10, &snapshot)` and writes the current
+`snapshot.id` into the active Runtime program. Runtime reads that ID and receives a
+generic INA219 sample containing bus voltage, current, and power. A second INA219 on
+the same Port has another key and another runtime ID, so the two streams cannot be
+confused. Runtime never includes INA219 or relay headers.
 
 ## Zephyr integration
 
@@ -172,6 +178,20 @@ A 1000 ms task reads module 3. A rule compares its generic temperature value wit
 ## Configuration templates
 
 ### Program shape
+
+The persisted/received Config stores `source_key`; it must never persist
+`module_id`, because runtime IDs may change after reboot or reconfiguration. Config
+resolves the key before calling `spaghetti_runtime_load()`:
+
+```c
+struct spaghetti_config_sampling_task {
+    spaghetti_module_key_t source_key;
+    uint32_t period_ms;
+    bool enabled;
+};
+```
+
+The active Runtime copy stores the already resolved ID:
 
 ```c
 struct spaghetti_runtime_sampling_task {
@@ -206,4 +226,6 @@ Only the Runtime worker mutates execution state. Load/start/stop serialize lifec
 
 - Blocking module operations never run in timer callback or ISR context.
 - Rules depend only on generic values and Manager operations.
+- Persistent references use stable Module keys; active work uses runtime IDs resolved
+  by Config for the current Manager generation.
 - Stopping has a bounded, observable completion result.

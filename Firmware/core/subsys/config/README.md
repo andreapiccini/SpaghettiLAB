@@ -29,8 +29,8 @@ Config is the validated desired-state model. It gives every input source and sto
 | Type / object | Owner | Meaning |
 |---|---|---|
 | `spaghetti_config` | Config | Complete validated desired-state snapshot. |
-| Module assignment | Config snapshot | Port ID, bounded type ID, and bounded driver config. |
-| Runtime rule/schedule | Config snapshot | Generic module IDs/channels and timing. |
+| Module assignment | Config snapshot | Stable key, Port ID, bounded type ID, and bounded driver config. |
+| Runtime rule/schedule | Config snapshot | Stable module keys/channels and timing. |
 | Generation/version | Config | Detects stale updates and incompatible schemas. |
 
 ## API contract
@@ -70,7 +70,8 @@ Config is the validated desired-state model. It gives every input source and sto
 
 **Execution context:** Calling thread; pure function.
 
-**Calls:** Bounded schema checks only.
+**Calls:** Bounded schema checks plus Registry driver `validate_config()` and
+`describe_endpoint()` pure operations.
 
 ### `int spaghetti_config_apply(const struct spaghetti_config *candidate, uint32_t expected_generation)`
 
@@ -142,7 +143,10 @@ flowchart LR
 
 ## Practical example
 
-A candidate assigns two modules but repeats Port 0. Validation rejects it before Manager is called. A valid candidate is applied completely; only after all owners accept it does Config publish the new generation.
+A candidate assigns INA219 key 10/address `0x40` and key 11/address `0x41` to Port 0.
+Validation accepts both. It rejects duplicate keys and a second claim for the same
+Port/address endpoint. A valid candidate is applied completely; only after all owners
+accept it does Config publish the new generation.
 
 ## Zephyr integration
 
@@ -159,18 +163,30 @@ A candidate assigns two modules but repeats Port 0. Validation rejects it before
 #define SPAGHETTI_TYPE_ID_MAX 24
 
 struct spaghetti_module_config {
+    spaghetti_module_key_t key;
     spaghetti_port_id_t port_id;
     char type_id[SPAGHETTI_TYPE_ID_MAX];
     uint8_t driver_config[SPAGHETTI_DRIVER_CONFIG_MAX];
     size_t driver_config_size;
 };
 
+struct spaghetti_runtime_sampling_config {
+    bool enabled;
+    spaghetti_module_key_t source_key;
+    uint32_t period_ms;
+};
+
 struct spaghetti_config {
     uint32_t version;
     size_t module_count;
     struct spaghetti_module_config modules[SPAGHETTI_CONFIG_MAX_MODULES];
+    struct spaghetti_runtime_sampling_config sampling;
 };
 ```
+
+Repeated `port_id` values are expected on shared buses. Validation requires nonzero
+unique keys, valid driver configs, and non-colliding normalized endpoints. Runtime
+references use keys because Manager IDs may change after reboot or replacement.
 
 The concrete schema may add bounded sections, but every retained string and
 payload must be owned by the snapshot.
@@ -184,3 +200,5 @@ Readers receive coherent copies. A single apply transaction serializes desired-s
 - Invalid input has no live side effect.
 - A committed snapshot owns all retained bytes.
 - Transport, encoding, and storage format do not change the internal Config contract.
+- Reconciliation compares elements by key; removing one key never removes sibling
+  Modules on the same Port.

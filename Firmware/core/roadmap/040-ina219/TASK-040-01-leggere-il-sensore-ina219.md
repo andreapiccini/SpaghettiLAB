@@ -156,6 +156,9 @@ modellare inserimento/rimozione runtime perché il suo device nasce dal Devicetr
 fase 080 conserva il controller statico della Port e sostituisce il sensore statico con
 indirizzo runtime e transazioni I2C dirette.
 
+La singola istanza statica verifica l’hardware ma non stabilisce una relazione Port
+1:1 Module. La fase 080 proverà più address runtime sulla stessa Port.
+
 ## Come si usa
 
 Bus voltage è espressa in V, current in A e power in W dentro `struct sensor_value`.

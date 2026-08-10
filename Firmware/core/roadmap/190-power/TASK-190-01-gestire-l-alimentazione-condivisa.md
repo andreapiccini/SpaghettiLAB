@@ -112,6 +112,10 @@ Prima usa hook fake in test; collega il `gpio_dt_spec` solo dopo aver verificato
 safe state e risorsa reale nello schema. Manager acquisisce prima di driver init e
 rilascia dopo deinit o in ogni rollback.
 
+L’owner usato da Manager deriva dal `spaghetti_module_id_t` dell’istanza, non da
+`port_id`. Due Module sulla stessa Port sono due owner distinti; rimuoverne uno rilascia
+soltanto il suo riferimento.
+
 Significato di stato e campi:
 
 - STARTING/STOPPING rendono osservabile una transizione mentre il mutex è posseduto;
@@ -165,6 +169,7 @@ if (err == 0) {
 - [ ] Provare proprietà e rollback di Power.
 - [ ] Collegare Power al controllo hardware reale.
 - [ ] Integrare Power con Manager e provare l’hardware.
+- [ ] Provare due owner Module distinti sulla stessa Port.
 
 ## Verifica finale
 

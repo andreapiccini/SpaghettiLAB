@@ -6,7 +6,7 @@
 
 ## Obiettivo
 
-Gestire configurazione, vita e lettura di un modulo in uno slot.
+Gestire un pool statico di Module, consentendo più endpoint sulla stessa Port.
 
 ## Dipende da
 
@@ -14,7 +14,7 @@ Gestire configurazione, vita e lettura di un modulo in uno slot.
 
 ## Risultato visibile
 
-Una chiamata Manager configura Port 0 come INA219 e legge il sensore.
+Due chiamate configurano INA219 `0x40` e `0x41` sulla stessa Port 0 e li leggono per ID.
 
 ## Task
 
@@ -22,6 +22,7 @@ Una chiamata Manager configura Port 0 come INA219 e legge il sensore.
 
 ## Criteri di completamento della fase
 
-- [ ] Lo stato dello slot ha un solo proprietario.
+- [ ] Gli slot hanno un solo proprietario e non contengono un context universale.
+- [ ] Key ed endpoint duplicati falliscono; Port ripetute sono accettate.
 - [ ] Configurazioni fallite eseguono rollback.
 - [ ] Letture su slot non pronti falliscono in modo controllato.

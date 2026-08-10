@@ -1,17 +1,9 @@
-#include <spaghetti/core.h>
-#include <spaghetti/port.h>
-#include <ina219.h>
-
-#include <errno.h>
-
-#include <zephyr/drivers/sensor.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(
-	spaghetti_app,
-	CONFIG_SPAGHETTI_APP_LOG_LEVEL
-);
+#include <spaghetti/core.h>
+
+LOG_MODULE_REGISTER(spaghetti_app, CONFIG_SPAGHETTI_APP_LOG_LEVEL);
 
 int main(void)
 {

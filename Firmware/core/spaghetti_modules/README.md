@@ -13,7 +13,7 @@ Each child directory implements one external module type through the common modu
 
 ## What this component does not own
 
-- Module instance lifetime or Port assignment.
+- Module slot lifetime or Port catalog ownership.
 - Sampling schedules and product rules.
 - Board pin mappings or transport protocols.
 
@@ -31,11 +31,24 @@ Each child directory implements one external module type through the common modu
 | Type / object | Owner | Meaning |
 |---|---|---|
 | Driver descriptor | Concrete driver | Immutable type ID, required capabilities, and operations. |
-| Module instance | Module Manager | Port assignment, state, ID, and private context pointer. |
-| Private context | Manager-provided storage; driver-managed content | Address, calibration, cached state, or protocol state for one instance. |
+| Module instance | Module Manager | Stable key, runtime ID, Port reference, endpoint, state, and opaque context pointer. |
+| Private context | Concrete driver static slab | Address, calibration, cached state, or protocol state for one instance. |
 | Input/output values | Caller during direct call | Bounded generic read results or command payloads. |
 
 ## API contract
+
+### Pure configuration operations
+
+```c
+int validate_config(const void *config, size_t config_size);
+int describe_endpoint(const void *config, size_t config_size,
+                      struct spaghetti_module_endpoint *out);
+```
+
+These operations do not access hardware, allocate context, or mutate a Module.
+Manager uses the endpoint to reject a duplicate physical claim while allowing several
+endpoints on the same Port. INA219 returns `SPAGHETTI_ENDPOINT_I2C_ADDRESS` plus its
+configured 7-bit address.
 
 ### `int init(struct spaghetti_module *module, const void *config, size_t config_size)`
 
@@ -45,7 +58,7 @@ Each child directory implements one external module type through the common modu
 
 | Parameter | Meaning |
 |---|---|
-| `module` | Manager-owned instance with a valid Port and private context. |
+| `module` | Manager-owned instance with a valid Port and initially null context. |
 | `config` | Caller-owned bounded configuration. |
 | `config_size` | Exact configuration byte count. |
 
@@ -131,7 +144,11 @@ sequenceDiagram
 
 ## Practical example
 
-A temperature driver receives an instance configured for address `0x44`. It requests the I2C device from the assigned Port, validates the sensor response, and returns a generic temperature sample. Runtime never calls the concrete driver directly.
+An INA219 driver receives an instance configured for address `0x40`. It requests the
+I2C device from the shared Port, executes a serialized transaction, and returns bus
+voltage, current, and power as a generic sample. Another instance at `0x41` may use
+the same Port before or after that transaction. Runtime never calls the concrete
+driver directly.
 
 ## Zephyr integration
 
@@ -145,6 +162,8 @@ A temperature driver receives an instance configured for address `0x44`. It requ
 
 ```c
 static const struct spaghetti_module_driver_ops example_ops = {
+    .validate_config = example_validate_config,
+    .describe_endpoint = example_describe_endpoint,
     .init = example_init,
     .read = example_read,
     .command = example_command,
@@ -157,6 +176,22 @@ const struct spaghetti_module_driver spaghetti_example_driver = {
     .ops = &example_ops,
 };
 ```
+
+### Driver-owned context pool
+
+Each driver defines a typed fixed-capacity slab instead of asking Manager for one
+global maximum-size byte array:
+
+```c
+K_MEM_SLAB_DEFINE(example_context_slab,
+                  sizeof(struct example_context),
+                  CONFIG_SPAGHETTI_EXAMPLE_MAX_INSTANCES,
+                  __alignof__(struct example_context));
+```
+
+`init()` allocates with `K_NO_WAIT`, copies validated config, and publishes
+`module->context` only on success. `deinit()` clears and frees the exact block. This is
+deterministic, uses no heap, and lets different drivers have different context sizes.
 
 ### Application `CMakeLists.txt` fragment
 
@@ -176,10 +211,13 @@ CONFIG_LOG=y
 
 ## Ownership and concurrency
 
-Drivers do not create a thread by default. Module Manager owns lifecycle serialization; Port owns shared-bus serialization. An ISR may only capture/signal and must defer blocking protocol work.
+Drivers do not create a thread by default. Module Manager owns lifecycle serialization;
+Port owns shared-bus serialization across every Module that references it. An ISR may
+only capture/signal and must defer blocking protocol work.
 
 ## Contract guarantees
 
 - Every operation is bounded and reports a precise status.
 - A driver contains no board-name or physical-pin branch.
 - Per-instance mutable state is never stored in the immutable descriptor.
+- Context capacity is fixed per driver and exhaustion returns `-ENOMEM` without heap.

@@ -61,7 +61,10 @@ flowchart TB
 
 ## Practical example
 
-`runtime.c` includes `module_manager.h` and calls the Manager with a module ID. It does not include `sht40.h`, access a Manager-owned struct directly, or know which I2C controller the Port uses.
+`runtime.c` includes `module_manager.h` and calls the Manager with a runtime Module ID.
+Config uses a stable Module key and Manager maps it to that ID. Neither component
+assumes that a Port identifies one Module; a bounded Port query may return several
+snapshots.
 
 ## Zephyr integration
 

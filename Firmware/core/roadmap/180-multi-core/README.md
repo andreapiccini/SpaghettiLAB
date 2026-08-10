@@ -16,6 +16,9 @@ Spostare i dati fisici Port nelle board reali e mantenere indipendenti i livelli
 
 Lo stesso firmware applicativo viene compilato per due varianti Core.
 
+Ogni catalogo descrive connessioni condivise; il numero di Port non limita il numero di
+Module runtime.
+
 ## Task
 
 1. ⬜ [TASK-180-01 — Supportare più varianti Core](TASK-180-01-supportare-piu-varianti-core.md)

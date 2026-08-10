@@ -172,6 +172,10 @@ Implementa le funzioni in quest’ordine:
 
 ## Esempio d’uso
 
+Port 0 rappresenta il controller/collegamento condiviso, non uno slot occupabile. Più
+Module potranno conservare lo stesso puntatore `const struct spaghetti_port *`; la
+serializzazione riguarderà le singole transazioni I2C, non l’intera lifetime Module.
+
 ```c
 const struct spaghetti_port *port = spaghetti_port_get(0U);
 if ((port == NULL) ||
@@ -191,6 +195,7 @@ const struct device *i2c = spaghetti_port_i2c_device(port);
 - [x] Aggiungere Port alla build CMake.
 - [x] Inizializzare Port da Core.
 - [x] Provare Port con ID validi e non validi.
+- [x] Port non contiene owner Module o flag occupied.
 
 ## Verifica finale
 

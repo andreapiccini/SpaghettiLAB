@@ -31,24 +31,28 @@ Scrivi questo schema esatto:
 ```cddl
 spaghetti-config-v0 = {
   0: 1,
-  1: [module],
+  1: [* module],
   2: sampling
 }
 module = {
-  0: 0,
-  1: "ina219",
-  2: 64,
-  3: 100,
-  4: 200
+  0: 1..4294967295,
+  1: 0..255,
+  2: "ina219",
+  3: ina219-config
 }
-sampling = { 0: 1..86400000, 1: bool }
+ina219-config = {
+  0: 64..79,
+  1: 1..65535,
+  2: 1..65535
+}
+sampling = { 0: 1..4294967295, 1: 1..86400000, 2: bool }
 ```
 
 Le chiavi root `0`, `1` e `2` sono versione, moduli e sampling. Il solo modulo V0 è
-Port 0/INA219. Nella mappa module: `0` è Port, `1` type ID, `2` address I2C, `3` shunt
-in mΩ e `4` current LSB in µA. I valori baseline sono address 64 (`0x40`), shunt 100 e
-current LSB 200. Il periodo è da 1 ms a un giorno. Le mappe rifiutano chiavi extra o
-duplicate.
+INA219, ma l’array può contenerne più di uno. Nella mappa module: `0` è la key stabile,
+`1` è Port, `2` type ID e `3` è la mappa driver. Nella mappa INA219: `0` è address,
+`1` shunt mΩ e `2` current LSB µA. Sampling contiene source key, periodo e enabled.
+Port ripetute sono valide; key e endpoint Port/address duplicati sono errori.
 
 ### Passo 2 — Dichiarare il confine del decoder Config
 
@@ -90,6 +94,9 @@ Provare un payload V0 valido più ingresso troncato, tipo errato, stringa oversi
 versione sconosciuta, byte di completamento, indirizzo non valido e Manager applicare il
 guasto. Confermare payload falliti non modificare l'istantanea attiva.
 
+Il vettore positivo contiene key 10/Port 0/address `0x40` e key 11/Port 0/address
+`0x41`. Aggiungi vettori negativi per key 10 ripetuta e address `0x40` ripetuto.
+
 ### Contratti completi da scrivere
 
 ```c
@@ -103,8 +110,8 @@ al chiamante e cambia solo dopo decodifica e validazione complete. Restituisce `
 `-EINVAL`, `-EMSGSIZE`, `-EBADMSG` o `-ENOTSUP`.
 
 Documenta nel task e nei test lo schema CBOR V0 come mappa con chiavi intere: `0`
-versione=1, `1` array moduli con port/type/address/shunt/current LSB, `2` mappa sampling
-con period_ms ed enabled. Tutti i campi sono obbligatori; chiavi duplicate, sconosciute,
+versione=1, `1` array moduli con key/port/type/config INA219, `2` mappa sampling
+con source key, period_ms ed enabled. Tutti i campi sono obbligatori; chiavi duplicate, sconosciute,
 tipi errati, address fuori `0x40`–`0x4F`, calibrazione nulla, trailing bytes e valori
 fuori limite falliscono. `config_codec.c` usa zcbor per
 riempire una variabile temporanea, chiama validate e copia in `out` solo al successo.
@@ -122,15 +129,23 @@ buffer; chiama `spaghetti_config_validate(&temporary)`; infine assegna
 Il payload baseline in notazione diagnostica CBOR è:
 
 ```text
-{0: 1, 1: [{0: 0, 1: "ina219", 2: 64, 3: 100, 4: 200}],
- 2: {0: 1000, 1: true}}
+{0: 1,
+ 1: [
+   {0: 10, 1: 0, 2: "ina219", 3: {0: 64, 1: 100, 2: 200}},
+   {0: 11, 1: 0, 2: "ina219", 3: {0: 65, 1: 100, 2: 200}}
+ ],
+ 2: {0: 10, 1: 1000, 2: true}}
 ```
 
 La codifica canonica da usare come vettore positivo è:
 
 ```text
-a3 00 01 01 81 a5 00 00 01 66 69 6e 61 32 31 39
-02 18 40 03 18 64 04 18 c8 02 a2 00 19 03 e8 01 f5
+a3 00 01 01 82
+a4 00 0a 01 00 02 66 69 6e 61 32 31 39
+03 a3 00 18 40 01 18 64 02 18 c8
+a4 00 0b 01 00 02 66 69 6e 61 32 31 39
+03 a3 00 18 41 01 18 64 02 18 c8
+02 a3 00 0a 01 19 03 e8 02 f5
 ```
 
 ```c
@@ -149,6 +164,7 @@ if (err == 0) {
 - [ ] Implementare la decodifica CBOR V0 rigorosa.
 - [ ] Applicare CBOR tramite Communication.
 - [ ] Provare payload CBOR validi e non validi.
+- [ ] Accettare due Module sulla stessa Port e distinguere key/address.
 
 ## Verifica finale
 

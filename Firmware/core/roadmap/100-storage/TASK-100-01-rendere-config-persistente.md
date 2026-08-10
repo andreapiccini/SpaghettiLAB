@@ -26,6 +26,9 @@ essere ispezionati prima dell'uso.
 
 La persistenza salva il modello Config già validato; non introduce un secondo modello di configurazione.
 
+Salva key, Port, type e driver config di ogni elemento. Non salva
+`spaghetti_module_id_t`, puntatori context o l’idea di una sola istanza per Port.
+
 ## Implementazione guidata
 
 ### Passo 1 — Definire l’API di storage sincrono
@@ -83,6 +86,10 @@ esiste ancora una configurazione salvata. Scrivi uno snapshot
 valido cambiato, riavviare e confermare lo stesso ritorno dell'assegnazione; i dati
 corrupt/version-mismatch devono ripiegare in modo sicuro.
 
+Nel round-trip positivo usa due elementi con la stessa Port 0, key 10/address `0x40` e
+key 11/address `0x41`. Dopo reboot gli ID runtime possono essere diversi, ma le key e i
+due endpoint devono essere ricostruiti.
+
 ### Contratti completi da scrivere
 
 In `subsys/services/storage/storage.h` dichiara:
@@ -114,6 +121,9 @@ Campi e funzioni, senza scelte lasciate aperte:
 - `version`: deve coincidere con `SPAGHETTI_CONFIG_VERSION`;
 - `config`: snapshot completo posseduto dal record, senza puntatori esterni.
 
+La versione del record cambia se cambia il layout di key/config. Non serializzare
+padding non inizializzato: azzera il record prima di copiarvi lo snapshot.
+
 `spaghetti_storage_init()` è chiamata da Core al boot; inizializza Settings, registra
 l’handler e carica il subtree `SPAGHETTI_STORAGE_CONFIG_KEY`. Restituisce `0` o propaga
 l’errno backend. `read_config(out)` valida `out`, controlla record presente, magic e
@@ -139,6 +149,7 @@ if (err == -ENOENT) {
 - [ ] Abilitare Zephyr Settings e il relativo backend.
 - [ ] Implementare il record persistente con Settings.
 - [ ] Caricare Config all’avvio e provare la persistenza.
+- [ ] Ripristinare due Module sulla stessa Port usando key, non vecchi runtime ID.
 
 ## Verifica finale
 

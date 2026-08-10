@@ -10,4 +10,32 @@ module = SPAGHETTI_PORT
 module-str = spaghetti_port
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_DRIVER_REGISTRY
+module-str = spaghetti_driver_registry
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_MODULE_MANAGER
+module-str = spaghetti_module_manager
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_INA219
+module-str = spaghetti_ina219
+source "subsys/logging/Kconfig.template.log_config"
+
+config SPAGHETTI_MAX_MODULES
+	int "Maximum number of simultaneous runtime Modules"
+	range 1 255
+	default 8
+	help
+	  Fixed capacity of the Module Manager slot pool. Multiple slots may
+	  reference the same physical Port when their endpoints differ.
+
+config SPAGHETTI_INA219_MAX_INSTANCES
+	int "Maximum number of simultaneous INA219 instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 4
+	help
+	  Number of typed INA219 contexts reserved in the driver-owned memory
+	  slab. Allocation is non-blocking and does not use the heap.
+
 source "Kconfig.zephyr"

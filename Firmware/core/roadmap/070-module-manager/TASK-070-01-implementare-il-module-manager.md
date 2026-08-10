@@ -3,151 +3,183 @@
 **Stato:** ⬜ TODO
 **Fase:** 070 — Module Manager
 
-## Perché lo facciamo
+## Cosa devo fare
 
-Il Manager è l’unico proprietario degli slot e rende configurazione e rollback atomici per i chiamanti.
+### 1. Correggere prima il codice parziale già presente
 
-## Implementazione guidata
+Apri `include/spaghetti/module_manager.h`. Rimuovi da questo header pubblico
+`struct spaghetti_module_slot`, il buffer `driver_context` e
+`SPAGHETTI_MODULE_CONTEXT_SIZE`: sono dettagli privati e il context sarà allocato dal
+driver concreto nel task 080.
 
-### Passo 1 — Dichiarare l’API di Module Manager
+Apri `subsys/module_manager/module_manager.c`. Elimina il blocco che scorre gli slot e
+restituisce `-EBUSY` quando `slots[i].module.port == port`. Quell’uguaglianza significa
+solo che due Module condividono la connessione; non è una collisione.
 
-`include/spaghetti/module_manager.h`.
+### 2. Dichiarare request, snapshot e API 1:N
 
-Scrivi le quattro firme complete mostrate nella sezione “Contratti completi da
-scrivere”; non usare prototipi con `...`.
-
-### Passo 2 — Implementare lo stato Manager con uno slot
-
-`subsys/module_manager/module_manager.c`.
-
-Crea uno slot `spaghetti_module` privato più un flag usato. Implementa
-`spaghetti_module_manager_init()` per cancellare tutti gli stati e definire gli helper
-ID/occupancy severi senza chiamare driver ancora.
-
-### Passo 3 — Implementare la configurazione nel Manager
-
-`subsys/module_manager/module_manager.c`.
-
-Implementa la configurazione in questo ordine: convalidare il puntatore di uscita e lo
-slot libero; chiamare `spaghetti_port_get()`; chiamare
-`spaghetti_driver_registry_find()`; verificare le capacità richieste; popolare lo stato
-provvisorio; chiamare driver `init`; commit READY e ID di output solo in caso di
-successo. Cancellare lo slot su ogni guasto.
-
-In questa fase il driver standard INA219 usa ancora il nodo statico e non riceve una
-config runtime: chiama esattamente `driver->ops->init(&slot.module, NULL, 0U)`. La firma
-del Manager verrà estesa, in modo esplicito, nella fase 080.
-
-### Passo 4 — Implementare la lettura nel Manager
-
-`subsys/module_manager/module_manager.c`.
-
-Implementa `spaghetti_module_manager_get_by_port()` e `spaghetti_module_manager_read()`.
-Convalida ID, stato usato, stato READY, puntatore di uscita, descrittore e funzionamento
-`read` prima di effettuare una chiamata diretta driver.
-
-### Passo 5 — Integrare Manager con Core e main
-
-`CMakeLists.txt`, `subsys/core/core.c` e `src/main.c`.
-
-Aggiungi sorgente Manager a CMake. Inizializzala da Core dopo il Registro. In `main`,
-rimuovi l'oggetto principale del modulo, configura Port 0 come `ina219`, mantieni l'ID
-del modulo restituito e leggi solo tramite Manager.
-
-> [!ATTENZIONE]
-> SCORCIATOIA TEMPORANEA
->
-> L'assegnazione hardcoded Port 0/INA219 è intenzionalmente temporanea e verrà rimossa in
-  [TASK-090-05](../090-config/TASK-090-01-implementare-config.md).
-
-### Passo 6 — Provare successo e rollback del Manager
-
-`subsys/module_manager/module_manager.c`, `src/main.c` e la console seriale.
-
-Prova il percorso Port 0/INA219 valido, un tipo sconosciuto, uno Port occupato, una
-lettura ID non valida e un errore di init driver forzato. Confermare ogni configurazione
-non riuscita lascia lo slot riutilizzabile.
-
-### Contratti completi da scrivere
+In `include/spaghetti/module_manager.h` scrivi:
 
 ```c
+struct spaghetti_module_request {
+	spaghetti_module_key_t key;
+	spaghetti_port_id_t port_id;
+	const char *type_id;
+	const void *driver_config;
+	size_t driver_config_size;
+	uint32_t revision;
+};
+
+struct spaghetti_module_snapshot {
+	spaghetti_module_id_t id;
+	spaghetti_module_key_t key;
+	spaghetti_port_id_t port_id;
+	char type_id[SPAGHETTI_TYPE_ID_MAX];
+	struct spaghetti_module_endpoint endpoint;
+	enum spaghetti_module_state state;
+	uint32_t revision;
+};
+
 int spaghetti_module_manager_init(void);
-int spaghetti_module_manager_configure(spaghetti_port_id_t port_id,
-				       const char *type_id,
-				       spaghetti_module_id_t *out_id);
-const struct spaghetti_module *spaghetti_module_manager_get_by_port(
-	spaghetti_port_id_t port_id);
+int spaghetti_module_manager_configure(
+	const struct spaghetti_module_request *request,
+	spaghetti_module_id_t *out_id);
+int spaghetti_module_manager_remove(spaghetti_module_id_t id,
+				    uint32_t expected_revision);
+int spaghetti_module_manager_get_by_id(
+	spaghetti_module_id_t id,
+	struct spaghetti_module_snapshot *out);
+int spaghetti_module_manager_get_by_key(
+	spaghetti_module_key_t key,
+	struct spaghetti_module_snapshot *out);
+int spaghetti_module_manager_list_by_port(
+	spaghetti_port_id_t port_id,
+	struct spaghetti_module_snapshot *out,
+	size_t capacity,
+	size_t *out_count);
 int spaghetti_module_manager_read(spaghetti_module_id_t id,
 				  struct spaghetti_sample *out);
 ```
 
-Gli ID sono valori copiati. `type_id` è una stringa presa in prestito per la chiamata;
-`out_id` e `out` sono destinazioni del chiamante e cambiano solo al successo. Il
-puntatore restituito da `get_by_port()` è un prestito `const` allo slot del Manager,
-valido finché lo slot non viene riconfigurato o rimosso.
+`request` è prestata per la chiamata; Manager non conserva `type_id` o config. `out_id`
+e gli snapshot appartengono al chiamante e cambiano solo al successo. `key` e `revision`
+sono valori copiati. Lo snapshot non espone puntatori a Port, driver, context o slot.
 
-La struct slot privata contiene `bool used`, una `struct spaghetti_module` e il buffer
-context INA219; Manager la possiede per tutta la vita del firmware. `configure()` opera
-in ordine: valida output e slot libero, risolve Port e driver, verifica capacità,
-prepara uno slot provvisorio, chiama `driver->ops->init`, poi pubblica READY e `out_id`.
-Su ogni errore azzera lo slot. Restituisce `-EINVAL`, `-ENOENT`, `-EBUSY`, `-ENOTSUP`,
-`-ENOMEM` o l’errno del driver. `read()` valida READY e inoltra a `ops->read`.
+Rimuovi `spaghetti_module_manager_get_by_port()`: un risultato singolo è ambiguo.
+`get_by_key()` serve Config/Runtime; `list_by_port()` serve diagnostica/UI.
 
-Completa le altre funzioni senza deduzioni:
+### 3. Creare un pool statico di soli slot
 
-1. `spaghetti_module_manager_init()` azzera lo slot e restituisce `0`; Core la chiama
-   dopo Port e Registry, una sola volta al boot.
-2. `configure(port_id, type_id, out_id)` riceve gli ID per valore perché sono piccoli;
-   `type_id` è `const` e valido per la chiamata; `out_id` è un puntatore perché la
-   funzione restituisce sia status sia ID. Non scrivere `*out_id` prima del commit.
-3. `get_by_port(port_id)` non modifica stato; restituisce un puntatore `const` allo
-   slot o `NULL`. Il puntatore resta valido fino a riconfigurazione/rimozione e non deve
-   essere conservato più a lungo.
-4. `read(id, out)` è chiamata da Runtime o dal test. `out` è del chiamante, non è
-   `const` perché viene scritto e resta invariato se la validazione o il driver fallisce.
-
-La struct slot privata è:
+In `module_manager.c` definisci:
 
 ```c
 struct spaghetti_module_slot {
 	bool used;
+	bool reserved;
+	bool busy;
+	spaghetti_port_id_t port_id;
+	uint32_t revision;
 	struct spaghetti_module module;
-	union {
-		max_align_t alignment;
-		uint8_t bytes[SPAGHETTI_MODULE_CONTEXT_SIZE];
-	} driver_context;
 };
+
+static struct spaghetti_module_slot slots[CONFIG_SPAGHETTI_MAX_MODULES];
 ```
 
-`used` distingue slot libero e occupato; `module` contiene lo stato pubblico
-dell’istanza; `alignment` forza l’allineamento adatto a qualunque tipo C e `bytes` è lo
-storage limitato posseduto dal Manager per tutta la lifetime dello slot. Assegna
-`module.context = slot.driver_context.bytes`. Definisci `SPAGHETTI_MODULE_CONTEXT_SIZE` con la size
-esatta richiesta dal solo INA219 in questa fase e verifica a build-time che sia sufficiente.
+Il pool è indipendente dal numero di Port. `reserved` protegge uno slot durante init e
+partecipa ai controlli di collisione, ma non appare nelle query. `busy` impedisce che
+read e remove operino contemporaneamente sulla stessa istanza mentre il mutex è
+rilasciato durante l'I/O. `port_id` serve a creare snapshot senza esporre la struct Port
+privata. In questa fase imposta il limite Kconfig a `8`: è capacità RAM, non cardinalità
+hardware. `module.context` parte `NULL`; non creare union o byte array globali.
 
-## Esempio d’uso
+### 4. Implementare configure senza Port occupancy
+
+Implementa `configure()` in questo ordine:
+
+1. valida `request`, `out_id`, key nonzero, revision e puntatori/size;
+2. risolve Port e driver;
+3. verifica le capability richieste;
+4. chiama `driver->ops->validate_config()`;
+5. chiama `driver->ops->describe_endpoint()` in una variabile locale;
+6. scorre gli slot usati: rifiuta la stessa key con `-EEXIST`; sulla stessa Port
+   rifiuta endpoint `PORT_EXCLUSIVE` o stessa coppia kind/value con `-EADDRINUSE`;
+   non rifiutare la sola uguaglianza della Port;
+7. trova uno slot libero, altrimenti `-ENOSPC`;
+8. prepara Module provvisorio con ID slot, key, Port, driver, endpoint, context `NULL`;
+9. chiama `driver->ops->init()` con config/size originali;
+10. solo al successo imposta READY, used/revision e `*out_id`.
+
+Se `init()` fallisce, il suo contratto impone di liberare ogni context parzialmente
+allocato; Manager azzera soltanto lo slot provvisorio. Gli altri Module sulla Port non
+vengono toccati.
+
+In questa fase lo shortcut statico INA219 accetta config nulla. Per provare due endpoint
+diversi usa un fake driver test con `describe_endpoint()` configurabile; il test hardware
+con due INA219 arriva nel task 080.
+
+### 5. Implementare query, read e remove
+
+- `get_by_id()` e `get_by_key()` copiano un solo snapshot sotto lock breve;
+- `list_by_port()` conta tutti gli slot corrispondenti. Se `out == NULL` e capacity zero
+  restituisce il count; se il buffer è piccolo restituisce `-ENOSPC`, scrive il count
+  richiesto e non produce output parziale;
+- `read(id, out)` seleziona per ID e chiama la read del driver READY;
+- `remove(id, revision)` chiama deinit e azzera soltanto quello slot. Non libera la
+  Port e non visita i suoi fratelli.
+
+Manager serializza le mutazioni. Non tenere il lock durante callback driver se il
+driver può rientrare; usa uno stato provvisorio/busy e rivalida al ritorno.
+
+### 6. Integrare e provare cardinalità
+
+Apri `CMakeLists.txt`, `subsys/core/core.c` e `src/main.c`. Core inizializza Manager dopo
+Port e Registry. Il main temporaneo configura key 1/INA219 e legge per ID; verrà rimosso
+da Config nel task 090.
+
+Nel test fake configura:
+
+```text
+key 10 -> Port 0 -> I2C 0x40
+key 11 -> Port 0 -> I2C 0x41
+key 12 -> Port 0 -> I2C 0x44
+```
+
+Tutti e tre devono essere READY. Poi prova key duplicata, endpoint `0x40` duplicato,
+pool pieno, init fallita e rimozione della sola key 11.
+
+## Perché è fatto così
+
+Il Manager possiede istanze, non connessioni fisiche. Key stabile e ID runtime separano
+desired state e slot correnti; endpoint normalizzato impedisce collisioni reali senza
+interpretare struct driver-specifiche. Il pool fisso limita RAM e numero totale di
+Module, mentre Port e driver rimangono condivisibili.
+
+## Come si usa
 
 ```c
-spaghetti_module_id_t module_id;
-int err = spaghetti_module_manager_configure(0U, "ina219", &module_id);
-if (err == 0) {
-	struct spaghetti_sample sample;
-	err = spaghetti_module_manager_read(module_id, &sample);
-}
+struct spaghetti_module_request request = {
+	.key = 10U,
+	.port_id = 0U,
+	.type_id = "ina219",
+	.driver_config = &ina219_config,
+	.driver_config_size = sizeof(ina219_config),
+	.revision = 1U,
+};
+spaghetti_module_id_t id;
+int err = spaghetti_module_manager_configure(&request, &id);
 ```
 
 ## Checklist di completamento
 
-- [ ] Dichiarare l’API di Module Manager.
-- [ ] Implementare lo stato Manager con uno slot.
-- [ ] Implementare la configurazione nel Manager.
-- [ ] Implementare la lettura nel Manager.
-- [ ] Integrare Manager con Core e main.
-- [ ] Provare successo e rollback del Manager.
+- [ ] Rimuovere controllo Port occupata e context buffer globale.
+- [ ] Dichiarare request/snapshot con key ed endpoint.
+- [ ] Implementare pool statico indipendente dalle Port.
+- [ ] Configure accetta stessa Port con endpoint diversi.
+- [ ] Get-by-key e list-by-port sostituiscono get-by-port singolare.
+- [ ] Remove e rollback preservano i fratelli sulla stessa Port.
+- [ ] Testare tre endpoint, duplicati, capacità ed errori.
 
-## Verifica finale
-
-**Comandi**
+## Verifica e fine task
 
 ```sh
 make validate
@@ -156,10 +188,5 @@ make flash
 make monitor
 ```
 
-**Controlla**
-
-Prova configure/read riusciti, Port occupato, tipo sconosciuto, capacità incompatibile e init driver fallita. Dopo ogni errore lo slot deve essere libero e gli output invariati.
-
-**Risultato atteso**
-
-Configure e read funzionano; ogni errore lascia lo slot libero e gli output invariati.
+Il task termina quando tre Module fake condividono Port 0, `list_by_port()` restituisce
+tre snapshot e la rimozione del secondo lascia primo e terzo READY.

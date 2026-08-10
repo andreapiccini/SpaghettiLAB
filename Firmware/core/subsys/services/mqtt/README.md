@@ -140,7 +140,12 @@ flowchart LR
 
 ## Practical example
 
-A generic temperature message becomes topic `devices/core-1/modules/3/temperature` and a bounded payload. The Data publisher only enqueues it. If the broker restarts, the MQTT worker reconnects without blocking Runtime.
+A generic electrical sample from stable Module key 10 becomes topic
+`devices/core-1/modules/10/electrical` with a bounded voltage/current/power payload.
+The topic uses the stable key, not Port 0 or the ephemeral runtime ID, so a sibling at
+address `0x41` remains distinct and reboot does not rename the stream. The Data
+publisher only enqueues it. If the broker restarts, the MQTT worker reconnects
+without blocking Runtime.
 
 ## Zephyr integration
 

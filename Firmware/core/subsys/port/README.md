@@ -4,6 +4,11 @@
 
 Port converts the static board description into stable runtime objects that concrete module drivers can use without knowing controllers, pins, or Core variants.
 
+A Port is a shared hardware access point, not a Module slot. When it exposes I2C,
+several runtime Modules may retain the same immutable Port pointer and use different
+addresses. Port serializes each bus transaction; it never stores an `occupied` flag or
+one owning Module ID.
+
 ## What this component owns
 
 - The catalog of physical Ports generated from Devicetree.
@@ -178,6 +183,10 @@ flowchart LR
 
 A sensor driver receives Port 0. It checks the I2C capability, acquires the Port for its command/read sequence, obtains the ready controller, performs the transaction, and releases the Port.
 
+INA219 `0x40`, INA219 `0x41`, and SHT40 `0x44` repeat this sequence independently on
+the same Port. The lock protects transaction boundaries, not the entire Module
+lifetime.
+
 ## Zephyr integration
 
 - Devicetree macros create the catalog at build time; Port validates device readiness at boot.
@@ -218,5 +227,7 @@ Port handles remain valid for firmware lifetime. Catalog data is read-only after
 ## Contract guarantees
 
 - Unknown IDs and unsupported capabilities fail safely.
+- Multiple Modules may share a capable Port; exclusivity exists only for a bounded
+  transaction or an explicitly exclusive endpoint.
 - No caller above Port needs a controller label or pin number.
 - Generated catalog size is bounded at compile time.

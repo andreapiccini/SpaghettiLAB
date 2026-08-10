@@ -16,6 +16,9 @@ Creare l’astrazione Port 0 e associarla al device I2C pronto di Zephyr.
 
 Port 0 espone capacità I2C e restituisce un device pronto.
 
+Port 0 è un accesso condiviso: non possiede uno stato “occupato” e può essere
+riferita contemporaneamente da più Module con endpoint diversi.
+
 ## Task
 
 1. ✅ [TASK-030-01 — Implementare Port 0](TASK-030-01-implementare-port-zero.md)

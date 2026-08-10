@@ -1,14 +1,13 @@
 #include <spaghetti/port.h>
+
 #include <errno.h>
+
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
-#include <zephyr/sys/util.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 
-LOG_MODULE_REGISTER(
-    spaghetti_port,
-    CONFIG_SPAGHETTI_PORT_LOG_LEVEL
-);
+LOG_MODULE_REGISTER(spaghetti_port, CONFIG_SPAGHETTI_PORT_LOG_LEVEL);
 
 struct spaghetti_port {
 	spaghetti_port_id_t id;
@@ -52,13 +51,13 @@ const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)
 
 bool spaghetti_port_has_capability(
 	const struct spaghetti_port *port,
-	enum spaghetti_port_capability capability)
+	uint32_t capabilities)
 {
-	if (port == NULL) {
+	if ((port == NULL) || (capabilities == 0U)) {
 		return false;
 	}
 
-	return (port->capabilities & capability) != 0U;
+	return (port->capabilities & capabilities) == capabilities;
 }
 
 const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port)

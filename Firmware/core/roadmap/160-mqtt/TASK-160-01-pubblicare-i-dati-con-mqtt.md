@@ -78,9 +78,13 @@ connected/error esplicito. Non bloccare i produttori di dati.
 
 Crea una `k_msgq` in uscita limitata. Il subscriber MQTT riceve
 `spaghetti_electrical_message`, formatta una copia JSON limitata come
-`{"bus_uv":12000000,"current_ua":125000,"power_uw":1500000}` e la accoda con
+`{"module_key":10,"bus_uv":12000000,"current_ua":125000,"power_uw":1500000}` e la accoda con
 `K_NO_WAIT`. Il thread MQTT la pubblica sul suffisso `electrical`; callback zbus e
 Runtime non devono eseguire socket I/O.
+
+Costruisci il topic come `<base_topic>/modules/<source_key>/electrical`, verificando il
+limite prima di formattare. Non usare Port ID nel topic: `0x40` e `0x41` condividono
+Port 0 ma sono sorgenti distinte.
 
 > [!ATTENZIONE]
 > SCORCIATOIA TEMPORANEA
@@ -184,6 +188,7 @@ int err = spaghetti_mqtt_publish(&publication);
 - [ ] Definire l’API del servizio MQTT.
 - [ ] Implementare worker MQTT e stato del client.
 - [ ] Accodare il campione elettrico per un topic di sviluppo.
+- [ ] Topic e payload distinguono la sorgente tramite module key.
 - [ ] Integrare e provare MQTT con topic fisso.
 - [ ] Spostare le impostazioni MQTT in Config.
 

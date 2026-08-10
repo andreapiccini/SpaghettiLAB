@@ -1,12 +1,12 @@
 #include <spaghetti/core.h>
-#include <spaghetti/port.h>
-#include <spaghetti/driver_registry.h>
+
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(
-    spaghetti_core,
-    CONFIG_SPAGHETTI_CORE_LOG_LEVEL
-);
+#include <spaghetti/driver_registry.h>
+#include <spaghetti/module_manager.h>
+#include <spaghetti/port.h>
+
+LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
 
 static enum spaghetti_core_state core_state = SPAGHETTI_CORE_UNINITIALIZED;
 
@@ -17,14 +17,21 @@ int spaghetti_core_init(void)
 	ret = spaghetti_port_init_all();
 	if (ret < 0) {
 		core_state = SPAGHETTI_CORE_ERROR;
-		LOG_ERR("Failed to initialize Spaghetti Core");
+		LOG_ERR("Port initialization failed: err=%d", ret);
 		return ret;
 	}
 
 	ret = spaghetti_driver_registry_init();
 	if (ret < 0) {
 		core_state = SPAGHETTI_CORE_ERROR;
-		LOG_ERR("Failed to initialize Spaghetti Driver Registry");
+		LOG_ERR("Driver Registry initialization failed: err=%d", ret);
+		return ret;
+	}
+
+	ret = spaghetti_module_manager_init();
+	if (ret < 0) {
+		core_state = SPAGHETTI_CORE_ERROR;
+		LOG_ERR("Module Manager initialization failed: err=%d", ret);
 		return ret;
 	}
 

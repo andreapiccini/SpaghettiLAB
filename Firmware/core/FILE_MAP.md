@@ -144,7 +144,7 @@ Services support owners; they do not own product rules or module instances.
 | Path | Contains | Read when |
 |---|---|---|
 | `spaghetti_modules/README.md` | Common module-driver lifecycle, operation table, config/build template | Before every new sensor/actuator driver |
-| `spaghetti_modules/sht40/README.md` | Practical I2C temperature/humidity driver contract | Implementing or testing SHT40 behavior |
+| `spaghetti_modules/ina219/README.md` | Practical I2C bus-voltage/current/power driver contract | Implementing or testing INA219 behavior |
 | `spaghetti_modules/relay/README.md` | Practical logical-output/safe-state driver contract | Implementing or testing a relay/output behavior |
 
 A new module directory owns only its protocol, per-instance private state, and

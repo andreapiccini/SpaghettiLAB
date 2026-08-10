@@ -41,6 +41,10 @@ Definire `spaghetti_runtime_sampling_task` con l'ID del modulo, i millisecondi d
 periodo e il flag abilitato. Dichiarare Runtime init, caricare, avviare e interrompere
 solo le funzioni; non aggiungere un linguaggio di scripting.
 
+L’ID è un handle runtime già risolto: la Config persistente conserva invece
+`source_key` e, durante apply, chiama `spaghetti_module_manager_get_by_key()` per
+ottenere questo ID. Runtime non cerca mai “il Module della Port”.
+
 ### Passo 2 — Implementare timer e semaforo del periodo
 
 Crea `subsys/services/timer/timer.h` e `subsys/services/timer/timer.c`.
@@ -76,6 +80,9 @@ interrompere il servizio Timer senza lavorare nella callback timer.
 Aggiungere sorgenti Runtime e Timer. Inizializzare Runtime da Core. Dopo l’applicazione di Config completa
 l'assegnazione del modulo, risolvere l'ID del modulo, caricare l'attività di
 campionamento 1000 ms e avviare Runtime. Propagare ogni guasto.
+
+Risolvi esattamente la `sampling.source_key`; se Port 0 contiene INA219 `0x40` e
+`0x41`, scegliere la Port non sarebbe sufficiente.
 
 ### Passo 6 — Rimuovere il loop da main e verificare la cadenza
 
@@ -168,6 +175,7 @@ if (err == 0) {
 - [ ] Implementare il thread di campionamento Runtime.
 - [ ] Implementare caricamento, avvio e arresto di Runtime.
 - [ ] Integrare Runtime con Core e Config.
+- [ ] Risolvere la sorgente per key e non con get-by-port.
 - [ ] Rimuovere il loop da main e verificare la cadenza.
 
 ## Verifica finale

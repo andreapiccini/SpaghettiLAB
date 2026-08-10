@@ -57,6 +57,8 @@ This component is used only when a Core exposes a real controllable resource sha
 ### `int spaghetti_power_acquire(spaghetti_power_resource_id_t id, spaghetti_power_owner_id_t owner)`
 
 **Purpose:** Add one owner and activate hardware only for the first successful owner.
+Manager derives `owner` from the live Module ID, not from Port ID: sibling Modules on
+one shared Port remain independently balanced.
 
 **Parameters**
 
@@ -131,7 +133,10 @@ sequenceDiagram
 
 ## Practical example
 
-Two Ports share one switchable 3.3 V rail. Initializing the first module turns it on; initializing the second only increments ownership. Removing one module keeps the rail on. The final removal turns it off.
+Two INA219 Modules at `0x40` and `0x41` share Port 0 and its switchable 3.3 V rail.
+Initializing the first turns the rail on; initializing the second adds a distinct
+Module-ID owner. Removing either sibling keeps the rail on. The final removal turns
+it off.
 
 ## Zephyr integration
 
@@ -167,4 +172,5 @@ Acquire/release transitions are serialized. The count changes only after the cor
 
 - No resource exists without a real board-side control contract.
 - Intermediate owners cannot switch off a resource still in use.
+- Owner identity is per live Module, so Port sharing does not collapse references.
 - Underflow, duplicate ownership, and hardware failures are observable.

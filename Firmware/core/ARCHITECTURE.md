@@ -34,8 +34,9 @@ flowchart LR
 For example:
 
 - the Core has an I2C controller wired to Port 0: **static hardware**;
-- a temperature sensor is assigned to Port 0: **runtime state**;
-- when temperature exceeds a threshold, an actuator is commanded: **product
+- two INA219 devices at addresses `0x40` and `0x41` are assigned to Port 0:
+  **runtime state**;
+- when measured current exceeds a threshold, an actuator is commanded: **product
   behavior**.
 
 The same architecture must still work if the example sensor, actuator,
@@ -50,13 +51,13 @@ its edges.
 |---|:---:|---|---|
 | Core | Yes | Coordinates startup and reports overall state | Initialize the common firmware layers |
 | Port | Yes | Represents one physical connector and its capabilities | Port 0 offers I2C |
-| Module | Yes | Represents one live peripheral instance | Sensor instance assigned to Port 0 |
-| Module driver | Yes | Implements one module type | Read a temperature sensor over I2C |
-| Driver Registry | Yes | Finds a compiled driver by type | Resolve `temperature-sensor` to its driver |
-| Module Manager | Yes | Owns module instances and lifecycle | Create, read, and remove the instance on Port 0 |
+| Module | Yes | Represents one live peripheral instance | INA219 at `0x40` on Port 0 |
+| Module driver | Yes | Implements one module type | Read an INA219 over I2C |
+| Driver Registry | Yes | Finds a compiled driver by type | Resolve `ina219` to its driver |
+| Module Manager | Yes | Owns module instances and lifecycle | Create several addressed instances on Port 0 |
 | Config | When configuration exists | Holds validated desired state | Assign a module and a sample interval |
-| Data | When values/events exist | Defines values independently of their producer | Temperature with source and timestamp |
-| Runtime | When autonomous behavior exists | Applies product rules | If temperature is high, command an actuator |
+| Data | When values/events exist | Defines values independently of their producer | Current with module key, ID, and timestamp |
+| Runtime | When autonomous behavior exists | Applies product rules | Sample both INA219 instances independently |
 | Input/output adapter | Optional | Connects the firmware to another interface | USB shell, local UI, REST, MQTT |
 | Discovery strategy | Optional | Proposes module identity | Manual assignment, EEPROM, electrical probe |
 | Shared-resource coordinator | Optional | Coordinates a real shared resource | A switchable rail used by two Ports |
@@ -70,7 +71,7 @@ no external output at all.
 
 ```mermaid
 flowchart LR
-    DATA["Generic temperature value"]
+    DATA["Generic electrical sample"]
     LOG["Local logger"]
     USB["USB adapter"]
     UI["Display adapter"]
@@ -125,7 +126,7 @@ Runtime state can change without rebuilding the firmware.
 
 Examples:
 
-- which module is assigned to Port 0;
+- which modules and bus endpoints are configured on Port 0;
 - whether that module is ready or in error;
 - its current measurements;
 - user configuration;
@@ -141,8 +142,8 @@ flowchart TB
 
     subgraph RUN["Runtime"]
         CONFIG["Configuration"]
-        ASSIGN["Port 0 = temperature sensor"]
-        STATE["Module is READY <br/> temperature = 24.6 °C"]
+        ASSIGN["Port 0: INA219 0x40 + 0x41"]
+        STATE["Two independent Modules are READY"]
         CONFIG --> ASSIGN --> STATE
     end
 
@@ -150,7 +151,7 @@ flowchart TB
 ```
 
 The Devicetree describes that Port 0 can access I2C. It must not permanently
-claim that a removable temperature sensor is connected there.
+claim that any removable module or I2C address is connected there.
 
 ## Core
 
@@ -196,19 +197,23 @@ A Port answers questions such as:
 A Port does not know which removable module is attached and does not implement a
 sensor protocol.
 
+A Port is not an occupancy slot. When it exposes a shared bus, several Modules may
+reference the same Port at the same time. Port owns controller access and transaction
+serialization; Module Manager owns the independent instances and their lifecycles.
+
 ### Practical example
 
-The temperature driver asks Port 0 for its I2C controller. On one Core that may
+Each INA219 driver instance asks Port 0 for its I2C controller. On one Core that may
 be `i2c0`; on another Core it may be `i2c1`. The driver sees only the Port API.
 
 ```mermaid
 flowchart LR
-    DRIVER["Generic temperature driver"]
+    DRIVER["Several module instances"]
     PORT["Port 0 API <br/> capability: I2C"]
     C3["Core variant A <br/> controller i2c0"]
     S3["Core variant B <br/> controller i2c1"]
 
-    DRIVER --> PORT
+    DRIVER -->|"serialized transactions"| PORT
     PORT --> C3
     PORT --> S3
 ```
@@ -220,19 +225,25 @@ implementation of one module type.
 
 The distinction is the same as an object and its class:
 
-- instance: “temperature sensor on Port 0, address 0x44, currently READY”;
-- driver: “code capable of initializing and reading this sensor family.”
+- instance: “INA219 key 10 on Port 0, address `0x40`, currently READY”;
+- driver: “code capable of initializing and reading the INA219 family.”
 
 Several instances may use the same immutable driver while keeping separate
 runtime state.
+
+The persistent identity of an instance is a Config-owned `module_key`. Its runtime
+`spaghetti_module_id_t` is an ephemeral Manager handle. A driver also derives a
+normalized endpoint from its configuration—for example I2C address `0x40`. Therefore
+two INA219 instances on Port 0 with addresses `0x40` and `0x41` are distinct, while a
+second claim for Port 0/address `0x40` is rejected as a hardware collision.
 
 ### Practical example
 
 ```mermaid
 flowchart TB
-    D["One immutable temperature driver <br/> init · read · deinit"]
-    M0["Module A <br/> Port 0 · address 0x44"]
-    M1["Module B <br/> Port 2 · address 0x45"]
+    D["One immutable INA219 driver <br/> init · read · deinit"]
+    M0["Module key 10 <br/> Port 0 · address 0x40"]
+    M1["Module key 11 <br/> Port 0 · address 0x41"]
 
     M0 -. "uses" .-> D
     M1 -. "uses" .-> D
@@ -243,7 +254,7 @@ The operation table keeps callers generic: the Manager calls `init`, `read`,
 
 ## Example: lifecycle of a runtime module
 
-The following example follows one INA219 connected to Port 0 from physical
+The following example follows one INA219 connected to shared Port 0 from physical
 connection to a measurement requested by Runtime. Port 0 is part of the static
 Core hardware, while the INA219 type, its I2C address, and the live Module
 instance are runtime state. The example uses address `0x40`, the address carried
@@ -272,8 +283,11 @@ sequenceDiagram
     end
     Manager->>Registry: find("ina219")
     Registry-->>Manager: &spaghetti_ina219_driver
-    Manager->>Port: resolve Port 0 and check required capabilities
+    Manager->>Port: resolve shared Port 0 and check required capabilities
     Port-->>Manager: Port exists, READY, I2C supported
+    Manager->>Driver: describe_endpoint(config)
+    Driver-->>Manager: I2C address 0x40
+    Manager->>Manager: reject only duplicate key/endpoint
     Manager->>Module: create provisional struct spaghetti_module
     Manager->>Driver: driver->ops->init(&module, config, config_size)
     Driver->>Port: spaghetti_port_i2c_device(module->port)
@@ -314,8 +328,8 @@ sequenceDiagram
    - [Discovery](subsys/discovery/README.md)
 
 3. **Module Manager receives the request.** The Manager is the lifecycle owner.
-   It validates the request, rejects an unavailable or already assigned Port,
-   and coordinates lookup, initialization, commit, later reads, and removal.
+   It validates the request, rejects an unavailable Port or a duplicate module
+   key/endpoint, and coordinates lookup, initialization, commit, later reads, and removal.
    No caller creates a live Module directly.
 
    See also:
@@ -331,10 +345,12 @@ sequenceDiagram
 
    - [Driver Registry](subsys/driver_registry/README.md)
 
-5. **Module Manager verifies Port capabilities.** The INA219 descriptor requires
+5. **Module Manager verifies Port capabilities and endpoint uniqueness.** The INA219 descriptor requires
    I2C. The Manager resolves Port 0, checks that it is ready, and confirms that
-   `SPAGHETTI_PORT_CAP_I2C` is present. This prevents calling an I2C driver on an
-   incompatible connector.
+   `SPAGHETTI_PORT_CAP_I2C` is present. The driver derives address `0x40` from its
+   runtime config; the Manager rejects another claim for Port 0/address `0x40`, but
+   permits `0x41` and `0x44` on the same Port. This prevents both incompatible access
+   and real bus-address collisions without treating the Port as occupied.
 
    See also:
 
@@ -343,7 +359,7 @@ sequenceDiagram
 
 6. **Module Manager creates a provisional Module.** It fills one private
    `struct spaghetti_module` slot with its ID, Port pointer, driver pointer,
-   initial state, and per-instance context. The Manager owns this structure for
+   stable key, endpoint, initial state, and per-instance context pointer. The Manager owns this structure for
    the whole connection lifetime; Runtime and other callers refer to it by ID
    and do not retain writable pointers to it.
 
@@ -356,8 +372,9 @@ sequenceDiagram
    `driver->ops->init(&module, config, config_size)`. The INA219 driver validates
    its configuration, asks the Port for the stable Zephyr I2C device, and uses
    the runtime address `0x40` for the device transaction. It keeps only
-   per-instance protocol state in the Module context; it does not own the Port
-   or the Zephyr device.
+   per-instance protocol state in a driver-specific static slab; it does not own the
+   Port or the Zephyr device. Different drivers may therefore use different context
+   sizes without a global context buffer or heap.
 
    See also:
 
@@ -367,8 +384,8 @@ sequenceDiagram
 8. **The Module becomes READY only after successful initialization.** When
    `init()` returns `0`, the Manager commits the provisional slot and publishes
    its ID in state `SPAGHETTI_MODULE_READY`. If initialization fails, it discards
-   the provisional instance and leaves Port 0 available instead of exposing a
-   half-initialized Module.
+   the provisional instance and releases only its driver context instead of exposing a
+   half-initialized Module. Other Modules already using Port 0 remain untouched.
 
    See also:
 
@@ -410,6 +427,10 @@ The Registry and Manager have different jobs:
 - **Module Manager:** owns every live module instance, its state, its Port
   assignment, and all lifecycle transitions.
 
+The mapping is one Port to zero or more Modules. Registry lookup remains by driver
+type; Manager lookup is by runtime ID or stable module key. A Port query returns a
+bounded list, never an assumed single instance.
+
 ### Practical example: assign a module
 
 ```mermaid
@@ -420,10 +441,10 @@ sequenceDiagram
     participant Registry as Driver Registry
     participant Driver as Module driver
 
-    Caller->>Manager: configure Port 0 as "temperature-sensor"
+    Caller->>Manager: configure key 10, "ina219", Port 0, 0x40
     Manager->>Port: get Port 0 and capabilities
     Port-->>Manager: I2C available
-    Manager->>Registry: find "temperature-sensor"
+    Manager->>Registry: find "ina219"
     Registry-->>Manager: immutable descriptor
     Manager->>Driver: init new instance
     alt initialization succeeds
@@ -432,12 +453,13 @@ sequenceDiagram
     else initialization fails
         Driver-->>Manager: error
         Manager->>Manager: discard provisional instance
-        Manager-->>Caller: error, Port remains free
+        Manager-->>Caller: error, provisional slot/context released
     end
 ```
 
-Only the Manager may create, replace, or destroy module instances. This makes
-rollback and ownership predictable.
+Only the Manager may create, replace, or destroy module instances. A failed creation
+rolls back that exact key/endpoint and cannot remove sibling Modules on the same Port.
+This makes rollback and ownership predictable.
 
 ## Config
 
@@ -455,9 +477,10 @@ Those sources must all produce the same internal Config model.
 
 ### Practical example
 
-A request asks for a temperature sensor on Port 0 with a 1000 ms sample period.
-Config first validates the complete request. Only then does it ask the Manager
-to apply the assignment. Invalid input must not leave half-applied live state.
+A request asks for INA219 keys 10 and 11 on Port 0, at `0x40` and `0x41`, with
+1000 ms sample periods. Config validates both keys and endpoints before it asks
+Manager to reconcile the desired set. Invalid input must not leave half-applied
+live state, and removing key 10 must not remove key 11.
 
 ```mermaid
 flowchart LR
@@ -483,7 +506,7 @@ driver or output protocol.
 
 A useful measurement contains enough context to stand on its own:
 
-- source module ID;
+- stable source module key and current runtime ID;
 - value and unit or fixed representation;
 - timestamp;
 - sequence number;
@@ -491,14 +514,14 @@ A useful measurement contains enough context to stand on its own:
 
 ### Practical example
 
-The sensor driver returns a raw result. The application turns it into a generic
-temperature value. A logger, a local display, and an optional network adapter
-can consume the same value without knowing how the sensor speaks I2C.
+The INA219 driver returns bus voltage, current, and power. The application turns
+them into a generic electrical sample. A logger, a local display, and an optional
+network adapter can consume it without knowing the concrete driver or I2C address.
 
 ```mermaid
 flowchart LR
     SENSOR["Module driver <br/> raw sensor result"]
-    VALUE["Data <br/> temperature, source, time"]
+    VALUE["Data <br/> voltage/current/power, key, ID, time"]
     LOG["Logger"]
     RULE["Runtime rule"]
     OUTPUT["Optional output adapter"]
@@ -519,8 +542,9 @@ contracts, not on a concrete sensor implementation.
 
 ### Practical example
 
-Every second, Runtime requests a value from one module. When the temperature is
-above 25 °C, it commands another module.
+Every second, Runtime independently requests values from the runtime IDs resolved
+from keys 10 and 11. A rule may command another Module when current exceeds a
+configured threshold.
 
 ```mermaid
 sequenceDiagram
@@ -534,7 +558,7 @@ sequenceDiagram
     Timer-->>Runtime: wake-up signal
     Runtime->>Manager: read sensor module
     Manager->>Sensor: read()
-    Sensor-->>Manager: 26.2 °C
+    Sensor-->>Manager: 5000 mV, 120 mA, 600 mW
     Manager-->>Runtime: normalized sample
     Runtime->>Data: publish sample
     Runtime->>Manager: command actuator ON
@@ -610,7 +634,7 @@ Use the simplest mechanism that satisfies the real behavior.
 | Protect short shared state | Mutex | Serialize one Port transaction |
 | Wake a worker without doing work in a callback | Semaphore or work item | Timer wakes Runtime |
 | Preserve ordered commands with bounded capacity | Message queue | Queue actuator commands |
-| Send one value to several independent consumers | Publish/subscribe | Temperature reaches logger and UI |
+| Send one value to several independent consumers | Publish/subscribe | Electrical sample reaches logger and UI |
 
 ```mermaid
 flowchart TB

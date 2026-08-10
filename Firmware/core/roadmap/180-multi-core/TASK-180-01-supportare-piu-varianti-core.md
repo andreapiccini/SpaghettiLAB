@@ -78,6 +78,10 @@ Descrivi la MCU verificata, la console, il controller I2C, i nodi Port fisici, i
 riferimenti di capacità e il vero cablaggio power/presence. Mantieni le assegnazioni
 runtime INA219/Relay fuori dal DTS.
 
+Non aggiungere proprietà `occupied`, `module-count` o identità Module ai nodi Port. Un
+solo nodo Port I2C può sostenere molti endpoint runtime; il catalogo DTS limita le
+connessioni fisiche, non il numero di Module.
+
 ### Passo 5 — Enumerare i Port dal Devicetree
 
 `subsys/port/port.c`.
@@ -173,6 +177,7 @@ for (spaghetti_port_id_t id = 0U; id < spaghetti_port_count(); ++id) {
 - [ ] Creare la prima definizione board Spaghetti LAB.
 - [ ] Spostare i dati hardware verificati nel DTS della board.
 - [ ] Enumerare i Port dal Devicetree.
+- [ ] Verificare che il catalogo non codifichi cardinalità Module.
 - [ ] Compilare e provare la prima board Core reale.
 - [ ] Compilare una seconda variante Core.
 

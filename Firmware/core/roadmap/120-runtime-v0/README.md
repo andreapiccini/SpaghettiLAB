@@ -16,6 +16,8 @@ Spostare il campionamento periodico da `main` a un servizio Runtime dedicato.
 
 Runtime campiona ogni 1000 ms mentre `main` esegue soltanto il boot.
 
+Config seleziona la sorgente per key; Runtime conserva l’ID risolto, mai la sola Port.
+
 ## Task
 
 1. ⬜ [TASK-120-01 — Implementare Runtime V0](TASK-120-01-implementare-runtime-v0.md)

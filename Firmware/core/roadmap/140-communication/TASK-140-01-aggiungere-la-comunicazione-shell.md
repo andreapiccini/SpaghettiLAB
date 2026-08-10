@@ -38,6 +38,11 @@ Dichiarare Communication init e handle-request API più una risposta limitata co
 return/callback. Implementare l'invio per i segnaposto GET_STATUS e SET_CONFIG con
 rigoroso comando, puntatore e convalida della lunghezza.
 
+GET_STATUS non può mostrare “il Module della Port”. Per ogni Port chiama
+`spaghetti_module_manager_list_by_port(port_id, NULL, 0U, &count)`, poi usa un array
+bounded fino a `CONFIG_SPAGHETTI_MAX_MODULES` e restituisce key, runtime ID, type,
+endpoint e stato di ogni snapshot.
+
 ### Passo 3 — Abilitare Zephyr Shell
 
 `prj.conf` e `boards/esp32c3_devkitm_esp32c3.overlay`.
@@ -144,6 +149,7 @@ int err = spaghetti_communication_handle_request(&request, &response);
 
 - [ ] Definire messaggi Communication a dimensione limitata.
 - [ ] Dichiarare e implementare il dispatch delle richieste.
+- [ ] GET_STATUS rappresenta zero o più Module per Port.
 - [ ] Abilitare Zephyr Shell.
 - [ ] Implementare l’adattatore di trasporto Shell.
 - [ ] Inizializzare Communication da Core.

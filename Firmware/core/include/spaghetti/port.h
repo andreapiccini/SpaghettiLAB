@@ -70,20 +70,20 @@ size_t spaghetti_port_count(void);
  * The returned object is owned by the Port subsystem and must not be modified
  * or freed by the caller.
  */
-const struct spaghetti_port * spaghetti_port_get(spaghetti_port_id_t id);
+const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id);
 
 /**
  * @brief Check whether a Port exposes a capability.
  *
  * @param[in] port Port to inspect.
- * @param[in] capability Capability to check.
+ * @param[in] capabilities Nonzero capability bitmask that must be fully present.
  *
  * @return true if the Port exposes the requested capability.
  * @return false if it does not, or if @p port is NULL.
  */
 bool spaghetti_port_has_capability(
 	const struct spaghetti_port *port,
-	enum spaghetti_port_capability capability);
+	uint32_t capabilities);
 
 /**
  * @brief Return the Zephyr I2C device associated with a Port.
@@ -96,6 +96,6 @@ bool spaghetti_port_has_capability(
  * The returned device is owned by Zephyr and must not be modified or freed by
  * the caller.
  */
-const struct device * spaghetti_port_i2c_device(const struct spaghetti_port *port);
+const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port);
 
 #endif /* SPAGHETTI_PORT_H */

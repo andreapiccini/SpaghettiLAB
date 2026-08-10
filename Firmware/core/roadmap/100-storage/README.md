@@ -16,6 +16,9 @@ Salvare e ricaricare soltanto la Config interna già validata.
 
 La configurazione valida sopravvive a un riavvio reale.
 
+Key e più elementi sulla stessa Port vengono ripristinati senza dipendere dai Module ID
+runtime precedenti.
+
 ## Task
 
 1. ⬜ [TASK-100-01 — Rendere Config persistente](TASK-100-01-rendere-config-persistente.md)

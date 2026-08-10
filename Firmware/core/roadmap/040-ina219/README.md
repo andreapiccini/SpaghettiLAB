@@ -16,6 +16,9 @@ Leggere un INA219 reale con il driver Sensor incluso in Zephyr 4.4.
 
 `ESP32-C3 -> Port 0 -> I2C -> INA219 -> bus voltage/current/power -> LOG_INF`.
 
+La singola istanza statica è soltanto una prova verticale; non definisce un limite di
+un Module per Port.
+
 ## Task
 
 1. ✅ [TASK-040-01 — Leggere il sensore INA219](TASK-040-01-leggere-il-sensore-ina219.md)

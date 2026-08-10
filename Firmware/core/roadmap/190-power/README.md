@@ -16,6 +16,8 @@ Gestire una risorsa di alimentazione condivisa con ownership e rollback esplicit
 
 La risorsa cambia stato correttamente con due proprietari e durante gli errori.
 
+I proprietari sono Module ID distinti anche quando condividono la stessa Port.
+
 ## Task
 
 1. ⬜ [TASK-190-01 — Gestire l’alimentazione condivisa](TASK-190-01-gestire-l-alimentazione-condivisa.md)

@@ -28,7 +28,7 @@ Data defines normalized measurements and events independently of the driver that
 | Type / object | Owner | Meaning |
 |---|---|---|
 | `spaghetti_data_message` | Publisher until copied; Data afterward | Tagged bounded value/event envelope. |
-| Temperature sample | Message payload | Source, fixed value, timestamp, sequence, validity. |
+| Electrical sample | Message payload | Source runtime ID and stable key, bus voltage, current, power, timestamp, sequence, and validity. |
 | Channel/queue | Data | Bounded delivery resource with explicit full policy. |
 | `spaghetti_data_stats` | Data | Published, delivered, dropped, rejected counters. |
 
@@ -120,7 +120,11 @@ flowchart LR
 
 ## Practical example
 
-A sensor produces 24.6 °C. Data publishes one message containing module ID, timestamp, sequence, and fixed value. Logger prints it, Runtime evaluates it, and an optional adapter formats it—none includes the concrete sensor driver.
+INA219 key 10 at Port 0/address `0x40` produces 5000 mV and 120 mA. Data publishes
+one message containing both its current runtime ID and stable key, timestamp,
+sequence, voltage, current, and power. INA219 key 11 at `0x41` produces a separate
+stream even though it shares Port 0. Logger, Runtime, and adapters do not include the
+concrete driver header.
 
 ## Zephyr integration
 
@@ -133,10 +137,12 @@ A sensor produces 24.6 °C. Data publishes one message containing module ID, tim
 ### Message shape
 
 ```c
-struct spaghetti_temperature_sample {
-    spaghetti_module_id_t source;
-    int32_t temperature_millicelsius;
-    int32_t humidity_millipercent;
+struct spaghetti_electrical_sample {
+    spaghetti_module_id_t source_id;
+    spaghetti_module_key_t source_key;
+    int32_t bus_voltage_mv;
+    int32_t current_ma;
+    int32_t power_mw;
     int64_t uptime_ms;
     uint32_t sequence;
     uint32_t validity_flags;
@@ -153,12 +159,12 @@ CONFIG_ZBUS_MSG_SUBSCRIBER=y
 ### Channel shape
 
 ```c
-ZBUS_CHAN_DEFINE(spaghetti_temperature_chan,
-                 struct spaghetti_temperature_sample,
-                 temperature_validator,
+ZBUS_CHAN_DEFINE(spaghetti_electrical_chan,
+                 struct spaghetti_electrical_sample,
+                 electrical_validator,
                  NULL,
                  ZBUS_OBSERVERS(logger_sub, runtime_sub),
-                 ZBUS_MSG_INIT(.source = 0));
+                 ZBUS_MSG_INIT(.source_id = 0, .source_key = 0));
 ```
 
 ## Ownership and concurrency
@@ -168,5 +174,7 @@ Publish copies the message before producer storage expires. Every consumer has a
 ## Contract guarantees
 
 - Consumers never depend on a concrete driver type.
+- Source identity is never inferred from Port; key distinguishes sibling Modules on a
+  shared bus and ID selects the current live instance.
 - Delivery capacity and overflow behavior are bounded and documented.
 - A rejected message never appears as valid downstream data.

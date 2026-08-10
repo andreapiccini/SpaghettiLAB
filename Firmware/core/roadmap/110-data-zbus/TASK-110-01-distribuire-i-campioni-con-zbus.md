@@ -12,6 +12,7 @@ Apri `include/spaghetti/data.h` e scrivi:
 ```c
 struct spaghetti_electrical_message {
 	spaghetti_module_id_t source_id;
+	spaghetti_module_key_t source_key;
 	int32_t bus_voltage_microvolts;
 	int32_t current_microamps;
 	uint32_t power_microwatts;
@@ -28,6 +29,7 @@ int spaghetti_data_publish_electrical(
 La struct è pubblica, priva di puntatori e viene copiata:
 
 - `source_id` identifica l’istanza Module, non il tipo INA219;
+- `source_key` identifica stabilmente l’elemento Config anche se l’ID cambia al reboot;
 - voltage/current/power usano le stesse microunità di `spaghetti_sample`;
 - current è firmata perché INA219 è bidirezionale;
 - `timestamp_ms` è l’uptime Zephyr al momento della misura;
@@ -94,6 +96,7 @@ Dopo `spaghetti_module_manager_read()` riuscita, scrivi:
 ```c
 const struct spaghetti_electrical_message message = {
 	.source_id = module_id,
+	.source_key = module_key,
 	.bus_voltage_microvolts = sample.bus_voltage_microvolts,
 	.current_microamps = sample.current_microamps,
 	.power_microwatts = sample.power_microwatts,
@@ -134,6 +137,9 @@ logger e MQTT non dipendono dal driver concreto INA219.
 Runtime legge un `spaghetti_sample`, crea il messaggio e chiama publish. Logger, test e
 più avanti MQTT ricevono ciascuno una copia dalla propria coda.
 
+Due sample provenienti dalla stessa Port restano distinti tramite `source_id` e
+`source_key`; Data non usa `port_id` come identità.
+
 ## Concetto Zephyr da sapere
 
 `zbus_chan_pub()` copia il valore nel channel e notifica gli observer. Un message
@@ -144,6 +150,7 @@ pubblicare un puntatore a memoria temporanea come payload.
 
 - [ ] Messaggio e API hanno le firme mostrate.
 - [ ] Tutte le unità sono dichiarate nei nomi dei campi.
+- [ ] Source ID e key distinguono Module fratelli sulla stessa Port.
 - [ ] Channel e due subscriber sono statici e limitati.
 - [ ] Data non include il driver INA219.
 - [ ] La policy di coda piena è verificata.

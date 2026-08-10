@@ -16,6 +16,8 @@ Associare un nome di tipo stabile al descrittore del relativo Module Driver.
 
 La ricerca di `ina219` riesce; un tipo sconosciuto viene rifiutato.
 
+Lo stesso descrittore può servire più istanze contemporanee sulla stessa Port.
+
 ## Task
 
 1. ⬜ [TASK-060-01 — Implementare il Driver Registry](TASK-060-01-implementare-il-driver-registry.md)
@@ -24,4 +26,5 @@ La ricerca di `ina219` riesce; un tipo sconosciuto viene rifiutato.
 
 - [ ] La tabella driver è fissa e validata all’avvio.
 - [ ] Nomi duplicati o descrittori incompleti vengono rifiutati.
+- [ ] Validate-config e describe-endpoint sono obbligatorie e pure.
 - [ ] Core inizializza il registry prima di usarlo.

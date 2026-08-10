@@ -40,6 +40,11 @@ Implementa il comando ON/OFF e fai in modo che `deinit` ripristini lo stato sicu
 Accedi all'hardware tramite Port, senza numeri GPIO specifici della scheda, e propaga
 gli errori hardware reali.
 
+Implementa anche `validate_config()` e `describe_endpoint()`. Se il Relay usa in modo
+esclusivo la risorsa della Port, restituisci `SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE`; se la
+Port espone linee indirizzabili, restituisci kind/value verificati. Il context Relay
+proviene da uno slab statico tipizzato del driver, non dal Manager.
+
 ### Passo 3 — Registrare e compilare il driver Relay
 
 `subsys/driver_registry/driver_registry.c` e `CMakeLists.txt`.
@@ -65,6 +70,10 @@ Definisci `spaghetti_runtime_threshold_rule` con modulo sorgente, soglie superio
 inferiore in µA, ID del relè e stato da applicare sopra la soglia. Le due soglie creano
 isteresi. Dichiara `spaghetti_runtime_load_threshold_rule()` e limita questa versione a
 una sola regola.
+
+Nel modello Config salva `source_key` e `relay_key`. Durante apply risolvile con
+`spaghetti_module_manager_get_by_key()` e costruisci la struct Runtime con gli ID
+correnti. Non salvare la sola Port come riferimento alla regola.
 
 ### Passo 6 — Valutare la corrente nel thread Runtime
 
@@ -150,9 +159,11 @@ int err = spaghetti_runtime_load_threshold_rule(&rule);
 
 - [ ] Definire il contratto dei comandi Relay.
 - [ ] Implementare ciclo di vita e comando sicuro del Relay.
+- [ ] Descrivere endpoint e usare un context slab per-driver.
 - [ ] Registrare e compilare il driver Relay.
 - [ ] Instradare i comandi tramite Module Manager.
 - [ ] Definire una regola di soglia.
+- [ ] Risolvere source/relay key nei rispettivi runtime ID.
 - [ ] Valutare la corrente nel thread Runtime.
 - [ ] Provare soglia e stato sicuro del Relay.
 

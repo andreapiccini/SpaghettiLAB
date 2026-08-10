@@ -1,143 +1,21 @@
 # Discovery
 
-[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) ·
+[1:N migration](../../roadmap/PORT-MODULE-1-N-MIGRATION.md)
 
-Discovery is an optional normalization boundary for proposed module identity. Manual configuration, identity memory, or a verified hardware probe can all produce the same result without changing Module Manager.
+Discovery normalizes proposed Module identities. One provider scan of a shared Port may
+produce zero, one, or many results. Discovery never treats a Port as one proposal slot
+and never creates a live Module itself.
 
-## What this component owns
+## Ownership and model
 
-- Discovery mode/policy and provider registration.
-- Validation, generation, source, confidence, and invalidation of proposals.
-- Delivery of accepted normalized results.
-
-## What this component does not own
-
-- Module instances or driver lifecycle.
-- A universal assumption that modules contain EEPROM.
-- Port bus access outside a provider's explicit capability contract.
-
-## Files
-
-| File | Role |
-|---|---|
-| `include/spaghetti/discovery.h` | Result/provider/policy types and API. |
-| `subsys/discovery/discovery.c` | Validation, generation, and accepted-result routing. |
-| Provider adapter | Manual, memory, or hardware-specific identity source. |
-| Module Manager | Consumes accepted proposals and owns live instances. |
-
-## Data model
-
-| Type / object | Owner | Meaning |
-|---|---|---|
-| Discovery result | Discovery after copy | Port, bounded type/config, source, confidence, generation. |
-| Provider descriptor | Provider | Immutable operations and capability requirements. |
-| Per-Port generation | Discovery | Rejects stale asynchronous results. |
-| Policy mode | Config/Discovery | MANUAL, AUTO, or HYBRID selection rules. |
-
-## API contract
-
-### `int spaghetti_discovery_init(spaghetti_discovery_sink_t sink, void *user_data)`
-
-**Purpose:** Initialize empty per-Port state and register the accepted-result sink.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `sink` | Callback receiving copied accepted results. |
-| `user_data` | Opaque caller context returned to the sink. |
-
-**Returns:** `0` when ready.
-
-**Errors:** Null sink or invalid Port capacity.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** No provider operation.
-
-### `int spaghetti_discovery_submit_manual(const struct spaghetti_discovery_result *result)`
-
-**Purpose:** Validate and submit one manual proposal through the common policy path.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `result` | Complete caller-owned proposal copied during the call. |
-
-**Returns:** `0` when accepted and delivered.
-
-**Errors:** Invalid Port/type/config/source, stale generation, or sink rejection.
-
-**Execution context:** Calling thread.
-
-**Calls:** Registered sink, commonly Config/Module Manager reconciliation.
-
-### `int spaghetti_discovery_run(spaghetti_port_id_t port_id, k_timeout_t timeout)`
-
-**Purpose:** Ask the selected automatic provider to produce a proposal for one Port.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `port_id` | Physical Port to inspect. |
-| `timeout` | Bounded provider completion policy. |
-
-**Returns:** `0` with accepted result, or precise no-result/error status.
-
-**Errors:** Unsupported mode/provider, busy Port, timeout, ambiguous/invalid identity.
-
-**Execution context:** Thread or provider worker; never ISR.
-
-**Calls:** Selected provider and accepted-result sink.
-
-### `int spaghetti_discovery_invalidate(spaghetti_port_id_t port_id, uint32_t generation)`
-
-**Purpose:** Invalidate an exact current proposal when hardware/config changes.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `port_id` | Affected Port. |
-| `generation` | Expected generation to reject stale invalidation. |
-
-**Returns:** `0` when invalidated.
-
-**Errors:** Unknown Port, stale generation, or no current result.
-
-**Execution context:** Calling thread.
-
-**Calls:** Sink removal/reconciliation path.
-
-## How it works
-
-```mermaid
-flowchart LR
-    MANUAL["Manual config"] --> NORMALIZE["Discovery result"]
-    MEMORY["Identity memory provider"] --> NORMALIZE
-    PROBE["Verified probe provider"] --> NORMALIZE
-    NORMALIZE --> VALIDATE["Policy + generation validation"]
-    VALIDATE --> SINK["Manager reconciliation sink"]
-```
-
-## Practical example
-
-Manual input proposes `Port 0 = temperature-sensor`, generation 4. Discovery validates and forwards it. A delayed provider response for generation 3 is rejected and cannot replace the current assignment.
-
-## Zephyr integration
-
-- Providers that wait or access buses run in thread/workqueue context.
-- Delayed work is appropriate for debounce/retry; cancellation and generation checks prevent stale completion.
-- A presence ISR only signals provider work.
-
-## Configuration templates
-
-### Normalized result shape
+Discovery owns a fixed-capacity table of accepted proposals indexed by stable
+`spaghetti_module_key_t`. Generation is tracked per key, not per Port, so a stale
+response for INA219 `0x40` cannot invalidate INA219 `0x41` on the same Port.
 
 ```c
 struct spaghetti_discovery_result {
+    spaghetti_module_key_t key;
     spaghetti_port_id_t port_id;
     char type_id[SPAGHETTI_TYPE_ID_MAX];
     uint8_t driver_config[SPAGHETTI_DRIVER_CONFIG_MAX];
@@ -145,14 +23,92 @@ struct spaghetti_discovery_result {
     enum spaghetti_discovery_source source;
     uint32_t generation;
 };
+
+enum spaghetti_discovery_event_type {
+    SPAGHETTI_DISCOVERY_UPSERT,
+    SPAGHETTI_DISCOVERY_REMOVE,
+};
+
+struct spaghetti_discovery_event {
+    enum spaghetti_discovery_event_type type;
+    struct spaghetti_discovery_result result;
+};
 ```
 
-## Ownership and concurrency
+The result and event contain owned bounded arrays, not provider pointers. An UPSERT
+contains complete identity/config. A REMOVE uses the exact key and expected generation;
+it removes only that desired/live instance.
 
-Discovery serializes state per Port. Every asynchronous completion carries the generation captured at start. Results are copied before provider storage can expire.
+## Provider and sink contracts
+
+```c
+typedef int (*spaghetti_discovery_sink_t)(
+    const struct spaghetti_discovery_event *event,
+    void *user_data);
+
+typedef int (*spaghetti_discovery_emit_t)(
+    const struct spaghetti_discovery_result *result,
+    void *user_data);
+
+struct spaghetti_discovery_provider_ops {
+    int (*scan)(spaghetti_port_id_t port_id,
+                spaghetti_discovery_emit_t emit,
+                void *emit_user_data,
+                k_timeout_t timeout);
+};
+```
+
+`scan()` may call `emit()` several times before returning. Each call is bounded and the
+result is copied. The provider owns neither Config nor Manager slots. A provider must
+have a real identity mechanism; probing arbitrary I2C addresses cannot identify an
+unknown module type by itself.
+
+## API contract
+
+```c
+int spaghetti_discovery_init(spaghetti_discovery_sink_t sink, void *user_data);
+int spaghetti_discovery_submit_manual(
+    const struct spaghetti_discovery_result *result);
+int spaghetti_discovery_scan_port(spaghetti_port_id_t port_id,
+                                  k_timeout_t timeout);
+int spaghetti_discovery_invalidate(spaghetti_module_key_t key,
+                                   uint32_t expected_generation);
+```
+
+- `init()` stores a firmware-lifetime sink/context and clears the bounded proposal
+  table;
+- `submit_manual()` validates and copies one result, rejects a duplicate/stale key, and
+  emits UPSERT;
+- `scan_port()` asks the selected provider to emit all identifiable Modules on that
+  Port; an unsupported provider returns `-ENOTSUP`, not a fabricated empty identity;
+- `invalidate()` emits REMOVE for one exact key after the generation check. Sibling
+  keys on the same Port are unchanged.
+
+All functions run in thread/workqueue context. `timeout` is passed by value and bounds
+provider work. Input pointers are borrowed for each call; Discovery copies any data it
+retains. Expected errors include `-EINVAL`, `-ENOENT`, `-ENOSPC`, `-ESTALE`,
+`-ENOTSUP`, `-EBUSY`, `-ETIMEDOUT`, and sink/provider errors.
+
+## Flow
+
+```mermaid
+sequenceDiagram
+    participant Provider
+    participant Discovery
+    participant Sink as Config/Manager sink
+    Provider->>Discovery: scan Port 0
+    Provider->>Discovery: emit key 10, ina219, 0x40
+    Discovery->>Sink: UPSERT key 10
+    Provider->>Discovery: emit key 11, ina219, 0x41
+    Discovery->>Sink: UPSERT key 11
+    Discovery->>Sink: REMOVE key 10, generation N
+    Note over Sink: key 11 remains active on Port 0
+```
 
 ## Contract guarantees
 
-- Manager receives the same result shape from every strategy.
-- A provider never creates or owns a live module.
-- Stale results and invalidations cannot overwrite current state.
+- One Port may appear in many independent proposal records; Discovery owns those
+  bounded records.
+- Generation and invalidation operate on stable Module keys.
+- A scan may emit several Modules and never implies Port exclusivity.
+- Discovery normalizes identity; Manager remains the sole owner of live instances.

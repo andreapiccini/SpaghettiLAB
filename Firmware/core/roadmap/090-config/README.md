@@ -14,7 +14,8 @@ Definire, validare e applicare la più piccola configurazione interna del prodot
 
 ## Risultato visibile
 
-Una Config C assegna Port 0, INA219, address/calibrazione e periodo di campionamento.
+Una Config C assegna due key INA219 a Port 0 con address/calibrazioni distinte e
+seleziona la sorgente Runtime per key.
 
 ## Task
 
@@ -24,4 +25,5 @@ Una Config C assegna Port 0, INA219, address/calibrazione e periodo di campionam
 
 - [ ] Proprietà e durata delle stringhe sono esplicite.
 - [ ] La validazione non modifica lo stato.
+- [ ] Port duplicate sono valide; key o endpoint duplicati sono rifiutati.
 - [ ] L’applicazione usa API pubbliche e gestisce rollback.

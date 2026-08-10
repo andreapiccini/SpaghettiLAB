@@ -5,7 +5,8 @@
 
 ## Perché lo facciamo
 
-Una tabella fissa rende la scelta del driver deterministica, validabile al boot e priva di heap.
+Una tabella fissa rende la scelta del driver deterministica, validabile al boot e priva
+di heap. Contiene un descrittore per tipo, non uno per Port o istanza.
 
 ## Implementazione guidata
 
@@ -28,9 +29,11 @@ con comportamento null-safe.
 
 `subsys/driver_registry/driver_registry.c`.
 
-Implementa la validazione `spaghetti_driver_registry_init()` per i descrittori null,
-null/empty di tipo ID, mancano i puntatori di funzionamento richiesti e duplicati di
-tipo ID. Restituisci il primo errore realistico senza modificare la tabella dei conti.
+Implementa la validazione `spaghetti_driver_registry_init()` per descrittori null, ID
+null/vuoti/duplicati, tabella ops e operazioni obbligatorie mancanti. Richiedi anche le
+callback pure `validate_config` e `describe_endpoint`, usate dal Manager per
+distinguere più istanze sulla stessa Port. Restituisci il primo errore senza modificare
+la tabella.
 
 ### Passo 4 — Inizializzare Driver Registry da Core
 
@@ -62,8 +65,13 @@ size_t spaghetti_driver_registry_count(void);
 immutabile con lifetime firmware oppure `NULL` per stringa nulla, vuota o sconosciuta.
 `count()` restituisce per valore una quantità infallibile. `init()` valida la tabella
 statica `{ &spaghetti_ina219_driver }`: nessun puntatore nullo, ID vuoto/duplicato,
-tabella ops nulla o operazione obbligatoria mancante; restituisce `0` o `-EINVAL`.
+tabella ops nulla, callback pure mancanti o operazione obbligatoria mancante;
+restituisce `0` o `-EINVAL`.
 Core chiama init prima del Manager.
+
+Il Registry non riceve `port_id`, address o Module ID. `find("ina219")` restituisce lo
+stesso puntatore immutabile sia per INA219 `0x40` sia per `0x41`; ogni stato mutabile
+vive nel context della singola istanza.
 
 Implementazione funzione per funzione:
 
@@ -102,6 +110,7 @@ if (driver == NULL) {
 - [ ] Dichiarare l’API di Driver Registry.
 - [ ] Implementare la tabella statica dei driver.
 - [ ] Convalidare le voci del registry.
+- [ ] Verificare che uno stesso descrittore serva due richieste indipendenti.
 - [ ] Inizializzare Driver Registry da Core.
 - [ ] Provare la ricerca di driver noti e sconosciuti.
 
@@ -118,7 +127,9 @@ make monitor
 
 **Controlla**
 
-Prova init valido, `find("ina219")`, `find(NULL)` e tipo sconosciuto; inietta ID duplicato e ops incompleta. Fine con build, flash e lettura sensore ancora funzionante.
+Prova init valido, `find("ina219")`, `find(NULL)` e tipo sconosciuto; inietta ID
+duplicato e ops pure incomplete. Conferma che due lookup INA219 restituiscano lo stesso
+descrittore senza condividere context.
 
 **Risultato atteso**
 

@@ -16,6 +16,9 @@ Distribuire campioni immutabili a più consumer tramite zbus.
 
 Un campione bus voltage/current/power raggiunge logger e un secondo consumer.
 
+Il messaggio contiene sia l’ID runtime sia la key stabile della sorgente, così due
+Module sulla stessa Port restano distinguibili.
+
 ## Task
 
 1. ⬜ [TASK-110-01 — Distribuire i campioni con zbus](TASK-110-01-distribuire-i-campioni-con-zbus.md)

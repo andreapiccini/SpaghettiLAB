@@ -16,6 +16,8 @@ Esporre richieste limitate attraverso un primo trasporto locale sostituibile.
 
 Zephyr Shell legge lo stato e invia bytes di configurazione.
 
+Lo stato elenca zero o più Module per Port con key, ID, tipo ed endpoint.
+
 ## Task
 
 1. ⬜ [TASK-140-01 — Aggiungere la comunicazione Shell](TASK-140-01-aggiungere-la-comunicazione-shell.md)
