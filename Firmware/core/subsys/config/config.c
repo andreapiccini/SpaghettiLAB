@@ -11,6 +11,7 @@
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/runtime.h>
 
 LOG_MODULE_REGISTER(spaghetti_config, CONFIG_SPAGHETTI_CONFIG_LOG_LEVEL);
 
@@ -173,6 +174,34 @@ static int remove_module(const struct spaghetti_module_snapshot *module)
 	return spaghetti_module_manager_remove(module->id, module->revision);
 }
 
+static int configure_runtime(const struct spaghetti_config *config)
+{
+	struct spaghetti_runtime_sampling_task task = {0};
+	struct spaghetti_module_snapshot source;
+	int err;
+
+	if (!config->sampling.enabled) {
+		return spaghetti_runtime_load(&task);
+	}
+
+	err = spaghetti_module_manager_get_by_key(config->sampling.source_key,
+						  &source);
+	if (err < 0) {
+		return err;
+	}
+
+	task.module_id = source.id;
+	task.period_ms = config->sampling.period_ms;
+	task.enabled = true;
+	err = spaghetti_runtime_load(&task);
+	if (err < 0) {
+		return err;
+	}
+
+	err = spaghetti_runtime_start();
+	return err;
+}
+
 static bool module_is_absent(spaghetti_module_key_t key)
 {
 	struct spaghetti_module_snapshot ignored;
@@ -289,6 +318,14 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 	if (had_old_config) {
 		old_config = current_config;
 	}
+	if (had_old_config && old_config.sampling.enabled) {
+		err = spaghetti_runtime_stop(
+			K_MSEC(CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS));
+		if ((err < 0) && (err != -EALREADY)) {
+			k_mutex_unlock(&config_lock);
+			return err;
+		}
+	}
 
 	for (size_t old_idx = 0U; old_idx < old_config.module_count; ++old_idx) {
 		err = spaghetti_module_manager_get_by_key(
@@ -347,15 +384,10 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 		transaction.candidate_added[candidate_idx] = true;
 	}
 
-	if (candidate->sampling.enabled) {
-		struct spaghetti_module_snapshot source;
-
-		err = spaghetti_module_manager_get_by_key(
-			candidate->sampling.source_key, &source);
-		if (err < 0) {
-			apply_error = err;
-			goto rollback;
-		}
+	err = configure_runtime(candidate);
+	if (err < 0) {
+		apply_error = err;
+		goto rollback;
 	}
 
 	current_config = *candidate;
@@ -368,6 +400,14 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 
 rollback:
 	err = rollback_transaction(&old_config, &transaction);
+	if (err == 0) {
+		const struct spaghetti_config empty_config = {
+			.version = SPAGHETTI_CONFIG_VERSION,
+		};
+
+		err = configure_runtime(had_old_config ? &old_config :
+							       &empty_config);
+	}
 	k_mutex_unlock(&config_lock);
 	if (err < 0) {
 		LOG_ERR("apply failed: err=%d rollback=%d", apply_error, err);

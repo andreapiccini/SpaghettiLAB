@@ -30,6 +30,10 @@ module = SPAGHETTI_DATA
 module-str = spaghetti_data
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_RUNTIME
+module-str = spaghetti_runtime
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"
@@ -72,5 +76,28 @@ config SPAGHETTI_DATA_LOGGER_PRIORITY
 	default 5
 	help
 	  Cooperative-independent preemptive priority used by the logger thread.
+
+config SPAGHETTI_RUNTIME_STACK_SIZE
+	int "Runtime sampling thread stack size"
+	range 1024 4096
+	default 1536
+	help
+	  Static stack bytes reserved for the Runtime sampling worker.
+
+config SPAGHETTI_RUNTIME_PRIORITY
+	int "Runtime sampling thread priority"
+	range 0 14
+	default 4
+	help
+	  Preemptive priority used by the Runtime sampling worker. The default is
+	  one level above the Data logger so acquisition is not delayed by logging.
+
+config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
+	int "Runtime stop timeout in milliseconds"
+	range 10 5000
+	default 1000
+	help
+	  Maximum time Config waits for an active sampling operation to finish
+	  before it refuses to replace live Modules.
 
 source "Kconfig.zephyr"

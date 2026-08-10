@@ -1,0 +1,15 @@
+mainmenu "Spaghetti Runtime tests"
+
+config SPAGHETTI_RUNTIME_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RUNTIME_STACK_SIZE
+	int
+	default 1536
+
+config SPAGHETTI_RUNTIME_PRIORITY
+	int
+	default 4
+
+source "Kconfig.zephyr"

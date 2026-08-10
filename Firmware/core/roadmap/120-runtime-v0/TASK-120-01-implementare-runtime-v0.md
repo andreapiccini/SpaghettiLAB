@@ -1,6 +1,6 @@
 # TASK-120-01 — Implementare Runtime V0
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 120 — Runtime V0
 
 ## Prima di scrivere: concetti Zephyr
@@ -12,7 +12,7 @@
 3. **Quando viene usato:** Il timer chiama la callback alla scadenza; la callback esegue `k_sem_give()`, mentre il thread attende con `k_sem_take()`.
 4. **Build-time o runtime:** Runtime.
 5. **Collegamento con questo task:** Runtime deve campionare periodicamente senza eseguire Manager o I2C dentro la callback.
-6. **File reali coinvolti:** `subsys/services/timer/timer.h` e `subsys/services/timer/timer.c`.
+6. **File reali coinvolti:** `include/spaghetti/timer.h` e `subsys/services/timer/timer.c`.
 7. **Cosa guardare nei file:** Controlla inizializzazione, periodo, start/stop, semaforo ricevuto e assenza di operazioni bloccanti nella callback.
 8. **Cosa non modificare:** Non leggere sensori, non pubblicare su zbus e non chiamare Manager dalla callback di `k_timer`.
 
@@ -47,7 +47,9 @@ ottenere questo ID. Runtime non cerca mai “il Module della Port”.
 
 ### Passo 2 — Implementare timer e semaforo del periodo
 
-Crea `subsys/services/timer/timer.h` e `subsys/services/timer/timer.c`.
+Crea `include/spaghetti/timer.h` e `subsys/services/timer/timer.c`. L'header è
+pubblico perché Runtime e Timer sono componenti distinti; l'implementazione resta
+privata nel proprio sottosistema.
 
 Avvolgi una `k_timer`. La sua callback di scadenza deve segnalare solo una `k_sem`
 fornita con `k_sem_give()`. Implementare le chiamate init/start/stop delimitate e
@@ -170,13 +172,13 @@ if (err == 0) {
 
 ## Checklist di completamento
 
-- [ ] Definire l’API del task di campionamento Runtime.
-- [ ] Implementare timer e semaforo del periodo.
-- [ ] Implementare il thread di campionamento Runtime.
-- [ ] Implementare caricamento, avvio e arresto di Runtime.
-- [ ] Integrare Runtime con Core e Config.
-- [ ] Risolvere la sorgente per key e non con get-by-port.
-- [ ] Rimuovere il loop da main e verificare la cadenza.
+- [x] Definire l’API del task di campionamento Runtime.
+- [x] Implementare timer e semaforo del periodo.
+- [x] Implementare il thread di campionamento Runtime.
+- [x] Implementare caricamento, avvio e arresto di Runtime.
+- [x] Integrare Runtime con Core e Config.
+- [x] Risolvere la sorgente per key e non con get-by-port.
+- [x] Rimuovere il loop da main e verificare la cadenza con test nativi.
 
 ## Verifica finale
 
@@ -196,3 +198,7 @@ Flasha e misura timestamp di almeno dieci campioni: periodo 1000 ms entro la tol
 **Risultato atteso**
 
 Runtime produce un campione ogni 1000 ms e stop termina la produzione entro il timeout.
+
+**Verifica eseguita:** validator senza errori, build pristine ESP32-C3 riuscita e
+test nativi Runtime/Config superati. La verifica `flash`/`monitor` su INA219 reale
+resta manuale perché richiede hardware collegato e una Config persistita.

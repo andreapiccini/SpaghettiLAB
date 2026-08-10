@@ -2,230 +2,83 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-Runtime executes autonomous product behavior using generic module IDs, Data values, schedules, and commands. It decides when to act; drivers decide how hardware operations work.
+Runtime V0 owns one periodic sampling task. Config stores the stable Module key;
+during apply it resolves that key to the current runtime ID, loads the task, and
+starts Runtime. Runtime never selects a Module from its Port because multiple
+Modules can share the same physical bus.
 
-## What this component owns
+## Responsibilities
 
-- Validated runtime tasks/rules and their execution state.
-- The Runtime worker context and wake-up/event queue.
-- Rule evaluation, schedule state, and Runtime diagnostics.
+- Copy one validated `spaghetti_runtime_sampling_task` while stopped.
+- Wake a dedicated worker at the configured period.
+- Read the exact Module through Module Manager.
+- Convert `spaghetti_sample` into `spaghetti_electrical_message` and publish it
+  through Data without waiting.
+- Stop new ticks and wait, with a caller-selected bound, for an active read to
+  finish.
 
-## What this component does not own
+Runtime does not own Module instances, I2C addresses, persistent Config, zbus
+consumers, or transport protocols. Runtime V1 will add rules separately; V0 does
+not expose placeholder rule or event APIs.
 
-- Module instances, bus transactions, persistent Config, or transport protocols.
-- Concrete INA219/Relay implementation types or I2C addresses.
-
-## Files
+## Files and API
 
 | File | Role |
 |---|---|
-| `include/spaghetti/runtime.h` | Task/rule schemas and lifecycle API. |
-| `subsys/runtime/runtime.c` | Worker loop, evaluation, and Manager/Data integration. |
-| Timer service | Produces wake-up signals without executing rules in callback context. |
-| Config | Supplies validated tasks/rules by value. |
+| `include/spaghetti/runtime.h` | Public task and lifecycle API. |
+| `subsys/runtime/runtime.c` | State machine and sampling worker. |
+| `include/spaghetti/timer.h` | Internal cross-component Timer contract. |
+| `subsys/services/timer/timer.c` | Periodic `k_timer` wrapper. |
 
-## Data model
+The public task is copied by Runtime, so the caller may release its source after
+`load` returns:
 
-| Type / object | Owner | Meaning |
-|---|---|---|
-| Sampling task in Config | Config | Stable source module key, period, and enabled flag. |
-| Active sampling task | Runtime | Resolved runtime module ID, period, enabled flag, and next execution state. |
-| Threshold rule | Runtime | Source value selector, comparison, target module, and command. |
-| Runtime event | Queue then Runtime | Bounded timer/data/control event. |
-| Runtime status | Runtime | Running state, last error, counters, and queue depth. |
+```c
+struct spaghetti_runtime_sampling_task {
+	spaghetti_module_id_t module_id;
+	uint32_t period_ms;
+	bool enabled;
+};
+```
 
-## API contract
+- `spaghetti_runtime_init()` initializes the stopped worker and Timer once.
+- `spaghetti_runtime_load(task)` validates and copies a task only while stopped.
+  An all-zero, disabled task clears the current program.
+- `spaghetti_runtime_start()` arms the period after a valid enabled task exists.
+- `spaghetti_runtime_stop(timeout)` stops new ticks and waits for the worker to
+  become quiescent; it returns `-ETIMEDOUT` when that does not happen in time.
 
-### `int spaghetti_runtime_init(void)`
+See `include/spaghetti/runtime.h` for the precise errno contract.
 
-**Purpose:** Initialize empty rule/task storage, worker synchronization, and diagnostics.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** `0` when Runtime can accept a load.
-
-**Errors:** Invalid static capacities or worker resource initialization failure.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** Semaphore/message-queue/thread initialization.
-
-### `int spaghetti_runtime_load(const struct spaghetti_runtime_program *program)`
-
-**Purpose:** Validate and copy the complete bounded program while stopped.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `program` | Caller-owned tasks/rules copied on success. |
-
-**Returns:** `0` when loaded.
-
-**Errors:** Invalid count, zero period, unknown/stale module IDs, invalid rule references, or called while running.
-
-**Execution context:** Calling thread.
-
-**Calls:** Module Manager snapshot queries for reference validation.
-
-### `int spaghetti_runtime_start(void)`
-
-**Purpose:** Start schedules and enter RUNNING state.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** `0` when wake-up sources and worker are active.
-
-**Errors:** No valid program, already running, or Timer start failure.
-
-**Execution context:** Calling thread; worker executes separately.
-
-**Calls:** Timer service start.
-
-### `int spaghetti_runtime_stop(k_timeout_t timeout)`
-
-**Purpose:** Stop new schedules and wait for bounded worker quiescence.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `timeout` | Maximum wait for current work to finish. |
-
-**Returns:** `0` when STOPPED.
-
-**Errors:** Timeout or Timer/worker stop error.
-
-**Execution context:** Calling thread, never Runtime worker itself.
-
-**Calls:** Timer stop and worker signalling.
-
-### `int spaghetti_runtime_submit_event(const struct spaghetti_runtime_event *event)`
-
-**Purpose:** Copy one bounded external/Data event to the worker.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `event` | Validated event copied before return. |
-
-**Returns:** `0` when queued.
-
-**Errors:** Invalid event, not running, or full queue.
-
-**Execution context:** Thread or explicitly supported nonblocking callback context.
-
-**Calls:** `k_msgq_put(..., K_NO_WAIT)` or equivalent.
-
-### `int spaghetti_runtime_get_status(struct spaghetti_runtime_status *out)`
-
-**Purpose:** Copy worker state and counters.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `out` | Caller-owned destination. |
-
-**Returns:** `0` with coherent status.
-
-**Errors:** Invalid output or uninitialized Runtime.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-## How it works
+## Execution flow
 
 ```mermaid
 sequenceDiagram
+    participant Config
     participant Timer
     participant Runtime as Runtime thread
     participant Manager as Module Manager
     participant Data
-    Timer-->>Runtime: semaphore/event
-    Runtime->>Manager: read(source module)
-    Manager-->>Runtime: generic sample
-    Runtime->>Data: publish(sample)
-    Runtime->>Runtime: evaluate rules
-    Runtime->>Manager: command(target module)
+    Config->>Runtime: load(resolved module ID, period)
+    Config->>Runtime: start()
+    Timer-->>Runtime: k_sem_give()
+    Runtime->>Manager: read(module_id)
+    Manager-->>Runtime: spaghetti_sample
+    Runtime->>Data: publish electrical message, K_NO_WAIT
 ```
 
-## Practical example
+The timer callback only gives a semaphore. The semaphore maximum is one, so
+multiple expiries coalesce if an I2C read is slower than the requested period;
+work cannot accumulate without bound. The Runtime thread owns sequence numbers
+and adds `k_uptime_get()` to each successful sample.
 
-Config asks to sample stable key 10 every 1000 ms. During apply, Config calls
-`spaghetti_module_manager_get_by_key(10, &snapshot)` and writes the current
-`snapshot.id` into the active Runtime program. Runtime reads that ID and receives a
-generic INA219 sample containing bus voltage, current, and power. A second INA219 on
-the same Port has another key and another runtime ID, so the two streams cannot be
-confused. Runtime never includes INA219 or relay headers.
+Config stops Runtime before changing live Modules. After reconciliation it
+resolves `sampling.source_key` with
+`spaghetti_module_manager_get_by_key()`, loads the resulting ID, and starts the
+new task. On transaction failure Config restores the previous Modules and task.
 
-## Zephyr integration
-
-- `k_timer` expiry only signals Runtime; it never performs bus I/O.
-- One dedicated thread is appropriate when Runtime blocks on events and performs bounded synchronous Manager calls.
-- Use a bounded event queue and document behavior when it is full.
-
-## Configuration templates
-
-### Program shape
-
-The persisted/received Config stores `source_key`; it must never persist
-`module_id`, because runtime IDs may change after reboot or reconfiguration. Config
-resolves the key before calling `spaghetti_runtime_load()`:
-
-```c
-struct spaghetti_config_sampling_task {
-    spaghetti_module_key_t source_key;
-    uint32_t period_ms;
-    bool enabled;
-};
-```
-
-The active Runtime copy stores the already resolved ID:
-
-```c
-struct spaghetti_runtime_sampling_task {
-    spaghetti_module_id_t module_id;
-    uint32_t period_ms;
-    bool enabled;
-};
-
-struct spaghetti_runtime_threshold_rule {
-    spaghetti_module_id_t source_id;
-    int32_t threshold;
-    spaghetti_module_id_t target_id;
-    bool target_state;
-};
-```
-
-### Thread configuration shape
-
-```c
-K_SEM_DEFINE(runtime_wakeup, 0, 1);
-K_THREAD_STACK_DEFINE(runtime_stack, CONFIG_SPAGHETTI_RUNTIME_STACK_SIZE);
-```
-
-Define stack size and priority through bounded application Kconfig symbols or
-constants justified by measurement.
-
-## Ownership and concurrency
-
-Only the Runtime worker mutates execution state. Load/start/stop serialize lifecycle. Events are copied; no producer-owned pointer survives queue insertion.
-
-## Contract guarantees
-
-- Blocking module operations never run in timer callback or ISR context.
-- Rules depend only on generic values and Manager operations.
-- Persistent references use stable Module keys; active work uses runtime IDs resolved
-  by Config for the current Manager generation.
-- Stopping has a bounded, observable completion result.
+Stack size, priority, log level, and Config's stop timeout are bounded Kconfig
+choices: `CONFIG_SPAGHETTI_RUNTIME_STACK_SIZE`,
+`CONFIG_SPAGHETTI_RUNTIME_PRIORITY`,
+`CONFIG_SPAGHETTI_RUNTIME_LOG_LEVEL`, and
+`CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS`.

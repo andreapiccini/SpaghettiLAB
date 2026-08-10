@@ -12,4 +12,8 @@ config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
 	int
 	default 0
 
+config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
+	int
+	default 1000
+
 source "Kconfig.zephyr"

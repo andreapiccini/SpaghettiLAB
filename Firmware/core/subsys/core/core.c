@@ -9,6 +9,7 @@
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
+#include <spaghetti/runtime.h>
 #include <spaghetti/storage.h>
 
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
@@ -85,6 +86,13 @@ int spaghetti_core_init(void)
 	if (ret < 0) {
 		core_state = SPAGHETTI_CORE_ERROR;
 		LOG_ERR("Data initialization failed: err=%d", ret);
+		return ret;
+	}
+
+	ret = spaghetti_runtime_init();
+	if (ret < 0) {
+		core_state = SPAGHETTI_CORE_ERROR;
+		LOG_ERR("Runtime initialization failed: err=%d", ret);
 		return ret;
 	}
 

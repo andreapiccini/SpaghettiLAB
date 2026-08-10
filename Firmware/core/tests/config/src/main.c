@@ -11,6 +11,7 @@
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
+#include <spaghetti/runtime.h>
 
 struct spaghetti_port {
 	spaghetti_port_id_t id;
@@ -33,6 +34,50 @@ static const struct spaghetti_port fake_port = {
 };
 
 static struct fake_driver_context fake_contexts[CONFIG_SPAGHETTI_MAX_MODULES];
+static struct spaghetti_runtime_sampling_task fake_runtime_task;
+static bool fake_runtime_running;
+static uint32_t fake_runtime_start_count;
+static uint32_t fake_runtime_stop_count;
+
+int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)
+{
+	if (task == NULL) {
+		return -EINVAL;
+	}
+	if (fake_runtime_running) {
+		return -EBUSY;
+	}
+
+	fake_runtime_task = *task;
+	return 0;
+}
+
+int spaghetti_runtime_start(void)
+{
+	if (fake_runtime_running) {
+		return -EALREADY;
+	}
+	if (!fake_runtime_task.enabled) {
+		return -ENOENT;
+	}
+
+	fake_runtime_running = true;
+	++fake_runtime_start_count;
+	return 0;
+}
+
+int spaghetti_runtime_stop(k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+
+	if (!fake_runtime_running) {
+		return -EALREADY;
+	}
+
+	fake_runtime_running = false;
+	++fake_runtime_stop_count;
+	return 0;
+}
 
 static int fake_validate_config(const void *config, size_t config_size)
 {
@@ -214,6 +259,9 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	zassert_equal(spaghetti_config_get_snapshot(&snapshot), -ENOENT);
 	zassert_ok(spaghetti_config_validate(&baseline));
 	zassert_ok(spaghetti_config_apply(&baseline));
+	zassert_true(fake_runtime_running);
+	zassert_equal(fake_runtime_task.period_ms, 1000U);
+	zassert_equal(fake_runtime_start_count, 1U);
 	zassert_ok(spaghetti_config_get_snapshot(&snapshot));
 	zassert_equal(snapshot.module_count, 2U);
 	assert_live_endpoint(10U, 0x40U);
@@ -236,6 +284,9 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	candidate = baseline;
 	set_module(&candidate.modules[1], 11U, 0x42U, -EIO);
 	zassert_equal(spaghetti_config_apply(&candidate), -EIO);
+	zassert_true(fake_runtime_running);
+	zassert_equal(fake_runtime_start_count, 2U);
+	zassert_equal(fake_runtime_stop_count, 1U);
 	zassert_ok(spaghetti_config_get_snapshot(&snapshot));
 	zassert_mem_equal(&snapshot, &baseline, sizeof(snapshot));
 	assert_live_endpoint(10U, 0x40U);
@@ -248,6 +299,9 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	set_module(&candidate.modules[1], 12U, 0x42U, 0);
 	candidate.sampling.source_key = 11U;
 	zassert_ok(spaghetti_config_apply(&candidate));
+	zassert_true(fake_runtime_running);
+	zassert_equal(fake_runtime_start_count, 3U);
+	zassert_equal(fake_runtime_stop_count, 2U);
 	zassert_equal(spaghetti_module_manager_get_by_key(10U, &key_11_after),
 		      -ENOENT);
 	zassert_ok(spaghetti_module_manager_get_by_key(11U, &key_11_after));
