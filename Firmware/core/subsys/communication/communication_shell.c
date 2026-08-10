@@ -163,13 +163,13 @@ static int cmd_apply(const struct shell *shell, size_t argc, char **argv)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	spaghetti_subcommands,
-	SHELL_CMD(status, NULL, "Mostra Core, Port e Module", cmd_status),
-	SHELL_CMD(apply, NULL, "Invia Config codificata come hex", cmd_apply),
+	SHELL_CMD(status, NULL, "Show Core, Port, and Module status", cmd_status),
+	SHELL_CMD(apply, NULL, "Submit a hex-encoded Config payload", cmd_apply),
 	SHELL_SUBCMD_SET_END
 );
 
 SHELL_CMD_REGISTER(spaghetti, &spaghetti_subcommands,
-		   "Comandi Spaghetti LAB", NULL);
+		   "Spaghetti LAB commands", NULL);
 
 int spaghetti_communication_shell_init(void)
 {
