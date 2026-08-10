@@ -1,31 +1,55 @@
+#include <string.h>
+
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 #include <ina219.h>
 
+#include <spaghetti/config.h>
 #include <spaghetti/core.h>
 #include <spaghetti/module_manager.h>
 
 LOG_MODULE_REGISTER(spaghetti_app, CONFIG_SPAGHETTI_APP_LOG_LEVEL);
 
-static int configure_ina219(spaghetti_module_key_t key, uint8_t i2c_address,
-			    spaghetti_module_id_t *out_id)
+static void build_two_ina219_config(struct spaghetti_config *out)
 {
-	const struct spaghetti_ina219_config config = {
-		.i2c_address = i2c_address,
+	const struct spaghetti_ina219_config ina219_40 = {
+		.i2c_address = 0x40U,
 		.shunt_milliohm = 100U,
 		.current_lsb_microamp = 200U,
 	};
-	const struct spaghetti_module_request request = {
-		.key = key,
-		.port_id = 0U,
-		.type_id = "ina219",
-		.driver_config = &config,
-		.driver_config_size = sizeof(config),
-		.revision = 1U,
+	const struct spaghetti_ina219_config ina219_41 = {
+		.i2c_address = 0x41U,
+		.shunt_milliohm = 100U,
+		.current_lsb_microamp = 200U,
+	};
+	struct spaghetti_config config = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+		.module_count = 2U,
+		.modules = {
+			{
+				.key = 10U,
+				.port_id = 0U,
+				.type_id = "ina219",
+				.driver_config_size = sizeof(ina219_40),
+			},
+			{
+				.key = 11U,
+				.port_id = 0U,
+				.type_id = "ina219",
+				.driver_config_size = sizeof(ina219_41),
+			},
+		},
+		.sampling = {
+			.enabled = true,
+			.source_key = 10U,
+			.period_ms = 1000U,
+		},
 	};
 
-	return spaghetti_module_manager_configure(&request, out_id);
+	memcpy(config.modules[0].driver_config, &ina219_40, sizeof(ina219_40));
+	memcpy(config.modules[1].driver_config, &ina219_41, sizeof(ina219_41));
+	*out = config;
 }
 
 static int read_and_log_ina219(spaghetti_module_key_t key,
@@ -44,35 +68,35 @@ static int read_and_log_ina219(spaghetti_module_key_t key,
 	return 0;
 }
 
-/* Config replaces these bring-up requests in TASK-090-01. */
-static int run_module_manager_bringup(void)
+static int run_config_bringup(void)
 {
-	spaghetti_module_id_t id_40;
-	spaghetti_module_id_t id_41;
+	struct spaghetti_module_snapshot module_40;
+	struct spaghetti_module_snapshot module_41;
+	struct spaghetti_config initial_config;
 	int err;
 
-	err = configure_ina219(10U, 0x40U, &id_40);
+	build_two_ina219_config(&initial_config);
+	err = spaghetti_config_apply(&initial_config);
 	if (err < 0) {
 		return err;
 	}
 
-	err = configure_ina219(11U, 0x41U, &id_41);
-	if (err < 0) {
-		(void)spaghetti_module_manager_remove(id_40, 1U);
-		return err;
-	}
-
-	err = read_and_log_ina219(10U, id_40);
+	err = spaghetti_module_manager_get_by_key(10U, &module_40);
 	if (err < 0) {
 		return err;
 	}
 
-	err = read_and_log_ina219(11U, id_41);
+	err = spaghetti_module_manager_get_by_key(11U, &module_41);
 	if (err < 0) {
 		return err;
 	}
 
-	return 0;
+	err = read_and_log_ina219(module_40.key, module_40.id);
+	if (err < 0) {
+		return err;
+	}
+
+	return read_and_log_ina219(module_41.key, module_41.id);
 }
 
 int main(void)
@@ -87,9 +111,9 @@ int main(void)
 		return err;
 	}
 
-	err = run_module_manager_bringup();
+	err = run_config_bringup();
 	if (err < 0) {
-		LOG_WRN("INA219 bring-up unavailable: err=%d", err);
+		LOG_WRN("initial Config unavailable: err=%d", err);
 	}
 
 	return 0;

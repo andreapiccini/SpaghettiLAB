@@ -31,6 +31,7 @@ target_sources(app PRIVATE
   subsys/port/port.c
   subsys/driver_registry/driver_registry.c
   subsys/module_manager/module_manager.c
+  subsys/config/config.c
 )
 
 get_target_property(APP_SRCS app SOURCES)

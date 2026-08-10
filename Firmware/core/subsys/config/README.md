@@ -2,203 +2,69 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-Config is the validated desired-state model. It gives every input source and storage backend one common representation before anything changes in the live system.
+Config è il desired state validato del firmware. Tutte le sorgenti future, come
+Storage, Shell o CBOR, devono prima costruire la stessa `struct spaghetti_config`:
+solo dopo una validazione completa Config modifica i Module vivi.
 
-## What this component owns
+## Responsabilità
 
-- The current validated configuration snapshot and schema version.
-- Syntactic/semantic validation independent of transport.
-- Atomic replacement and reconciliation requests to owning components.
+Config possiede una copia bounded dell'ultimo snapshot applicato con successo.
+Ogni Module desiderato contiene una key stabile, una Port condivisibile, il type ID
+del driver e una copia dei byte di configurazione del driver. Config non possiede le
+istanze vive, i context dei driver, i sample o il formato persistente.
 
-## What this component does not own
+La relazione Port → Module è 1:N. Due INA219 sulla Port 0 sono validi se usano, per
+esempio, gli endpoint I2C `0x40` e `0x41`. La stessa key o lo stesso endpoint sulla
+stessa Port costituiscono invece una collisione.
 
-- Transport parsing, flash layout, module instances, measurements, or product execution.
-- Secrets unless an explicit protected-storage contract is defined.
+## File
 
-## Files
-
-| File | Role |
+| File | Ruolo |
 |---|---|
-| `include/spaghetti/config.h` | Bounded schema, snapshot, validation, and apply declarations. |
-| `subsys/config/config.c` | Validation and atomic snapshot management. |
-| Optional codec files | Translate CBOR/JSON/other bytes into the same internal model. |
-| Storage service | Persists an encoded/versioned snapshot when required. |
+| `include/spaghetti/config.h` | Schema bounded e API pubblica. |
+| `subsys/config/config.c` | Validazione, riconciliazione e rollback. |
+| `tests/config/src/main.c` | Test nativo della transazione. |
 
-## Data model
+## API
 
-| Type / object | Owner | Meaning |
-|---|---|---|
-| `spaghetti_config` | Config | Complete validated desired-state snapshot. |
-| Module assignment | Config snapshot | Stable key, Port ID, bounded type ID, and bounded driver config. |
-| Runtime rule/schedule | Config snapshot | Stable module keys/channels and timing. |
-| Generation/version | Config | Detects stale updates and incompatible schemas. |
+```c
+int spaghetti_config_validate(const struct spaghetti_config *candidate);
+int spaghetti_config_apply(const struct spaghetti_config *candidate);
+int spaghetti_config_get_snapshot(struct spaghetti_config *out);
+```
 
-## API contract
+`spaghetti_config_validate()` è pura: verifica versione, limiti, key, Port, driver,
+capability, configurazioni concrete, endpoint e sorgente di sampling senza toccare
+l'hardware o il Manager.
 
-### `int spaghetti_config_init(const struct spaghetti_config *defaults)`
+`spaghetti_config_apply()` riconcilia per key. Mantiene intatti i Module invariati,
+rimuove quelli assenti o cambiati e configura quelli nuovi. Pubblica la copia del
+candidato soltanto dopo il successo completo. Se un'operazione fallisce, elimina le
+istanze appena aggiunte e ricrea quelle precedenti che aveva rimosso.
 
-**Purpose:** Validate and install the startup default snapshot.
+`spaghetti_config_get_snapshot()` scrive una copia coerente nel buffer del chiamante.
+Prima del primo apply riuscito restituisce `-ENOENT`; in caso di errore non modifica
+l'output.
 
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `defaults` | Complete caller-owned default configuration copied on success. |
-
-**Returns:** `0` with generation initialized.
-
-**Errors:** Null or semantically invalid defaults.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** Pure validation; no live apply required by this function.
-
-### `int spaghetti_config_validate(const struct spaghetti_config *candidate, struct spaghetti_config_error *error)`
-
-**Purpose:** Validate the entire candidate without side effects.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `candidate` | Complete caller-owned snapshot. |
-| `error` | Optional destination for field/index/reason diagnostics. |
-
-**Returns:** `0` when fully valid; negative semantic error otherwise.
-
-**Errors:** Unsupported version, invalid count/range/string, duplicates, inconsistent references.
-
-**Execution context:** Calling thread; pure function.
-
-**Calls:** Bounded schema checks plus Registry driver `validate_config()` and
-`describe_endpoint()` pure operations.
-
-### `int spaghetti_config_apply(const struct spaghetti_config *candidate, uint32_t expected_generation)`
-
-**Purpose:** Reconcile a valid candidate with live component owners and commit atomically.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `candidate` | Complete candidate copied before return. |
-| `expected_generation` | Current generation required to reject stale writers. |
-
-**Returns:** `0` plus incremented generation.
-
-**Errors:** Validation failure, stale generation, component apply error, or rollback error.
-
-**Execution context:** Calling thread; never ISR.
-
-**Calls:** Module Manager, Runtime, and selected service configuration APIs.
-
-### `int spaghetti_config_get_snapshot(struct spaghetti_config *out, uint32_t *generation)`
-
-**Purpose:** Copy the current desired state.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `out` | Caller-owned snapshot destination. |
-| `generation` | Optional generation destination. |
-
-**Returns:** `0` with a coherent copy.
-
-**Errors:** Invalid output or uninitialized Config.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-### `int spaghetti_config_reset_defaults(void)`
-
-**Purpose:** Validate and apply the stored default snapshot through the same transactional path.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** `0` after defaults are live and current.
-
-**Errors:** Apply/rollback failure.
-
-**Execution context:** Calling thread.
-
-**Calls:** `spaghetti_config_apply()`.
-
-## How it works
+## Flusso
 
 ```mermaid
 flowchart LR
-    INPUT["USB / network / file / defaults"] --> DECODE["Decode into temporary Config"]
-    DECODE --> VALIDATE["Validate complete snapshot"]
-    VALIDATE -->|"invalid"| REJECT["Reject, no live change"]
-    VALIDATE -->|"valid"| APPLY["Apply to component owners"]
-    APPLY -->|"success"| COMMIT["Commit snapshot + generation"]
-    APPLY -->|"failure"| ROLLBACK["Restore defined prior state"]
+    INPUT["Defaults / Storage / comando"] --> TEMP["Config temporanea"]
+    TEMP --> VALIDATE["Validazione completa"]
+    VALIDATE -->|"errore"| REJECT["Nessuna modifica"]
+    VALIDATE -->|"valida"| APPLY["Riconcilia per key"]
+    APPLY -->|"successo"| COMMIT["Pubblica snapshot"]
+    APPLY -->|"errore"| ROLLBACK["Ripristina Module precedenti"]
 ```
 
-## Practical example
+Il campo `sampling.source_key` resta una key persistente. Durante apply Config la
+risolve in un Module runtime READY. La consegna dell'ID al Runtime verrà aggiunta
+quando il componente Runtime sarà implementato nella fase 120.
 
-A candidate assigns INA219 key 10/address `0x40` and key 11/address `0x41` to Port 0.
-Validation accepts both. It rejects duplicate keys and a second claim for the same
-Port/address endpoint. A valid candidate is applied completely; only after all owners
-accept it does Config publish the new generation.
+## Proprietà e concorrenza
 
-## Zephyr integration
-
-- Config is runtime state; Kconfig is unrelated build-time feature selection.
-- A short `k_mutex` can protect snapshot/generation copies.
-- Persistence uses a Storage adapter; Zephyr Settings callbacks must decode into a temporary candidate before apply.
-
-## Configuration templates
-
-### Bounded schema shape
-
-```c
-#define SPAGHETTI_CONFIG_MAX_MODULES 8
-#define SPAGHETTI_TYPE_ID_MAX 24
-
-struct spaghetti_module_config {
-    spaghetti_module_key_t key;
-    spaghetti_port_id_t port_id;
-    char type_id[SPAGHETTI_TYPE_ID_MAX];
-    uint8_t driver_config[SPAGHETTI_DRIVER_CONFIG_MAX];
-    size_t driver_config_size;
-};
-
-struct spaghetti_runtime_sampling_config {
-    bool enabled;
-    spaghetti_module_key_t source_key;
-    uint32_t period_ms;
-};
-
-struct spaghetti_config {
-    uint32_t version;
-    size_t module_count;
-    struct spaghetti_module_config modules[SPAGHETTI_CONFIG_MAX_MODULES];
-    struct spaghetti_runtime_sampling_config sampling;
-};
-```
-
-Repeated `port_id` values are expected on shared buses. Validation requires nonzero
-unique keys, valid driver configs, and non-colliding normalized endpoints. Runtime
-references use keys because Manager IDs may change after reboot or replacement.
-
-The concrete schema may add bounded sections, but every retained string and
-payload must be owned by the snapshot.
-
-## Ownership and concurrency
-
-Readers receive coherent copies. A single apply transaction serializes desired-state mutation and never exposes the partially reconciled candidate as current.
-
-## Contract guarantees
-
-- Invalid input has no live side effect.
-- A committed snapshot owns all retained bytes.
-- Transport, encoding, and storage format do not change the internal Config contract.
-- Reconciliation compares elements by key; removing one key never removes sibling
-  Modules on the same Port.
+Lo snapshot non contiene puntatori: stringhe e configurazioni dei driver sono copie
+possedute da Config per tutta la durata dello snapshot corrente. Gli input sono
+prestati soltanto durante la chiamata. Un mutex serializza apply e lettura dello
+snapshot; le risorse restano statiche e non viene usato heap.

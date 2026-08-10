@@ -80,17 +80,18 @@ static int ina219_read_register(const struct spaghetti_ina219_context *context,
 
 static int ina219_validate_config(const void *config, size_t config_size)
 {
-	const struct spaghetti_ina219_config *ina219_config = config;
+	struct spaghetti_ina219_config ina219_config;
 
-	if ((ina219_config == NULL) ||
+	if ((config == NULL) ||
 	    (config_size != sizeof(struct spaghetti_ina219_config))) {
 		return -EINVAL;
 	}
 
-	if ((ina219_config->i2c_address < SPAGHETTI_INA219_ADDRESS_MIN) ||
-	    (ina219_config->i2c_address > SPAGHETTI_INA219_ADDRESS_MAX) ||
-	    (ina219_config->shunt_milliohm == 0U) ||
-	    (ina219_config->current_lsb_microamp == 0U)) {
+	memcpy(&ina219_config, config, sizeof(ina219_config));
+	if ((ina219_config.i2c_address < SPAGHETTI_INA219_ADDRESS_MIN) ||
+	    (ina219_config.i2c_address > SPAGHETTI_INA219_ADDRESS_MAX) ||
+	    (ina219_config.shunt_milliohm == 0U) ||
+	    (ina219_config.current_lsb_microamp == 0U)) {
 		return -EINVAL;
 	}
 
@@ -100,7 +101,7 @@ static int ina219_validate_config(const void *config, size_t config_size)
 static int ina219_describe_endpoint(const void *config, size_t config_size,
 				    struct spaghetti_module_endpoint *out)
 {
-	const struct spaghetti_ina219_config *ina219_config = config;
+	struct spaghetti_ina219_config ina219_config;
 	int err;
 
 	if (out == NULL) {
@@ -111,10 +112,11 @@ static int ina219_describe_endpoint(const void *config, size_t config_size,
 	if (err < 0) {
 		return err;
 	}
+	memcpy(&ina219_config, config, sizeof(ina219_config));
 
 	const struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-		.value = ina219_config->i2c_address,
+		.value = ina219_config.i2c_address,
 	};
 
 	*out = endpoint;
@@ -130,7 +132,7 @@ static void ina219_free_context(struct spaghetti_ina219_context *context)
 static int ina219_init(struct spaghetti_module *module, const void *config,
 		       size_t config_size)
 {
-	const struct spaghetti_ina219_config *ina219_config = config;
+	struct spaghetti_ina219_config ina219_config;
 	struct spaghetti_ina219_context *context;
 	const struct device *i2c;
 	void *context_block;
@@ -146,6 +148,7 @@ static int ina219_init(struct spaghetti_module *module, const void *config,
 	if (err < 0) {
 		return err;
 	}
+	memcpy(&ina219_config, config, sizeof(ina219_config));
 
 	err = k_mem_slab_alloc(&ina219_context_slab, &context_block, K_NO_WAIT);
 	if (err < 0) {
@@ -165,8 +168,8 @@ static int ina219_init(struct spaghetti_module *module, const void *config,
 		goto free_context;
 	}
 
-	denominator = (uint64_t)ina219_config->shunt_milliohm *
-		      (uint64_t)ina219_config->current_lsb_microamp;
+	denominator = (uint64_t)ina219_config.shunt_milliohm *
+		      (uint64_t)ina219_config.current_lsb_microamp;
 	calibration = SPAGHETTI_INA219_CALIBRATION_NUMERATOR / denominator;
 	if ((calibration == 0U) || (calibration > UINT16_MAX)) {
 		err = -ERANGE;
@@ -174,7 +177,7 @@ static int ina219_init(struct spaghetti_module *module, const void *config,
 	}
 
 	context->i2c = i2c;
-	context->config = *ina219_config;
+	context->config = ina219_config;
 	context->calibration = (uint16_t)calibration;
 
 	err = ina219_write_register(context, SPAGHETTI_INA219_REG_CONFIG,

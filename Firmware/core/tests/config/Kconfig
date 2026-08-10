@@ -1,0 +1,15 @@
+mainmenu "Spaghetti Config tests"
+
+config SPAGHETTI_MAX_MODULES
+	int
+	default 8
+
+config SPAGHETTI_CONFIG_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

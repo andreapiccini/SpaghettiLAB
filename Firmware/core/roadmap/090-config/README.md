@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -19,11 +19,11 @@ seleziona la sorgente Runtime per key.
 
 ## Task
 
-1. ⬜ [TASK-090-01 — Implementare Config](TASK-090-01-implementare-config.md)
+1. ✅ [TASK-090-01 — Implementare Config](TASK-090-01-implementare-config.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Proprietà e durata delle stringhe sono esplicite.
-- [ ] La validazione non modifica lo stato.
-- [ ] Port duplicate sono valide; key o endpoint duplicati sono rifiutati.
-- [ ] L’applicazione usa API pubbliche e gestisce rollback.
+- [x] Proprietà e durata delle stringhe sono esplicite.
+- [x] La validazione non modifica lo stato.
+- [x] Port duplicate sono valide; key o endpoint duplicati sono rifiutati.
+- [x] L’applicazione usa API pubbliche e gestisce rollback.

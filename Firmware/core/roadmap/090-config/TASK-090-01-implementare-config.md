@@ -1,6 +1,6 @@
 # TASK-090-01 — Implementare Config
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 090 — Config interna
 
 ## Cosa devo fare
@@ -87,7 +87,9 @@ Implementa `spaghetti_config_apply()` con una copia del vecchio snapshot:
 5. per una key esistente con Port, type, endpoint o config cambiati esegue
    remove+configure della sola key;
 6. dopo le configure risolve `source_key` con
-   `spaghetti_module_manager_get_by_key()` e passa il runtime ID a Runtime;
+   `spaghetti_module_manager_get_by_key()`; in questa fase verifica così che il
+   Module sia vivo, mentre il passaggio del runtime ID al Runtime verrà aggiunto nel
+   task 120, quando quel componente esisterà;
 7. committa la copia Config solo dopo tutti i successi;
 8. su errore ricrea esattamente lo snapshot precedente per key. Non rimuove mai tutti i
    Module di una Port come scorciatoia.
@@ -148,12 +150,12 @@ if (err == 0) {
 
 ## Checklist di completamento
 
-- [ ] Ogni Module Config ha una key stabile e config bounded generica.
-- [ ] Port ripetute sono accettate.
-- [ ] Key duplicate ed endpoint collidenti sono rifiutati.
-- [ ] Sampling riferisce una key, non una Port o un vecchio runtime ID.
-- [ ] Apply e rollback operano per key e preservano i fratelli sulla Port.
-- [ ] Due INA219 `0x40`/`0x41` vengono applicati insieme.
+- [x] Ogni Module Config ha una key stabile e config bounded generica.
+- [x] Port ripetute sono accettate.
+- [x] Key duplicate ed endpoint collidenti sono rifiutati.
+- [x] Sampling riferisce una key, non una Port o un vecchio runtime ID.
+- [x] Apply e rollback operano per key e preservano i fratelli sulla Port.
+- [x] Due INA219 `0x40`/`0x41` vengono applicati insieme.
 
 ## Verifica e fine task
 
