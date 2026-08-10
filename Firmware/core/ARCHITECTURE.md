@@ -6,7 +6,7 @@ This document explains the firmware architecture without prescribing a specific
 sensor, protocol, Core model, or product feature.
 
 > [!IMPORTANT]
-> SHT40, Relay, USB, MQTT, and switched power are examples used to make the
+> INA219, Relay, USB, MQTT, and switched power are examples used to make the
 > diagrams concrete. They are not mandatory parts of the architecture.
 
 ## The idea in one minute
