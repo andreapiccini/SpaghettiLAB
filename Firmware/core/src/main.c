@@ -8,10 +8,13 @@
 
 #include <spaghetti/config.h>
 #include <spaghetti/core.h>
+#include <spaghetti/data.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/storage.h>
 
 LOG_MODULE_REGISTER(spaghetti_app, CONFIG_SPAGHETTI_APP_LOG_LEVEL);
+
+static uint32_t electrical_sequence;
 
 static void build_two_ina219_config(struct spaghetti_config *out)
 {
@@ -54,20 +57,29 @@ static void build_two_ina219_config(struct spaghetti_config *out)
 	*out = config;
 }
 
-static int read_and_log_ina219(spaghetti_module_key_t key,
+static int read_and_publish_electrical(spaghetti_module_key_t key,
 			       spaghetti_module_id_t module_id)
 {
 	struct spaghetti_sample sample;
-	int err = spaghetti_module_manager_read(module_id, &sample);
+	int err;
+
+	err = spaghetti_module_manager_read(module_id, &sample);
 
 	if (err < 0) {
 		return err;
 	}
 
-	LOG_INF("INA219: key=%u id=%u bus=%d uV current=%d uA power=%u uW", key,
-		(uint32_t)module_id, sample.bus_voltage_microvolts,
-		sample.current_microamps, sample.power_microwatts);
-	return 0;
+	const struct spaghetti_electrical_message message = {
+		.source_id = module_id,
+		.source_key = key,
+		.bus_voltage_microvolts = sample.bus_voltage_microvolts,
+		.current_microamps = sample.current_microamps,
+		.power_microwatts = sample.power_microwatts,
+		.timestamp_ms = k_uptime_get(),
+		.sequence = electrical_sequence++,
+	};
+
+	return spaghetti_data_publish_electrical(&message, K_NO_WAIT);
 }
 
 static int run_config_bringup(void)
@@ -103,12 +115,12 @@ static int run_config_bringup(void)
 		return err;
 	}
 
-	err = read_and_log_ina219(module_40.key, module_40.id);
+	err = read_and_publish_electrical(module_40.key, module_40.id);
 	if (err < 0) {
 		return err;
 	}
 
-	return read_and_log_ina219(module_41.key, module_41.id);
+	return read_and_publish_electrical(module_41.key, module_41.id);
 }
 
 int main(void)

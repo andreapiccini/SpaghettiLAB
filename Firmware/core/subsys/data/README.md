@@ -2,179 +2,93 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-Data defines normalized measurements and events independently of the driver that produced them and the adapter that consumes them.
+Data distribuisce misure normalizzate senza esporre ai consumer il driver che le ha
+prodotte. Logger, test e futuri adapter MQTT conoscono il messaggio elettrico, non
+`ina219.h` né i dettagli I2C.
 
-## What this component owns
+## Responsabilità
 
-- Bounded value/event schemas and validation.
-- Source identity, timestamp, sequence, validity, and delivery statistics.
-- The selected fan-out mechanism and its overflow policy.
+Data possiede il channel zbus, gli observer statici e i contatori diagnostici. Non
+esegue acquisizioni, non possiede Module o Port e non conserva puntatori del publisher.
 
-## What this component does not own
+## File
 
-- Sensor acquisition, product rules, long-term storage, or transport encoding.
-- Pointers to producer stack memory after publish returns.
-
-## Files
-
-| File | Role |
+| File | Ruolo |
 |---|---|
-| `include/spaghetti/data.h` | Value/event types and publish/query API. |
-| `subsys/data/data.c` | Validation, channels/queues, and statistics. |
-| Consumer adapters | Translate generic Data into logs, UI, or transport formats. |
+| `include/spaghetti/data.h` | Messaggio, statistiche e API pubbliche. |
+| `subsys/data/data.c` | Channel, subscriber, logger e publish. |
+| `tests/data/` | Test fan-out e pool pieno. |
 
-## Data model
+## Messaggio
 
-| Type / object | Owner | Meaning |
-|---|---|---|
-| `spaghetti_data_message` | Publisher until copied; Data afterward | Tagged bounded value/event envelope. |
-| Electrical sample | Message payload | Source runtime ID and stable key, bus voltage, current, power, timestamp, sequence, and validity. |
-| Channel/queue | Data | Bounded delivery resource with explicit full policy. |
-| `spaghetti_data_stats` | Data | Published, delivered, dropped, rejected counters. |
+`struct spaghetti_electrical_message` è priva di puntatori e contiene:
 
-## API contract
+- `source_id`, handle dell'istanza Module viva;
+- `source_key`, identità Config stabile anche dopo un reboot;
+- bus voltage, current firmata e power nelle stesse microunità di
+  `struct spaghetti_sample`;
+- uptime di acquisizione in millisecondi;
+- sequence del publisher, con wrap unsigned intenzionale.
 
-### `int spaghetti_data_init(void)`
+Due Module sulla stessa Port restano distinti tramite ID e key. Data non usa la Port
+come identità e non assume che la sorgente sia un INA219.
 
-**Purpose:** Initialize channels, subscribers, counters, and initial values.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** `0` when Data is ready.
-
-**Errors:** Invalid static channel configuration or subscriber capacity.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** Selected Zephyr zbus/message-queue initialization.
-
-### `int spaghetti_data_validate(const struct spaghetti_data_message *message)`
-
-**Purpose:** Validate type, bounds, source, timestamp, and flags without side effects.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `message` | Caller-owned complete message. |
-
-**Returns:** `0` when publishable.
-
-**Errors:** Null, unknown type, invalid source, malformed payload, or inconsistent validity flags.
-
-**Execution context:** Calling thread; pure validation.
-
-**Calls:** None.
-
-### `int spaghetti_data_publish(const struct spaghetti_data_message *message, k_timeout_t timeout)`
-
-**Purpose:** Copy one valid message into the selected bounded delivery path.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `message` | Caller-owned message copied before return. |
-| `timeout` | Maximum wait according to the channel policy. |
-
-**Returns:** `0` when accepted for delivery.
-
-**Errors:** Validation failure, timeout/full channel, or unavailable subscriber infrastructure.
-
-**Execution context:** Documented thread context; `K_NO_WAIT` for nonblocking producers.
-
-**Calls:** zbus publish or bounded queue API.
-
-### `int spaghetti_data_get_stats(struct spaghetti_data_stats *out)`
-
-**Purpose:** Copy delivery and rejection counters.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `out` | Caller-owned destination. |
-
-**Returns:** `0` with coherent counters.
-
-**Errors:** Invalid output or uninitialized Data.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-## How it works
-
-```mermaid
-flowchart LR
-    PRODUCER["Module read result"] --> NORMALIZE["Data message"]
-    NORMALIZE --> VALIDATE["Validate + copy"]
-    VALIDATE --> LOGGER["Logger subscriber"]
-    VALIDATE --> RUNTIME["Runtime subscriber"]
-    VALIDATE --> ADAPTER["Optional output adapter"]
-```
-
-## Practical example
-
-INA219 key 10 at Port 0/address `0x40` produces 5000 mV and 120 mA. Data publishes
-one message containing both its current runtime ID and stable key, timestamp,
-sequence, voltage, current, and power. INA219 key 11 at `0x41` produces a separate
-stream even though it shares Port 0. Logger, Runtime, and adapters do not include the
-concrete driver header.
-
-## Zephyr integration
-
-- Use zbus when one value genuinely needs multiple independent observers.
-- Use a bounded `k_msgq` when one ordered stream and explicit backpressure are the real requirement.
-- Choose observer/queue sizes from message size and accepted loss/latency behavior.
-
-## Configuration templates
-
-### Message shape
+## API
 
 ```c
-struct spaghetti_electrical_sample {
-    spaghetti_module_id_t source_id;
-    spaghetti_module_key_t source_key;
-    int32_t bus_voltage_mv;
-    int32_t current_ma;
-    int32_t power_mw;
-    int64_t uptime_ms;
-    uint32_t sequence;
-    uint32_t validity_flags;
-};
+int spaghetti_data_init(void);
+int spaghetti_data_publish_electrical(
+	const struct spaghetti_electrical_message *message,
+	k_timeout_t timeout);
+int spaghetti_data_get_stats(struct spaghetti_data_stats *out);
 ```
 
-### `prj.conf` for zbus fan-out
+`spaghetti_data_init()` azzera i contatori una sola volta. Channel e observer sono
+oggetti statici che Zephyr prepara prima di `main`.
+
+`spaghetti_data_publish_electrical()` presta il messaggio a zbus per la durata della
+chiamata. zbus ne copia il contenuto nel channel e poi crea una copia per ciascun
+observer abilitato. `K_NO_WAIT` è la policy usata dal producer firmware.
+
+`spaghetti_data_get_stats()` restituisce i contatori atomici di publish completate,
+chiamate rifiutate ed errori di consegna. I contatori possono fare wrap.
+
+## zbus e capacità
+
+Le FIFO dei message subscriber sono separate, ma in Zephyr 4.4 i loro messaggi usano
+un pool globale di `net_buf`. Il firmware configura 8 buffer statici da 64 byte:
 
 ```ini
 CONFIG_ZBUS=y
 CONFIG_ZBUS_MSG_SUBSCRIBER=y
+CONFIG_ZBUS_PREFER_DYNAMIC_ALLOCATION=n
+CONFIG_ZBUS_MSG_SUBSCRIBER_BUF_ALLOC_STATIC=y
+CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_POOL_SIZE=8
+CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_STATIC_DATA_SIZE=64
 ```
 
-### Channel shape
+Non viene usato heap. Il logger subscriber è consumato continuamente da un thread
+bounded. Il subscriber di test esiste staticamente ma è disabilitato nel firmware
+normale; il test lo abilita soltanto mentre riceve e verifica il fan-out.
 
-```c
-ZBUS_CHAN_DEFINE(spaghetti_electrical_chan,
-                 struct spaghetti_electrical_sample,
-                 electrical_validator,
-                 NULL,
-                 ZBUS_OBSERVERS(logger_sub, runtime_sub),
-                 ZBUS_MSG_INIT(.source_id = 0, .source_key = 0));
+## Backpressure
+
+Se il pool non può completare tutte le copie, zbus restituisce `-ENOMEM`. Le notifiche
+sono sequenziali: un observer precedente può avere già ricevuto il messaggio, quindi
+l'errore rappresenta un fan-out incompleto. Data incrementa `delivery_errors`; il
+producer non ritenta e continua. I consumer usano `sequence` per riconoscere buchi.
+
+```mermaid
+flowchart LR
+    READ["Module Manager read"] --> MESSAGE["Messaggio elettrico owned"]
+    MESSAGE --> CHANNEL["Channel zbus"]
+    CHANNEL --> LOGGER["FIFO logger"]
+    CHANNEL --> TEST["FIFO test, disabilitata normalmente"]
+    LOGGER --> LOG["LOG_INF"]
 ```
 
-## Ownership and concurrency
+## Ownership e concorrenza
 
-Publish copies the message before producer storage expires. Every consumer has a documented thread/context and full-queue policy. Statistics updates are atomic or protected by a short lock.
-
-## Contract guarantees
-
-- Consumers never depend on a concrete driver type.
-- Source identity is never inferred from Port; key distinguishes sibling Modules on a
-  shared bus and ID selects the current live instance.
-- Delivery capacity and overflow behavior are bounded and documented.
-- A rejected message never appears as valid downstream data.
+Il publisher mantiene valido il proprio oggetto soltanto fino al ritorno; zbus e i
+subscriber lavorano su copie. I contatori sono atomici, stack e pool sono statici e
+bounded. Il logger è l'unico proprietario della lettura dalla propria FIFO.

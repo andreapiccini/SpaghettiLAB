@@ -33,6 +33,7 @@ target_sources(app PRIVATE
   subsys/module_manager/module_manager.c
   subsys/config/config.c
   subsys/services/storage/storage.c
+  subsys/data/data.c
 )
 
 get_target_property(APP_SRCS app SOURCES)

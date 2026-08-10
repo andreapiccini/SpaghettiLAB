@@ -1,0 +1,11 @@
+mainmenu "Spaghetti Data tests"
+
+config SPAGHETTI_DATA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_DATA_LOGGER
+	bool
+	default n
+
+source "Kconfig.zephyr"

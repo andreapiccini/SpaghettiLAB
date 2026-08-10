@@ -1,6 +1,6 @@
 # TASK-110-01 — Distribuire i campioni con zbus
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 110 — Data / zbus
 
 ## Cosa devo fare
@@ -20,10 +20,17 @@ struct spaghetti_electrical_message {
 	uint32_t sequence;
 };
 
+struct spaghetti_data_stats {
+	uint32_t published;
+	uint32_t rejected;
+	uint32_t delivery_errors;
+};
+
 int spaghetti_data_init(void);
 int spaghetti_data_publish_electrical(
 	const struct spaghetti_electrical_message *message,
 	k_timeout_t timeout);
+int spaghetti_data_get_stats(struct spaghetti_data_stats *out);
 ```
 
 La struct è pubblica, priva di puntatori e viene copiata:
@@ -38,6 +45,8 @@ La struct è pubblica, priva di puntatori e viene copiata:
 `message` è un prestito `const` valido per la chiamata: Data lo legge e zbus ne copia
 il contenuto. `timeout` è un piccolo valore kernel passato per valore e limita l’attesa.
 La funzione restituisce `0`, `-EINVAL` o l’errno di `zbus_chan_pub()`.
+`spaghetti_data_get_stats()` copia nel buffer del chiamante i tre contatori atomici;
+`out` non può essere `NULL`, non viene conservato e cambia solo al successo.
 
 ### 2. Abilitare zbus
 
@@ -46,11 +55,16 @@ Apri `prj.conf` e aggiungi:
 ```conf
 CONFIG_ZBUS=y
 CONFIG_ZBUS_MSG_SUBSCRIBER=y
+CONFIG_ZBUS_PREFER_DYNAMIC_ALLOCATION=n
+CONFIG_ZBUS_MSG_SUBSCRIBER_BUF_ALLOC_STATIC=y
+CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_POOL_SIZE=8
+CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_STATIC_DATA_SIZE=64
 ```
 
 zbus è il bus di messaggi interno di Zephyr. Un channel ha un tipo fisso; un message
-subscriber possiede una coda limitata che riceve copie. Le dichiarazioni sono statiche
-a build-time, mentre publish e receive avvengono a runtime.
+subscriber possiede una FIFO che riceve copie. Le FIFO condividono 8 buffer statici da
+64 byte e non usano heap. Le dichiarazioni e la capacità sono statiche a build-time,
+mentre publish e receive avvengono a runtime.
 
 ### 3. Creare canale e subscriber
 
@@ -58,7 +72,7 @@ Apri `subsys/data/data.c` e aggiungi:
 
 ```c
 ZBUS_MSG_SUBSCRIBER_DEFINE(electrical_logger_subscriber);
-ZBUS_MSG_SUBSCRIBER_DEFINE(electrical_test_subscriber);
+ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(electrical_test_subscriber, false);
 
 ZBUS_CHAN_DEFINE(
 	spaghetti_electrical_chan,
@@ -71,9 +85,11 @@ ZBUS_CHAN_DEFINE(
 );
 ```
 
-Il channel copia l’intera struct. I subscriber hanno code indipendenti: un consumer
-lento non ottiene un puntatore allo stack del publisher. I `NULL` indicano che qui non
-servono validator zbus o user data; la validazione resta nell’API Data.
+Il channel copia l’intera struct. I subscriber hanno FIFO indipendenti, ma in Zephyr
+4.4 condividono il pool bounded di `net_buf`. Il subscriber di test parte disabilitato:
+se fosse abilitato senza un consumer nel firmware normale, tratterrebbe copie fino a
+saturare il pool. Il test lo abilita soltanto mentre lo consuma. I `NULL` indicano che
+qui non servono validator zbus o user data; la validazione resta nell’API Data.
 
 ### 4. Implementare init e publish
 
@@ -83,7 +99,8 @@ Sempre in `subsys/data/data.c`, implementa:
    Core la chiama una volta al boot e non modifica dati del chiamante.
 2. `spaghetti_data_publish_electrical(message, timeout)`: rifiuta `NULL`, poi chiama
    `zbus_chan_pub(&spaghetti_electrical_chan, message, timeout)`. Non conserva il
-   puntatore. Propaga `-EAGAIN`/`-ETIMEDOUT` quando la coda non accetta entro il timeout.
+   puntatore. Propaga `-EBUSY`, `-EAGAIN` e `-ENOMEM` quando channel o pool non accettano
+   entro il timeout. Incrementa un contatore diagnostico sugli errori.
 
 Apri `CMakeLists.txt` e aggiungi `subsys/data/data.c` alle sorgenti; apri
 `subsys/core/core.c` e chiama `spaghetti_data_init()` durante il boot.
@@ -148,12 +165,12 @@ pubblicare un puntatore a memoria temporanea come payload.
 
 ## Checklist di completamento
 
-- [ ] Messaggio e API hanno le firme mostrate.
-- [ ] Tutte le unità sono dichiarate nei nomi dei campi.
-- [ ] Source ID e key distinguono Module fratelli sulla stessa Port.
-- [ ] Channel e due subscriber sono statici e limitati.
-- [ ] Data non include il driver INA219.
-- [ ] La policy di coda piena è verificata.
+- [x] Messaggio e API hanno le firme mostrate.
+- [x] Tutte le unità sono dichiarate nei nomi dei campi.
+- [x] Source ID e key distinguono Module fratelli sulla stessa Port.
+- [x] Channel e due subscriber sono statici e limitati.
+- [x] Data non include il driver INA219.
+- [x] La policy di coda piena è verificata.
 
 ## Verifica e fine task
 

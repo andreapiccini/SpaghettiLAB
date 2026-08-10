@@ -26,6 +26,10 @@ module = SPAGHETTI_STORAGE
 module-str = spaghetti_storage
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_DATA
+module-str = spaghetti_data
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"
@@ -45,5 +49,28 @@ config SPAGHETTI_INA219_MAX_INSTANCES
 	help
 	  Number of typed INA219 contexts reserved in the driver-owned memory
 	  slab. Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_DATA_LOGGER
+	bool "Enable the electrical Data logger consumer"
+	default y
+	help
+	  Start one bounded thread that drains the electrical logger subscriber
+	  and writes normalized samples through Zephyr logging.
+
+config SPAGHETTI_DATA_LOGGER_STACK_SIZE
+	int "Electrical Data logger stack size"
+	depends on SPAGHETTI_DATA_LOGGER
+	range 768 4096
+	default 1024
+	help
+	  Static stack bytes reserved for the electrical logger consumer.
+
+config SPAGHETTI_DATA_LOGGER_PRIORITY
+	int "Electrical Data logger thread priority"
+	depends on SPAGHETTI_DATA_LOGGER
+	range 0 15
+	default 5
+	help
+	  Cooperative-independent preemptive priority used by the logger thread.
 
 source "Kconfig.zephyr"

@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -21,10 +21,10 @@ Module sulla stessa Port restano distinguibili.
 
 ## Task
 
-1. ⬜ [TASK-110-01 — Distribuire i campioni con zbus](TASK-110-01-distribuire-i-campioni-con-zbus.md)
+1. ✅ [TASK-110-01 — Distribuire i campioni con zbus](TASK-110-01-distribuire-i-campioni-con-zbus.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Il messaggio contiene solo dati copiabili e con unità definite.
-- [ ] Canale e subscriber hanno capacità limitate.
-- [ ] Backpressure e code piene sono provate esplicitamente.
+- [x] Il messaggio contiene solo dati copiabili e con unità definite.
+- [x] Canale e subscriber hanno capacità limitate.
+- [x] Backpressure e code piene sono provate esplicitamente.
