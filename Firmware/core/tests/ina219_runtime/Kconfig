@@ -1,0 +1,19 @@
+mainmenu "Spaghetti INA219 runtime tests"
+
+config SPAGHETTI_MAX_MODULES
+	int
+	default 6
+
+config SPAGHETTI_INA219_MAX_INSTANCES
+	int
+	default 4
+
+config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_INA219_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

@@ -1,6 +1,6 @@
 # TASK-080-01 — Rendere INA219 configurabile a runtime
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 080 — INA219 rimovibile a runtime
 
 ## Cosa devo fare
@@ -232,19 +232,22 @@ la sola Port.
 
 ## Checklist di completamento
 
-- [ ] La config contiene address, shunt e current LSB copiati.
-- [ ] Il controller arriva soltanto da `spaghetti_port_i2c_device()`.
-- [ ] Registri a 16 bit sono trasferiti big-endian.
-- [ ] Read gestisce conversion-ready, overflow, timeout e range numerici.
-- [ ] Nodo INA219 e Sensor API temporanei sono rimossi.
-- [ ] Context INA219 provengono dallo slab statico del driver.
-- [ ] Due address sulla stessa Port funzionano e hanno context distinti.
+- [x] La config contiene address, shunt e current LSB copiati.
+- [x] Il controller arriva soltanto da `spaghetti_port_i2c_device()`.
+- [x] Registri a 16 bit sono trasferiti big-endian.
+- [x] Read gestisce conversion-ready, overflow, timeout e range numerici.
+- [x] Nodo INA219 e Sensor API temporanei sono rimossi.
+- [x] Context INA219 provengono dallo slab statico del driver.
+- [x] Due address sulla stessa Port funzionano e hanno context distinti.
 
 ## Verifica e fine task
 
 ```sh
 make validate
 make pristine
+docker compose run --rm --entrypoint sh dev -lc \
+	'west build -p always -b native_sim/native/64 \
+	-d build-tests/ina219_runtime tests/ina219_runtime -t run'
 rg -n -i "ina219_test|DT_NODELABEL.*ina219|sensor_sample|sensor_channel|CONFIG_SENSOR" \
 	boards prj.conf spaghetti_modules build/zephyr/zephyr.dts build/zephyr/.config
 make flash
@@ -257,3 +260,9 @@ restare invariati. Con il modulo reale, dieci letture di bus voltage/current/pow
 devono essere plausibili e una remove/reconfigure deve riuscire senza reboot.
 Con due sensori reali, alterna letture `0x40`/`0x41`; rimuovi solo key 11 e verifica che
 key 10 continui a produrre campioni.
+
+La suite automatica Zephyr 4.4 usa un controller I2C fake registrato nel Device Model:
+verifica due istanze, context slab distinti, calibrazione, byte order, valori signed,
+timeout, overflow, errore bus, esaurimento slab e rimozione selettiva. Il test elettrico
+con due INA219 fisici resta una verifica hardware da eseguire quando entrambi sono
+collegati; non modifica il risultato della suite software.

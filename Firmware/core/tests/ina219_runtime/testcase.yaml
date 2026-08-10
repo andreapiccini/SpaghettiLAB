@@ -1,0 +1,8 @@
+tests:
+  spaghetti.ina219_runtime:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - ina219
+      - module_manager

@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -19,11 +19,11 @@ senza nodo sensore Devicetree.
 
 ## Task
 
-1. ⬜ [TASK-080-01 — Rendere INA219 configurabile a runtime](TASK-080-01-rendere-ina219-configurabile-a-runtime.md)
+1. ✅ [TASK-080-01 — Rendere INA219 configurabile a runtime](TASK-080-01-rendere-ina219-configurabile-a-runtime.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Il driver usa `spaghetti_port_i2c_device(port)` e API I2C Zephyr dirette.
-- [ ] Configurazione, calibrazione, byte order, conversion-ready e overflow sono gestiti.
-- [ ] Non rimangono device o dipendenze Sensor specifiche di INA219.
-- [ ] Il driver usa uno slab statico tipizzato e non `SPAGHETTI_MODULE_CONTEXT_SIZE`.
+- [x] Il driver usa `spaghetti_port_i2c_device(port)` e API I2C Zephyr dirette.
+- [x] Configurazione, calibrazione, byte order, conversion-ready e overflow sono gestiti.
+- [x] Non rimangono device o dipendenze Sensor specifiche di INA219.
+- [x] Il driver usa uno slab statico tipizzato e non `SPAGHETTI_MODULE_CONTEXT_SIZE`.
