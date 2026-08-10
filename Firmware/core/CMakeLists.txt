@@ -27,6 +27,7 @@ add_dependencies(app spaghetti_validator)
 target_sources(app PRIVATE
   src/main.c
   spaghetti_modules/ina219/ina219.c
+  spaghetti_modules/relay/relay.c
   subsys/core/core.c
   subsys/port/port.c
   subsys/driver_registry/driver_registry.c
@@ -50,6 +51,7 @@ endforeach()
 target_include_directories(app PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/ina219
+  ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/relay
 )
 
 get_target_property(APP_INCLUDES app INCLUDE_DIRECTORIES)

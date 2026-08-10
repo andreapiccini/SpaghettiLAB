@@ -1,6 +1,6 @@
 # TASK-130-01 — Aggiungere Relay e la regola di soglia
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 130 — Relay + Runtime V1
 
 ## Prima di scrivere: concetti Zephyr
@@ -157,15 +157,15 @@ int err = spaghetti_runtime_load_threshold_rule(&rule);
 
 ## Checklist di completamento
 
-- [ ] Definire il contratto dei comandi Relay.
-- [ ] Implementare ciclo di vita e comando sicuro del Relay.
-- [ ] Descrivere endpoint e usare un context slab per-driver.
-- [ ] Registrare e compilare il driver Relay.
-- [ ] Instradare i comandi tramite Module Manager.
-- [ ] Definire una regola di soglia.
-- [ ] Risolvere source/relay key nei rispettivi runtime ID.
-- [ ] Valutare la corrente nel thread Runtime.
-- [ ] Provare soglia e stato sicuro del Relay.
+- [x] Definire il contratto dei comandi Relay.
+- [x] Implementare ciclo di vita e comando sicuro del Relay.
+- [x] Descrivere endpoint e usare un context slab per-driver.
+- [x] Registrare e compilare il driver Relay.
+- [x] Instradare i comandi tramite Module Manager.
+- [x] Definire una regola di soglia.
+- [x] Risolvere source/relay key nei rispettivi runtime ID.
+- [x] Valutare la corrente nel thread Runtime.
+- [x] Provare soglia e stato sicuro del Relay con GPIO fake.
 
 ## Verifica finale
 
@@ -186,3 +186,8 @@ di corrente indicati. Nessun comando duplicato e rollback sempre sicuro.
 **Risultato atteso**
 
 Il relay parte/termina sicuro e segue le soglie 450/500 mA con isteresi deterministica.
+
+**Verifica eseguita:** validator e build pristine ESP32-C3 superati; test nativi
+Relay, Runtime, Config e Module Manager superati. La prova su Relay reale resta
+volutamente sospesa: l'overlay ESP32-C3 corrente non dichiara una Port GPIO verificata
+e non è stato inventato un pin. Il driver restituisce `-ENOTSUP` su Port 0.

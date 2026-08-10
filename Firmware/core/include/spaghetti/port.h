@@ -29,6 +29,7 @@ typedef uint8_t spaghetti_port_id_t;
  */
 enum spaghetti_port_capability {
 	SPAGHETTI_PORT_CAP_I2C = BIT(0), /**< I2C capability */
+	SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT = BIT(1), /**< One exclusive digital output. */
 };
 
 /*
@@ -97,5 +98,22 @@ bool spaghetti_port_has_capability(
  * the caller.
  */
 const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port);
+
+/**
+ * @brief Drive the raw electrical level of a Port digital output.
+ *
+ * @param[in] port Port borrowed for this call and never retained.
+ * @param[in] high True requests a high electrical level; false requests low.
+ *
+ * @retval 0 The output reached the requested level.
+ * @retval -EINVAL @p port is NULL.
+ * @retval -ENOTSUP The Port has no digital-output capability or GPIO resource.
+ * @retval -ENODEV The GPIO controller is unavailable.
+ * @retval -EIO The GPIO driver rejected the write.
+ *
+ * @note Call from thread context. Logical actuator polarity belongs to its
+ *       Module driver, not to this raw Port operation.
+ */
+int spaghetti_port_set_output(const struct spaghetti_port *port, bool high);
 
 #endif /* SPAGHETTI_PORT_H */

@@ -34,8 +34,9 @@ int spaghetti_config_get_snapshot(struct spaghetti_config *out);
 ```
 
 `spaghetti_config_validate()` è pura: verifica versione, limiti, key, Port, driver,
-capability, configurazioni concrete, endpoint e sorgente di sampling senza toccare
-l'hardware o il Manager.
+capability, configurazioni concrete, endpoint, sorgente di sampling e riferimenti
+della regola senza toccare l'hardware o il Manager. La sorgente deve supportare
+`read`; il target della regola deve supportare `command`.
 
 `spaghetti_config_apply()` riconcilia per key. Mantiene intatti i Module invariati,
 rimuove quelli assenti o cambiati e configura quelli nuovi. Pubblica la copia del
@@ -58,9 +59,14 @@ flowchart LR
     APPLY -->|"errore"| ROLLBACK["Ripristina Module precedenti"]
 ```
 
-Il campo `sampling.source_key` resta una key persistente. Durante apply Config la
-risolve in un Module runtime READY. La consegna dell'ID al Runtime verrà aggiunta
-quando il componente Runtime sarà implementato nella fase 120.
+I campi `sampling.source_key`, `threshold_rule.source_key` e
+`threshold_rule.relay_key` restano key persistenti. Durante apply Config ferma
+Runtime, riconcilia i Module, risolve le tre key in ID runtime READY e carica task e
+regola. Un rollback ripristina anche il precedente stato Runtime.
+
+Lo schema corrente è `SPAGHETTI_CONFIG_VERSION == 2`: la versione è aumentata perché
+la struct persistente ora contiene la regola di soglia. Un record V1 viene rifiutato
+come incompatibile invece di essere interpretato con un layout errato.
 
 ## Proprietà e concorrenza
 

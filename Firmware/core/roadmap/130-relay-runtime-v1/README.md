@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -18,10 +18,10 @@ Una corrente sopra 500 mA comanda il Relay; sotto 450 mA applica lo stato oppost
 
 ## Task
 
-1. ⬜ [TASK-130-01 — Aggiungere Relay e la regola di soglia](TASK-130-01-aggiungere-relay-e-regola-di-soglia.md)
+1. ✅ [TASK-130-01 — Aggiungere Relay e la regola di soglia](TASK-130-01-aggiungere-relay-e-regola-di-soglia.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Il Relay parte e termina nello stato sicuro.
-- [ ] I comandi passano dal Module Manager.
-- [ ] La regola usa isteresi o comportamento al limite documentato.
+- [x] Il Relay parte e termina nello stato sicuro.
+- [x] I comandi passano dal Module Manager.
+- [x] La regola usa isteresi o comportamento al limite documentato.

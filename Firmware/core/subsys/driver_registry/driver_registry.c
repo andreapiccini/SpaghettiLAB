@@ -11,12 +11,14 @@
 #include <spaghetti/module_driver.h>
 
 #include <ina219.h>
+#include <relay.h>
 
 LOG_MODULE_REGISTER(spaghetti_driver_registry,
 		    CONFIG_SPAGHETTI_DRIVER_REGISTRY_LOG_LEVEL);
 
 static const struct spaghetti_module_driver *const drivers[] = {
 	&spaghetti_ina219_driver,
+	&spaghetti_relay_driver,
 };
 
 static bool type_id_is_valid(const char *type_id)
@@ -43,7 +45,9 @@ int spaghetti_driver_registry_init(void)
 		    (driver->required_capabilities == 0U) || (driver->ops == NULL) ||
 		    (driver->ops->validate_config == NULL) ||
 		    (driver->ops->describe_endpoint == NULL) ||
-		    (driver->ops->init == NULL) || (driver->ops->read == NULL) ||
+		    (driver->ops->init == NULL) ||
+		    ((driver->ops->read == NULL) &&
+		     (driver->ops->command == NULL)) ||
 		    (driver->ops->deinit == NULL)) {
 			return -EINVAL;
 		}

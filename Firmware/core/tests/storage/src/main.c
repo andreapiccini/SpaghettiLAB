@@ -91,6 +91,14 @@ static struct spaghetti_config make_config(void)
 			.source_key = 10U,
 			.period_ms = 1000U,
 		},
+		.threshold_rule = {
+			.enabled = true,
+			.source_key = 10U,
+			.lower_current_microamps = 450000,
+			.upper_current_microamps = 500000,
+			.relay_key = 11U,
+			.relay_on_above = true,
+		},
 	};
 
 	set_module(&config.modules[0], 10U, 0x40U);
@@ -132,6 +140,10 @@ ZTEST(storage, test_absent_round_trip_corruption_and_backend_errors)
 	zassert_equal(output.modules[1].driver_config[0], 0x41U);
 	zassert_equal(output.modules[2].key, 0U);
 	zassert_equal(output.modules[0].driver_config[1], 0U);
+	zassert_true(output.threshold_rule.enabled);
+	zassert_equal(output.threshold_rule.source_key, 10U);
+	zassert_equal(output.threshold_rule.relay_key, 11U);
+	zassert_equal(output.threshold_rule.upper_current_microamps, 500000);
 
 	valid_size = persistent_size;
 	memcpy(valid_record, persistent_bytes, valid_size);

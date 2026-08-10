@@ -35,7 +35,9 @@ static const struct spaghetti_port fake_port = {
 
 static struct fake_driver_context fake_contexts[CONFIG_SPAGHETTI_MAX_MODULES];
 static struct spaghetti_runtime_sampling_task fake_runtime_task;
+static struct spaghetti_runtime_threshold_rule fake_runtime_rule;
 static bool fake_runtime_running;
+static bool fake_runtime_rule_enabled;
 static uint32_t fake_runtime_start_count;
 static uint32_t fake_runtime_stop_count;
 
@@ -57,12 +59,38 @@ int spaghetti_runtime_start(void)
 	if (fake_runtime_running) {
 		return -EALREADY;
 	}
-	if (!fake_runtime_task.enabled) {
+	if (!fake_runtime_task.enabled && !fake_runtime_rule_enabled) {
 		return -ENOENT;
 	}
 
 	fake_runtime_running = true;
 	++fake_runtime_start_count;
+	return 0;
+}
+
+int spaghetti_runtime_load_threshold_rule(
+	const struct spaghetti_runtime_threshold_rule *rule)
+{
+	if (rule == NULL) {
+		return -EINVAL;
+	}
+	if (fake_runtime_running) {
+		return -EBUSY;
+	}
+
+	fake_runtime_rule = *rule;
+	fake_runtime_rule_enabled = true;
+	return 0;
+}
+
+int spaghetti_runtime_clear_threshold_rule(void)
+{
+	if (fake_runtime_running) {
+		return -EBUSY;
+	}
+
+	memset(&fake_runtime_rule, 0, sizeof(fake_runtime_rule));
+	fake_runtime_rule_enabled = false;
 	return 0;
 }
 
@@ -153,6 +181,14 @@ static int fake_read(struct spaghetti_module *module,
 	return -ENOTSUP;
 }
 
+static int fake_command(struct spaghetti_module *module,
+			const struct spaghetti_command *command)
+{
+	ARG_UNUSED(module);
+
+	return (command != NULL) ? 0 : -EINVAL;
+}
+
 static int fake_deinit(struct spaghetti_module *module)
 {
 	struct fake_driver_context *context;
@@ -172,6 +208,7 @@ static const struct spaghetti_module_driver_ops fake_ops = {
 	.describe_endpoint = fake_describe_endpoint,
 	.init = fake_init,
 	.read = fake_read,
+	.command = fake_command,
 	.deinit = fake_deinit,
 };
 
@@ -278,6 +315,13 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	candidate = baseline;
 	candidate.sampling.source_key = 99U;
 	zassert_equal(spaghetti_config_validate(&candidate), -EINVAL);
+	candidate = baseline;
+	candidate.threshold_rule.enabled = true;
+	candidate.threshold_rule.source_key = 10U;
+	candidate.threshold_rule.lower_current_microamps = 500000;
+	candidate.threshold_rule.upper_current_microamps = 450000;
+	candidate.threshold_rule.relay_key = 11U;
+	zassert_equal(spaghetti_config_validate(&candidate), -EINVAL);
 	assert_live_endpoint(10U, 0x40U);
 	assert_live_endpoint(11U, 0x41U);
 
@@ -298,6 +342,12 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	candidate.modules[0] = baseline.modules[1];
 	set_module(&candidate.modules[1], 12U, 0x42U, 0);
 	candidate.sampling.source_key = 11U;
+	candidate.threshold_rule.enabled = true;
+	candidate.threshold_rule.source_key = 11U;
+	candidate.threshold_rule.lower_current_microamps = 450000;
+	candidate.threshold_rule.upper_current_microamps = 500000;
+	candidate.threshold_rule.relay_key = 12U;
+	candidate.threshold_rule.relay_on_above = true;
 	zassert_ok(spaghetti_config_apply(&candidate));
 	zassert_true(fake_runtime_running);
 	zassert_equal(fake_runtime_start_count, 3U);
@@ -310,6 +360,10 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	assert_live_endpoint(12U, 0x42U);
 	zassert_ok(spaghetti_config_get_snapshot(&snapshot));
 	zassert_equal(snapshot.sampling.source_key, 11U);
+	zassert_true(snapshot.threshold_rule.enabled);
+	zassert_true(fake_runtime_rule_enabled);
+	zassert_equal(fake_runtime_rule.source_id, key_11_after.id);
+	zassert_equal(fake_runtime_rule.lower_current_microamps, 450000);
 }
 
 ZTEST_SUITE(config, NULL, NULL, NULL, NULL, NULL);

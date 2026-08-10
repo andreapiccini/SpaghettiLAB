@@ -88,6 +88,7 @@ static void canonicalize_config(const struct spaghetti_config *source,
 	}
 
 	destination->sampling = source->sampling;
+	destination->threshold_rule = source->threshold_rule;
 }
 
 static int storage_settings_set(const char *name, size_t len,

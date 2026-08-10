@@ -15,7 +15,7 @@
 #include <spaghetti/port.h>
 
 /** Current in-memory Config schema version. */
-#define SPAGHETTI_CONFIG_VERSION 1U
+#define SPAGHETTI_CONFIG_VERSION 2U
 
 /** Maximum number of desired Modules in one Config snapshot. */
 #define SPAGHETTI_CONFIG_MAX_MODULES 8U
@@ -50,6 +50,18 @@ struct spaghetti_runtime_sampling_config {
 };
 
 /**
+ * @brief Persistent threshold rule using stable Module keys.
+ */
+struct spaghetti_runtime_threshold_config {
+	bool enabled; /**< True when current-based Relay control is requested. */
+	spaghetti_module_key_t source_key; /**< Stable sampled Module key. */
+	int32_t lower_current_microamps; /**< Strict lower hysteresis boundary. */
+	int32_t upper_current_microamps; /**< Strict upper hysteresis boundary. */
+	spaghetti_module_key_t relay_key; /**< Stable target Relay Module key. */
+	bool relay_on_above; /**< Logical Relay state strictly above upper boundary. */
+};
+
+/**
  * @brief Complete bounded desired-state snapshot.
  */
 struct spaghetti_config {
@@ -58,6 +70,7 @@ struct spaghetti_config {
 	struct spaghetti_module_config
 		modules[SPAGHETTI_CONFIG_MAX_MODULES]; /**< Owned desired Modules. */
 	struct spaghetti_runtime_sampling_config sampling; /**< Runtime selection. */
+	struct spaghetti_runtime_threshold_config threshold_rule; /**< Runtime rule. */
 };
 
 /**

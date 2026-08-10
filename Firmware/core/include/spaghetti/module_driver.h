@@ -7,10 +7,24 @@
 #ifndef SPAGHETTI_MODULE_DRIVER_H
 #define SPAGHETTI_MODULE_DRIVER_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include <spaghetti/module.h>
+
+/** Generic command identifiers understood through Module Manager. */
+enum spaghetti_command_type {
+	SPAGHETTI_COMMAND_RELAY_SET, /**< Set one Relay logical ON/OFF state. */
+};
+
+/**
+ * @brief Complete bounded command copied or consumed during one Manager call.
+ */
+struct spaghetti_command {
+	enum spaghetti_command_type type; /**< Selects the command payload meaning. */
+	bool relay_on; /**< Logical Relay state, independent of GPIO polarity. */
+};
 
 /** Pure callback that validates borrowed driver config without hardware access. */
 typedef int (*spaghetti_module_validate_config_cb_t)(const void *config,
@@ -31,6 +45,11 @@ typedef int (*spaghetti_module_init_cb_t)(struct spaghetti_module *module,
 typedef int (*spaghetti_module_read_cb_t)(struct spaghetti_module *module,
 					  struct spaghetti_sample *out);
 
+/** Callback that applies one borrowed generic command synchronously. */
+typedef int (*spaghetti_module_command_cb_t)(
+	struct spaghetti_module *module,
+	const struct spaghetti_command *command);
+
 /** Callback that places one Module in safe state and releases its context. */
 typedef int (*spaghetti_module_deinit_cb_t)(struct spaghetti_module *module);
 
@@ -45,6 +64,7 @@ struct spaghetti_module_driver_ops {
 	spaghetti_module_describe_endpoint_cb_t describe_endpoint; /**< Endpoint derivation. */
 	spaghetti_module_init_cb_t init; /**< Context allocation and instance initialization. */
 	spaghetti_module_read_cb_t read; /**< Bounded sample acquisition. */
+	spaghetti_module_command_cb_t command; /**< Bounded actuator command. */
 	spaghetti_module_deinit_cb_t deinit; /**< Safe-state and context release. */
 };
 

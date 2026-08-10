@@ -442,3 +442,51 @@ unlock:
 	k_mutex_unlock(&slots_lock);
 	return err;
 }
+
+int spaghetti_module_manager_command(
+	spaghetti_module_id_t id,
+	const struct spaghetti_command *command)
+{
+	struct spaghetti_module_slot *slot;
+	int err;
+
+	if (command == NULL) {
+		return -EINVAL;
+	}
+	if (command->type != SPAGHETTI_COMMAND_RELAY_SET) {
+		return -ENOTSUP;
+	}
+
+	err = k_mutex_lock(&slots_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+
+	slot = find_slot_by_id(id);
+	if (slot == NULL) {
+		err = -ENOENT;
+		goto unlock;
+	}
+	if (slot->busy) {
+		err = -EBUSY;
+		goto unlock;
+	}
+	if ((slot->module.state != SPAGHETTI_MODULE_READY) ||
+	    (slot->module.driver->ops->command == NULL)) {
+		err = -ENOTSUP;
+		goto unlock;
+	}
+
+	slot->busy = true;
+	k_mutex_unlock(&slots_lock);
+	err = slot->module.driver->ops->command(&slot->module, command);
+
+	(void)k_mutex_lock(&slots_lock, K_FOREVER);
+	slot->busy = false;
+	k_mutex_unlock(&slots_lock);
+	return err;
+
+unlock:
+	k_mutex_unlock(&slots_lock);
+	return err;
+}

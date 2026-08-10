@@ -38,6 +38,10 @@ module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_RELAY
+module-str = spaghetti_relay
+source "subsys/logging/Kconfig.template.log_config"
+
 config SPAGHETTI_MAX_MODULES
 	int "Maximum number of simultaneous runtime Modules"
 	range 1 255
@@ -53,6 +57,14 @@ config SPAGHETTI_INA219_MAX_INSTANCES
 	help
 	  Number of typed INA219 contexts reserved in the driver-owned memory
 	  slab. Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_RELAY_MAX_INSTANCES
+	int "Maximum number of simultaneous Relay instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 4
+	help
+	  Number of typed Relay contexts reserved in the driver-owned memory slab.
+	  Allocation is non-blocking and does not use the heap.
 
 config SPAGHETTI_DATA_LOGGER
 	bool "Enable the electrical Data logger consumer"
@@ -91,6 +103,21 @@ config SPAGHETTI_RUNTIME_PRIORITY
 	help
 	  Preemptive priority used by the Runtime sampling worker. The default is
 	  one level above the Data logger so acquisition is not delayed by logging.
+
+config SPAGHETTI_RUNTIME_RULE_STACK_SIZE
+	int "Runtime threshold-rule thread stack size"
+	range 1024 4096
+	default 1536
+	help
+	  Static stack bytes reserved for consuming electrical Data and applying
+	  the single Runtime V1 threshold rule.
+
+config SPAGHETTI_RUNTIME_RULE_PRIORITY
+	int "Runtime threshold-rule thread priority"
+	range 0 14
+	default 4
+	help
+	  Preemptive priority used by the Runtime threshold-rule worker.
 
 config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
 	int "Runtime stop timeout in milliseconds"

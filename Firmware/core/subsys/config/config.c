@@ -89,7 +89,10 @@ static int describe_module(
 	if ((driver == NULL) || (driver->ops == NULL) ||
 	    (driver->ops->validate_config == NULL) ||
 	    (driver->ops->describe_endpoint == NULL) ||
-	    (driver->ops->init == NULL) || (driver->ops->deinit == NULL)) {
+	    (driver->ops->init == NULL) ||
+	    ((driver->ops->read == NULL) &&
+	     (driver->ops->command == NULL)) ||
+	    (driver->ops->deinit == NULL)) {
 		return -ENOTSUP;
 	}
 	if (!spaghetti_port_has_capability(port,
@@ -128,6 +131,38 @@ static int find_module_index(const struct spaghetti_config *config,
 	}
 
 	return -1;
+}
+
+static bool module_supports_read(const struct spaghetti_config *config,
+				 spaghetti_module_key_t key)
+{
+	const int module_idx = find_module_index(config, key);
+
+	if (module_idx < 0) {
+		return false;
+	}
+
+	const struct spaghetti_module_driver *driver =
+		spaghetti_driver_registry_find(config->modules[module_idx].type_id);
+
+	return (driver != NULL) && (driver->ops != NULL) &&
+	       (driver->ops->read != NULL);
+}
+
+static bool module_supports_command(const struct spaghetti_config *config,
+				    spaghetti_module_key_t key)
+{
+	const int module_idx = find_module_index(config, key);
+
+	if (module_idx < 0) {
+		return false;
+	}
+
+	const struct spaghetti_module_driver *driver =
+		spaghetti_driver_registry_find(config->modules[module_idx].type_id);
+
+	return (driver != NULL) && (driver->ops != NULL) &&
+	       (driver->ops->command != NULL);
 }
 
 static bool module_configs_are_equal(
@@ -178,24 +213,59 @@ static int configure_runtime(const struct spaghetti_config *config)
 {
 	struct spaghetti_runtime_sampling_task task = {0};
 	struct spaghetti_module_snapshot source;
+	struct spaghetti_module_snapshot relay;
 	int err;
 
-	if (!config->sampling.enabled) {
-		return spaghetti_runtime_load(&task);
-	}
+	if (config->sampling.enabled) {
+		err = spaghetti_module_manager_get_by_key(
+			config->sampling.source_key, &source);
+		if (err < 0) {
+			return err;
+		}
 
-	err = spaghetti_module_manager_get_by_key(config->sampling.source_key,
-						  &source);
-	if (err < 0) {
-		return err;
+		task.module_id = source.id;
+		task.period_ms = config->sampling.period_ms;
+		task.enabled = true;
 	}
-
-	task.module_id = source.id;
-	task.period_ms = config->sampling.period_ms;
-	task.enabled = true;
 	err = spaghetti_runtime_load(&task);
 	if (err < 0) {
 		return err;
+	}
+
+	if (config->threshold_rule.enabled) {
+		const struct spaghetti_runtime_threshold_config *rule_config =
+			&config->threshold_rule;
+
+		err = spaghetti_module_manager_get_by_key(rule_config->source_key,
+						  &source);
+		if (err < 0) {
+			return err;
+		}
+		err = spaghetti_module_manager_get_by_key(rule_config->relay_key,
+						  &relay);
+		if (err < 0) {
+			return err;
+		}
+
+		const struct spaghetti_runtime_threshold_rule rule = {
+			.source_id = source.id,
+			.lower_current_microamps =
+				rule_config->lower_current_microamps,
+			.upper_current_microamps =
+				rule_config->upper_current_microamps,
+			.relay_id = relay.id,
+			.relay_on_above = rule_config->relay_on_above,
+		};
+
+		err = spaghetti_runtime_load_threshold_rule(&rule);
+	} else {
+		err = spaghetti_runtime_clear_threshold_rule();
+	}
+	if (err < 0) {
+		return err;
+	}
+	if (!config->sampling.enabled && !config->threshold_rule.enabled) {
+		return 0;
 	}
 
 	err = spaghetti_runtime_start();
@@ -291,6 +361,28 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate)
 				       candidate->sampling.source_key) < 0)) {
 			return -EINVAL;
 		}
+		if (!module_supports_read(candidate,
+					  candidate->sampling.source_key)) {
+			return -ENOTSUP;
+		}
+	}
+
+	if (candidate->threshold_rule.enabled) {
+		const struct spaghetti_runtime_threshold_config *rule =
+			&candidate->threshold_rule;
+
+		if ((rule->source_key == 0U) || (rule->relay_key == 0U) ||
+		    (rule->lower_current_microamps < 0) ||
+		    (rule->lower_current_microamps >=
+		     rule->upper_current_microamps) ||
+		    (find_module_index(candidate, rule->source_key) < 0) ||
+		    (find_module_index(candidate, rule->relay_key) < 0)) {
+			return -EINVAL;
+		}
+		if (!module_supports_read(candidate, rule->source_key) ||
+		    !module_supports_command(candidate, rule->relay_key)) {
+			return -ENOTSUP;
+		}
 	}
 
 	return 0;
@@ -318,7 +410,9 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 	if (had_old_config) {
 		old_config = current_config;
 	}
-	if (had_old_config && old_config.sampling.enabled) {
+	if (had_old_config &&
+	    (old_config.sampling.enabled ||
+	     old_config.threshold_rule.enabled)) {
 		err = spaghetti_runtime_stop(
 			K_MSEC(CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS));
 		if ((err < 0) && (err != -EALREADY)) {

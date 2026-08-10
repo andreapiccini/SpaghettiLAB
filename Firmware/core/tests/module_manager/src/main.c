@@ -24,6 +24,7 @@ struct fake_driver_config {
 struct fake_driver_context {
 	bool used;
 	uint8_t i2c_address;
+	bool output_on;
 };
 
 static const struct spaghetti_port fake_port = {
@@ -113,6 +114,24 @@ static int fake_read(struct spaghetti_module *module, struct spaghetti_sample *o
 	return 0;
 }
 
+static int fake_command(struct spaghetti_module *module,
+			const struct spaghetti_command *command)
+{
+	struct fake_driver_context *context;
+
+	if ((module == NULL) || (command == NULL) ||
+	    (module->context == NULL)) {
+		return -EINVAL;
+	}
+	if (command->type != SPAGHETTI_COMMAND_RELAY_SET) {
+		return -ENOTSUP;
+	}
+
+	context = module->context;
+	context->output_on = command->relay_on;
+	return 0;
+}
+
 static int fake_deinit(struct spaghetti_module *module)
 {
 	struct fake_driver_context *context;
@@ -132,6 +151,7 @@ static const struct spaghetti_module_driver_ops fake_ops = {
 	.describe_endpoint = fake_describe_endpoint,
 	.init = fake_init,
 	.read = fake_read,
+	.command = fake_command,
 	.deinit = fake_deinit,
 };
 
@@ -187,6 +207,10 @@ ZTEST(module_manager, test_shared_port_lifecycle)
 	struct spaghetti_module_snapshot snapshots[CONFIG_SPAGHETTI_MAX_MODULES];
 	struct spaghetti_module_snapshot snapshot;
 	struct spaghetti_sample sample;
+	const struct spaghetti_command relay_on = {
+		.type = SPAGHETTI_COMMAND_RELAY_SET,
+		.relay_on = true,
+	};
 	spaghetti_module_id_t id_10;
 	spaghetti_module_id_t id_11;
 	spaghetti_module_id_t id_12;
@@ -228,6 +252,9 @@ ZTEST(module_manager, test_shared_port_lifecycle)
 
 	zassert_ok(spaghetti_module_manager_read(id_10, &sample));
 	zassert_equal(sample.bus_voltage_microvolts, 0x40 * 1000);
+	zassert_equal(spaghetti_module_manager_command(id_10, NULL), -EINVAL);
+	zassert_ok(spaghetti_module_manager_command(id_10, &relay_on));
+	zassert_true(fake_contexts[id_10].output_on);
 	zassert_equal(spaghetti_module_manager_remove(id_10, 2U), -ESTALE);
 	zassert_ok(spaghetti_module_manager_remove(id_11, 1U));
 	zassert_equal(spaghetti_module_manager_get_by_key(11U, &snapshot), -ENOENT);

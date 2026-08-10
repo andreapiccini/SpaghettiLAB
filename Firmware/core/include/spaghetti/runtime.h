@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Public Runtime V0 periodic sampling contract.
+ * @brief Public Runtime V1 sampling and threshold-rule contract.
  * @ingroup spaghetti_runtime
  */
 
@@ -21,6 +21,17 @@ struct spaghetti_runtime_sampling_task {
 	spaghetti_module_id_t module_id; /**< Current live Module handle. */
 	uint32_t period_ms; /**< Positive sampling period in milliseconds. */
 	bool enabled; /**< True to define an active task; false clears it. */
+};
+
+/**
+ * @brief Complete active current-threshold rule copied by Runtime.
+ */
+struct spaghetti_runtime_threshold_rule {
+	spaghetti_module_id_t source_id; /**< Current live electrical source handle. */
+	int32_t lower_current_microamps; /**< Strict lower hysteresis boundary. */
+	int32_t upper_current_microamps; /**< Strict upper hysteresis boundary. */
+	spaghetti_module_id_t relay_id; /**< Current live Relay target handle. */
+	bool relay_on_above; /**< Logical Relay state above the upper boundary. */
 };
 
 /**
@@ -55,11 +66,43 @@ int spaghetti_runtime_init(void);
 int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task);
 
 /**
+ * @brief Validate and copy the single threshold rule while Runtime is stopped.
+ *
+ * Runtime resolves both IDs through Module Manager and privately retains the
+ * source key to reject stale queued samples. The input is borrowed only for
+ * this call and never retained.
+ *
+ * @param[in] rule Caller-owned, suitably aligned rule valid for this call.
+ *
+ * @retval 0 The rule was validated and copied.
+ * @retval -EINVAL @p rule is NULL, a threshold is negative, or lower is not
+ *                 strictly less than upper.
+ * @retval -EACCES Runtime has not been initialized.
+ * @retval -ENOENT A source or Relay ID is not live and READY.
+ * @retval -EBUSY Runtime is running or stopping.
+ *
+ * @note Call from thread context. This function performs no hardware I/O.
+ */
+int spaghetti_runtime_load_threshold_rule(
+	const struct spaghetti_runtime_threshold_rule *rule);
+
+/**
+ * @brief Remove the threshold rule while Runtime is stopped.
+ *
+ * @retval 0 No threshold rule is loaded.
+ * @retval -EACCES Runtime has not been initialized.
+ * @retval -EBUSY Runtime is running or stopping.
+ *
+ * @note Call from thread context. This operation performs no hardware I/O.
+ */
+int spaghetti_runtime_clear_threshold_rule(void);
+
+/**
  * @brief Start periodic execution of the loaded task.
  *
  * @retval 0 Timer and Runtime worker are active.
  * @retval -EACCES Runtime has not been initialized.
- * @retval -ENOENT No enabled task is loaded.
+ * @retval -ENOENT No enabled sampling task or threshold rule is loaded.
  * @retval -EALREADY Runtime is already running.
  * @retval -EBUSY Runtime is still stopping.
  * @retval -EINVAL The loaded period is invalid for Timer.

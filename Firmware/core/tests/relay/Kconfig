@@ -1,0 +1,11 @@
+mainmenu "Spaghetti Relay tests"
+
+config SPAGHETTI_RELAY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RELAY_MAX_INSTANCES
+	int
+	default 2
+
+source "Kconfig.zephyr"

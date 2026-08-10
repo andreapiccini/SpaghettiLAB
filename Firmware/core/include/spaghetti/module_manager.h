@@ -13,6 +13,8 @@
 #include <spaghetti/module.h>
 #include <spaghetti/port.h>
 
+struct spaghetti_command;
+
 /**
  * @brief Complete borrowed request used to create one Module.
  *
@@ -187,5 +189,26 @@ int spaghetti_module_manager_list_by_port(
 int spaghetti_module_manager_read(
 	spaghetti_module_id_t id,
 	struct spaghetti_sample *out);
+
+/**
+ * @brief Apply one generic command to a live READY Module.
+ *
+ * @param[in] id Ephemeral ID of the Module to command.
+ * @param[in] command Caller-owned command borrowed only for this synchronous call.
+ *
+ * @retval 0 The concrete driver applied the requested state.
+ * @retval -EINVAL @p command is NULL.
+ * @retval -ENOENT @p id does not identify a live Module.
+ * @retval -EBUSY The Module is executing another driver operation.
+ * @retval -ENOTSUP The command type or driver operation is unsupported.
+ * @retval -ENODEV Required output hardware is unavailable.
+ * @retval -EIO The concrete output operation failed.
+ *
+ * @note Call from thread context. The Manager serializes this operation with
+ *       read and remove on the same Module instance.
+ */
+int spaghetti_module_manager_command(
+	spaghetti_module_id_t id,
+	const struct spaghetti_command *command);
 
 #endif /* SPAGHETTI_MODULE_MANAGER_H */
