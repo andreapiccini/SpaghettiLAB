@@ -38,6 +38,8 @@ target_sources(app PRIVATE
   subsys/config/config.c
   subsys/config/config_cbor.c
   subsys/services/storage/storage.c
+  subsys/services/update/update.c
+  subsys/services/update/update_mcuboot.c
   subsys/data/data.c
   subsys/services/timer/timer.c
   subsys/runtime/runtime.c

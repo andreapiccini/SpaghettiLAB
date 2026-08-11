@@ -17,6 +17,7 @@ enum init_step {
 	STEP_RUNTIME,
 	STEP_MQTT,
 	STEP_STORAGE,
+	STEP_UPDATE,
 	STEP_DISCOVERY,
 	STEP_CONFIG,
 	STEP_WIFI,
@@ -69,6 +70,11 @@ int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
 int spaghetti_storage_init(void)
 {
 	return record_step(STEP_STORAGE);
+}
+
+int spaghetti_update_init(void)
+{
+	return record_step(STEP_UPDATE);
 }
 
 int spaghetti_storage_read_config(struct spaghetti_config *out)
@@ -166,7 +172,7 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 	zassert_ok(spaghetti_core_init());
 	zassert_equal(spaghetti_core_get_state(), SPAGHETTI_CORE_READY);
 	zassert_equal(spaghetti_core_init(), -EALREADY);
-	zassert_equal(step_count, 11U);
+	zassert_equal(step_count, 12U);
 	for (size_t step_idx = 0U; step_idx < step_count; ++step_idx) {
 		zassert_equal(steps[step_idx], (enum init_step)step_idx);
 	}

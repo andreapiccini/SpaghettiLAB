@@ -34,6 +34,7 @@ This directory contains contracts shared between firmware components. Headers ex
 | `wifi_profiles.h` | Persistent Wi-Fi credentials and selection-policy contract. |
 | `discovery.h` | Bounded per-key identification results and lifecycle events. |
 | `power.h` | Optional shared-resource contract. |
+| `update.h` | Transport-independent firmware-update session contract. |
 
 ## Data model
 

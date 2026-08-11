@@ -18,6 +18,7 @@
 #include <spaghetti/power.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/storage.h>
+#include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
 
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
@@ -166,6 +167,10 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto storage_failed;
 	}
+	err = spaghetti_update_init();
+	if (err < 0) {
+		goto update_failed;
+	}
 	err = spaghetti_discovery_init(discovery_event_sink, NULL);
 	if (err < 0) {
 		goto discovery_failed;
@@ -206,6 +211,9 @@ config_failed:
 	goto unlock;
 discovery_failed:
 	(void)fail_initialization("Discovery", err);
+	goto unlock;
+update_failed:
+	(void)fail_initialization("Update", err);
 	goto unlock;
 storage_failed:
 	(void)fail_initialization("Storage", err);

@@ -62,6 +62,7 @@ its edges.
 | Connectivity profile service | Optional | Owns network credentials and link selection | Preferred Wi-Fi or strongest known fallback |
 | Discovery strategy | Optional | Proposes module identity | Manual assignment, EEPROM, electrical probe |
 | Shared-resource coordinator | Optional | Coordinates a real shared resource | A switchable rail used by two Ports |
+| Update coordinator | When firmware update exists | Owns one bounded upload session and test-boot policy | UART or UDP writes one MCUboot candidate |
 
 ### Why MQTT is not a core concept
 
@@ -611,7 +612,7 @@ protocol. MQTT belongs here if the product chooses it.
 An adapter does not own modules, modify Manager internals, or define the common
 Data representation.
 
-## Planned maintenance and firmware-update boundary
+## Maintenance and firmware-update boundary
 
 Maintenance is a Core capability, not a property of a runtime Module and not a fixed
 GPIO pair in common code. A board/overlay supplies a Maintenance Link that can switch
@@ -642,10 +643,21 @@ Boot policy is distinct from image-upload state:
 - entering maintenance does not write flash. Image Management must separately ask the
   Update coordinator to receive into the secondary slot.
 
+The Update coordinator is implemented as one transport-independent state machine. It
+serializes UART and UDP ownership, applies one absolute timeout, erases only the
+secondary slot on cancellation and requests only an MCUboot test boot. The transport
+adapters and boot-mode policy remain in later roadmap phases. MCUboot, not the running
+application, performs the definitive ECDSA verification before executing a candidate.
+
+See also:
+
+- [Update coordinator](subsys/services/update/README.md)
+- [Maintenance Link contract](UPDATE_HARDWARE_CONTRACT.md)
+
 The detailed contract is in
-[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Its implementation is
-planned in roadmap phases 230–290; this section does not claim that OTA is already
-active in the production firmware.
+[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). The remaining boot policy,
+local transport, OTA and remote-console work is planned in roadmap phases 250–290;
+this section does not claim that OTA is already active in the production firmware.
 
 ## Discovery strategies
 

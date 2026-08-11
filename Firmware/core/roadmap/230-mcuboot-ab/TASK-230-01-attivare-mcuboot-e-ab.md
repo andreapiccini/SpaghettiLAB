@@ -1,6 +1,6 @@
 # TASK-230-01 — Attivare MCUboot e le immagini A/B firmate
 
-**Stato:** 🟨 IN PROGRESS
+**Stato:** ✅ DONE
 **Fase:** 230 — MCUboot e A/B
 
 ## Cosa devo fare
@@ -96,7 +96,7 @@ Non usare `erase-flash`: cancellerebbe anche Config e profili Wi-Fi nello storag
 - [x] Chiave privata e build sono ignorate da Git.
 - [x] Bootloader e app firmata rientrano nelle rispettive partizioni.
 - [x] `make flash` ricava ordine, indirizzi e file dai domini sysbuild.
-- [ ] Il provisioning USB avvia MCUboot e l'app senza perdere Config o profili Wi-Fi.
+- [x] Il provisioning USB avvia MCUboot e l'app senza perdere Config o profili Wi-Fi.
 
 ## Verifica e fine task
 

@@ -21,6 +21,7 @@ A service wraps a reusable Zephyr or platform capability behind a small product-
 |---|---|
 | `timer/` | Bounded scheduling and deferred wake-up capability. |
 | `storage/` | Versioned bounded persistence capability. |
+| `update/` | Exclusive update session, timeout and MCUboot test policy. |
 | `mqtt/` | Optional MQTT transport adapter when selected by a product. |
 | Each service header/source | Public product contract and private Zephyr integration. |
 

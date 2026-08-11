@@ -53,7 +53,7 @@ incompleta. Nessun record Config persistente può impostare direttamente `RECEIV
 7. [280 — Rendere `make monitor` multi-trasporto](280-remote-console/README.md)
 8. [290 — Qualificare interruzioni, rollback e recovery](290-update-qualification/README.md)
 
-Non iniziare un task se il precedente non è completato. Il task 220 ha fissato il
-confine hardware e il task 230 ha predisposto bootloader, firma e immagini A/B. Pin e
-controller sono proprietà della board/overlay; i servizi comuni usano soltanto il
-Maintenance Link.
+Non iniziare un task se il precedente non è completato. I task 220–240 hanno fissato
+il confine hardware, predisposto bootloader/firma A/B e implementato il coordinatore
+Update. Pin e controller sono proprietà della board/overlay; i servizi comuni usano
+soltanto il Maintenance Link.

@@ -34,6 +34,10 @@ module = SPAGHETTI_STORAGE
 module-str = spaghetti_storage
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_UPDATE
+module-str = spaghetti_update
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_DATA
 module-str = spaghetti_data
 source "subsys/logging/Kconfig.template.log_config"
@@ -168,6 +172,20 @@ config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
 	help
 	  Maximum time Config waits for an active sampling operation to finish
 	  before it refuses to replace live Modules.
+
+config SPAGHETTI_UPDATE_WORK_STACK_SIZE
+	int "Update cleanup workqueue stack size"
+	range 768 4096
+	default 1024
+	help
+	  Static stack bytes reserved for timeout cleanup of the secondary image.
+
+config SPAGHETTI_UPDATE_WORK_PRIORITY
+	int "Update cleanup workqueue priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority used by the Update-owned flash cleanup workqueue.
 
 config SPAGHETTI_MQTT_QUEUE_DEPTH
 	int "MQTT outbound publication queue depth"

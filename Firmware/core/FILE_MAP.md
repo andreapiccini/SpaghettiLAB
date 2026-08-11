@@ -102,6 +102,7 @@ flowchart TD
 | `include/spaghetti/communication.h` | Generic request/response dispatch boundary | Adding an input/output transport adapter |
 | `include/spaghetti/discovery.h` | Normalized module-discovery proposal/provider boundary | Adding manual, memory, or probe discovery |
 | `include/spaghetti/power.h` | Optional shared-resource coordination contract | Only when verified switchable/shared power hardware exists |
+| `include/spaghetti/update.h` | Exclusive update-session state, timeout and copied status contract | Arming, cancelling or finalizing firmware updates |
 
 Public headers contain contracts, not implementation state. Read the header
 before its `.c`; it tells you what the implementation is required to preserve.
@@ -138,6 +139,7 @@ its `.c` only when changing its owned behavior or diagnosing an internal defect.
 | `subsys/services/README.md` | Rules for optional replaceable services | Adding any service/backend |
 | `subsys/services/timer/README.md` | Wake-up/timing service contract | Scheduling work without placing logic in timer callbacks |
 | `subsys/services/storage/README.md` | Bounded persistence, Settings/NVS, versioning, partition example | Saving/loading configuration or state |
+| `subsys/services/update/README.md` | Transport-independent update policy and MCUboot backend boundary | Implementing update state, cleanup, timeout or test boot |
 | `subsys/services/mqtt/README.md` | Optional MQTT adapter and worker/network ownership | Product requirements explicitly choose MQTT |
 
 Services support owners; they do not own product rules or module instances.
