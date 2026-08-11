@@ -33,7 +33,8 @@ valid operations in the same way.
 
 Communication first queries the count for every Port with
 `spaghetti_module_manager_list_by_port(port_id, NULL, 0, &count)`, then copies all
-snapshots into a fixed array. The response contains Core state, Port count, Module
+snapshots into a fixed array. The response contains Core state, operational mode,
+MCUboot image state, active slot, confirmation, signed version, Port count, Module
 count and, for every Module:
 
 - stable key and runtime ID;
@@ -74,7 +75,8 @@ spaghetti wifi remove <ssid>
 spaghetti wifi connect
 ```
 
-`status` prints every Module, including multiple Modules on the same Port. `apply`
+`status` first prints the independent operational mode and image state, then every
+Module, including multiple Modules on the same Port. `apply`
 requires non-empty even-length hexadecimal text, rejects invalid characters, and
 decodes at most 256 bytes into a stack-owned request. Missing, odd, malformed, or
 oversized input never reaches dispatch.

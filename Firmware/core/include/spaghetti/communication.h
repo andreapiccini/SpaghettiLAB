@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #include <spaghetti/config.h>
+#include <spaghetti/core.h>
 
 /** Maximum request or response payload bytes retained in one envelope. */
 #define SPAGHETTI_COMM_PAYLOAD_MAX 256U
@@ -65,9 +66,14 @@ struct spaghetti_communication_module_status {
  */
 struct spaghetti_communication_status_payload {
 	uint8_t core_state; /**< Numeric @ref spaghetti_core_state value. */
+	uint8_t core_mode; /**< Numeric @ref spaghetti_core_mode value. */
+	uint8_t image_state; /**< Numeric @ref spaghetti_core_image_state value. */
+	uint8_t active_slot; /**< MCUboot slot currently executing. */
+	uint8_t image_confirmed; /**< One when the running image is permanent. */
 	uint8_t port_count; /**< Number of physical Ports reported by Core. */
 	uint8_t module_count; /**< Used elements in @ref modules. */
 	uint8_t reserved; /**< Always zero; retained for stable field alignment. */
+	char version[SPAGHETTI_CORE_VERSION_SIZE]; /**< Signed application version. */
 	struct spaghetti_communication_module_status
 		modules[SPAGHETTI_CONFIG_MAX_MODULES]; /**< Every live Module snapshot. */
 };

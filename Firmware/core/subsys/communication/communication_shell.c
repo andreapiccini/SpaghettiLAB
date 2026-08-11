@@ -48,6 +48,20 @@ static const char *wifi_state_name(enum spaghetti_wifi_profiles_state state)
 	}
 }
 
+static const char *core_mode_name(uint8_t mode)
+{
+	switch ((enum spaghetti_core_mode)mode) {
+	case SPAGHETTI_CORE_MODE_UNPROVISIONED:
+		return "unprovisioned";
+	case SPAGHETTI_CORE_MODE_NORMAL:
+		return "normal";
+	case SPAGHETTI_CORE_MODE_MAINTENANCE:
+		return "maintenance";
+	default:
+		return "unknown";
+	}
+}
+
 static int hex_nibble(char character, uint8_t *out)
 {
 	if (out == NULL) {
@@ -150,9 +164,15 @@ static int cmd_status(const struct shell *shell, size_t argc, char **argv)
 	}
 
 	memcpy(&status, response.payload, response.payload_size);
-	shell_print(shell, "correlation=%u status=0 core=%u ports=%u modules=%u",
-		    response.correlation_id, status.core_state, status.port_count,
-		    status.module_count);
+	shell_print(shell,
+		    "correlation=%u status=0 core=%u mode=%s image=%s "
+		    "slot=%u confirmed=%u version=%s ports=%u modules=%u",
+		    response.correlation_id, status.core_state,
+		    core_mode_name(status.core_mode),
+		    (status.image_state == SPAGHETTI_CORE_IMAGE_TRIAL) ?
+			    "trial" : "confirmed",
+		    status.active_slot, status.image_confirmed, status.version,
+		    status.port_count, status.module_count);
 	for (size_t module_idx = 0U; module_idx < status.module_count;
 	     ++module_idx) {
 		const struct spaghetti_communication_module_status *module =

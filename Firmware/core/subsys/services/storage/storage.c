@@ -31,6 +31,8 @@ static enum spaghetti_storage_state storage_state =
 static struct spaghetti_storage_record loaded_record;
 static bool record_present;
 static int record_load_error;
+static bool maintenance_marker_present;
+static bool maintenance_marker_corrupt;
 K_MUTEX_DEFINE(storage_lock);
 
 static bool stored_type_id_is_terminated(const char *type_id)
@@ -140,6 +142,45 @@ SETTINGS_STATIC_HANDLER_DEFINE(spaghetti_storage,
 			       SPAGHETTI_STORAGE_CONFIG_KEY,
 			       NULL, storage_settings_set, NULL, NULL);
 
+static int maintenance_settings_set(const char *name, size_t len,
+				    settings_read_cb read_cb, void *read_cb_arg)
+{
+	uint8_t marker = 0U;
+	ssize_t bytes_read;
+	int err;
+
+	if ((name == NULL) || (strcmp(name, "boot_once") != 0)) {
+		return -ENOENT;
+	}
+
+	err = k_mutex_lock(&storage_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	maintenance_marker_present = false;
+	maintenance_marker_corrupt = false;
+	if ((read_cb == NULL) || (len != sizeof(marker))) {
+		maintenance_marker_corrupt = true;
+		k_mutex_unlock(&storage_lock);
+		return 0;
+	}
+
+	bytes_read = read_cb(read_cb_arg, &marker, sizeof(marker));
+	if ((bytes_read != (ssize_t)sizeof(marker)) || (marker != 1U)) {
+		maintenance_marker_corrupt = true;
+		k_mutex_unlock(&storage_lock);
+		return 0;
+	}
+
+	maintenance_marker_present = true;
+	k_mutex_unlock(&storage_lock);
+	return 0;
+}
+
+SETTINGS_STATIC_HANDLER_DEFINE(spaghetti_maintenance,
+			       "maintenance", NULL, maintenance_settings_set,
+			       NULL, NULL);
+
 int spaghetti_storage_init(void)
 {
 	bool is_record_present;
@@ -161,12 +202,17 @@ int spaghetti_storage_init(void)
 	storage_state = SPAGHETTI_STORAGE_INITIALIZING;
 	record_present = false;
 	record_load_error = 0;
+	maintenance_marker_present = false;
+	maintenance_marker_corrupt = false;
 	memset(&loaded_record, 0, sizeof(loaded_record));
 	k_mutex_unlock(&storage_lock);
 
 	err = settings_subsys_init();
 	if (err == 0) {
 		err = settings_load_subtree(SPAGHETTI_STORAGE_CONFIG_KEY);
+	}
+	if (err == 0) {
+		err = settings_load_subtree("maintenance");
 	}
 
 	(void)k_mutex_lock(&storage_lock, K_FOREVER);
@@ -264,4 +310,72 @@ int spaghetti_storage_write_config(const struct spaghetti_config *config)
 			(uint32_t)config->module_count);
 	}
 	return err;
+}
+
+int spaghetti_storage_request_maintenance_once(void)
+{
+	const uint8_t marker = 1U;
+	int err = k_mutex_lock(&storage_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (storage_state != SPAGHETTI_STORAGE_READY) {
+		err = -EACCES;
+		goto unlock;
+	}
+
+	err = settings_save_one(SPAGHETTI_STORAGE_MAINTENANCE_BOOT_ONCE_KEY,
+				&marker, sizeof(marker));
+	if (err == 0) {
+		maintenance_marker_present = true;
+		maintenance_marker_corrupt = false;
+	}
+
+unlock:
+	k_mutex_unlock(&storage_lock);
+	return err;
+}
+
+int spaghetti_storage_consume_maintenance_once(bool *requested)
+{
+	bool marker_exists;
+	bool marker_valid;
+	int err;
+
+	if (requested == NULL) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&storage_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (storage_state != SPAGHETTI_STORAGE_READY) {
+		k_mutex_unlock(&storage_lock);
+		return -EACCES;
+	}
+
+	marker_exists = maintenance_marker_present ||
+			maintenance_marker_corrupt;
+	marker_valid = maintenance_marker_present &&
+		       !maintenance_marker_corrupt;
+	if (!marker_exists) {
+		k_mutex_unlock(&storage_lock);
+		*requested = false;
+		return 0;
+	}
+
+	err = settings_delete(SPAGHETTI_STORAGE_MAINTENANCE_BOOT_ONCE_KEY);
+	if (err == 0) {
+		maintenance_marker_present = false;
+		maintenance_marker_corrupt = false;
+	}
+	k_mutex_unlock(&storage_lock);
+	if (err < 0) {
+		return err;
+	}
+
+	*requested = marker_valid;
+	return 0;
 }

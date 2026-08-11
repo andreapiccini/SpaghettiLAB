@@ -100,7 +100,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [220 — Contratto Maintenance Link](220-update-hardware-contract/README.md) | Board/overlay scelgono pin e controller; il firmware comune usa un'API astratta. |
 | ✅ | [230 — MCUboot e A/B](230-mcuboot-ab/README.md) | Bootloader e applicazione firmata usano gli slot primario e secondario. |
 | ✅ | [240 — Coordinatore update](240-update-coordinator/README.md) | Timeout e cancel scartano il candidato senza toccare il firmware attivo. |
-| ⬜ | [250 — Boot sicuro](250-safe-boot-mode/README.md) | Boot senza Config entra in maintenance locale; un'immagine trial è confermata solo se sana. |
+| ✅ | [250 — Boot sicuro](250-safe-boot-mode/README.md) | Boot senza Config resta sicuro; modalità operativa e trial sono visibili e indipendenti. |
 | ⬜ | [260 — Manutenzione locale UART](260-local-maintenance-uart/README.md) | La base configura e aggiorna il Core usando i pin condivisi in una finestra sicura. |
 | ⬜ | [270 — OTA Wi-Fi](270-wifi-ota/README.md) | Un peer autenticato carica una signed image durante una finestra esplicita. |
 | ⬜ | [280 — Console remota](280-remote-console/README.md) | `make monitor` usa USB o un canale di rete autenticato. |
@@ -108,12 +108,12 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 
 ## Da dove iniziare
 
-Le fasi fino alla 200 sono complete. Prima dell'estensione OTA apri ora
-[TASK-210-01 — Ripulire e qualificare il firmware completo](210-finalizzazione/TASK-210-01-ripulire-e-qualificare-il-firmware.md).
+Il piano OTA è descritto in
+[Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Le fasi 220–250 sono
+complete. Apri ora
+[TASK-260-01 — Aggiungere provisioning e update UART dalla base](260-local-maintenance-uart/TASK-260-01-aggiungere-la-manutenzione-uart.md),
+che collegherà la policy di boot già pronta al pinmux e al trasporto UART reale.
 
-Il piano successivo è descritto in
-[Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Dopo la fase 210, il
-I task OTA 220–240 sono completi. Il prossimo passo è
-[TASK-250-01 — Definire il boot sicuro](250-safe-boot-mode/TASK-250-01-definire-il-boot-sicuro.md),
-che renderà espliciti `UNPROVISIONED`, `NORMAL` e `TRIAL` e confermerà un'immagine solo
-dopo i controlli di salute.
+La [fase 210](210-finalizzazione/README.md) resta aperta come qualificazione finale e
+va chiusa dopo le estensioni OTA, quando tutte le scorciatoie temporanee possono essere
+rimosse insieme.

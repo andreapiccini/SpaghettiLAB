@@ -7,8 +7,8 @@ successo. Gli altri componenti non vedono Settings, NVS, offset flash o record f
 
 ## Responsabilità
 
-Storage possiede una copia RAM del record caricato, il suo envelope con magic/versione
-e lo stato del backend. Non valida il significato hardware della Config e non salva
+Storage possiede una copia RAM del record caricato, il suo envelope con magic/versione,
+il marker maintenance one-shot e lo stato del backend. Non valida il significato hardware della Config e non salva
 Module ID runtime, puntatori, context dei driver, misure o segreti. Le credenziali
 Wi-Fi appartengono invece al servizio separato
 [Wi-Fi Profiles](../wifi_profiles/README.md), che usa record PSA ITS autenticati e
@@ -29,6 +29,8 @@ cifrati sulla stessa infrastruttura Settings/NVS.
 int spaghetti_storage_init(void);
 int spaghetti_storage_read_config(struct spaghetti_config *out);
 int spaghetti_storage_write_config(const struct spaghetti_config *config);
+int spaghetti_storage_request_maintenance_once(void);
+int spaghetti_storage_consume_maintenance_once(bool *requested);
 ```
 
 `spaghetti_storage_init()` inizializza Settings/NVS e carica la chiave `config`.
@@ -42,6 +44,13 @@ accede nuovamente alla flash. L'output resta invariato in caso di errore.
 `spaghetti_storage_write_config()` costruisce un record completamente azzerato, copia
 solo campi e byte usati e chiama `settings_save_one()` in modo sincrono. Aggiorna la
 copia RAM soltanto dopo il successo del backend.
+
+`spaghetti_storage_request_maintenance_once()` salva il byte separato
+`maintenance/boot_once`; non modifica la Config. Un futuro adapter autenticato lo usa
+prima del reboot. Core chiama `spaghetti_storage_consume_maintenance_once()` una sola
+volta durante il boot. Storage elimina il record prima di restituire `requested=true`,
+così crash e reset non possono creare un boot loop. Un valore malformato viene
+eliminato e trattato come richiesta assente.
 
 ## Record e flusso
 

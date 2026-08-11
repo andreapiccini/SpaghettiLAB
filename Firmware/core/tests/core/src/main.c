@@ -3,23 +3,25 @@
 #include <stdint.h>
 
 #include <zephyr/ztest.h>
+#include <zephyr/sys/util.h>
 
 #include <spaghetti/config.h>
 #include <spaghetti/core.h>
 #include <spaghetti/discovery.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/update.h>
 
 enum init_step {
+	STEP_STORAGE,
+	STEP_UPDATE,
 	STEP_PORT,
 	STEP_REGISTRY,
 	STEP_MANAGER,
 	STEP_DATA,
+	STEP_CONFIG,
 	STEP_RUNTIME,
 	STEP_MQTT,
-	STEP_STORAGE,
-	STEP_UPDATE,
 	STEP_DISCOVERY,
-	STEP_CONFIG,
 	STEP_WIFI,
 	STEP_COMMUNICATION,
 };
@@ -27,6 +29,7 @@ enum init_step {
 static enum init_step steps[16];
 static size_t step_count;
 static struct spaghetti_config initialized_defaults;
+static int trial_confirm_count;
 
 static int record_step(enum init_step step)
 {
@@ -80,11 +83,52 @@ int spaghetti_update_init(void)
 int spaghetti_storage_read_config(struct spaghetti_config *out)
 {
 	zassert_not_null(out);
+	if (IS_ENABLED(CONFIG_SPAGHETTI_TEST_CONFIG_ABSENT)) {
+		return -ENOENT;
+	}
 	*out = (struct spaghetti_config) {
 		.version = SPAGHETTI_CONFIG_VERSION,
 		.module_count = 1U,
 	};
 	return 0;
+}
+
+int spaghetti_storage_consume_maintenance_once(bool *requested)
+{
+	zassert_not_null(requested);
+	*requested = IS_ENABLED(CONFIG_SPAGHETTI_TEST_MAINTENANCE_MARKER);
+	return 0;
+}
+
+int spaghetti_update_get_status(struct spaghetti_update_status *out)
+{
+	zassert_not_null(out);
+	*out = (struct spaghetti_update_status) {
+		.state = IS_ENABLED(CONFIG_SPAGHETTI_TEST_TRIAL_IMAGE) ?
+			SPAGHETTI_UPDATE_TRIAL_BOOT : SPAGHETTI_UPDATE_IDLE,
+		.active_slot = IS_ENABLED(CONFIG_SPAGHETTI_TEST_TRIAL_IMAGE) ? 1U : 0U,
+		.image_confirmed = !IS_ENABLED(CONFIG_SPAGHETTI_TEST_TRIAL_IMAGE),
+	};
+	return 0;
+}
+
+int spaghetti_update_confirm_trial(void)
+{
+	++trial_confirm_count;
+	return 0;
+}
+
+int spaghetti_core_bootstrap_probe(uint32_t timeout_ms, bool *requested)
+{
+	zassert_true(timeout_ms > 0U);
+	zassert_not_null(requested);
+	*requested = IS_ENABLED(CONFIG_SPAGHETTI_TEST_BOOTSTRAP_REQUEST);
+	return 0;
+}
+
+void spaghetti_core_boot_reboot(void)
+{
+	ztest_test_fail();
 }
 
 int spaghetti_discovery_init(spaghetti_discovery_sink_t sink, void *user_data)
@@ -167,14 +211,46 @@ int spaghetti_module_manager_remove(spaghetti_module_id_t id,
 
 ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 {
+	const bool maintenance =
+		IS_ENABLED(CONFIG_SPAGHETTI_TEST_MAINTENANCE_MARKER) ||
+		IS_ENABLED(CONFIG_SPAGHETTI_TEST_BOOTSTRAP_REQUEST);
+	const bool normal = !IS_ENABLED(CONFIG_SPAGHETTI_TEST_CONFIG_ABSENT) &&
+			    !maintenance;
+	struct spaghetti_core_info info;
+
 	zassert_equal(spaghetti_core_get_state(), SPAGHETTI_CORE_UNINITIALIZED);
+	zassert_equal(spaghetti_core_get_info(&info), -EAGAIN);
+	zassert_equal(spaghetti_core_get_info(NULL), -EINVAL);
 	zassert_equal(spaghetti_core_start(), -EACCES);
 	zassert_ok(spaghetti_core_init());
 	zassert_equal(spaghetti_core_get_state(), SPAGHETTI_CORE_READY);
+	zassert_ok(spaghetti_core_get_info(&info));
+	zassert_equal(info.state, SPAGHETTI_CORE_READY);
+	zassert_equal(info.mode,
+		IS_ENABLED(CONFIG_SPAGHETTI_TEST_CONFIG_ABSENT) ?
+			SPAGHETTI_CORE_MODE_UNPROVISIONED :
+			maintenance ? SPAGHETTI_CORE_MODE_MAINTENANCE :
+				      SPAGHETTI_CORE_MODE_NORMAL);
+	zassert_equal(info.image_state,
+		IS_ENABLED(CONFIG_SPAGHETTI_TEST_TRIAL_IMAGE) ?
+			SPAGHETTI_CORE_IMAGE_TRIAL :
+			SPAGHETTI_CORE_IMAGE_CONFIRMED);
+	zassert_equal(strcmp(info.version, "1.2.3+4"), 0);
 	zassert_equal(spaghetti_core_init(), -EALREADY);
-	zassert_equal(step_count, 12U);
-	for (size_t step_idx = 0U; step_idx < step_count; ++step_idx) {
-		zassert_equal(steps[step_idx], (enum init_step)step_idx);
+	zassert_equal(step_count, normal ? 12U : 8U);
+	zassert_equal(steps[0], STEP_STORAGE);
+	zassert_equal(steps[1], STEP_UPDATE);
+	zassert_equal(steps[2], STEP_PORT);
+	zassert_equal(steps[3], STEP_REGISTRY);
+	zassert_equal(steps[4], STEP_MANAGER);
+	zassert_equal(steps[5], STEP_DATA);
+	zassert_equal(steps[6], STEP_CONFIG);
+	zassert_equal(steps[step_count - 1U], STEP_COMMUNICATION);
+	if (normal) {
+		zassert_equal(steps[7], STEP_RUNTIME);
+		zassert_equal(steps[8], STEP_MQTT);
+		zassert_equal(steps[9], STEP_DISCOVERY);
+		zassert_equal(steps[10], STEP_WIFI);
 	}
 	zassert_equal(initialized_defaults.version, SPAGHETTI_CONFIG_VERSION);
 	zassert_equal(initialized_defaults.module_count, 0U);
@@ -183,6 +259,11 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 
 	zassert_ok(spaghetti_core_start());
 	zassert_equal(spaghetti_core_get_state(), SPAGHETTI_CORE_RUNNING);
+	zassert_ok(spaghetti_core_get_info(&info));
+	zassert_equal(info.state, SPAGHETTI_CORE_RUNNING);
+	zassert_equal(trial_confirm_count,
+		IS_ENABLED(CONFIG_SPAGHETTI_TEST_TRIAL_IMAGE) ? 1 : 0);
+	zassert_true(info.image_confirmed);
 	zassert_equal(spaghetti_core_start(), -EACCES);
 }
 

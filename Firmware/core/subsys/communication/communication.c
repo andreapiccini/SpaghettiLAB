@@ -74,19 +74,30 @@ static int collect_module_snapshots(
 
 static int build_status_payload(struct spaghetti_response *response)
 {
+	struct spaghetti_core_info core_info;
 	struct spaghetti_module_snapshot
 		snapshots[SPAGHETTI_CONFIG_MAX_MODULES];
 	struct spaghetti_communication_status_payload status = {0};
 	size_t module_count;
-	int err = collect_module_snapshots(snapshots, &module_count);
+	int err = spaghetti_core_get_info(&core_info);
+
+	if (err < 0) {
+		return err;
+	}
+	err = collect_module_snapshots(snapshots, &module_count);
 
 	if (err < 0) {
 		return err;
 	}
 
-	status.core_state = (uint8_t)spaghetti_core_get_state();
+	status.core_state = (uint8_t)core_info.state;
+	status.core_mode = (uint8_t)core_info.mode;
+	status.image_state = (uint8_t)core_info.image_state;
+	status.active_slot = core_info.active_slot;
+	status.image_confirmed = core_info.image_confirmed ? 1U : 0U;
 	status.port_count = (uint8_t)spaghetti_port_count();
 	status.module_count = (uint8_t)module_count;
+	memcpy(status.version, core_info.version, sizeof(status.version));
 	for (size_t module_idx = 0U; module_idx < module_count; ++module_idx) {
 		const struct spaghetti_module_snapshot *snapshot =
 			&snapshots[module_idx];

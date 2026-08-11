@@ -31,6 +31,7 @@ target_sources(app PRIVATE
   spaghetti_modules/ina219/ina219.c
   spaghetti_modules/relay/relay.c
   subsys/core/core.c
+  subsys/core/core_boot_backend.c
   subsys/port/port.c
   subsys/driver_registry/driver_registry.c
   subsys/module_manager/module_manager.c

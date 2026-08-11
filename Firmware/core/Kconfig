@@ -187,6 +187,20 @@ config SPAGHETTI_UPDATE_WORK_PRIORITY
 	help
 	  Preemptive priority used by the Update-owned flash cleanup workqueue.
 
+config SPAGHETTI_BOOTSTRAP_PROBE_MS
+	int "Receive-only maintenance bootstrap window in milliseconds"
+	range 10 5000
+	default 500
+	help
+	  Maximum boot-time receive-only probe used when a valid Config exists.
+
+config SPAGHETTI_TRIAL_HEALTH_MS
+	int "Trial image health window in milliseconds"
+	range 100 60000
+	default 5000
+	help
+	  Stable RUNNING time required before Core confirms a trial image.
+
 config SPAGHETTI_MQTT_QUEUE_DEPTH
 	int "MQTT outbound publication queue depth"
 	range 1 16

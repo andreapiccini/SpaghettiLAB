@@ -13,12 +13,17 @@
 
 extern const struct settings_handler_static
 	settings_handler_spaghetti_storage;
+extern const struct settings_handler_static
+	settings_handler_spaghetti_maintenance;
 
 static uint8_t persistent_bytes[SPAGHETTI_TEST_SETTINGS_CAPACITY];
 static size_t persistent_size;
 static bool persistent_present;
 static int fake_read_error;
 static int fake_save_error;
+static int fake_delete_error;
+static uint8_t maintenance_marker;
+static bool maintenance_marker_present;
 
 static ssize_t fake_settings_read(void *cb_arg, void *data, size_t len)
 {
@@ -42,6 +47,17 @@ int spaghetti_test_settings_subsys_init(void)
 
 int spaghetti_test_settings_load_subtree(const char *subtree)
 {
+	if (strcmp(subtree, "maintenance") == 0) {
+		if (!maintenance_marker_present) {
+			return 0;
+		}
+
+		const size_t marker_size = sizeof(maintenance_marker);
+
+		return settings_handler_spaghetti_maintenance.h_set(
+			"boot_once", marker_size, fake_settings_read,
+			(void *)&marker_size);
+	}
 	if (strcmp(subtree, SPAGHETTI_STORAGE_CONFIG_KEY) != 0) {
 		return -ENOENT;
 	}
@@ -59,6 +75,14 @@ int spaghetti_test_settings_save_one(const char *name, const void *value,
 	if (fake_save_error < 0) {
 		return fake_save_error;
 	}
+	if (strcmp(name, SPAGHETTI_STORAGE_MAINTENANCE_BOOT_ONCE_KEY) == 0) {
+		if ((value == NULL) || (val_len != sizeof(maintenance_marker))) {
+			return -EINVAL;
+		}
+		memcpy(&maintenance_marker, value, sizeof(maintenance_marker));
+		maintenance_marker_present = true;
+		return 0;
+	}
 	if ((strcmp(name, SPAGHETTI_STORAGE_CONFIG_KEY) != 0) ||
 	    (value == NULL) || (val_len > sizeof(persistent_bytes))) {
 		return -EINVAL;
@@ -67,6 +91,20 @@ int spaghetti_test_settings_save_one(const char *name, const void *value,
 	memcpy(persistent_bytes, value, val_len);
 	persistent_size = val_len;
 	persistent_present = true;
+	return 0;
+}
+
+int spaghetti_test_settings_delete(const char *name)
+{
+	if (fake_delete_error < 0) {
+		return fake_delete_error;
+	}
+	if (strcmp(name, SPAGHETTI_STORAGE_MAINTENANCE_BOOT_ONCE_KEY) != 0) {
+		return -ENOENT;
+	}
+
+	maintenance_marker_present = false;
+	maintenance_marker = 0U;
 	return 0;
 }
 
@@ -120,6 +158,7 @@ static int reload_fake_backend(void)
 
 ZTEST(storage, test_absent_round_trip_corruption_and_backend_errors)
 {
+	bool maintenance_requested = true;
 	uint8_t valid_record[SPAGHETTI_TEST_SETTINGS_CAPACITY];
 	struct spaghetti_config unchanged = {
 		.version = 99U,
@@ -130,10 +169,36 @@ ZTEST(storage, test_absent_round_trip_corruption_and_backend_errors)
 
 	zassert_equal(spaghetti_storage_read_config(&output), -EACCES);
 	zassert_equal(spaghetti_storage_write_config(&config), -EACCES);
+	zassert_equal(spaghetti_storage_request_maintenance_once(), -EACCES);
+	zassert_equal(spaghetti_storage_consume_maintenance_once(
+		&maintenance_requested), -EACCES);
+	zassert_equal(spaghetti_storage_consume_maintenance_once(NULL), -EINVAL);
 	zassert_ok(spaghetti_storage_init());
 	zassert_equal(spaghetti_storage_init(), -EALREADY);
 	zassert_equal(spaghetti_storage_read_config(&output), -ENOENT);
 	zassert_mem_equal(&output, &unchanged, sizeof(output));
+	zassert_ok(spaghetti_storage_consume_maintenance_once(
+		&maintenance_requested));
+	zassert_false(maintenance_requested);
+	zassert_ok(spaghetti_storage_request_maintenance_once());
+	zassert_true(maintenance_marker_present);
+	zassert_ok(spaghetti_storage_consume_maintenance_once(
+		&maintenance_requested));
+	zassert_true(maintenance_requested);
+	zassert_false(maintenance_marker_present);
+	zassert_ok(spaghetti_storage_consume_maintenance_once(
+		&maintenance_requested));
+	zassert_false(maintenance_requested);
+
+	zassert_ok(spaghetti_storage_request_maintenance_once());
+	fake_delete_error = -EIO;
+	zassert_equal(spaghetti_storage_consume_maintenance_once(
+		&maintenance_requested), -EIO);
+	zassert_true(maintenance_marker_present);
+	fake_delete_error = 0;
+	zassert_ok(spaghetti_storage_consume_maintenance_once(
+		&maintenance_requested));
+	zassert_true(maintenance_requested);
 
 	zassert_ok(spaghetti_storage_write_config(&config));
 	zassert_true(persistent_present);

@@ -7,10 +7,15 @@
 #ifndef SPAGHETTI_STORAGE_H
 #define SPAGHETTI_STORAGE_H
 
+#include <stdbool.h>
+
 #include <spaghetti/config.h>
 
 /** Settings key that contains the single versioned Config record. */
 #define SPAGHETTI_STORAGE_CONFIG_KEY "config"
+
+/** One-shot Settings key consumed before entering requested maintenance. */
+#define SPAGHETTI_STORAGE_MAINTENANCE_BOOT_ONCE_KEY "maintenance/boot_once"
 
 /**
  * @brief Initialize persistent Storage and load its Config record.
@@ -69,5 +74,38 @@ int spaghetti_storage_read_config(struct spaghetti_config *out);
  * @note Call from thread context. This function performs synchronous flash I/O.
  */
 int spaghetti_storage_write_config(const struct spaghetti_config *config);
+
+/**
+ * @brief Persist one authenticated request to enter maintenance after reboot.
+ *
+ * @retval 0 The one-shot marker was durably stored.
+ * @retval -EACCES Storage is not initialized.
+ * @retval -ENOSPC Persistent storage has no capacity.
+ * @retval -EIO The Settings backend rejected the write.
+ * @retval -errno The selected Settings backend rejected the operation.
+ *
+ * @note Future authenticated adapters call this before requesting reboot. The
+ *       marker is not user Config and contains no credentials.
+ */
+int spaghetti_storage_request_maintenance_once(void);
+
+/**
+ * @brief Atomically consume the one-shot maintenance marker.
+ *
+ * Missing or malformed marker data is reported as @c false and removed, so it
+ * can never create a persistent boot loop.
+ *
+ * @param[out] requested Caller-owned boolean written only after a successful
+ *                       Settings read/delete operation.
+ *
+ * @retval 0 @p requested says whether a valid marker was consumed.
+ * @retval -EINVAL @p requested is NULL.
+ * @retval -EACCES Storage is not initialized.
+ * @retval -EIO The Settings backend could not delete the consumed marker.
+ * @retval -errno The selected Settings backend rejected deletion.
+ *
+ * @note Call once from the Core boot thread before selecting its mode.
+ */
+int spaghetti_storage_consume_maintenance_once(bool *requested);
 
 #endif /* SPAGHETTI_STORAGE_H */

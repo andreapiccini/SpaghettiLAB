@@ -632,7 +632,7 @@ UART RX/TX on the same pins during maintenance. Those numbers remain board facts
 future Core may use different pins or controllers while preserving the same operations:
 initialize, probe for a bounded boot request, enter maintenance and leave maintenance.
 
-Boot policy is distinct from image-upload state:
+Boot policy is distinct from image-upload and image-permanence state:
 
 - no valid Config enters local maintenance directly, while Wi-Fi and network OTA stay
   disabled;
@@ -643,11 +643,41 @@ Boot policy is distinct from image-upload state:
 - entering maintenance does not write flash. Image Management must separately ask the
   Update coordinator to receive into the secondary slot.
 
+Core represents this with two independent values. The operational mode is
+`UNPROVISIONED`, `NORMAL` or `MAINTENANCE`; the image state is `TRIAL` or `CONFIRMED`.
+Consequently `NORMAL + TRIAL` is valid while a newly installed image runs its bounded
+health window. Only Core confirms it, after reaching RUNNING. A reset before that point
+leaves MCUboot free to restore the previous image.
+
+```mermaid
+sequenceDiagram
+    participant MCUboot
+    participant Core
+    participant Storage
+    participant Engine
+    participant Communication
+    MCUboot->>Core: start signed image (trial or confirmed)
+    Core->>Storage: load Config and consume maintenance marker
+    Core->>Core: select operational mode
+    alt NORMAL
+        Core->>Engine: initialize and apply valid Config
+    else UNPROVISIONED or MAINTENANCE
+        Core->>Core: keep Runtime and network services stopped
+    end
+    Core->>Communication: expose mode, image, slot and version
+    Core->>Core: reach RUNNING and survive health window
+    opt trial image
+        Core->>MCUboot: confirm running image
+    end
+```
+
 The Update coordinator is implemented as one transport-independent state machine. It
 serializes UART and UDP ownership, applies one absolute timeout, erases only the
 secondary slot on cancellation and requests only an MCUboot test boot. The transport
-adapters and boot-mode policy remain in later roadmap phases. MCUboot, not the running
-application, performs the definitive ECDSA verification before executing a candidate.
+adapters remain in later roadmap phases. The boot-mode policy and trial confirmation
+are implemented; the production bootstrap backend stays inactive until the shared-pin
+UART adapter is added in phase 260. MCUboot, not the running application, performs the
+definitive ECDSA verification before executing a candidate.
 
 See also:
 
@@ -655,9 +685,9 @@ See also:
 - [Maintenance Link contract](UPDATE_HARDWARE_CONTRACT.md)
 
 The detailed contract is in
-[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). The remaining boot policy,
-local transport, OTA and remote-console work is planned in roadmap phases 250–290;
-this section does not claim that OTA is already active in the production firmware.
+[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Local transport, OTA,
+remote console and qualification remain in roadmap phases 260–290; this section does
+not claim that firmware reception is already active in the production firmware.
 
 ## Discovery strategies
 

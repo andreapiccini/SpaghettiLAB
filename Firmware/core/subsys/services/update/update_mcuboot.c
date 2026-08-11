@@ -34,6 +34,25 @@ int spaghetti_update_backend_is_trial(bool *trial)
 	return 0;
 }
 
+int spaghetti_update_backend_active_slot(uint8_t *slot)
+{
+	const uint8_t active_area = boot_fetch_active_slot();
+
+	if (slot == NULL) {
+		return -EINVAL;
+	}
+	if (active_area == DT_FIXED_PARTITION_ID(DT_NODELABEL(slot0_partition))) {
+		*slot = 0U;
+		return 0;
+	}
+	if (active_area == DT_FIXED_PARTITION_ID(DT_NODELABEL(slot1_partition))) {
+		*slot = 1U;
+		return 0;
+	}
+
+	return -EIO;
+}
+
 int spaghetti_update_backend_prepare(void)
 {
 	const int swap_type = mcuboot_swap_type();
@@ -70,6 +89,13 @@ int spaghetti_update_backend_finalize_test(void)
 int spaghetti_update_backend_cancel(void)
 {
 	const int err = erase_secondary_slot();
+
+	return err;
+}
+
+int spaghetti_update_backend_confirm(void)
+{
+	const int err = boot_write_img_confirmed();
 
 	return err;
 }

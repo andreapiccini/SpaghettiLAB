@@ -9,8 +9,8 @@
 - La flash ESP32-C3 da 4 MiB è già divisa in `image-0` e `image-1`, entrambe da
   1792 KiB, più `image-scratch`: la base fisica per un aggiornamento A/B esiste.
 - Sysbuild costruisce MCUboot e l'applicazione firmata ECDSA P-256. MCUboot usa lo
-  swap tramite move, quindi il rollback è disponibile; la conferma applicativa del
-  boot di prova verrà aggiunta nella fase 250.
+  swap tramite move, quindi il rollback è disponibile; la fase 250 ha aggiunto la
+  conferma applicativa dopo una health window.
 - Zephyr 4.4 include Image Management di `mcumgr`, trasporto SMP UART e trasporto SMP
   UDP. Non include un trasporto SMP I2C.
 - Il driver `i2c_esp32.c` installato espone controller/initiator, ma non le callback
@@ -24,18 +24,19 @@
 
 ## Comportamento finale richiesto
 
-Il firmware parte sempre in uno di questi stati:
+La modalità operativa del firmware è sempre una fra:
 
 1. `UNPROVISIONED`: Config assente; il Core entra direttamente in maintenance UART
    locale. Niente Runtime, MQTT, scansione Wi-Fi automatica o listener OTA di rete.
 2. `NORMAL`: Config valida; Engine e Module usano normalmente le Port. I trasporti di
    aggiornamento sono chiusi.
-3. `MAINTENANCE_ARMED`: stato esplicitamente richiesto e limitato nel tempo. Runtime e
-   Module vengono fermati prima di cambiare funzione ai pin.
-4. `RECEIVING`: l'immagine viene scritta esclusivamente in `image-1`; `image-0` resta
-   avviabile.
-5. `TRIAL_BOOT`: MCUboot avvia una sola volta la nuova immagine. Il firmware la conferma
-   soltanto dopo i controlli di salute; un reset prima della conferma provoca rollback.
+3. `MAINTENANCE`: modalità richiesta da marker one-shot o probe valido; Runtime e rete
+   restano spenti. La fase 260 collegherà questa policy al pinmux UART reale.
+
+La macchina Update può separatamente essere `ARMED` o `RECEIVING`. Lo stato immagine
+può essere `TRIAL` in qualunque modalità operativa: MCUboot avvia il candidato e Core lo
+conferma soltanto dopo i controlli di salute. Un reset precedente lascia possibile il
+rollback. Nessuno di questi stati viene salvato nella Config.
 
 Un trasferimento interrotto non marca mai l'immagine come pending. Alla scadenza il
 coordinatore chiude il trasporto, azzera lo stato di upload ed elimina la secondaria
@@ -53,7 +54,7 @@ incompleta. Nessun record Config persistente può impostare direttamente `RECEIV
 7. [280 — Rendere `make monitor` multi-trasporto](280-remote-console/README.md)
 8. [290 — Qualificare interruzioni, rollback e recovery](290-update-qualification/README.md)
 
-Non iniziare un task se il precedente non è completato. I task 220–240 hanno fissato
-il confine hardware, predisposto bootloader/firma A/B e implementato il coordinatore
-Update. Pin e controller sono proprietà della board/overlay; i servizi comuni usano
-soltanto il Maintenance Link.
+Non iniziare un task se il precedente non è completato. I task 220–250 hanno fissato
+il confine hardware, predisposto bootloader/firma A/B, implementato il coordinatore
+Update e la policy di boot sicuro. Pin e controller restano proprietà della
+board/overlay; il task 260 implementa il Maintenance Link reale.

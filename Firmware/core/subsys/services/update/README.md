@@ -23,8 +23,9 @@ IDLE -> ARMED -> RECEIVING -> VERIFYING -> PENDING_REBOOT
 ```
 
 `TRIAL_BOOT` means the currently running MCUboot image is not confirmed. The
-coordinator refuses a second update in that state. Task 250 owns health checks and
-confirmation. `ERROR` retains the last backend errno; `cancel()` retries cleanup and
+coordinator refuses a second update in that state. Core owns the bounded health window
+and is the only caller of `spaghetti_update_confirm_trial()`. `ERROR` retains the last
+backend errno; `cancel()` retries cleanup and
 returns to `IDLE` only after the secondary slot was erased successfully.
 
 ## Zephyr and MCUboot boundary
@@ -57,3 +58,9 @@ parser on cancel, and never log firmware bytes, credentials or URLs.
 
 All public calls are thread-context operations. Flash erase and finalization may block;
 no API is callable from ISR context.
+
+Status also reports the active MCUboot slot and whether the running image is confirmed.
+The backend obtains the active flash-area ID with `boot_fetch_active_slot()` and maps
+the Devicetree `slot0_partition` and `slot1_partition` nodes to public slot numbers zero
+and one. After a healthy trial, confirmation calls `boot_write_img_confirmed()`; this
+operation is never exposed to a transport or Shell command.

@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -21,6 +22,8 @@
 #include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
 
+#include "core_boot_internal.h"
+
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
 
 static const struct spaghetti_config empty_config = {
@@ -34,8 +37,13 @@ static const struct spaghetti_config empty_config = {
 
 static struct spaghetti_config startup_config;
 static bool startup_config_present;
+static bool core_info_available;
+static struct spaghetti_core_info core_info;
 static atomic_t core_state = ATOMIC_INIT(SPAGHETTI_CORE_UNINITIALIZED);
 K_MUTEX_DEFINE(core_lock);
+
+BUILD_ASSERT(sizeof(CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION) <=
+	     SPAGHETTI_CORE_VERSION_SIZE);
 
 static int fail_initialization(const char *component, int err)
 {
@@ -119,9 +127,58 @@ static int retain_startup_config(void)
 	return 0;
 }
 
+static int select_boot_mode(const struct spaghetti_update_status *update_status)
+{
+	bool maintenance_requested;
+	int err = spaghetti_storage_consume_maintenance_once(
+		&maintenance_requested);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!startup_config_present) {
+		core_info.mode = SPAGHETTI_CORE_MODE_UNPROVISIONED;
+	} else if (maintenance_requested) {
+		core_info.mode = SPAGHETTI_CORE_MODE_MAINTENANCE;
+	} else {
+		err = spaghetti_core_bootstrap_probe(
+			CONFIG_SPAGHETTI_BOOTSTRAP_PROBE_MS,
+			&maintenance_requested);
+		if (err < 0) {
+			return err;
+		}
+		core_info.mode = maintenance_requested ?
+			SPAGHETTI_CORE_MODE_MAINTENANCE :
+			SPAGHETTI_CORE_MODE_NORMAL;
+	}
+
+	core_info.image_state = update_status->image_confirmed ?
+		SPAGHETTI_CORE_IMAGE_CONFIRMED : SPAGHETTI_CORE_IMAGE_TRIAL;
+	core_info.active_slot = update_status->active_slot;
+	core_info.image_confirmed = update_status->image_confirmed;
+	memcpy(core_info.version, CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION,
+	       sizeof(CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION));
+	return 0;
+}
+
+static const char *core_mode_name(enum spaghetti_core_mode mode)
+{
+	switch (mode) {
+	case SPAGHETTI_CORE_MODE_UNPROVISIONED:
+		return "unprovisioned";
+	case SPAGHETTI_CORE_MODE_NORMAL:
+		return "normal";
+	case SPAGHETTI_CORE_MODE_MAINTENANCE:
+		return "maintenance";
+	default:
+		return "unknown";
+	}
+}
+
 int spaghetti_core_init(void)
 {
 	const struct spaghetti_mqtt_config mqtt_disabled = {0};
+	struct spaghetti_update_status update_status;
 	int err = k_mutex_lock(&core_lock, K_FOREVER);
 
 	if (err < 0) {
@@ -132,7 +189,20 @@ int spaghetti_core_init(void)
 		return -EALREADY;
 	}
 	atomic_set(&core_state, SPAGHETTI_CORE_INITIALIZING);
+	core_info_available = false;
 
+	err = spaghetti_storage_init();
+	if (err < 0) {
+		goto storage_failed;
+	}
+	err = spaghetti_update_init();
+	if (err < 0) {
+		goto update_failed;
+	}
+	err = spaghetti_update_get_status(&update_status);
+	if (err < 0) {
+		goto update_status_failed;
+	}
 	err = spaghetti_port_init_all();
 	if (err < 0) {
 		goto port_failed;
@@ -155,26 +225,6 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto data_failed;
 	}
-	err = spaghetti_runtime_init();
-	if (err < 0) {
-		goto runtime_failed;
-	}
-	err = spaghetti_mqtt_init(&mqtt_disabled);
-	if (err < 0) {
-		goto mqtt_failed;
-	}
-	err = spaghetti_storage_init();
-	if (err < 0) {
-		goto storage_failed;
-	}
-	err = spaghetti_update_init();
-	if (err < 0) {
-		goto update_failed;
-	}
-	err = spaghetti_discovery_init(discovery_event_sink, NULL);
-	if (err < 0) {
-		goto discovery_failed;
-	}
 	err = spaghetti_config_init(&empty_config);
 	if (err < 0) {
 		goto config_failed;
@@ -183,9 +233,28 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto startup_config_failed;
 	}
-	err = spaghetti_wifi_profiles_init();
+	err = select_boot_mode(&update_status);
 	if (err < 0) {
-		goto wifi_failed;
+		goto boot_mode_failed;
+	}
+
+	if (core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) {
+		err = spaghetti_runtime_init();
+		if (err < 0) {
+			goto runtime_failed;
+		}
+		err = spaghetti_mqtt_init(&mqtt_disabled);
+		if (err < 0) {
+			goto mqtt_failed;
+		}
+		err = spaghetti_discovery_init(discovery_event_sink, NULL);
+		if (err < 0) {
+			goto discovery_failed;
+		}
+		err = spaghetti_wifi_profiles_init();
+		if (err < 0) {
+			goto wifi_failed;
+		}
 	}
 	err = spaghetti_communication_init();
 	if (err < 0) {
@@ -193,7 +262,15 @@ int spaghetti_core_init(void)
 	}
 
 	atomic_set(&core_state, SPAGHETTI_CORE_READY);
+	core_info.state = SPAGHETTI_CORE_READY;
+	core_info_available = true;
 	k_mutex_unlock(&core_lock);
+	LOG_INF("boot: mode=%s image=%s slot=%u confirmed=%u version=%s",
+		core_mode_name(core_info.mode),
+		(core_info.image_state == SPAGHETTI_CORE_IMAGE_TRIAL) ?
+			"trial" : "confirmed",
+		(uint32_t)core_info.active_slot,
+		core_info.image_confirmed ? 1U : 0U, core_info.version);
 	LOG_INF("Spaghetti Core ready");
 	return 0;
 
@@ -206,6 +283,9 @@ wifi_failed:
 startup_config_failed:
 	(void)fail_initialization("startup Config", err);
 	goto unlock;
+boot_mode_failed:
+	(void)fail_initialization("boot mode", err);
+	goto unlock;
 config_failed:
 	(void)fail_initialization("Config", err);
 	goto unlock;
@@ -214,6 +294,9 @@ discovery_failed:
 	goto unlock;
 update_failed:
 	(void)fail_initialization("Update", err);
+	goto unlock;
+update_status_failed:
+	(void)fail_initialization("Update status", err);
 	goto unlock;
 storage_failed:
 	(void)fail_initialization("Storage", err);
@@ -248,6 +331,7 @@ unlock:
 
 int spaghetti_core_start(void)
 {
+	bool confirm_trial;
 	uint32_t generation;
 	struct spaghetti_config current;
 	int err = k_mutex_lock(&core_lock, K_FOREVER);
@@ -260,7 +344,8 @@ int spaghetti_core_start(void)
 		return -EACCES;
 	}
 
-	if (startup_config_present) {
+	if ((core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) &&
+	    startup_config_present) {
 		err = spaghetti_config_get_snapshot(&current, &generation);
 		if (err == 0) {
 			err = spaghetti_config_apply(&startup_config, generation);
@@ -272,11 +357,51 @@ int spaghetti_core_start(void)
 	}
 
 	atomic_set(&core_state, SPAGHETTI_CORE_RUNNING);
+	core_info.state = SPAGHETTI_CORE_RUNNING;
+	confirm_trial =
+		core_info.image_state == SPAGHETTI_CORE_IMAGE_TRIAL;
 	k_mutex_unlock(&core_lock);
+
+	if (confirm_trial) {
+		k_sleep(K_MSEC(CONFIG_SPAGHETTI_TRIAL_HEALTH_MS));
+		if (atomic_get(&core_state) != SPAGHETTI_CORE_RUNNING) {
+			return -EIO;
+		}
+		err = spaghetti_update_confirm_trial();
+		if (err < 0) {
+			atomic_set(&core_state, SPAGHETTI_CORE_FAILED);
+			spaghetti_core_boot_reboot();
+			return err;
+		}
+
+		(void)k_mutex_lock(&core_lock, K_FOREVER);
+		core_info.state = SPAGHETTI_CORE_RUNNING;
+		core_info.image_state = SPAGHETTI_CORE_IMAGE_CONFIRMED;
+		core_info.image_confirmed = true;
+		k_mutex_unlock(&core_lock);
+	}
+
 	return 0;
 }
 
 enum spaghetti_core_state spaghetti_core_get_state(void)
 {
 	return (enum spaghetti_core_state)atomic_get(&core_state);
+}
+
+int spaghetti_core_get_info(struct spaghetti_core_info *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	(void)k_mutex_lock(&core_lock, K_FOREVER);
+	if (!core_info_available) {
+		k_mutex_unlock(&core_lock);
+		return -EAGAIN;
+	}
+	core_info.state = (enum spaghetti_core_state)atomic_get(&core_state);
+	*out = core_info;
+	k_mutex_unlock(&core_lock);
+	return 0;
 }

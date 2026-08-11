@@ -74,6 +74,7 @@ static void update_timeout_handler(struct k_work *work)
 int spaghetti_update_init(void)
 {
 	bool trial;
+	uint8_t active_slot;
 	int err = k_mutex_lock(&update_lock, K_FOREVER);
 
 	if (err < 0) {
@@ -88,6 +89,10 @@ int spaghetti_update_init(void)
 	if (err < 0) {
 		goto unlock;
 	}
+	err = spaghetti_update_backend_active_slot(&active_slot);
+	if (err < 0) {
+		goto unlock;
+	}
 
 	k_work_init_delayable(&context.timeout_work, update_timeout_handler);
 	k_work_queue_start(&update_work_queue, update_work_stack,
@@ -98,6 +103,8 @@ int spaghetti_update_init(void)
 		.state = trial ? SPAGHETTI_UPDATE_TRIAL_BOOT :
 				 SPAGHETTI_UPDATE_IDLE,
 		.transport = SPAGHETTI_UPDATE_TRANSPORT_NONE,
+		.active_slot = active_slot,
+		.image_confirmed = !trial,
 	};
 	context.deadline_ms = 0;
 	context.initialized = true;
@@ -283,6 +290,39 @@ int spaghetti_update_cancel(void)
 	if (err == 0) {
 		LOG_INF("update cancelled; secondary slot discarded");
 	}
+
+unlock:
+	k_mutex_unlock(&update_lock);
+	return err;
+}
+
+int spaghetti_update_confirm_trial(void)
+{
+	int err = k_mutex_lock(&update_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		err = -EACCES;
+		goto unlock;
+	}
+	if (context.status.state != SPAGHETTI_UPDATE_TRIAL_BOOT) {
+		err = -EPERM;
+		goto unlock;
+	}
+
+	err = spaghetti_update_backend_confirm();
+	if (err < 0) {
+		context.status.state = SPAGHETTI_UPDATE_ERROR;
+		context.status.last_error = err;
+		goto unlock;
+	}
+
+	context.status.state = SPAGHETTI_UPDATE_IDLE;
+	context.status.image_confirmed = true;
+	context.status.last_error = 0;
+	LOG_INF("trial image confirmed");
 
 unlock:
 	k_mutex_unlock(&update_lock);

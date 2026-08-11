@@ -7,6 +7,7 @@
 #ifndef SPAGHETTI_UPDATE_H
 #define SPAGHETTI_UPDATE_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 /** Transport currently authorized to deliver one firmware candidate. */
@@ -32,6 +33,8 @@ struct spaghetti_update_status {
 	enum spaghetti_update_state state; /**< State observed while locked. */
 	enum spaghetti_update_transport transport; /**< Session owner, or NONE. */
 	uint32_t timeout_remaining_ms; /**< Remaining session time, or zero. */
+	uint8_t active_slot; /**< MCUboot image slot currently executing: zero or one. */
+	bool image_confirmed; /**< True when MCUboot will not revert this image. */
 	int last_error; /**< Last transition error, or zero after success. */
 };
 
@@ -122,6 +125,19 @@ int spaghetti_update_finish(void);
  * @note Thread context only. Active firmware and persistent storage are untouched.
  */
 int spaghetti_update_cancel(void);
+
+/**
+ * @brief Confirm the currently running trial image after Core health checks.
+ *
+ * @retval 0 MCUboot marked the image confirmed and Update returned to IDLE.
+ * @retval -EACCES The coordinator is not initialized.
+ * @retval -EPERM The running image is not in TRIAL_BOOT.
+ * @retval -EIO MCUboot could not persist the confirmation trailer.
+ * @retval -errno The boot backend rejected confirmation.
+ *
+ * @note Core is the only caller. Transports and Shell must not expose this operation.
+ */
+int spaghetti_update_confirm_trial(void);
 
 /**
  * @brief Copy the coherent update status into caller-owned storage.

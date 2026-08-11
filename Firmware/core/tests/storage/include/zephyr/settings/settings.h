@@ -31,9 +31,11 @@ int spaghetti_test_settings_subsys_init(void);
 int spaghetti_test_settings_load_subtree(const char *subtree);
 int spaghetti_test_settings_save_one(const char *name, const void *value,
 				     size_t val_len);
+int spaghetti_test_settings_delete(const char *name);
 
 #define settings_subsys_init spaghetti_test_settings_subsys_init
 #define settings_load_subtree spaghetti_test_settings_load_subtree
 #define settings_save_one spaghetti_test_settings_save_one
+#define settings_delete spaghetti_test_settings_delete
 
 #endif /* SPAGHETTI_TEST_SETTINGS_H */

@@ -125,6 +125,23 @@ enum spaghetti_core_state spaghetti_core_get_state(void)
 	return SPAGHETTI_CORE_READY;
 }
 
+int spaghetti_core_get_info(struct spaghetti_core_info *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	*out = (struct spaghetti_core_info) {
+		.state = SPAGHETTI_CORE_READY,
+		.mode = SPAGHETTI_CORE_MODE_NORMAL,
+		.image_state = SPAGHETTI_CORE_IMAGE_CONFIRMED,
+		.active_slot = 0U,
+		.image_confirmed = true,
+		.version = "1.2.3+4",
+	};
+	return 0;
+}
+
 size_t spaghetti_port_count(void)
 {
 	return 2U;
@@ -255,6 +272,11 @@ ZTEST(communication, test_bounded_dispatch_status_and_hex_validation)
 		(2U * sizeof(struct spaghetti_communication_module_status)));
 	memcpy(&status, response.payload, response.payload_size);
 	zassert_equal(status.core_state, SPAGHETTI_CORE_READY);
+	zassert_equal(status.core_mode, SPAGHETTI_CORE_MODE_NORMAL);
+	zassert_equal(status.image_state, SPAGHETTI_CORE_IMAGE_CONFIRMED);
+	zassert_equal(status.active_slot, 0U);
+	zassert_equal(status.image_confirmed, 1U);
+	zassert_equal(strcmp(status.version, "1.2.3+4"), 0);
 	zassert_equal(status.port_count, 2U);
 	zassert_equal(status.module_count, 2U);
 	zassert_equal(status.modules[0].key, 10U);
