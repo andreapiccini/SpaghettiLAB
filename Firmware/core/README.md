@@ -292,6 +292,10 @@ The `build/` directory is generated locally and can be safely recreated.
 
 ## Documentation
 
+Start from the [documentation index](DOCUMENTATION_INDEX.md) when you want the complete
+reading order for architecture, implementation tasks, Module/Core extensions,
+Node-RED, troubleshooting, and release material.
+
 For the planned USB-free provisioning, A/B update and remote-console work, start from
 [the Maintenance Link hardware contract](UPDATE_HARDWARE_CONTRACT.md) and the
 [OTA roadmap](roadmap/OTA-REMOTE-MAINTENANCE.md). GPIO and controller selection belong
@@ -302,6 +306,7 @@ you need its detailed contract.
 
 | Guide | Use it for |
 |---|---|
+| [Documentation index](DOCUMENTATION_INDEX.md) | Single ordered entry point for every documentation path |
 | [Extension guide](EXTENDING_SPAGHETTI_LAB.md) | How-to per Module, Core e Config, template Zephyr e caveat specifici del firmware |
 | [V1 platform closure](roadmap/V1-PLATFORM-CLOSURE.md) | Planned generic contracts and tasks required before the main Node-RED work |
 | [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |

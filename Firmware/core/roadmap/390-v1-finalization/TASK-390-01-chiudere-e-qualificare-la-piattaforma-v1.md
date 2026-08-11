@@ -29,7 +29,8 @@ subsys/services/mqtt/
 ```
 
 Il test applica JSON→CBOR con due Module sulla stessa Port, due schedule, una rule,
-evento pulsante e comando PWM. Verifica catalogo, Data, MQTT fake e rollback.
+evento pulsante e comando PWM. Verifica catalogo, Data, due consumer Record Delivery,
+MQTT fake, BLE fake e rollback.
 
 ### 2. Eseguire la pulizia rimasta dalla fase 210
 
@@ -61,6 +62,9 @@ Verifica che manuale e template della fase 385 siano coerenti, quindi crea
 - permission matrix;
 - scope di reset e lifecycle credenziali;
 - error mapping;
+- GET/VALIDATE/APPLY Config, generation/hash e regole compare-and-swap;
+- principal, replay cache, job asincroni e fingerprint catalogo;
+- mapping lossless INT64/UINT64 per JavaScript;
 - backward compatibility e deprecation;
 - procedura per Module, rule, provider, Core e transport nuovi.
 
@@ -83,6 +87,10 @@ OTA Wi-Fi, OTA BLE, stop completo dei servizi e allocazione TLS fallita. Sul pro
 Minimal verifica una sola sessione sicura pesante e assenza della Remote Console di
 produzione. Ripeti 100 cicli start/stop e connect/disconnect.
 
+Verifica Health Supervisor su ogni profilo: deadline dei worker, window OTA/flash,
+reset cause e watchdog hardware quando dichiarato. Un Core senza chosen watchdog deve
+riportarlo come capability assente, non come test superato.
+
 Fallisci build con `BUILD_ASSERT` quando una relazione statica è invalida. Non ridurre
 limiti silenziosamente in runtime.
 
@@ -102,12 +110,29 @@ della fase 375. Con native/fake o board corrente:
 9. BLE/Wi-Fi disconnessi non fermano Runtime e i drop sono visibili;
 10. un nuovo fake schema aggiunto dopo il freeze compare senza patch centrali;
 11. Node-RED legge capability e rifiuta una funzione non compilata;
-12. reboot cambia boot ID ma conserva Config e identità dispositivo.
+12. reboot cambia boot ID ma conserva Config e identità dispositivo;
+13. due client leggono la stessa generation: uno committa e l'altro gestisce CONFLICT;
+14. apply identica non incrementa generation e non scrive Storage;
+15. MQTT e BLE consumano gli stessi record con cursori indipendenti;
+16. retry della stessa request da un altro adapter non ripete l'effetto;
+17. OTA cambia catalog fingerprint e Node-RED invalida la cache;
+18. un intero a 64 bit oltre il safe range attraversa C/CBOR/TypeScript senza perdita.
 
 Registra risultati in `verification/v1/PLATFORM_REPORT.md` con commit, Zephyr, board e
 comandi, senza segreti.
 
-### 6. Separare “platform V1” da “release hardware 1.0”
+### 6. Eseguire conformance e test avversariali
+
+Usa i golden vector della fase 378 in test C, Python e TypeScript. Aggiungi corpus e
+fuzz harness per decoder envelope, Config CBOR, pagina catalogo e framing BLE. Copri
+chiavi duplicate/extra, lunghezze massime, integer overflow, UTF-8 errato, frammenti
+sovrapposti/fuori ordine, replay, principal revocato, queue piena e paginazione che
+cambia fingerprint a metà lettura.
+
+Il fuzz test non deve richiedere hardware e non può allocare oltre i limiti del profilo.
+Registra seed e crash artifact; zero crash, hang o accesso fuori limite è il gate.
+
+### 7. Separare “platform V1” da “release hardware 1.0”
 
 Puoi marcare questo task DONE con fake e hardware corrente. Non impostare automaticamente
 `VERSION=1.0.0`: la release hardware 1.0 richiede anche fase 290 completa, board PCB
@@ -134,6 +159,10 @@ Nuovi Core aggiungono board/binding/backend Port senza branch applicativi.
 - [ ] Protocol, Config wire, schema ID, MQTT topic e BLE UUID/framing sono congelati.
 - [ ] Resource budget di ogni profilo/board è registrato nei carichi peggiori.
 - [ ] Gate Node-RED passa sia con MQTT TLS sia con BLE/gateway.
+- [ ] SDK TypeScript, CLI Python e firmware C superano gli stessi golden vector.
+- [ ] Config concorrente/no-op, replay cross-transport e cursori multipli sono provati.
+- [ ] Fuzzing dei decoder e framing termina senza crash o hang.
+- [ ] Health Supervisor e watchdog dichiarato superano fault injection.
 - [ ] Lifecycle, workspace TLS, lease, reset e record drop superano i failure test.
 - [ ] Manuale e template della fase 385 superano una prova clean-room.
 - [ ] Limiti hardware/produzione restano esplicitamente aperti.
@@ -149,10 +178,11 @@ docker compose run --rm --entrypoint sh dev -lc \
 make pristine
 BOARD=spaghettilab_core_v2_build_only/esp32c3 make build
 .venv/bin/python -m unittest discover -s tools/tests -v
+npm --prefix tools/sdk/typescript test
 make node-red-mqtt-smoke
 make node-red-ble-smoke
 ```
 
 Il task termina quando il report V1 contiene zero failure, entrambi i percorsi Node-RED
-completano i dodici passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema
+completano i diciotto passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema
 centrale.

@@ -56,6 +56,7 @@ console, ma con namespace e lifecycle separati:
 ```c
 int spaghetti_mqtt_credentials_set(
 	uint16_t credential_id,
+	spaghetti_principal_id_t principal_id,
 	const uint8_t *ca,
 	size_t ca_size,
 	const uint8_t *client_certificate,
@@ -68,7 +69,9 @@ int spaghetti_mqtt_credentials_exists(
 	bool *out_exists);
 ```
 
-Buffer sono borrowed e mai loggati; set è ammesso soltanto dalla Maintenance locale.
+`principal_id` passa per valore e lega la credenziale ai ruoli/permessi della fase 355;
+la funzione fallisce con `-ENOENT` se il principal non esiste o è revocato. I buffer
+sono borrowed e mai loggati; set è ammesso soltanto dalla Maintenance locale.
 TLS server richiede CA e hostname verification; mutual richiede anche certificato e
 chiave. Output exists cambia solo al successo. Capacità certificate/Kconfig è bounded.
 

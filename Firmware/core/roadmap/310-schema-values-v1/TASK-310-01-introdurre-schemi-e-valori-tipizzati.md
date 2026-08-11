@@ -80,7 +80,7 @@ enum spaghetti_field_flags {
 };
 
 struct spaghetti_enum_option {
-	int64_t value;
+	struct spaghetti_value value;
 	const char *name;
 	const char *description;
 };
@@ -116,7 +116,8 @@ appartengono al plug-in che li definisce. `name` è l'identificatore macchina st
 usato da JSON e Node-RED; `description` è testo umano breve; `unit` è vuota se non
 applicabile. `default_value` è NULL senza default e deve avere lo stesso field ID e
 tipo del descrittore. Le enum sono ammesse soltanto su INT64/UINT64, hanno nomi stabili
-e valori univoci. Ogni tipo usa la propria coppia di limiti; i campi non applicabili
+e valori univoci; ogni `value` usa field ID e type del relativo descrittore. Ogni tipo
+usa la propria coppia di limiti; i campi non applicabili
 sono zero.
 `schema_id` è una stringa stabile come `"spaghetti.ina219.sample"`; `version` cambia
 quando cambia un field ID, tipo o significato incompatibile.

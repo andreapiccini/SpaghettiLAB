@@ -15,6 +15,13 @@
 
 const defaultSettings = require("/usr/src/node-red/node_modules/node-red/settings.js");
 
+// Developer escape hatch: set NODE_RED_ADMIN_MODE=true in .env to
+// temporarily re-enable the palette manager (install/remove nodes) for
+// yourself. Defaults to false, which is the locked-down, end-user-safe
+// behavior this tier exists for. Flip it back to false/remove it when
+// you're done installing whatever you needed.
+const ADMIN_MODE = String(process.env.NODE_RED_ADMIN_MODE).toLowerCase() === "true";
+
 module.exports = {
   ...defaultSettings,
   // Non-developer end users should not be able to install/remove nodes from
@@ -26,7 +33,7 @@ module.exports = {
     ...defaultSettings.externalModules,
     palette: {
       ...defaultSettings.externalModules?.palette,
-      allowInstall: false,
+      allowInstall: ADMIN_MODE,
     },
   },
   editorTheme: {
@@ -44,11 +51,10 @@ module.exports = {
     logout: {
       redirect: "https://spaghetti-lab.my.canva.site",
     },
-    // "Manage palette" would otherwise be a dead link once palette installs
-    // are disabled above, so hide the menu entry instead of leaving a
-    // button that does nothing.
+    // "Manage palette" is a dead link when palette installs are disabled
+    // above, so it's hidden along with them — and shown again in admin mode.
     menu: {
-      "menu-item-edit-palette": false,
+      "menu-item-edit-palette": ADMIN_MODE,
     },
   },
 };

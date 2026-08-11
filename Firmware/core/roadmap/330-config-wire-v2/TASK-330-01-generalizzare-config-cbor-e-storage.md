@@ -128,7 +128,7 @@ driver concreti.
 Aggiorna `include/spaghetti/config_codec.h`:
 
 ```c
-#define SPAGHETTI_CONFIG_CBOR_MAX_SIZE 2048U
+#define SPAGHETTI_CONFIG_CBOR_MAX_SIZE CONFIG_SPAGHETTI_CONFIG_CBOR_MAX_SIZE
 
 int spaghetti_config_decode_cbor(
 	const uint8_t *bytes,

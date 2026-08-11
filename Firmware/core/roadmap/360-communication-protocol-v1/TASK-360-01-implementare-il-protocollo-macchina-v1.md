@@ -12,7 +12,9 @@ Crea `include/spaghetti/protocol.h`, `subsys/communication/protocol_cbor.c` e ag
 
 ```c
 #define SPAGHETTI_PROTOCOL_VERSION 1U
-#define SPAGHETTI_PROTOCOL_PAYLOAD_MAX 2048U
+#define SPAGHETTI_PROTOCOL_PAYLOAD_ABSOLUTE_MAX 2048U
+#define SPAGHETTI_PROTOCOL_PAYLOAD_MAX \
+	CONFIG_SPAGHETTI_PROTOCOL_PAYLOAD_MAX
 
 enum spaghetti_protocol_operation {
 	SPAGHETTI_PROTOCOL_GET_CATALOG = 1,
@@ -68,6 +70,8 @@ struct spaghetti_protocol_response {
 	enum spaghetti_protocol_status status;
 	struct spaghetti_protocol_payload payload;
 };
+
+enum spaghetti_protocol_status spaghetti_protocol_status_from_errno(int error);
 ```
 
 Ogni envelope possiede il payload. `correlation_id` viene copiato esattamente nella
@@ -77,6 +81,14 @@ aggiungi una funzione centrale che traduce gli errori interni nel dominio V1 e n
 cambiare tale mapping fra board o release. Un errno opzionale può comparire soltanto
 nel payload diagnostico autorizzato, mai come significato principale per Node-RED.
 
+Congela il mapping: `0→OK`; `-EINVAL/-ERANGE→INVALID_ARGUMENT`;
+`-ENOTSUP/-EPROTONOSUPPORT/-ENOSYS→UNSUPPORTED`; `-EACCES/-EPERM→UNAUTHORIZED`;
+`-ESTALE/-EEXIST→CONFLICT`; `-EBUSY/-EAGAIN→BUSY`;
+`-ENODEV/-ENETDOWN/-ENOTCONN→UNAVAILABLE`; `-ETIMEDOUT→TIMEOUT`;
+`-ENOMEM/-ENOSPC/-EMSGSIZE→RESOURCE_EXHAUSTED`;
+`-EBADMSG/-EILSEQ→MALFORMED_REQUEST`; ogni altro errore negativo→INTERNAL_ERROR.
+La funzione è pura, riceve il piccolo intero per valore e non modifica stato.
+
 Il CBOR canonico è:
 
 ```cddl
@@ -85,9 +97,12 @@ response = { 0: 1, 1: uint, 2: uint, 3: bstr }
 event    = { 0: 1, 1: uint, 2: uint, 3: bstr }
 ```
 
-Esponi encode/decode request/response con buffer, capacity e written size. Rifiuta
-versione sconosciuta, payload oltre 2048, chiavi duplicate/extra, trailing bytes e
-correlation zero. Gli output cambiano solo al successo.
+Esponi encode/decode request/response con buffer, capacity e written size. V1 ammette
+al massimo 2048 byte, mentre la capability del profilo può dichiarare un limite minore;
+aggiungi `BUILD_ASSERT(SPAGHETTI_PROTOCOL_PAYLOAD_MAX <=
+SPAGHETTI_PROTOCOL_PAYLOAD_ABSOLUTE_MAX)`. Rifiuta versione sconosciuta, payload oltre
+la capability, chiavi duplicate/extra, trailing bytes e correlation zero. Gli output
+cambiano solo al successo.
 
 ### 2. Registrare operation handler come plug-in
 
@@ -133,7 +148,7 @@ Dividi `subsys/communication/operations/` per owner:
 
 - catalog: pagina driver/rule/provider/operation e relativi schemi con cursor+limit,
   versioni Protocol/Config supportate e fingerprint SHA-256 dell'intero catalogo;
-- status: Core, Port, Module, schedule e service status;
+- status: Core, Port, Module, schedule, service, health, reset cause e stale component;
 - get config: restituisce Config CBOR canonica, generation e hash della fase 330;
 - validate config: esegue validazione completa senza effetti e restituisce il failure
   path tipizzato quando non è valida;
@@ -191,8 +206,12 @@ Crea in Communication una replay cache bounded da
 request canonica e response completa. Se arriva la stessa request, restituisci la
 response salvata senza eseguire di nuovo l'handler. Se lo stesso principal riutilizza
 il correlation ID con byte o operation differenti, restituisci CONFLICT. La cache ha
-TTL e sostituzione deterministica; non contiene segreti in chiaro. MQTT, BLE, USB e
-gateway non implementano cache proprie.
+TTL `CONFIG_SPAGHETTI_PROTOCOL_REPLAY_WINDOW_MS` e sostituzione deterministica; la
+capability pubblica tale finestra e non contiene segreti in chiaro. Il client usa un
+timeout/retry complessivo minore della finestra. La cache vive soltanto nel boot
+corrente: se cambia `boot_id`, il client non ripete automaticamente command/reset/update
+rimasti senza risposta; deve rileggere stato e decidere esplicitamente. MQTT, BLE, USB
+e gateway non implementano cache proprie.
 
 Documenta per ogni operation se è read-only, mutazione serializzata o job asincrono.
 Le letture immediate usano snapshot e non bloccano callback di rete. Config, command,
@@ -260,7 +279,7 @@ resta comoda per una persona ma non è più il protocollo dell'app.
 
 ## Checklist di completamento
 
-- [ ] Envelope V1 ha encoding canonico e limite 2048 byte.
+- [ ] Envelope V1 ha encoding canonico, limite assoluto 2048 e capacità dichiarata dal profilo.
 - [ ] Diciannove operation ID e status pubblici sono congelati.
 - [ ] Handler e relativi schema request/response sono auto-registrati e catalogati.
 - [ ] Permessi derivano da principal e limite dell'adapter, non dalla richiesta.

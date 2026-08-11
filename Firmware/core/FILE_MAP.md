@@ -1,6 +1,7 @@
 # Firmware file map and reading guide
 
-[← Project README](README.md) · [Architecture](ARCHITECTURE.md) ·
+[← Project README](README.md) · [Documentation index](DOCUMENTATION_INDEX.md) ·
+[Architecture](ARCHITECTURE.md) ·
 [Implementation guide](FIRMWARE_IMPLEMENTATION_GUIDE.md)
 
 This document answers three questions for every important project file or file
@@ -12,6 +13,9 @@ family:
 
 Use it to choose the minimum complete reading set before making a change. Do not
 open every file for every task.
+
+If you want a linear introduction to all documentation rather than a change-specific
+file set, start from [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
 ## Mandatory reading before any firmware task
 
@@ -68,6 +72,7 @@ flowchart TD
 | File | Contains | Read before / modify when |
 |---|---|---|
 | `README.md` | Supported hosts, Docker workflow, build/flash commands, navigation, licensing summary | First checkout; environment, build, flash, or documentation navigation changes |
+| `DOCUMENTATION_INDEX.md` | Global reading order and paths for architecture, tasks, extensions, Node-RED and diagnosis | First orientation or whenever it is unclear which documentation path to follow |
 | `EXTENDING_SPAGHETTI_LAB.md` | End-to-end Italian guide for Module, Core, Config, Zephyr integration and caveats | First file to open when extending hardware or runtime configuration |
 | `roadmap/V1-PLATFORM-CLOSURE.md` | Ordered plan for resources, generic Port/schema/Config/Runtime, BLE, protocol and Node-RED | Before implementing phases 291–390 or freezing Protocol V1 |
 | `tools/device.py` | Cross-platform port discovery, flashing, and shared Rich monitor over serial or authenticated TLS-PSK | Changing flash, screen, monitor transport, or host credential handling |
@@ -157,7 +162,7 @@ Services support owners; they do not own product rules or module instances.
 | Path | Contains | Read when |
 |---|---|---|
 | `spaghetti_modules/README.md` | Common module-driver lifecycle, operation table, config/build template | Before every new sensor/actuator driver |
-| `spaghetti_modules/ina219/README.md` | Practical I2C bus-voltage/current/power driver contract | Implementing or testing INA219 behavior |
+| `roadmap/080-runtime-removable-ina219/README.md` | Practical I2C bus-voltage/current/power driver contract | Implementing or testing INA219 behavior |
 | `spaghetti_modules/relay/README.md` | Practical logical-output/safe-state driver contract | Implementing or testing a relay/output behavior |
 
 A new module directory owns only its protocol, per-instance private state, and

@@ -18,6 +18,8 @@ Al termine delle fasi 291–390:
 - Connectivity Manager governa LOW_ENERGY, ONLINE e lease temporanee;
 - TLS/DTLS usa un workspace condiviso e i servizi opzionali rilasciano le proprie
   risorse quando vengono arrestati;
+- Health Supervisor controlla heartbeat e watchdog senza permettere a un worker di
+  alimentarlo autonomamente;
 - BLE è il trasporto low-energy autenticato del protocollo comune e può ricevere OTA o
   richiedere un handover Wi-Fi bounded;
 - una Port può esporre I2C, SPI, UART, GPIO, ADC o 1-Wire tramite un contratto
@@ -27,18 +29,21 @@ Al termine delle fasi 291–390:
   Zephyr, senza modificare tabelle centrali;
 - Config usa proprietà tipizzate e versionate, non copie di struct C specifiche;
 - Data trasporta record tipizzati descritti da schema, non soltanto misure INA219;
+- MQTT e BLE leggono la stessa ring con cursori e contatori di perdita indipendenti;
 - Runtime pianifica più sorgenti e carica regole plug-in senza conoscere sensori o
   attuatori concreti;
 - un Module può essere dichiarato manualmente oppure proposto da zero o più provider
   Discovery indipendenti;
 - nessuna EEPROM è obbligatoria: EEPROM, registri I2C, analogico e 1-Wire sono metodi
   opzionali con diversa affidabilità;
-- Communication espone un protocollo CBOR V1 versionato e trasportabile su USB,
-  console autenticata, BLE o MQTT;
+- Communication espone un protocollo CBOR V1 con principal, errori stabili, replay,
+  job e Config compare-and-swap su USB, console autenticata, BLE o MQTT;
 - MQTT oppure BLE/gateway permettono a Node-RED di ricevere record, inviare
   Config/comandi e correlare le risposte;
 - un tool host trasforma JSON leggibile in CBOR, interroga il catalogo e gestisce
   configurazione, discovery e update;
+- un SDK TypeScript condiviso permette a Node-RED di invalidare il catalogo dopo OTA e
+  coordina read/merge/validate/apply della Config senza lost update;
 - il percorso completo è provato con fake e `native_sim`, anche senza Module fisici.
 
 ## Decisioni congelate
@@ -66,7 +71,15 @@ Al termine delle fasi 291–390:
 9. **Connettività e update sono lifecycle, non effetti collaterali.** Accendere Wi-Fi
    non apre OTA; una lease scade; un solo trasporto possiede Update.
 10. **Tempo e perdita sono espliciti.** Record porta boot ID e uptime; una coda RAM
-    bounded espone i drop e non promette storico flash.
+    bounded espone i drop e non promette storico flash. Ogni consumer ha il proprio
+    cursore: l'ACK di MQTT non consuma i dati BLE.
+11. **Config è una transazione concorrente.** Il client legge generation/hash, valida e
+    applica compare-and-swap. Una Config identica non scrive flash; un conflitto non
+    viene forzato.
+12. **Il contratto host non è errno Zephyr.** Status pubblici, int64 lossless, golden
+    vector e fingerprint catalogo sono congelati per C, Python e TypeScript.
+13. **Node-RED coordina, non esegue Zephyr.** Hardware, real-time e safe state restano
+    plug-in firmware; i nodi host chiamano solo operation handler catalogati.
 
 ## Ordine e dipendenze
 
@@ -78,6 +91,8 @@ flowchart TD
     P292 --> P294["294 · Lifecycle servizi"]
     P293 --> P294
     P294 --> P295["295 · Low energy"]
+    P291 --> P296["296 · Health supervisor"]
+    P294 --> P296
     P300["300 · Port e trasporti"] --> P320["320 · Module Driver V2"]
     P310["310 · Schemi e valori"] --> P320
     P320 --> P330["330 · Config e wire V2"]
@@ -96,13 +111,19 @@ flowchart TD
     P365 --> P367["367 · Handover Wi-Fi"]
     P360 --> P370["370 · MQTT per Node-RED"]
     P365 --> P375["375 · Gateway Node-RED"]
+    P370 --> P378["378 · SDK host / Node-RED"]
+    P375 --> P378
+    P360 --> P378
     P360 --> P380["380 · Tool sviluppatore"]
+    P378 --> P380
     P366 --> P380
     P367 --> P380
     P375 --> P385["385 · Manuale developer"]
     P370 --> P385
     P370 --> P390["390 · Chiusura V1"]
     P380 --> P390
+    P296 --> P390
+    P378 --> P390
     P385 --> P390
 ```
 
@@ -134,7 +155,7 @@ Puoi spostare il lavoro principale su Node-RED quando:
 1. un fake Module definito fuori dai sottosistemi centrali compare nel catalogo;
 2. un JSON host crea due Module sulla stessa Port e sopravvive al reboot;
 3. due schemi dati differenti raggiungono MQTT e BLE/gateway senza modificare gli
-   adapter;
+   adapter e con cursori Record Delivery indipendenti;
 4. Node-RED invia un comando generico e riceve una risposta con lo stesso correlation ID;
 5. un provider fake produce candidati, mentre un Module manuale continua a funzionare;
 6. un tipo/provider/regola nuovi non richiedono modifiche a Registry, Config, Data,
@@ -142,7 +163,11 @@ Puoi spostare il lavoro principale su Node-RED quando:
 7. capability e profilo impediscono Config/immagini incompatibili;
 8. LOW_ENERGY, lease Wi-Fi, OTA BLE/Wi-Fi e ritorno alla policy superano timeout/errori;
 9. boot ID e contatori drop rendono visibile ogni discontinuità dati;
-10. validator, Twister completo e build sysbuild di ogni profilo/board passano.
+10. due client concorrenti gestiscono generation conflict senza perdere modifiche;
+11. Config identica non incrementa generation e non scrive Storage;
+12. retry cross-transport non ripete Config o comandi;
+13. SDK TypeScript e CLI Python superano gli stessi golden vector del firmware;
+14. Health Supervisor, fuzzing, validator, Twister e build di ogni profilo passano.
 
 La qualificazione fisica della fase 290 resta necessaria prima di dichiarare una
 release hardware di produzione, ma non blocca lo sviluppo del contratto Node-RED con

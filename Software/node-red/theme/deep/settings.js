@@ -16,13 +16,18 @@
 
 const defaultSettings = require("/usr/src/node-red/node_modules/node-red/settings.js");
 
+// Developer escape hatch: set NODE_RED_ADMIN_MODE=true in .env to
+// temporarily re-enable the palette manager for yourself. See
+// theme/safe/settings.js for the full explanation.
+const ADMIN_MODE = String(process.env.NODE_RED_ADMIN_MODE).toLowerCase() === "true";
+
 module.exports = {
   ...defaultSettings,
   externalModules: {
     ...defaultSettings.externalModules,
     palette: {
       ...defaultSettings.externalModules?.palette,
-      allowInstall: false,
+      allowInstall: ADMIN_MODE,
     },
   },
   editorTheme: {
@@ -42,7 +47,7 @@ module.exports = {
       redirect: "https://spaghetti-lab.my.canva.site",
     },
     menu: {
-      "menu-item-edit-palette": false,
+      "menu-item-edit-palette": ADMIN_MODE,
     },
   },
 };

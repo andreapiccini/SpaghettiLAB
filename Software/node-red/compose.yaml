@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     environment:
       TZ: ${TZ:-Europe/Rome}
+      NODE_RED_ADMIN_MODE: ${NODE_RED_ADMIN_MODE:-false}
     ports:
       - "127.0.0.1:${NODE_RED_PORT:-1880}:1880"
     volumes:
