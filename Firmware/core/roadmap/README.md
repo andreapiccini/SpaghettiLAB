@@ -92,7 +92,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [150 — CBOR](150-cbor/README.md) | Un payload CBOR viene decodificato e applicato a Config. |
 | ✅ | [160 — MQTT](160-mqtt/README.md) | Il campione elettrico raggiunge il topic MQTT configurato. |
 | ✅ | [165 — Wi-Fi sicuro](165-secure-wifi/README.md) | Più reti note persistono e vengono selezionate senza esporre password sulla seriale. |
-| ⬜ | [170 — Discovery](170-discovery/README.md) | Discovery emette più risultati per Port e invalida una key alla volta. |
+| ✅ | [170 — Discovery](170-discovery/README.md) | Discovery emette più risultati per Port e invalida una key alla volta. |
 | ⬜ | [180 — Varianti Core multiple](180-multi-core/README.md) | Gli stessi livelli applicativi funzionano su due varianti Core. |
 | ⬜ | [190 — Power](190-power/README.md) | Una risorsa di alimentazione gestisce correttamente più proprietari e rollback. |
 | ⬜ | [200 — Engine completo](200-engine/README.md) | Il Core carica Config, avvia i componenti e accetta riconfigurazioni senza reboot. |

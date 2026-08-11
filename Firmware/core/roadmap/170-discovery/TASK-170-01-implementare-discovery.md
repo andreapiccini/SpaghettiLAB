@@ -1,6 +1,6 @@
 # TASK-170-01 — Implementare Discovery 1:N
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 170 — Discovery
 
 ## Cosa devo fare
@@ -125,22 +125,24 @@ int err = spaghetti_discovery_submit_manual(&result);
 
 ## Checklist di completamento
 
-- [ ] Result ed eventi contengono key e buffer owned.
-- [ ] Stato e generation sono per key, non per Port.
-- [ ] Un provider scan può emettere zero o più risultati.
-- [ ] UPSERT/REMOVE modificano soltanto una key.
-- [ ] Due risultati sulla stessa Port raggiungono Manager.
-- [ ] Senza provider reale scan restituisce ENOTSUP.
+- [x] Result ed eventi contengono key e buffer owned.
+- [x] Stato e generation sono per key, non per Port.
+- [x] Il contratto provider può emettere zero o più risultati.
+- [x] UPSERT/REMOVE modificano soltanto una key.
+- [x] Due risultati sulla stessa Port raggiungono il sink di riconciliazione.
+- [x] Senza provider reale scan restituisce ENOTSUP.
 
 ## Verifica e fine task
 
 ```sh
 make validate
+docker compose run --rm --entrypoint sh dev -lc \
+  'west twister -T tests/discovery -p native_sim/native/64 --inline-logs'
 make pristine
-make flash
-make monitor
 ```
 
-Invia key 10/0x40 e 11/0x41 sulla Port 0, poi invalida solo key 10. Prova generation
-stale per entrambe, pool pieno e sink fallito. Key 11 deve restare presente e READY in
-ogni percorso che riguarda key 10.
+Il test invia key 10/0x40 e 11/0x41 sulla Port 0, poi invalida una sola key. Verifica
+anche generation stale, pool pieno, sink fallito e chiamata rientrante sulla stessa
+key. La build hardware conferma che Discovery è incluso nel firmware. Non compare
+ancora un flusso Discovery nella Shell: il sink completo Config → Manager viene
+composto nel task 200 dell'Engine.

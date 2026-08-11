@@ -1,0 +1,15 @@
+mainmenu "Spaghetti Discovery tests"
+
+config SPAGHETTI_MAX_MODULES
+	int
+	default 3
+
+config SPAGHETTI_DISCOVERY_MAX_RESULTS
+	int
+	default 3
+
+config SPAGHETTI_DISCOVERY_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

@@ -18,6 +18,10 @@ module = SPAGHETTI_MODULE_MANAGER
 module-str = spaghetti_module_manager
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_DISCOVERY
+module-str = spaghetti_discovery
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_CONFIG
 module-str = spaghetti_config
 source "subsys/logging/Kconfig.template.log_config"
@@ -61,6 +65,14 @@ config SPAGHETTI_MAX_MODULES
 	help
 	  Fixed capacity of the Module Manager slot pool. Multiple slots may
 	  reference the same physical Port when their endpoints differ.
+
+config SPAGHETTI_DISCOVERY_MAX_RESULTS
+	int "Maximum number of accepted Discovery results"
+	range 1 SPAGHETTI_MAX_MODULES
+	default SPAGHETTI_MAX_MODULES
+	help
+	  Fixed capacity of the Discovery table indexed by stable Module key.
+	  Several entries may reference the same physical Port.
 
 config SPAGHETTI_INA219_MAX_INSTANCES
 	int "Maximum number of simultaneous INA219 instances"

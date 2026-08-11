@@ -9,9 +9,11 @@ and never creates a live Module itself.
 
 ## Ownership and model
 
-Discovery owns a fixed-capacity table of accepted proposals indexed by stable
-`spaghetti_module_key_t`. Generation is tracked per key, not per Port, so a stale
-response for INA219 `0x40` cannot invalidate INA219 `0x41` on the same Port.
+Discovery owns a fixed-capacity table of
+`CONFIG_SPAGHETTI_DISCOVERY_MAX_RESULTS` accepted proposals indexed by stable
+`spaghetti_module_key_t`. The capacity cannot exceed the Module Manager capacity.
+Generation is tracked per key, not per Port, so a stale response for INA219 `0x40`
+cannot invalidate INA219 `0x41` on the same Port.
 
 ```c
 struct spaghetti_discovery_result {
@@ -79,8 +81,9 @@ int spaghetti_discovery_invalidate(spaghetti_module_key_t key,
   table;
 - `submit_manual()` validates and copies one result, rejects a duplicate/stale key, and
   emits UPSERT;
-- `scan_port()` asks the selected provider to emit all identifiable Modules on that
-  Port; an unsupported provider returns `-ENOTSUP`, not a fabricated empty identity;
+- `scan_port()` validates the Port and currently returns `-ENOTSUP`: the ESP32-C3
+  board has no hardware identity provider, and probing an I2C address would not prove
+  which driver owns that address;
 - `invalidate()` emits REMOVE for one exact key after the generation check. Sibling
   keys on the same Port are unchanged.
 
@@ -88,6 +91,11 @@ All functions run in thread/workqueue context. `timeout` is passed by value and 
 provider work. Input pointers are borrowed for each call; Discovery copies any data it
 retains. Expected errors include `-EINVAL`, `-ENOENT`, `-ENOSPC`, `-ESTALE`,
 `-ENOTSUP`, `-EBUSY`, `-ETIMEDOUT`, and sink/provider errors.
+
+The provider operation type is the contract for a future board-specific identity
+mechanism. It is deliberately not registered by this phase. The complete Engine adds
+the Config/Manager reconciliation sink; Discovery itself remains independent of both
+owners.
 
 ## Flow
 

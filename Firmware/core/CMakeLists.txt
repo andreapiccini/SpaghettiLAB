@@ -32,6 +32,7 @@ target_sources(app PRIVATE
   subsys/port/port.c
   subsys/driver_registry/driver_registry.c
   subsys/module_manager/module_manager.c
+  subsys/discovery/discovery.c
   subsys/config/config.c
   subsys/config/config_cbor.c
   subsys/services/storage/storage.c

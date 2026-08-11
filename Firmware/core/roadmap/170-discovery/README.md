@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -18,11 +18,11 @@ Un provider manuale configura due Module distinti sulla stessa Port senza possed
 
 ## Task
 
-1. ⬜ [TASK-170-01 — Implementare Discovery](TASK-170-01-implementare-discovery.md)
+1. ✅ [TASK-170-01 — Implementare Discovery](TASK-170-01-implementare-discovery.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Tipi risultato e ownership sono espliciti.
-- [ ] Il provider non modifica direttamente lo stato del Manager.
-- [ ] Risultati invalidi o duplicati vengono rifiutati.
-- [ ] Generazione e invalidazione sono per key, non per Port.
+- [x] Tipi risultato e ownership sono espliciti.
+- [x] Il provider non modifica direttamente lo stato del Manager.
+- [x] Risultati invalidi o duplicati vengono rifiutati.
+- [x] Generazione e invalidazione sono per key, non per Port.
