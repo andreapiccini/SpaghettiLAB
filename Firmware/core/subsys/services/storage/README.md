@@ -9,7 +9,10 @@ successo. Gli altri componenti non vedono Settings, NVS, offset flash o record f
 
 Storage possiede una copia RAM del record caricato, il suo envelope con magic/versione
 e lo stato del backend. Non valida il significato hardware della Config e non salva
-Module ID runtime, puntatori, context dei driver, misure o segreti.
+Module ID runtime, puntatori, context dei driver, misure o segreti. Le credenziali
+Wi-Fi appartengono invece al servizio separato
+[Wi-Fi Profiles](../wifi_profiles/README.md), che usa record PSA ITS autenticati e
+cifrati sulla stessa infrastruttura Settings/NVS.
 
 ## File
 

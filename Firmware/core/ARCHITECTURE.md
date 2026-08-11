@@ -59,6 +59,7 @@ its edges.
 | Data | When values/events exist | Defines values independently of their producer | Current with module key, ID, and timestamp |
 | Runtime | When autonomous behavior exists | Applies product rules | Sample both INA219 instances independently |
 | Input/output adapter | Optional | Connects the firmware to another interface | USB shell, local UI, REST, MQTT |
+| Connectivity profile service | Optional | Owns network credentials and link selection | Preferred Wi-Fi or strongest known fallback |
 | Discovery strategy | Optional | Proposes module identity | Manual assignment, EEPROM, electrical probe |
 | Shared-resource coordinator | Optional | Coordinates a real shared resource | A switchable rail used by two Ports |
 
@@ -85,6 +86,22 @@ flowchart LR
 
 Removing MQTT must not change the sensor driver, Module Manager, Data contract,
 or Runtime rules. It removes only one adapter.
+
+### Why Wi-Fi credentials are separate from Config
+
+Wi-Fi credentials configure how this Core reaches a network; they do not describe a
+Module connected to a Port. The persistent Wi-Fi Profiles service therefore owns
+SSID, password, preferred-network policy, scan, and association. Config continues to
+own the desired Module/Runtime/MQTT state without carrying secrets.
+
+At boot, the service scans known networks. A visible preferred SSID is attempted
+first; when it is absent, visible known SSIDs are tried by descending RSSI. The
+serial Communication adapter provisions profiles through a hidden prompt and remains
+available to the future application. See also:
+
+- [Persistent Wi-Fi Profiles](subsys/services/wifi_profiles/README.md)
+- [Communication](subsys/communication/README.md)
+- [Optional MQTT adapter](subsys/services/mqtt/README.md)
 
 ### Why Power is not always present
 

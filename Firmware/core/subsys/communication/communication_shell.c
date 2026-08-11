@@ -209,7 +209,7 @@ static int cmd_wifi_add(const struct shell *shell, size_t argc, char **argv)
 		return -EINVAL;
 	}
 
-	ssid_size = strnlen(argv[1], sizeof(profile.ssid));
+	ssid_size = strlen(argv[1]);
 	if ((ssid_size == 0U) || (ssid_size >= sizeof(profile.ssid))) {
 		shell_error(shell, "SSID must contain 1 to 32 bytes");
 		return -EINVAL;
@@ -309,19 +309,38 @@ static int cmd_wifi_prefer(const struct shell *shell, size_t argc, char **argv)
 	int err;
 
 	if (argc != 2U) {
-		shell_error(shell, "usage: spaghetti wifi prefer <ssid|none>");
+		shell_error(shell, "usage: spaghetti wifi prefer <ssid>");
 		return -EINVAL;
 	}
 
-	err = (strcmp(argv[1], "none") == 0) ?
-		spaghetti_wifi_profiles_clear_preferred() :
-		spaghetti_wifi_profiles_set_preferred(argv[1]);
+	err = spaghetti_wifi_profiles_set_preferred(argv[1]);
 	if (err < 0) {
 		shell_error(shell, "preferred network was not changed: %d", err);
 		return err;
 	}
 
 	shell_print(shell, "Preferred network updated");
+	return 0;
+}
+
+static int cmd_wifi_unprefer(const struct shell *shell, size_t argc,
+			    char **argv)
+{
+	int err;
+
+	ARG_UNUSED(argv);
+	if (argc != 1U) {
+		shell_error(shell, "usage: spaghetti wifi unprefer");
+		return -EINVAL;
+	}
+
+	err = spaghetti_wifi_profiles_clear_preferred();
+	if (err < 0) {
+		shell_error(shell, "preferred network was not cleared: %d", err);
+		return err;
+	}
+
+	shell_print(shell, "Preferred network cleared");
 	return 0;
 }
 
@@ -367,8 +386,9 @@ static int cmd_wifi_connect(const struct shell *shell, size_t argc, char **argv)
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	spaghetti_wifi_subcommands,
 	SHELL_CMD(add, NULL, "Save a Wi-Fi profile; password is prompted", cmd_wifi_add),
+	SHELL_CMD(unprefer, NULL, "Clear the preferred SSID", cmd_wifi_unprefer),
 	SHELL_CMD(list, NULL, "List Wi-Fi profiles without passwords", cmd_wifi_list),
-	SHELL_CMD(prefer, NULL, "Set a preferred SSID or none", cmd_wifi_prefer),
+	SHELL_CMD(prefer, NULL, "Set a preferred SSID", cmd_wifi_prefer),
 	SHELL_CMD(remove, NULL, "Delete one Wi-Fi profile", cmd_wifi_remove),
 	SHELL_CMD(connect, NULL, "Run connection selection now", cmd_wifi_connect),
 	SHELL_SUBCMD_SET_END

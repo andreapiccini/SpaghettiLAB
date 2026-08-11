@@ -219,8 +219,11 @@ Implementa `spaghetti_core_init()` passo-passo:
    attiva la Config vuota;
 8. se la lettura e la validazione riescono imposta `startup_config_present = true`, ma
    non applicare ancora lo snapshot e non avviare thread asincroni dentro init;
-9. inizializza Communication per rendere disponibile la Shell;
-10. inizializza gli adattatori opzionali configurati e passa a READY.
+9. inizializza Wi-Fi Profiles dopo Settings: il servizio carica le credenziali senza
+   inserirle nella Config e avvia la selezione automatica nella propria thread;
+10. inizializza Communication per rendere disponibile la Shell seriale, inclusi i
+    comandi di provisioning Wi-Fi;
+11. inizializza gli adattatori opzionali configurati e passa a READY.
 
 Un errore di infrastruttura obbligatoria porta Core a FAILED e viene restituito.
 L’assenza di una Config o di un modulo rimovibile non è un errore di infrastruttura.

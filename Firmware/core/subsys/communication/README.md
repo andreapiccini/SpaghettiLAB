@@ -65,6 +65,12 @@ Shell. This keeps the same dispatch usable by future MQTT and other transports.
 ```text
 spaghetti status
 spaghetti apply <hex>
+spaghetti wifi add <ssid> <open|wpa2>
+spaghetti wifi list
+spaghetti wifi prefer <ssid>
+spaghetti wifi unprefer
+spaghetti wifi remove <ssid>
+spaghetti wifi connect
 ```
 
 `status` prints every Module, including multiple Modules on the same Port. `apply`
@@ -77,6 +83,10 @@ The shell uses the existing `usb_serial` console selected by the board overlay.
 the maximum payload plus command text. `CONFIG_SHELL_STACK_SIZE=3072` bounds enough
 stack for the two 256-byte envelopes and the status snapshot built synchronously.
 Shell handlers call only Communication, never Manager or Config directly.
+The Wi-Fi subcommands are a separate provisioning adapter: WPA2 passwords are read
+from a hidden interactive prompt, copied into Secure Storage, and wiped from the
+handler stack. They never appear in command arguments, history, list output, or logs.
+See [Persistent Wi-Fi Profiles](../services/wifi_profiles/README.md).
 
 ```mermaid
 flowchart LR

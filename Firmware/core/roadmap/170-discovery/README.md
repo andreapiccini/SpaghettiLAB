@@ -10,7 +10,7 @@ Tradurre zero o più risultati per Port in eventi per key accettati dal Module M
 
 ## Dipende da
 
-[Fase 160 — MQTT](../160-mqtt/README.md)
+[Fase 165 — Profili Wi-Fi persistenti](../165-secure-wifi/README.md)
 
 ## Risultato visibile
 

@@ -17,15 +17,16 @@ Apri questi file:
 - `tests/mqtt/`: test nativi senza rete reale.
 
 Il percorso di sviluppo è Wi-Fi station ESP32-C3, DHCPv4, DNS, TCP non cifrato e
-MQTT 3.1.1 QoS 0. SSID e password non entrano nel codice: vengono inseriti a runtime
-nella shell Zephyr 4.4 con:
+MQTT 3.1.1 QoS 0. SSID e password non entrano nel codice. La fase 165 aggiunge
+profili persistenti; il comando attuale è:
 
 ```text
-wifi connect -s "YOUR_SSID" -p "YOUR_PASSWORD" -k 1
+spaghetti wifi add "YOUR_SSID" wpa2
+Password (input is hidden):
 ```
 
-`-k 1` seleziona WPA2-PSK. `NET_EVENT_IPV4_ADDR_ADD`, non la sola associazione Wi-Fi,
-indica al worker che può provare DNS e connessione.
+`NET_EVENT_IPV4_ADDR_ADD`, non la sola associazione Wi-Fi, indica al worker che può
+provare DNS e connessione.
 
 Scrivi in `include/spaghetti/mqtt.h` questi contratti pubblici:
 
@@ -167,10 +168,10 @@ rete; `k_msgq` copia elementi di dimensione fissa senza heap; zbus copia il camp
 dal channel nelle FIFO dei subscriber. Il file reale delle opzioni prodotto è
 `prj.conf`; la configurazione risolta è verificabile in `build/zephyr/.config`.
 
-## Checklist
+## Checklist di completamento
 
 - [x] Wi-Fi ESP32, DHCPv4, DNS e MQTT Zephyr sono abilitati.
-- [x] Le credenziali vengono inserite dalla shell e non sono versionate.
+- [x] Le credenziali vengono inserite dalla shell e non sono versionate nel repository.
 - [x] La callback considera pronta la rete solo dopo un indirizzo IPv4.
 - [x] Socket e reconnessione appartengono al worker MQTT.
 - [x] Queue, buffer, stack e backoff hanno limiti fissi.
@@ -191,7 +192,7 @@ make flash
 make monitor
 ```
 
-Nella shell seriale esegui il comando `wifi connect` mostrato sopra, poi `wifi status`
+Nella shell seriale salva il profilo col comando mostrato sopra, poi usa `wifi status`
 e `net iface`. Configura un broker raggiungibile e osserva i messaggi da un PC:
 
 ```sh

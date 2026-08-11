@@ -79,17 +79,21 @@ MQTT objects and buffers are static; status counters intentionally wrap as `uint
 ## Development Wi-Fi and broker test
 
 The ESP32-C3 build uses Wi-Fi station mode, DHCPv4, DNS, and Zephyr's MQTT library.
-Credentials are entered at runtime through the Zephyr shell and are never stored in
-the repository. With a WPA2 access point, run on the serial shell:
+Credentials are provisioned at runtime through the Spaghetti shell and are never
+stored in the repository. With a WPA2 access point, run on the serial shell:
 
 ```text
-wifi scan
-wifi connect -s "YOUR_SSID" -p "YOUR_PASSWORD" -k 1
+spaghetti wifi add "YOUR_SSID" wpa2
+Password (input is hidden):
+spaghetti wifi prefer "YOUR_SSID"
+spaghetti wifi connect
 ```
 
-`-k 1` selects WPA2-PSK in Zephyr 4.4. Use `wifi status` to check association and
-`net iface` to verify that DHCP added an IPv4 address. Do not paste a real password in
-committed logs or Markdown files.
+The password is saved through PSA ITS and does not appear in shell history. Use
+`spaghetti wifi list` to inspect selection state, `wifi status` to check association,
+and `net iface` to verify that DHCP added an IPv4 address. Do not paste a real
+password in committed logs or Markdown files. See
+[Persistent Wi-Fi Profiles](../wifi_profiles/README.md) for the security boundary.
 
 Apply a Config V1 payload with `mqtt.enabled=true`, the reachable broker hostname or
 IPv4 address, port `1883`, and a base topic such as `spaghetti/dev`. On a development
