@@ -327,6 +327,13 @@ config SPAGHETTI_REMOTE_CONSOLE_IDLE_TIMEOUT_MS
 	help
 	  A connected authenticated client is closed after this idle interval.
 
+config SPAGHETTI_REMOTE_CONSOLE_CREDENTIAL_INPUT_TIMEOUT_SECONDS
+	int "USB remote-console credential input timeout in seconds"
+	range 10 300
+	default 60
+	help
+	  Maximum hidden-input wait used only by the local development USB Shell.
+
 config SPAGHETTI_OTA_WORK_PRIORITY
 	int "OTA lifecycle workqueue priority"
 	range 0 15

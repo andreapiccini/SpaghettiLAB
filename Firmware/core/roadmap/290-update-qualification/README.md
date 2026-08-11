@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** 🟨 READY FOR HARDWARE
 
 ## Obiettivo
 
@@ -10,7 +10,7 @@ Dimostrare che nessun errore di trasferimento, boot o rete rende inutilizzabile 
 
 ## Task
 
-1. ⬜ [TASK-290-01 — Qualificare interruzioni, rollback e recovery](TASK-290-01-qualificare-update-e-recovery.md)
+1. 🟨 [TASK-290-01 — Qualificare interruzioni, rollback e recovery](TASK-290-01-qualificare-update-e-recovery.md)
 
 ## Criteri di completamento della fase
 

@@ -104,13 +104,13 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [260 — Manutenzione locale UART](260-local-maintenance-uart/README.md) | La base configura e aggiorna il Core usando i pin condivisi in una finestra sicura. |
 | ✅ | [270 — OTA Wi-Fi](270-wifi-ota/README.md) | Un peer autenticato carica una signed image durante una finestra esplicita. |
 | ✅ | [280 — Console remota](280-remote-console/README.md) | `make monitor` usa USB o un canale di rete autenticato. |
-| ⬜ | [290 — Qualificazione update](290-update-qualification/README.md) | Interruzioni, rollback e recovery sono verificati end-to-end. |
+| 🟨 | [290 — Qualificazione update](290-update-qualification/README.md) | Tool e matrice sono pronti; le prove fisiche devono ancora produrre evidenze. |
 
 ## Da dove iniziare
 
 Il piano OTA è descritto in
 [Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Le fasi 220–280 sono
-complete. Apri ora
+complete. La fase 290 è predisposta nel repository; apri ora
 [TASK-290-01 — Qualificare update e recovery](290-update-qualification/TASK-290-01-qualificare-update-e-recovery.md),
 che riusa il confine autenticato senza esporre Telnet in chiaro.
 

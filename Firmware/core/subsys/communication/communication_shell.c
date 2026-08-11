@@ -6,13 +6,19 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/sys/atomic.h>
+#include <zephyr/sys/reboot.h>
 #include <zephyr/sys/util.h>
 
+#include <spaghetti/core.h>
+#include <spaghetti/remote_console.h>
+#include <spaghetti/storage.h>
 #include <spaghetti/wifi_profiles.h>
 
 static atomic_t next_correlation_id;
+static struct k_work_delayable maintenance_reboot_work;
 
 static void wipe_sensitive(void *data, size_t data_size)
 {
@@ -127,6 +133,29 @@ int spaghetti_communication_shell_decode_hex(
 static uint32_t allocate_correlation_id(void)
 {
 	return (uint32_t)atomic_inc(&next_correlation_id);
+}
+
+static void maintenance_reboot_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	sys_reboot(SYS_REBOOT_WARM);
+}
+
+static const char *remote_console_state_name(
+	enum spaghetti_remote_console_state state)
+{
+	switch (state) {
+	case SPAGHETTI_REMOTE_CONSOLE_UNINITIALIZED:
+		return "uninitialized";
+	case SPAGHETTI_REMOTE_CONSOLE_DISABLED:
+		return "disabled";
+	case SPAGHETTI_REMOTE_CONSOLE_LISTENING:
+		return "listening";
+	case SPAGHETTI_REMOTE_CONSOLE_ERROR:
+		return "error";
+	default:
+		return "unknown";
+	}
 }
 
 static int cmd_status(const struct shell *shell, size_t argc, char **argv)
@@ -403,6 +432,137 @@ static int cmd_wifi_connect(const struct shell *shell, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_maintenance_reboot(
+	const struct shell *shell, size_t argc, char **argv)
+{
+	struct spaghetti_core_info info;
+	int err;
+
+	ARG_UNUSED(argv);
+	if (argc != 1U) {
+		shell_error(shell, "usage: spaghetti maintenance reboot");
+		return -EINVAL;
+	}
+	err = spaghetti_core_get_info(&info);
+	if (err < 0) {
+		shell_error(shell, "Core status failed: %d", err);
+		return err;
+	}
+	if (info.mode != SPAGHETTI_CORE_MODE_NORMAL) {
+		shell_error(shell, "Core is already outside Normal mode");
+		return -EALREADY;
+	}
+	err = spaghetti_storage_request_maintenance_once();
+	if (err < 0) {
+		shell_error(shell, "Maintenance request failed: %d", err);
+		return err;
+	}
+	shell_print(shell, "Rebooting into Maintenance mode");
+	(void)k_work_reschedule(
+		&maintenance_reboot_work,
+		K_MSEC(CONFIG_SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS));
+	return 0;
+}
+
+static int cmd_remote_console_provision(
+	const struct shell *shell, size_t argc, char **argv)
+{
+	char psk_hex[(SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE * 2U) + 1U] = {0};
+	uint8_t psk[SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE] = {0};
+	const size_t identity_size = (argc == 2U) ? strlen(argv[1]) : 0U;
+	int err;
+
+	if ((argc != 2U) || (identity_size == 0U) ||
+	    (identity_size > SPAGHETTI_REMOTE_CONSOLE_IDENTITY_MAX_SIZE)) {
+		shell_error(shell,
+			"usage: spaghetti remote provision <identity-1-to-32-bytes>");
+		return -EINVAL;
+	}
+	shell_print(shell, "PSK (64 hex digits; input is hidden):");
+	(void)shell_obscure_set(shell, true);
+	err = shell_readline(
+		shell, psk_hex, sizeof(psk_hex),
+		K_SECONDS(CONFIG_SPAGHETTI_REMOTE_CONSOLE_CREDENTIAL_INPUT_TIMEOUT_SECONDS));
+	(void)shell_obscure_set(shell, false);
+	shell_print(shell, "");
+	if (err != (int)(SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE * 2U)) {
+		wipe_sensitive(psk_hex, sizeof(psk_hex));
+		shell_error(shell, "PSK must contain exactly 64 hex digits");
+		return (err < 0) ? err : -EINVAL;
+	}
+
+	for (size_t byte_idx = 0U; byte_idx < sizeof(psk); ++byte_idx) {
+		uint8_t high;
+		uint8_t low;
+
+		err = hex_nibble(psk_hex[byte_idx * 2U], &high);
+		if (err == 0) {
+			err = hex_nibble(psk_hex[(byte_idx * 2U) + 1U], &low);
+		}
+		if (err < 0) {
+			wipe_sensitive(psk, sizeof(psk));
+			wipe_sensitive(psk_hex, sizeof(psk_hex));
+			shell_error(shell, "PSK contains a non-hexadecimal character");
+			return err;
+		}
+		psk[byte_idx] = (uint8_t)((high << 4U) | low);
+	}
+	err = spaghetti_remote_console_set_credentials(
+		psk, sizeof(psk), (const uint8_t *)argv[1], identity_size);
+	wipe_sensitive(psk, sizeof(psk));
+	wipe_sensitive(psk_hex, sizeof(psk_hex));
+	if (err < 0) {
+		shell_error(shell, "Remote-console credential was not saved: %d", err);
+		return err;
+	}
+	shell_print(shell, "Remote-console credential saved");
+	return 0;
+}
+
+static int cmd_remote_console_clear(
+	const struct shell *shell, size_t argc, char **argv)
+{
+	int err;
+
+	ARG_UNUSED(argv);
+	if (argc != 1U) {
+		shell_error(shell, "usage: spaghetti remote clear");
+		return -EINVAL;
+	}
+	err = spaghetti_remote_console_clear_credentials();
+	if (err < 0) {
+		shell_error(shell, "Remote-console credential was not cleared: %d", err);
+		return err;
+	}
+	shell_print(shell, "Remote-console credential cleared");
+	return 0;
+}
+
+static int cmd_remote_console_status(
+	const struct shell *shell, size_t argc, char **argv)
+{
+	struct spaghetti_remote_console_status status;
+	int err;
+
+	ARG_UNUSED(argv);
+	if (argc != 1U) {
+		shell_error(shell, "usage: spaghetti remote status");
+		return -EINVAL;
+	}
+	err = spaghetti_remote_console_get_status(&status);
+	if (err < 0) {
+		shell_error(shell, "Remote-console status failed: %d", err);
+		return err;
+	}
+	shell_print(shell,
+		"state=%s credentials=%u client=%u port=%u dropped_logs=%u last_error=%d",
+		remote_console_state_name(status.state),
+		status.credentials_present ? 1U : 0U,
+		status.client_connected ? 1U : 0U, status.port,
+		status.dropped_log_count, status.last_error);
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	spaghetti_wifi_subcommands,
 	SHELL_CMD(add, NULL, "Save a Wi-Fi profile; password is prompted", cmd_wifi_add),
@@ -415,11 +575,33 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 );
 
 SHELL_STATIC_SUBCMD_SET_CREATE(
+	spaghetti_maintenance_subcommands,
+	SHELL_CMD(reboot, NULL, "Reboot once into local Maintenance mode",
+		  cmd_maintenance_reboot),
+	SHELL_SUBCMD_SET_END
+);
+
+SHELL_STATIC_SUBCMD_SET_CREATE(
+	spaghetti_remote_subcommands,
+	SHELL_CMD(provision, NULL, "Save the hidden remote-console PSK",
+		  cmd_remote_console_provision),
+	SHELL_CMD(clear, NULL, "Delete the remote-console credential",
+		  cmd_remote_console_clear),
+	SHELL_CMD(status, NULL, "Show remote-console state without secrets",
+		  cmd_remote_console_status),
+	SHELL_SUBCMD_SET_END
+);
+
+SHELL_STATIC_SUBCMD_SET_CREATE(
 	spaghetti_subcommands,
 	SHELL_CMD(status, NULL, "Show Core, Port, and Module status", cmd_status),
 	SHELL_CMD(apply, NULL, "Submit a hex-encoded Config payload", cmd_apply),
 	SHELL_CMD(wifi, &spaghetti_wifi_subcommands,
 		  "Manage encrypted Wi-Fi profiles", NULL),
+	SHELL_CMD(maintenance, &spaghetti_maintenance_subcommands,
+		  "Enter local Maintenance mode", NULL),
+	SHELL_CMD(remote, &spaghetti_remote_subcommands,
+		  "Manage authenticated remote-console access", NULL),
 	SHELL_SUBCMD_SET_END
 );
 
@@ -429,5 +611,7 @@ SHELL_CMD_REGISTER(spaghetti, &spaghetti_subcommands,
 int spaghetti_communication_shell_init(void)
 {
 	atomic_set(&next_correlation_id, 1);
+	k_work_init_delayable(
+		&maintenance_reboot_work, maintenance_reboot_handler);
 	return 0;
 }

@@ -174,6 +174,36 @@ require their own host utility or debug-probe driver. A board without a serial
 console can still be flashed by its runner, but `make screen` naturally requires
 a serial port.
 
+### Remote console credentials during development
+
+The final board provisions over the GPIO-based Maintenance Link. While the USB
+connector is available, the development Shell can enter the same Maintenance mode
+and install the remote-console credential without exposing its PSK in command-line
+arguments or Shell history:
+
+```sh
+make remote-console-credential \
+  CREDENTIALS=.keys/core-v1-console.json IDENTITY=core-v1
+make remote-console-provision PORT=/dev/cu.usbmodem1101 \
+  CREDENTIALS=.keys/core-v1-console.json
+```
+
+Provisioning automatically requests a one-shot Maintenance reboot when necessary.
+Reboot the device afterwards to return to Normal mode. Then locate authenticated
+devices on an explicitly routed LAN or VPN subnet and connect:
+
+```sh
+make remote-console-list SUBNET=192.168.1.0/24 \
+  CREDENTIALS=.keys/core-v1-console.json
+make monitor TRANSPORT=network HOST=192.168.1.42 \
+  CREDENTIALS=.keys/core-v1-console.json
+```
+
+Revoke the device credential locally with `make remote-console-clear
+PORT=/dev/cu.usbmodem1101`. The generated JSON is mode `0600`, is never overwritten,
+and must be kept private. Do not expose TCP port 1338 directly to the Internet; use
+an authenticated VPN with a route to the device subnet.
+
 On Linux, your user may need serial-port access. On many distributions, add the
 user to the `dialout` group and then sign out and back in:
 
@@ -196,6 +226,12 @@ sudo usermod -aG dialout "$USER"
 | `make screen [PORT=...]` | Open the raw serial console at 115200 baud |
 | `make monitor [PORT=...]` | Open the styled, reconnecting Rich monitor |
 | `make host-tools` | Create `.venv/` and install monitor dependencies |
+| `make remote-console-credential CREDENTIALS=...` | Create a protected TLS-PSK file |
+| `make remote-console-provision CREDENTIALS=...` | Install it through local USB Maintenance |
+| `make remote-console-list SUBNET=... CREDENTIALS=...` | Find authenticated consoles |
+| `make remote-console-clear [PORT=...]` | Revoke the device console credential |
+| `make update-qualification-manifest ...` | Print hashes and candidate metadata without secrets |
+| `make update-qualification-check` | Reject an incomplete or failed hardware report |
 | `make clean` | Remove the CMake build artifacts |
 
 Useful Windows equivalents:

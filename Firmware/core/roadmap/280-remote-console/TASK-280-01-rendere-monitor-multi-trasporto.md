@@ -33,7 +33,12 @@ frammenti in 8 slot statici da 256 byte: se sono pieni elimina il più vecchio, 
 Runtime non attende mai il client.
 
 Apri `subsys/services/maintenance_link/maintenance_mgmt.c`: i command ID 10 e 11
-impostano e cancellano la credenziale console esclusivamente via UART locale attiva.
+impostano e cancellano la credenziale console via UART locale attiva. Apri anche
+`subsys/communication/communication_shell.c`: per lo sviluppo, la USB fisica espone
+lo stesso confine locale con `spaghetti maintenance reboot`, `spaghetti remote
+provision <identity>`, `spaghetti remote clear` e `spaghetti remote status`. La PSK
+viene letta con input nascosto e le API rifiutano la scrittura se la Maintenance
+Link locale non è ACTIVE. Questi comandi non sono esposti dalla console TLS remota.
 Apri `subsys/core/core.c`: Communication precede Remote Console e il listener non è
 creato in Maintenance o Unprovisioned.
 
@@ -58,14 +63,31 @@ autenticazione impediscono a un host nella LAN di ottenere una shell amministrat
 
 ## Come si usa
 
-Provisiona localmente command ID 10 con `{psk: bstr(32), identity: tstr}`, crea lo
-stesso file host e limita i permessi:
+Genera una credenziale casuale locale. Il comando crea un file `0600`, non stampa la
+PSK e non sovrascrive un file esistente:
 
 ```sh
-chmod 600 .keys/remote-console.json
-make monitor TRANSPORT=network HOST=192.0.2.10 PORT=1338 \
-  CREDENTIALS=.keys/remote-console.json
+make remote-console-credential \
+  CREDENTIALS=.keys/core-v1-console.json IDENTITY=core-v1
+make remote-console-provision PORT=/dev/cu.usbmodem1101 \
+  CREDENTIALS=.keys/core-v1-console.json
 ```
+
+Il secondo comando rileva la modalità corrente. Se è Normal, salva il marker
+one-shot, riavvia in Maintenance, aspetta che la USB ricompaia e inserisce la PSK nel
+prompt nascosto. In Maintenance o Unprovisioned la inserisce subito. Riavvia poi il
+Core e trova soltanto i dispositivi che dimostrano di conoscere quella PSK:
+
+```sh
+make remote-console-list SUBNET=192.168.1.0/24 \
+  CREDENTIALS=.keys/core-v1-console.json
+make monitor TRANSPORT=network HOST=192.0.2.10 PORT=1338 \
+  CREDENTIALS=.keys/core-v1-console.json
+make remote-console-clear PORT=/dev/cu.usbmodem1101
+```
+
+La ricerca usa handshake TLS-PSK autenticati su un CIDR IPv4 esplicito: funziona
+anche via VPN se quella subnet è instradata e non pubblica annunci non autenticati.
 
 ## Checklist di completamento
 
@@ -73,6 +95,8 @@ make monitor TRANSPORT=network HOST=192.0.2.10 PORT=1338 \
 - [x] Una credenziale errata impedisce l'handshake.
 - [x] Timeout e disconnessione liberano la sessione.
 - [x] Log flood e client lento non bloccano il firmware.
+- [x] USB di sviluppo e UART finale possono provisionare senza esporre la PSK.
+- [x] La ricerca in rete restituisce solo console autenticate.
 
 ## Verifica e fine task
 

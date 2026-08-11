@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <zephyr/ztest.h>
+#include <zephyr/sys/reboot.h>
 
 #include <spaghetti/communication.h>
 #include <spaghetti/config_codec.h>
@@ -12,6 +13,7 @@
 #include <spaghetti/module.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
+#include <spaghetti/remote_console.h>
 #include <spaghetti/wifi_profiles.h>
 
 #include "communication_internal.h"
@@ -22,6 +24,48 @@ static int decode_error;
 static int apply_error;
 static uint32_t decode_count;
 static uint32_t apply_count;
+
+FUNC_NORETURN void sys_reboot(int type)
+{
+	ARG_UNUSED(type);
+	for (;;) {
+	}
+}
+
+int spaghetti_storage_request_maintenance_once(void)
+{
+	return 0;
+}
+
+int spaghetti_remote_console_set_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const uint8_t *identity, size_t identity_size)
+{
+	if ((psk == NULL) ||
+	    (psk_size != SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE) ||
+	    (identity == NULL) || (identity_size == 0U)) {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+int spaghetti_remote_console_clear_credentials(void)
+{
+	return 0;
+}
+
+int spaghetti_remote_console_get_status(
+	struct spaghetti_remote_console_status *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+	*out = (struct spaghetti_remote_console_status) {
+		.state = SPAGHETTI_REMOTE_CONSOLE_DISABLED,
+		.port = 1338U,
+	};
+	return 0;
+}
 
 int spaghetti_wifi_profiles_set(
 	const struct spaghetti_wifi_profile_config *config)

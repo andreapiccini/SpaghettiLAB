@@ -2,7 +2,7 @@
 
 [← Indice roadmap](README.md)
 
-**Stato:** 🟨 IN CORSO
+**Stato:** 🟨 READY FOR HARDWARE QUALIFICATION
 
 ## Decisioni verificate su Zephyr 4.4 e Core V1
 
@@ -58,4 +58,5 @@ incompleta. Nessun record Config persistente può impostare direttamente `RECEIV
 Non iniziare un task se il precedente non è completato. Le fasi 220–280 hanno fissato
 il confine hardware, predisposto bootloader/firma A/B, implementato il coordinatore,
 la maintenance locale e l'adapter OTA DTLS-PSK. Pin e controller restano proprietà
-della board/overlay. Il prossimo passo è la qualificazione update della fase 290.
+della board/overlay. Tool, report e matrice della fase 290 sono pronti; mancano le
+prove fisiche documentate prima di poter dichiarare completo il piano.

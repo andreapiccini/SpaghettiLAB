@@ -73,6 +73,10 @@ spaghetti wifi prefer <ssid>
 spaghetti wifi unprefer
 spaghetti wifi remove <ssid>
 spaghetti wifi connect
+spaghetti maintenance reboot
+spaghetti remote provision <identity>
+spaghetti remote clear
+spaghetti remote status
 ```
 
 `status` first prints the independent operational mode and image state, then every
@@ -117,8 +121,13 @@ Telnet: the remote peer receives only `spaghetti status`, `spaghetti apply <hex>
 `spaghetti_communication_handle_request()` boundary used by the serial adapter.
 
 The listener exists only in Normal mode and only after a separate 32-byte console
-PSK and 1–32 byte identity have been provisioned through the local Maintenance Link
-(management command IDs 10 and 11 set/clear them). OTA credentials are independent.
+PSK and 1–32 byte identity have been provisioned while local Maintenance is active.
+The final-hardware path uses Maintenance Link management command IDs 10 and 11. The
+development path uses the physical USB Shell: `spaghetti maintenance reboot` writes
+the one-shot marker, and `spaghetti remote provision` reads the PSK with hidden
+input. The policy API still rejects set and clear unless the local Maintenance Link
+is `ACTIVE` (which it is during Maintenance and Unprovisioned boots). These local
+commands are not part of the remote TLS parser. OTA credentials are independent.
 One authenticated client is accepted; inactivity closes it after five minutes.
 The log backend copies fragments into eight static 256-byte slots without waiting.
 When full, it discards the oldest fragment and increments the status counter, so a
@@ -128,17 +137,35 @@ The current Core V1/V2 secure-storage transform derives its encryption key from 
 device ID. Zephyr warns that this does not establish strong physical at-rest
 protection; production hardware must replace that provider with a protected key.
 
-The host credential file is JSON and must be readable only by its owner:
-
-```json
-{"identity":"core-v1","psk":"64 hexadecimal digits"}
-```
+Create and install the host credential without copying the PSK into a command line:
 
 ```sh
-chmod 600 .keys/remote-console.json
-make monitor TRANSPORT=network HOST=192.0.2.10 PORT=1338 \
-  CREDENTIALS=.keys/remote-console.json
+make remote-console-credential \
+  CREDENTIALS=.keys/core-v1-console.json IDENTITY=core-v1
+make remote-console-provision \
+  PORT=/dev/cu.usbmodem1101 CREDENTIALS=.keys/core-v1-console.json
 ```
+
+The provisioning helper inspects the current mode. From Normal it requests the
+one-shot Maintenance reboot, waits for USB to reconnect, then sends the PSK only to
+the hidden prompt. In Maintenance or Unprovisioned it provisions immediately. The
+device remains in the non-operational mode until rebooted.
+
+Find devices only by successfully authenticating with that credential. `SUBNET`
+must be an explicitly routed IPv4 CIDR; this also works across a VPN that routes the
+target subnet and does not depend on multicast discovery:
+
+```sh
+make remote-console-list SUBNET=192.168.1.0/24 \
+  CREDENTIALS=.keys/core-v1-console.json
+make monitor TRANSPORT=network HOST=192.0.2.10 PORT=1338 \
+  CREDENTIALS=.keys/core-v1-console.json
+make remote-console-clear PORT=/dev/cu.usbmodem1101
+```
+
+Credential creation uses 32 random bytes, creates the JSON with mode `0600`, and
+refuses to overwrite an existing file. Clearing the device does not delete that
+host file; retain it only if it is still needed as an audit/backup artifact.
 
 The client requires Python 3.13+ with TLS-PSK, fixes TLS to
 `PSK-AES128-GCM-SHA256`, and has no option to skip authentication. Serial and

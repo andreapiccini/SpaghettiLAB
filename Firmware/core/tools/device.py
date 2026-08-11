@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 import glob
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -15,6 +17,7 @@ import shutil
 import socket
 import ssl
 import stat
+import secrets
 import subprocess
 import sys
 import time
@@ -788,6 +791,8 @@ def network_credentials(path_text: str | None) -> tuple[str, bytes]:
             f"Credential file {path} is accessible by other users; run "
             f"'chmod 600 {path}'."
         )
+    if not isinstance(document, dict):
+        raise ToolError("Credential JSON must contain one object.")
     identity = document.get("identity")
     psk_hex = document.get("psk")
     if not isinstance(identity, str) or not 1 <= len(identity.encode()) <= 32:
@@ -799,19 +804,182 @@ def network_credentials(path_text: str | None) -> tuple[str, bytes]:
     return identity, bytes.fromhex(psk_hex)
 
 
-def open_network_monitor(host: str | None, port: str | None, credentials: str | None):
-    """Create one TLS 1.2 socket authenticated with the provisioned PSK."""
-    if not host:
-        raise ToolError("Network monitor requires HOST=<device IPv4 address>.")
-    if not hasattr(ssl.SSLContext, "set_psk_client_callback"):
-        raise ToolError("Network monitor requires Python 3.13 or newer with TLS-PSK.")
+def create_network_credentials(path_text: str | None, identity: str) -> Path:
+    """Create one owner-only remote-console credential without overwriting."""
+    if not path_text:
+        raise ToolError("Credential creation requires CREDENTIALS=<JSON file>.")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", identity):
+        raise ToolError(
+            "IDENTITY must contain 1 to 32 letters, digits, '.', '_' or '-'."
+        )
+    path = Path(path_text).expanduser()
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    document = json.dumps(
+        {"identity": identity, "psk": secrets.token_hex(32)}, indent=2
+    ) + "\n"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     try:
-        tcp_port = int(port or "1338")
-    except ValueError as exc:
-        raise ToolError("Network PORT must be a decimal TCP port.") from exc
-    if not 1 <= tcp_port <= 65535:
-        raise ToolError("Network PORT must be between 1 and 65535.")
-    identity, psk = network_credentials(credentials)
+        descriptor = os.open(path, flags, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(document)
+    except FileExistsError as exc:
+        raise ToolError(
+            f"Credential file already exists and was not replaced: {path}."
+        ) from exc
+    except OSError as exc:
+        raise ToolError(f"Cannot create credential file: {path}.") from exc
+    return path
+
+
+def serial_dependency():
+    """Load pyserial for non-interactive local provisioning commands."""
+    try:
+        import serial
+    except ImportError as exc:
+        raise ToolError(
+            "Local provisioning requires pyserial; run 'make host-tools'."
+        ) from exc
+    return serial
+
+
+def read_serial_until(connection, markers: tuple[bytes, ...], timeout: float) -> bytes:
+    """Read bounded serial output until one marker is observed."""
+    deadline = time.monotonic() + timeout
+    received = bytearray()
+    while time.monotonic() < deadline:
+        chunk = connection.read(connection.in_waiting or 1)
+        if chunk:
+            received.extend(chunk)
+            if len(received) > 16384:
+                del received[:-8192]
+            if any(marker in received for marker in markers):
+                return bytes(received)
+    expected = ", ".join(marker.decode(errors="replace") for marker in markers)
+    raise ToolError(f"Timed out waiting for device response: {expected}.")
+
+
+def open_local_shell(serial, port: str, baud: int):
+    """Open and synchronize the development USB Zephyr Shell."""
+    connection = None
+    try:
+        connection = serial.Serial(
+            port=port, baudrate=baud, timeout=0.05, write_timeout=0.5
+        )
+        connection.reset_input_buffer()
+        connection.write(b"\x03\r")
+        connection.flush()
+        read_serial_until(connection, (b":~$ ",), 3.0)
+        return connection
+    except (OSError, serial.SerialException, ToolError) as exc:
+        if connection is not None:
+            connection.close()
+        raise ToolError(f"Cannot open local USB Shell on {port}.") from exc
+
+
+def shell_command(connection, command: str, timeout: float = 5.0) -> str:
+    """Execute one local Shell command and return output through its next prompt."""
+    connection.write(command.encode("ascii") + b"\r")
+    connection.flush()
+    response = read_serial_until(connection, (b":~$ ",), timeout)
+    return clean_terminal_text(response.decode("utf-8", errors="replace"))
+
+
+def ensure_usb_maintenance(serial, port: str, baud: int):
+    """Return a synchronized USB Shell after entering a one-shot Maintenance boot."""
+    connection = open_local_shell(serial, port, baud)
+    status = shell_command(connection, "spaghetti status")
+    mode_match = re.search(r"\bmode=(normal|maintenance|unprovisioned)\b", status)
+    if mode_match is None:
+        connection.close()
+        raise ToolError("The USB Shell did not return a recognizable Core mode.")
+    if mode_match.group(1) != "normal":
+        return connection, mode_match.group(1), False
+
+    response = shell_command(
+        connection, "spaghetti maintenance reboot", timeout=3.0
+    )
+    if "Rebooting into Maintenance mode" not in response:
+        connection.close()
+        raise ToolError("The Core refused the one-shot Maintenance reboot.")
+    connection.close()
+
+    deadline = time.monotonic() + 20.0
+    while time.monotonic() < deadline:
+        time.sleep(0.5)
+        try:
+            connection = open_local_shell(serial, port, baud)
+            status = shell_command(connection, "spaghetti status")
+        except ToolError:
+            continue
+        if "mode=maintenance" in status:
+            return connection, "maintenance", True
+        connection.close()
+    raise ToolError("The Core did not reconnect over USB in Maintenance mode.")
+
+
+def run_remote_console_credential(args: argparse.Namespace) -> int:
+    """Generate a protected host credential used by provisioning and TLS."""
+    path = create_network_credentials(args.credentials, args.identity)
+    print(f"Created remote-console credential: {path}")
+    print("Keep this file private and back it up; its PSK was not printed.")
+    return 0
+
+
+def run_remote_console_provision(args: argparse.Namespace) -> int:
+    """Provision the host credential through the local development USB Shell."""
+    serial = serial_dependency()
+    identity, psk = network_credentials(args.credentials)
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", identity):
+        raise ToolError(
+            "Provisioning identity must contain only letters, digits, '.', '_' or '-'."
+        )
+    port = selected_port(args.port)
+    connection, mode, rebooted = ensure_usb_maintenance(serial, port, args.baud)
+    try:
+        command = f"spaghetti remote provision {identity}"
+        connection.write(command.encode("ascii") + b"\r")
+        connection.flush()
+        read_serial_until(connection, (b"PSK (64 hex digits; input is hidden):",), 5.0)
+        connection.write(psk.hex().encode("ascii") + b"\r")
+        connection.flush()
+        response = read_serial_until(
+            connection,
+            (b"Remote-console credential saved", b"credential was not saved"),
+            10.0,
+        )
+        if b"Remote-console credential saved" not in response:
+            raise ToolError(
+                clean_terminal_text(response.decode(errors="replace")).strip()
+            )
+    finally:
+        connection.close()
+    print(f"Provisioned identity {identity!r} through {port} in {mode} mode.")
+    if rebooted:
+        print("The Core remains in Maintenance; reboot it to return to Normal mode.")
+    return 0
+
+
+def run_remote_console_clear(args: argparse.Namespace) -> int:
+    """Revoke the device credential through the local development USB Shell."""
+    serial = serial_dependency()
+    port = selected_port(args.port)
+    connection, mode, rebooted = ensure_usb_maintenance(serial, port, args.baud)
+    try:
+        response = shell_command(connection, "spaghetti remote clear")
+        if "Remote-console credential cleared" not in response:
+            raise ToolError(response.strip())
+    finally:
+        connection.close()
+    print(f"Cleared the remote-console credential through {port} in {mode} mode.")
+    if rebooted:
+        print("The Core remains in Maintenance; reboot it to return to Normal mode.")
+    return 0
+
+
+def psk_client_context(identity: str, psk: bytes) -> ssl.SSLContext:
+    """Build the only accepted TLS profile for a remote-console client."""
+    if not hasattr(ssl.SSLContext, "set_psk_client_callback"):
+        raise ToolError("Network console requires Python 3.13 or newer with TLS-PSK.")
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.maximum_version = ssl.TLSVersion.TLSv1_2
@@ -822,6 +990,21 @@ def open_network_monitor(host: str | None, port: str | None, credentials: str | 
     except ssl.SSLError as exc:
         raise ToolError("Host OpenSSL does not provide the required PSK cipher.") from exc
     context.set_psk_client_callback(lambda _hint: (identity, psk))
+    return context
+
+
+def open_network_monitor(host: str | None, port: str | None, credentials: str | None):
+    """Create one TLS 1.2 socket authenticated with the provisioned PSK."""
+    if not host:
+        raise ToolError("Network monitor requires HOST=<device IPv4 address>.")
+    try:
+        tcp_port = int(port or "1338")
+    except ValueError as exc:
+        raise ToolError("Network PORT must be a decimal TCP port.") from exc
+    if not 1 <= tcp_port <= 65535:
+        raise ToolError("Network PORT must be between 1 and 65535.")
+    identity, psk = network_credentials(credentials)
+    context = psk_client_context(identity, psk)
     plain = None
     try:
         plain = socket.create_connection((host, tcp_port), timeout=3.0)
@@ -834,6 +1017,88 @@ def open_network_monitor(host: str | None, port: str | None, credentials: str | 
             "TLS-PSK connection failed; check address, identity and credential."
         ) from exc
     return connection, f"{host}:{tcp_port}", f"TLS-PSK · identity {identity}"
+
+
+def probe_remote_console(
+    address: str,
+    port: int,
+    context: ssl.SSLContext,
+    timeout: float,
+) -> str | None:
+    """Return an authenticated remote-console address or no match."""
+    plain = None
+    connection = None
+    try:
+        plain = socket.create_connection((address, port), timeout=timeout)
+        connection = context.wrap_socket(plain, server_hostname=None)
+        connection.settimeout(timeout)
+        greeting = connection.recv(128)
+        if greeting.startswith(b"Spaghetti LAB authenticated network console"):
+            return address
+    except (OSError, ssl.SSLError):
+        return None
+    finally:
+        if connection is not None:
+            connection.close()
+        elif plain is not None:
+            plain.close()
+    return None
+
+
+def run_remote_console_list(args: argparse.Namespace) -> int:
+    """Discover only consoles authenticated by one credential on a bounded subnet."""
+    _, Console, _, Table, _, box = monitor_dependencies()
+    identity, psk = network_credentials(args.credentials)
+    context = psk_client_context(identity, psk)
+    try:
+        network = ipaddress.ip_network(args.subnet, strict=False)
+    except ValueError as exc:
+        raise ToolError("SUBNET must be a valid IPv4 CIDR such as 192.168.1.0/24.") from exc
+    if network.version != 4:
+        raise ToolError("Remote-console discovery currently supports IPv4 only.")
+    if not 1 <= args.network_port <= 65535:
+        raise ToolError("Remote-console port must be between 1 and 65535.")
+    if not 0.05 <= args.timeout <= 5.0:
+        raise ToolError("Discovery timeout must be between 0.05 and 5 seconds.")
+    addresses = [str(address) for address in network.hosts()]
+    if len(addresses) > 4094:
+        raise ToolError("Discovery is limited to at most 4094 host addresses.")
+
+    matches: list[str] = []
+    with ThreadPoolExecutor(max_workers=min(32, len(addresses) or 1)) as executor:
+        futures = {
+            executor.submit(
+                probe_remote_console,
+                address,
+                args.network_port,
+                context,
+                args.timeout,
+            ): address
+            for address in addresses
+        }
+        for future in as_completed(futures):
+            match = future.result()
+            if match is not None:
+                matches.append(match)
+
+    console = Console(highlight=False)
+    table = Table(
+        title=f"Authenticated Spaghetti consoles · identity {identity}",
+        box=box.ROUNDED,
+        border_style="white",
+        header_style="bold blue",
+        title_style="bold white",
+    )
+    table.add_column("Address", style="bold white")
+    table.add_column("Port", justify="right", style="cyan")
+    table.add_column("Authentication", style="green")
+    for address in sorted(matches, key=ipaddress.ip_address):
+        table.add_row(address, str(args.network_port), "TLS-PSK verified")
+    console.print(table)
+    if not matches:
+        console.print("  [yellow]○ no matching console found[/]")
+        return 1
+    return 0
 
 
 def run_monitor(args: argparse.Namespace) -> int:
@@ -994,6 +1259,37 @@ def build_parser() -> argparse.ArgumentParser:
         help="do not synchronize the Shell prompt after connecting",
     )
     monitor.set_defaults(wake_shell=True)
+
+    credential = subparsers.add_parser(
+        "remote-console-credential",
+        help="create one protected TLS-PSK credential file",
+    )
+    credential.add_argument("--credentials", required=True)
+    credential.add_argument("--identity", default="core-v1")
+
+    provision = subparsers.add_parser(
+        "remote-console-provision",
+        help="provision TLS-PSK through the local development USB Shell",
+    )
+    provision.add_argument("--port", help="development USB Shell serial device")
+    provision.add_argument("--baud", type=int, default=115200)
+    provision.add_argument("--credentials", required=True)
+
+    clear = subparsers.add_parser(
+        "remote-console-clear",
+        help="clear TLS-PSK through the local development USB Shell",
+    )
+    clear.add_argument("--port", help="development USB Shell serial device")
+    clear.add_argument("--baud", type=int, default=115200)
+
+    discover = subparsers.add_parser(
+        "remote-console-list",
+        help="find remote consoles by authenticated TLS-PSK probing",
+    )
+    discover.add_argument("--subnet", required=True)
+    discover.add_argument("--credentials", required=True)
+    discover.add_argument("--network-port", type=int, default=1338)
+    discover.add_argument("--timeout", type=float, default=0.35)
     return parser
 
 
@@ -1012,6 +1308,14 @@ def main() -> int:
             return run_flash(args)
         if args.command == "screen":
             return run_screen(args)
+        if args.command == "remote-console-credential":
+            return run_remote_console_credential(args)
+        if args.command == "remote-console-provision":
+            return run_remote_console_provision(args)
+        if args.command == "remote-console-clear":
+            return run_remote_console_clear(args)
+        if args.command == "remote-console-list":
+            return run_remote_console_list(args)
         return run_monitor(args)
     except ToolError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
