@@ -18,6 +18,7 @@
 #include <spaghetti/config_codec.h>
 #include <spaghetti/core.h>
 #include <spaghetti/maintenance_link.h>
+#include <spaghetti/ota.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
@@ -33,11 +34,21 @@ enum spaghetti_mgmt_command_id {
 	SPAGHETTI_MGMT_ID_BOOTSTRAP_KEY,
 	SPAGHETTI_MGMT_ID_IMAGE,
 	SPAGHETTI_MGMT_ID_IMAGE_CANCEL,
+	SPAGHETTI_MGMT_ID_OTA_CREDENTIALS,
+	SPAGHETTI_MGMT_ID_OTA_ARM,
+	SPAGHETTI_MGMT_ID_OTA_CREDENTIALS_CLEAR,
 	SPAGHETTI_MGMT_ID_COUNT,
+};
+
+enum spaghetti_mgmt_transport {
+	SPAGHETTI_MGMT_TRANSPORT_NONE,
+	SPAGHETTI_MGMT_TRANSPORT_UART,
+	SPAGHETTI_MGMT_TRANSPORT_UDP,
 };
 
 static uint32_t expected_image_size;
 static bool image_transfer_active;
+static enum spaghetti_mgmt_transport image_transport;
 static struct k_work_delayable reboot_work;
 K_MUTEX_DEFINE(mgmt_lock);
 
@@ -56,6 +67,18 @@ static bool maintenance_is_active(void)
 	       SPAGHETTI_MAINTENANCE_LINK_ACTIVE;
 }
 
+static enum spaghetti_mgmt_transport request_transport(
+	const struct smp_streamer *ctxt)
+{
+	if (spaghetti_ota_is_transport(ctxt->smpt)) {
+		return SPAGHETTI_MGMT_TRANSPORT_UDP;
+	}
+	if (maintenance_is_active()) {
+		return SPAGHETTI_MGMT_TRANSPORT_UART;
+	}
+	return SPAGHETTI_MGMT_TRANSPORT_NONE;
+}
+
 static int encode_result(zcbor_state_t *zse, int result)
 {
 	const bool ok = zcbor_tstr_put_lit(zse, "rc") &&
@@ -67,6 +90,7 @@ static int encode_result(zcbor_state_t *zse, int result)
 static void reboot_handler(struct k_work *work)
 {
 	ARG_UNUSED(work);
+	spaghetti_ota_prepare_reboot();
 	sys_reboot(SYS_REBOOT_WARM);
 }
 
@@ -79,27 +103,33 @@ static void schedule_reboot(void)
 static void synchronize_image_transfer(void)
 {
 	struct spaghetti_update_status status;
+	enum spaghetti_update_transport expected_transport;
 
 	if (!image_transfer_active) {
 		return;
 	}
+	expected_transport = (image_transport == SPAGHETTI_MGMT_TRANSPORT_UDP) ?
+		SPAGHETTI_UPDATE_TRANSPORT_UDP :
+		SPAGHETTI_UPDATE_TRANSPORT_UART;
 	if ((spaghetti_update_get_status(&status) < 0) ||
 	    (status.state != SPAGHETTI_UPDATE_RECEIVING) ||
-	    (status.transport != SPAGHETTI_UPDATE_TRANSPORT_UART)) {
+	    (status.transport != expected_transport)) {
 		image_transfer_active = false;
 		expected_image_size = 0U;
+		image_transport = SPAGHETTI_MGMT_TRANSPORT_NONE;
 	}
 }
 
 static int status_read(struct smp_streamer *ctxt)
 {
 	struct spaghetti_update_status update;
+	struct spaghetti_ota_status ota;
 	struct spaghetti_core_info core;
 	zcbor_state_t *zse = ctxt->writer->zs;
 	int err;
 	bool ok;
 
-	if (!maintenance_is_active()) {
+	if (request_transport(ctxt) == SPAGHETTI_MGMT_TRANSPORT_NONE) {
 		return MGMT_ERR_EACCESSDENIED;
 	}
 	err = spaghetti_core_get_info(&core);
@@ -107,6 +137,10 @@ static int status_read(struct smp_streamer *ctxt)
 		return encode_result(zse, err);
 	}
 	err = spaghetti_update_get_status(&update);
+	if (err < 0) {
+		return encode_result(zse, err);
+	}
+	err = spaghetti_ota_get_status(&ota);
 	if (err < 0) {
 		return encode_result(zse, err);
 	}
@@ -123,7 +157,11 @@ static int status_read(struct smp_streamer *ctxt)
 	     zcbor_tstr_put_lit(zse, "version") &&
 	     zcbor_tstr_encode_ptr(zse, core.version, strlen(core.version)) &&
 	     zcbor_tstr_put_lit(zse, "update") &&
-	     zcbor_uint32_put(zse, (uint32_t)update.state);
+	     zcbor_uint32_put(zse, (uint32_t)update.state) &&
+	     zcbor_tstr_put_lit(zse, "ota") &&
+	     zcbor_uint32_put(zse, (uint32_t)ota.state) &&
+	     zcbor_tstr_put_lit(zse, "port") &&
+	     zcbor_uint32_put(zse, ota.port);
 	return ok ? MGMT_ERR_EOK : MGMT_ERR_EMSGSIZE;
 }
 
@@ -271,8 +309,11 @@ static int image_write(struct smp_streamer *ctxt)
 	bool last;
 	bool ok;
 	int err;
+	size_t image_capacity;
+	const enum spaghetti_mgmt_transport transport =
+		request_transport(ctxt);
 
-	if (!maintenance_is_active()) {
+	if (transport == SPAGHETTI_MGMT_TRANSPORT_NONE) {
 		return MGMT_ERR_EACCESSDENIED;
 	}
 	ok = zcbor_map_decode_bulk(zsd, fields, ARRAY_SIZE(fields),
@@ -282,6 +323,13 @@ static int image_write(struct smp_streamer *ctxt)
 	    (offset > total) || (data.len > (total - offset))) {
 		return MGMT_ERR_EINVAL;
 	}
+	err = spaghetti_update_get_capacity(&image_capacity);
+	if (err < 0) {
+		return encode_result(zse, err);
+	}
+	if (total > image_capacity) {
+		return encode_result(zse, -EFBIG);
+	}
 
 	(void)k_mutex_lock(&mgmt_lock, K_FOREVER);
 	synchronize_image_transfer();
@@ -290,11 +338,17 @@ static int image_write(struct smp_streamer *ctxt)
 			err = -EBUSY;
 			goto respond;
 		}
-		err = spaghetti_update_arm(
-			CONFIG_SPAGHETTI_MAINTENANCE_SESSION_MS);
+		if (transport == SPAGHETTI_MGMT_TRANSPORT_UART) {
+			err = spaghetti_update_arm(
+				CONFIG_SPAGHETTI_MAINTENANCE_SESSION_MS);
+		} else {
+			err = 0;
+		}
 		if (err == 0) {
-			err = spaghetti_update_begin(
-				SPAGHETTI_UPDATE_TRANSPORT_UART);
+			err = spaghetti_update_begin((transport ==
+				SPAGHETTI_MGMT_TRANSPORT_UART) ?
+				SPAGHETTI_UPDATE_TRANSPORT_UART :
+				SPAGHETTI_UPDATE_TRANSPORT_UDP);
 		}
 		if (err < 0) {
 			(void)spaghetti_update_cancel();
@@ -302,8 +356,10 @@ static int image_write(struct smp_streamer *ctxt)
 		}
 		expected_image_size = total;
 		image_transfer_active = true;
+		image_transport = transport;
 	} else if (!image_transfer_active ||
-		   (total != expected_image_size)) {
+		   (total != expected_image_size) ||
+		   (transport != image_transport)) {
 		err = -EINVAL;
 		goto respond;
 	}
@@ -315,6 +371,7 @@ static int image_write(struct smp_streamer *ctxt)
 		if (err == 0) {
 			image_transfer_active = false;
 			expected_image_size = 0U;
+			image_transport = SPAGHETTI_MGMT_TRANSPORT_NONE;
 			schedule_reboot();
 		}
 	}
@@ -322,6 +379,10 @@ static int image_write(struct smp_streamer *ctxt)
 		(void)spaghetti_update_cancel();
 		image_transfer_active = false;
 		expected_image_size = 0U;
+		image_transport = SPAGHETTI_MGMT_TRANSPORT_NONE;
+		if (transport == SPAGHETTI_MGMT_TRANSPORT_UDP) {
+			spaghetti_ota_cancel_after_response();
+		}
 	}
 
 respond:
@@ -337,17 +398,88 @@ respond:
 static int image_cancel_write(struct smp_streamer *ctxt)
 {
 	zcbor_state_t *zse = ctxt->writer->zs;
+	const enum spaghetti_mgmt_transport transport =
+		request_transport(ctxt);
 	int err;
 
-	if (!maintenance_is_active()) {
+	if (transport == SPAGHETTI_MGMT_TRANSPORT_NONE) {
 		return MGMT_ERR_EACCESSDENIED;
 	}
 	(void)k_mutex_lock(&mgmt_lock, K_FOREVER);
 	err = spaghetti_update_cancel();
 	image_transfer_active = false;
 	expected_image_size = 0U;
+	image_transport = SPAGHETTI_MGMT_TRANSPORT_NONE;
 	k_mutex_unlock(&mgmt_lock);
+	if (transport == SPAGHETTI_MGMT_TRANSPORT_UDP) {
+		spaghetti_ota_cancel_after_response();
+	}
 	return encode_result(zse, err);
+}
+
+static int ota_credentials_write(struct smp_streamer *ctxt)
+{
+	struct zcbor_string psk = {0};
+	struct zcbor_string identity = {0};
+	zcbor_state_t *zsd = ctxt->reader->zs;
+	zcbor_state_t *zse = ctxt->writer->zs;
+	size_t decoded;
+	struct zcbor_map_decode_key_val fields[] = {
+		ZCBOR_MAP_DECODE_KEY_DECODER("psk", zcbor_bstr_decode, &psk),
+		ZCBOR_MAP_DECODE_KEY_DECODER(
+			"identity", zcbor_tstr_decode, &identity),
+	};
+	const bool ok = zcbor_map_decode_bulk(
+		zsd, fields, ARRAY_SIZE(fields), &decoded) == 0;
+	int err;
+
+	if (!maintenance_is_active()) {
+		return MGMT_ERR_EACCESSDENIED;
+	}
+	if (!ok || (psk.len != SPAGHETTI_OTA_PSK_SIZE) ||
+	    (identity.len == 0U) ||
+	    (identity.len > SPAGHETTI_OTA_IDENTITY_MAX_SIZE)) {
+		return MGMT_ERR_EINVAL;
+	}
+	err = spaghetti_ota_set_credentials(
+		psk.value, psk.len, identity.value, identity.len);
+	return encode_result(zse, err);
+}
+
+static int ota_arm_write(struct smp_streamer *ctxt)
+{
+	uint32_t timeout_ms = 0U;
+	zcbor_state_t *zsd = ctxt->reader->zs;
+	zcbor_state_t *zse = ctxt->writer->zs;
+	size_t decoded;
+	struct zcbor_map_decode_key_val fields[] = {
+		ZCBOR_MAP_DECODE_KEY_DECODER(
+			"timeout_ms", zcbor_uint32_decode, &timeout_ms),
+	};
+	const bool ok = zcbor_map_decode_bulk(
+		zsd, fields, ARRAY_SIZE(fields), &decoded) == 0;
+	int err;
+
+	if (!maintenance_is_active()) {
+		return MGMT_ERR_EACCESSDENIED;
+	}
+	if (!ok || (timeout_ms == 0U)) {
+		return MGMT_ERR_EINVAL;
+	}
+	err = spaghetti_ota_request_once(timeout_ms);
+	if (err == 0) {
+		schedule_reboot();
+	}
+	return encode_result(zse, err);
+}
+
+static int ota_credentials_clear_write(struct smp_streamer *ctxt)
+{
+	if (!maintenance_is_active()) {
+		return MGMT_ERR_EACCESSDENIED;
+	}
+	return encode_result(
+		ctxt->writer->zs, spaghetti_ota_clear_credentials());
 }
 
 static const struct mgmt_handler spaghetti_mgmt_handlers[] = {
@@ -371,6 +503,15 @@ static const struct mgmt_handler spaghetti_mgmt_handlers[] = {
 	},
 	[SPAGHETTI_MGMT_ID_IMAGE_CANCEL] = {
 		.mh_write = image_cancel_write,
+	},
+	[SPAGHETTI_MGMT_ID_OTA_CREDENTIALS] = {
+		.mh_write = ota_credentials_write,
+	},
+	[SPAGHETTI_MGMT_ID_OTA_ARM] = {
+		.mh_write = ota_arm_write,
+	},
+	[SPAGHETTI_MGMT_ID_OTA_CREDENTIALS_CLEAR] = {
+		.mh_write = ota_credentials_clear_write,
 	},
 };
 

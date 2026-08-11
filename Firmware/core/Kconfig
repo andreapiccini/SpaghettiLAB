@@ -42,6 +42,10 @@ module = SPAGHETTI_MAINTENANCE_LINK
 module-str = spaghetti_maintenance_link
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_OTA
+module-str = spaghetti_ota
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_DATA
 module-str = spaghetti_data
 source "subsys/logging/Kconfig.template.log_config"
@@ -218,6 +222,49 @@ config SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS
 	default 500
 	help
 	  Time reserved for the final SMP UART response to leave the transmitter.
+
+config SPAGHETTI_OTA_PORT
+	int "Authenticated OTA UDP port"
+	range 1024 65535
+	default 1337
+	help
+	  UDP port opened only during an authenticated OTA window.
+
+config SPAGHETTI_OTA_MAX_WINDOW_MS
+	int "Maximum authenticated OTA window in milliseconds"
+	range 10000 900000
+	default 300000
+	help
+	  Upper bound accepted from the local maintenance command. The complete
+	  transfer, including interruptions and retries, must finish in this time.
+
+config SPAGHETTI_OTA_MTU
+	int "Maximum OTA SMP datagram bytes"
+	range 256 1024
+	default 512
+	help
+	  Maximum complete SMP request or response carried by one DTLS datagram.
+
+config SPAGHETTI_OTA_LISTENER_STACK_SIZE
+	int "OTA DTLS listener stack bytes"
+	range 2048 8192
+	default 4096
+	help
+	  Static stack reserved for the authenticated DTLS receive thread.
+
+config SPAGHETTI_OTA_WORK_STACK_SIZE
+	int "OTA lifecycle workqueue stack bytes"
+	range 1024 4096
+	default 1536
+	help
+	  Static stack reserved for timeout and cleanup operations.
+
+config SPAGHETTI_OTA_WORK_PRIORITY
+	int "OTA lifecycle workqueue priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority shared by the OTA lifecycle and receive threads.
 
 config SPAGHETTI_MQTT_QUEUE_DEPTH
 	int "MQTT outbound publication queue depth"

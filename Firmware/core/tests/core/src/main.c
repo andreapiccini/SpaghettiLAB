@@ -25,6 +25,7 @@ enum init_step {
 	STEP_MQTT,
 	STEP_DISCOVERY,
 	STEP_WIFI,
+	STEP_OTA,
 	STEP_MAINTENANCE_ENTER,
 	STEP_COMMUNICATION,
 };
@@ -183,6 +184,11 @@ int spaghetti_wifi_profiles_init_offline(void)
 	return record_step(STEP_WIFI);
 }
 
+int spaghetti_ota_init(void)
+{
+	return record_step(STEP_OTA);
+}
+
 int spaghetti_communication_init(void)
 {
 	return record_step(STEP_COMMUNICATION);
@@ -263,7 +269,7 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 			SPAGHETTI_CORE_IMAGE_CONFIRMED);
 	zassert_equal(strcmp(info.version, "1.2.3+4"), 0);
 	zassert_equal(spaghetti_core_init(), -EALREADY);
-	zassert_equal(step_count, normal ? 13U : 11U);
+	zassert_equal(step_count, normal ? 14U : 11U);
 	zassert_equal(steps[0], STEP_STORAGE);
 	zassert_equal(steps[1], STEP_UPDATE);
 	zassert_equal(steps[2], STEP_MAINTENANCE_INIT);
@@ -278,6 +284,7 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 		zassert_equal(steps[9], STEP_MQTT);
 		zassert_equal(steps[10], STEP_DISCOVERY);
 		zassert_equal(steps[11], STEP_WIFI);
+		zassert_equal(steps[12], STEP_OTA);
 	} else {
 		zassert_equal(steps[8], STEP_WIFI);
 		zassert_equal(steps[9], STEP_MAINTENANCE_ENTER);

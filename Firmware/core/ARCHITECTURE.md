@@ -625,6 +625,8 @@ flowchart LR
     BOARD --> NORMAL["Normal controller"]
     BOARD --> LOCAL["Local maintenance transport"]
     LOCAL --> UPDATE["Update coordinator"]
+    CORE --> OTA["One-shot authenticated OTA"]
+    OTA --> UPDATE
 ```
 
 On Core V1 the board mapping is I2C SDA/SCL on GPIO3/GPIO4 in normal operation and
@@ -656,11 +658,16 @@ sequenceDiagram
     participant Storage
     participant Engine
     participant Communication
+    participant OTA
     MCUboot->>Core: start signed image (trial or confirmed)
     Core->>Storage: load Config and consume maintenance marker
     Core->>Core: select operational mode
     alt NORMAL
         Core->>Engine: initialize and apply valid Config
+        Core->>OTA: consume one-shot request
+        opt request and credentials are valid
+            OTA->>OTA: open bounded DTLS-PSK listener
+        end
     else UNPROVISIONED or MAINTENANCE
         Core->>Core: keep Runtime and network services stopped
     end
@@ -673,21 +680,30 @@ sequenceDiagram
 
 The Update coordinator is implemented as one transport-independent state machine. It
 serializes UART and UDP ownership, applies one absolute timeout, erases only the
-secondary slot on cancellation and requests only an MCUboot test boot. The local UART
-adapter uses Zephyr SMP framing but registers only the restricted Spaghetti management
-group; it streams ordered chunks through the coordinator and cannot confirm a trial
-image. The UDP adapter remains in phase 270. MCUboot, not the running application,
-performs the definitive ECDSA verification before executing a candidate.
+secondary slot on cancellation and requests only an MCUboot test boot. Both adapters
+use Zephyr SMP framing and the restricted Spaghetti management group; neither can
+confirm a trial image.
+
+The OTA adapter is initialized only in `NORMAL`. A local active Maintenance Link
+provisions a per-device 32-byte PSK and a one-shot bounded request. On the next normal
+boot, OTA consumes that request and opens UDP port 1337 with DTLS-PSK. Possession of
+the PSK authenticates the peer; MCUboot separately authenticates the signed image.
+Remote SMP may read status, upload ordered chunks or cancel, but cannot change Config,
+Wi-Fi, credentials or image confirmation. Timeout or network loss closes the socket
+and discards only an incomplete secondary candidate. MCUboot, not the running
+application, performs the definitive ECDSA verification before executing a candidate.
 
 See also:
 
 - [Update coordinator](subsys/services/update/README.md)
 - [Local Maintenance Link](subsys/services/maintenance_link/README.md)
+- [Authenticated Wi-Fi OTA](subsys/services/ota/README.md)
 - [Maintenance Link contract](UPDATE_HARDWARE_CONTRACT.md)
 
 The detailed contract is in
-[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Local transport is active;
-OTA, remote console and physical interruption qualification remain in phases 270–290.
+[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Local transport and OTA
+are active; remote console and physical interruption qualification remain in phases
+280–290.
 
 ## Discovery strategies
 

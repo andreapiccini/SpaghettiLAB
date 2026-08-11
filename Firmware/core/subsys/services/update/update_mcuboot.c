@@ -57,6 +57,31 @@ int spaghetti_update_backend_active_slot(uint8_t *slot)
 	return -EIO;
 }
 
+int spaghetti_update_backend_get_capacity(size_t *out_size)
+{
+	const struct flash_area *area;
+	const uint8_t area_id = flash_img_get_upload_slot();
+	size_t trailer_offset;
+	int err;
+
+	if (out_size == NULL) {
+		return -EINVAL;
+	}
+	err = flash_area_open(area_id, &area);
+	if (err < 0) {
+		return err;
+	}
+	trailer_offset = boot_get_trailer_status_offset(area->fa_size);
+	if ((trailer_offset == 0U) || (trailer_offset > area->fa_size)) {
+		err = -EIO;
+	} else {
+		*out_size = trailer_offset;
+		err = 0;
+	}
+	flash_area_close(area);
+	return err;
+}
+
 int spaghetti_update_backend_prepare(void)
 {
 	const int swap_type = mcuboot_swap_type();

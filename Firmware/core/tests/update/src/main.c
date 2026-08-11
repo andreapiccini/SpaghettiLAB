@@ -19,6 +19,13 @@ static int next_write_error;
 static int next_finalize_error;
 static int next_cancel_error;
 
+int spaghetti_update_backend_get_capacity(size_t *out_size)
+{
+	zassert_not_null(out_size);
+	*out_size = 4096U;
+	return 0;
+}
+
 int spaghetti_update_backend_is_trial(bool *trial)
 {
 	zassert_not_null(trial);
@@ -135,8 +142,17 @@ ZTEST(update, test_update_lifecycle_and_failures)
 	zassert_equal(spaghetti_update_finish(), -EACCES);
 	zassert_equal(spaghetti_update_cancel(), -EACCES);
 	zassert_equal(spaghetti_update_confirm_trial(), -EACCES);
+	zassert_equal(spaghetti_update_get_capacity(NULL), -EINVAL);
+	zassert_equal(spaghetti_update_get_capacity(
+		&(size_t){0U}), -EACCES);
 
 	zassert_ok(spaghetti_update_init());
+	{
+		size_t capacity = 0U;
+
+		zassert_ok(spaghetti_update_get_capacity(&capacity));
+		zassert_equal(capacity, 4096U);
+	}
 	zassert_equal(spaghetti_update_init(), -EALREADY);
 	expect_status(SPAGHETTI_UPDATE_IDLE,
 		      SPAGHETTI_UPDATE_TRANSPORT_NONE, 0);

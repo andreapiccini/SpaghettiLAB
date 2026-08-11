@@ -43,10 +43,12 @@ ECDSA validation. The bootloader therefore performs the definitive signature and
 integrity checks on the next reset. An invalid candidate never executes; MCUboot keeps
 the previous image bootable. `finish()` must never call `BOOT_UPGRADE_PERMANENT`.
 
-The local UART adapter writes contiguous chunks with `spaghetti_update_write()`.
-The production backend streams them into the upload slot with Zephyr `flash_img`;
-`last=true` flushes its bounded staging buffer. Phase 270 will add the UDP adapter.
-Both adapters must finish their bounded transfer before calling
+The local UART and authenticated DTLS-PSK adapters write contiguous chunks with
+`spaghetti_update_write()`. The production backend streams them into the upload slot
+with Zephyr `flash_img`; `last=true` flushes its bounded staging buffer. Before
+accepting `total`, an adapter calls `spaghetti_update_get_capacity()`; the backend
+derives the exact usable boundary from image-1 and its MCUboot trailer. Both adapters
+must finish their bounded transfer before calling
 `spaghetti_update_finish()`, reset their parser on cancel, and never log firmware
 bytes, credentials or URLs.
 

@@ -16,6 +16,7 @@
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
+#include <spaghetti/ota.h>
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
 #include <spaghetti/runtime.h>
@@ -264,6 +265,10 @@ int spaghetti_core_init(void)
 		if (err < 0) {
 			goto wifi_failed;
 		}
+		err = spaghetti_ota_init();
+		if (err < 0) {
+			goto ota_failed;
+		}
 	} else {
 		err = spaghetti_wifi_profiles_init_offline();
 		if (err < 0) {
@@ -294,6 +299,9 @@ int spaghetti_core_init(void)
 
 communication_failed:
 	(void)fail_initialization("Communication", err);
+	goto unlock;
+ota_failed:
+	(void)fail_initialization("OTA", err);
 	goto unlock;
 maintenance_enter_failed:
 	(void)fail_initialization("Maintenance Link enter", err);

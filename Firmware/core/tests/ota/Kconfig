@@ -1,0 +1,27 @@
+mainmenu "Spaghetti OTA tests"
+
+config SPAGHETTI_OTA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_OTA_PORT
+	int
+	default 1337
+
+config SPAGHETTI_OTA_MAX_WINDOW_MS
+	int
+	default 100
+
+config SPAGHETTI_OTA_WORK_STACK_SIZE
+	int
+	default 1024
+
+config SPAGHETTI_OTA_WORK_PRIORITY
+	int
+	default 5
+
+config SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS
+	int
+	default 10
+
+source "Kconfig.zephyr"

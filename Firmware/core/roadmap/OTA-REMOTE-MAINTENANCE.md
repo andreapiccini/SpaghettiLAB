@@ -55,8 +55,7 @@ incompleta. Nessun record Config persistente può impostare direttamente `RECEIV
 7. [280 — Rendere `make monitor` multi-trasporto](280-remote-console/README.md)
 8. [290 — Qualificare interruzioni, rollback e recovery](290-update-qualification/README.md)
 
-Non iniziare un task se il precedente non è completato. I task 220–250 hanno fissato
-il confine hardware, predisposto bootloader/firma A/B, implementato il coordinatore
-Update e la policy di boot sicuro. Anche il Maintenance Link locale è completo: pin e
-controller restano proprietà della board/overlay. Il prossimo passo è l'adapter OTA
-Wi-Fi della fase 270.
+Non iniziare un task se il precedente non è completato. Le fasi 220–270 hanno fissato
+il confine hardware, predisposto bootloader/firma A/B, implementato il coordinatore,
+la maintenance locale e l'adapter OTA DTLS-PSK. Pin e controller restano proprietà
+della board/overlay. Il prossimo passo è la console remota autenticata della fase 280.

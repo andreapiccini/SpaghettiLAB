@@ -7,6 +7,7 @@
 
 int spaghetti_update_backend_is_trial(bool *trial);
 int spaghetti_update_backend_active_slot(uint8_t *slot);
+int spaghetti_update_backend_get_capacity(size_t *out_size);
 int spaghetti_update_backend_prepare(void);
 int spaghetti_update_backend_write(uint32_t offset, const uint8_t *data,
 				   size_t data_size, bool last);

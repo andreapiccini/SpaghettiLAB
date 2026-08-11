@@ -370,6 +370,26 @@ unlock:
 	return err;
 }
 
+int spaghetti_update_get_capacity(size_t *out_size)
+{
+	int err;
+
+	if (out_size == NULL) {
+		return -EINVAL;
+	}
+	err = k_mutex_lock(&update_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		err = -EACCES;
+	} else {
+		err = spaghetti_update_backend_get_capacity(out_size);
+	}
+	k_mutex_unlock(&update_lock);
+	return err;
+}
+
 int spaghetti_update_get_status(struct spaghetti_update_status *out)
 {
 	struct spaghetti_update_status snapshot;

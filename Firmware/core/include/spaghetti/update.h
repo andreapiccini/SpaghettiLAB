@@ -162,6 +162,23 @@ int spaghetti_update_cancel(void);
 int spaghetti_update_confirm_trial(void);
 
 /**
+ * @brief Report the maximum candidate image size accepted by MCUboot.
+ *
+ * @param[out] out_size Caller-owned destination receiving bytes available in
+ *                      the secondary slot before the MCUboot trailer. Update
+ *                      retains no pointer to it.
+ *
+ * @retval 0 @p out_size contains the exact maximum candidate size.
+ * @retval -EINVAL @p out_size is NULL.
+ * @retval -EACCES The coordinator is not initialized.
+ * @retval -EIO The secondary flash slot cannot be inspected.
+ * @retval -errno The flash-map backend rejected the query.
+ *
+ * @note Thread context only. This function does not erase or write flash.
+ */
+int spaghetti_update_get_capacity(size_t *out_size);
+
+/**
  * @brief Copy the coherent update status into caller-owned storage.
  *
  * @param[out] out Caller-owned destination written only on success. The

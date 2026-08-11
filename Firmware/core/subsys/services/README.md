@@ -23,6 +23,7 @@ A service wraps a reusable Zephyr or platform capability behind a small product-
 | `storage/` | Versioned bounded persistence capability. |
 | `maintenance_link/` | Board-selected shared-pin UART and restricted SMP commands. |
 | `update/` | Exclusive update session, timeout and MCUboot test policy. |
+| `ota/` | One-shot authenticated DTLS-PSK adapter for restricted SMP update. |
 | `mqtt/` | Optional MQTT transport adapter when selected by a product. |
 | Each service header/source | Public product contract and private Zephyr integration. |
 

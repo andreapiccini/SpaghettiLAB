@@ -1,0 +1,8 @@
+tests:
+  spaghetti.ota.policy:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - ota
+      - update
