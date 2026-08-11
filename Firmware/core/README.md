@@ -302,6 +302,8 @@ you need its detailed contract.
 
 | Guide | Use it for |
 |---|---|
+| [Extension guide](EXTENDING_SPAGHETTI_LAB.md) | Start-to-finish path for adding a Module driver or a Core/board variant |
+| [V1 platform closure](roadmap/V1-PLATFORM-CLOSURE.md) | Planned generic contracts and tasks required before the main Node-RED work |
 | [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |
 | [Implementation guide](FIRMWARE_IMPLEMENTATION_GUIDE.md) | Mandatory coding rules, decisions, workflow, and copyable templates |
 | [Hardware and finalization reminder](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md) | Deferred hardware decisions, production gaps, and the prompt for completing them |

@@ -27,6 +27,10 @@ Read these in order:
 6. [`templates/firmware/change_contract.md.template`](templates/firmware/change_contract.md.template)
    for a non-trivial new API, state transition, thread, queue, or shared object.
 
+If the work adds a new removable Module or a new Core/board variant, begin with
+[`EXTENDING_SPAGHETTI_LAB.md`](EXTENDING_SPAGHETTI_LAB.md). It provides the complete
+integration order; return here only to select the detailed component references.
+
 ```mermaid
 flowchart TD
     TASK["What must change? <br/> current task"] --> OWNER["Who owns it? <br/> architecture"]
@@ -63,6 +67,8 @@ flowchart TD
 | File | Contains | Read before / modify when |
 |---|---|---|
 | `README.md` | Supported hosts, Docker workflow, build/flash commands, navigation, licensing summary | First checkout; environment, build, flash, or documentation navigation changes |
+| `EXTENDING_SPAGHETTI_LAB.md` | End-to-end Italian guide for adding Module drivers and Core/board variants | First file to open when extending supported hardware |
+| `roadmap/V1-PLATFORM-CLOSURE.md` | Ordered plan for generic Port, schema, driver, Config, Runtime, Discovery, protocol and Node-RED contracts | Before implementing phases 300–390 or freezing Protocol V1 |
 | `tools/device.py` | Cross-platform port discovery, flashing, and shared Rich monitor over serial or authenticated TLS-PSK | Changing flash, screen, monitor transport, or host credential handling |
 | `ARCHITECTURE.md` | Generic ownership, boundaries, static/runtime split, data/control flow | Any new component, dependency, shared state, protocol adapter, or lifecycle change |
 | `UPDATE_HARDWARE_CONTRACT.md` | Board-independent Maintenance Link, boot-entry policy, and Core V1 mapping | Implementing provisioning, pinmux switching, MCUboot, OTA, recovery, or a new Core backend |

@@ -1,6 +1,7 @@
 # Spaghetti module drivers
 
-[← Project README](../README.md) · [Architecture](../ARCHITECTURE.md)
+[← Project README](../README.md) · [Architecture](../ARCHITECTURE.md) ·
+[Guida per aggiungere un Module](../EXTENDING_SPAGHETTI_LAB.md#percorso-a-aggiungere-un-nuovo-module)
 
 Each child directory implements one external module type through the common module-driver contract. The code executes on the Core; the external module is a peripheral, not another Zephyr application.
 

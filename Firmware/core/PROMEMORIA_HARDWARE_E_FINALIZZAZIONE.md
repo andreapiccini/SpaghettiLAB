@@ -26,22 +26,19 @@ modifica controlla sempre `build/zephyr/zephyr.dts` e `build/zephyr/.config`.
 
 ### 1. Engine completo e pulizia finale
 
-**Situazione attuale:** i componenti esistono, ma la loro composizione definitiva è
-ancora descritta nei task 200 e 210.
+**Situazione attuale:** l'Engine del task 200 è implementato. La pulizia 210 è ancora
+aperta; le fasi 300–390 rendono generici schema, protocolli, trasporti, Discovery e
+integrazione Node-RED prima del freeze V1.
 
 **Da fare:**
 
-- implementare
-  `roadmap/200-engine/TASK-200-01-comporre-e-avviare-engine.md`;
-- inizializzare nel giusto ordine Port, Registry, Manager, Data, Runtime, Storage,
-  Discovery, Wi-Fi, MQTT e Communication;
-- caricare al boot la Config persistente e mantenere disponibile Communication anche
-  senza Config o Module;
-- collegare Config → Discovery → Manager → Runtime senza creare Module di prova;
 - completare
   `roadmap/210-finalizzazione/TASK-210-01-ripulire-e-qualificare-il-firmware.md`;
 - rimuovere shortcut, wrapper e valori temporanei, quindi provare boot, apply,
   rollback, remove, reboot e più Module sulla stessa Port.
+- implementare in ordine il
+  `roadmap/V1-PLATFORM-CLOSURE.md`, mantenendo compilabile ogni fase;
+- superare il gate Node-RED con fake prima di dipendere dai Module fisici.
 
 **Fine:** `main()` avvia soltanto l’engine definitivo; non rimangono configurazioni di
 bring-up nascoste e l’intera matrice di test passa.
@@ -252,14 +249,13 @@ low-power globale richiedono comunque implementazione e qualificazione dedicate.
 
 ## Ordine consigliato
 
-1. Completa task 200 e 210 sull’hardware corrente.
-2. Congela schema, pinout e requisiti della scheda definitiva.
-3. Crea la nuova variante board e verifica Port/capability.
-4. Implementa Power e Relay reali soltanto se presenti nello schema.
-5. Implementa il meccanismo fisico di Discovery.
-6. Definisci il protocollo dell’app e il modello di sicurezza.
-7. Aggiungi TLS MQTT e provisioning production-grade.
-8. Esegui qualificazione, test di fault e procedura di manufacturing.
+1. Esegui la parte automatizzabile del task 210 e registra i casi fisici rinviati.
+2. Implementa le fasi software 300–390 con fake e congela Protocol V1.
+3. Passa allo sviluppo principale Node-RED usando catalogo e MQTT V1.
+4. Congela schema, pinout e requisiti della scheda definitiva.
+5. Crea la nuova variante board e verifica Port/capability.
+6. Implementa Power, Relay e provider Discovery reali soltanto se presenti.
+7. Completa i casi hardware 210, sicurezza production e qualificazione fisica 290.
 
 ## Prompt da usare per completare il lavoro
 

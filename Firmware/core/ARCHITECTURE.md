@@ -9,6 +9,13 @@ sensor, protocol, Core model, or product feature.
 > INA219, Relay, USB, MQTT, and switched power are examples used to make the
 > diagrams concrete. They are not mandatory parts of the architecture.
 
+> [!NOTE]
+> The current implementation is being generalized into the stable typed plug-in and
+> protocol contracts described by the
+> [V1 platform closure plan](roadmap/V1-PLATFORM-CLOSURE.md). Phases 300–390 keep the
+> ownership model below while removing the remaining electrical-sample, Relay-command,
+> single-codec and single-provider assumptions.
+
 ## The idea in one minute
 
 A Spaghetti LAB **Core** controls external **Modules** connected to physical

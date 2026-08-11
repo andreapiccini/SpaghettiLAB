@@ -105,15 +105,26 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [270 — OTA Wi-Fi](270-wifi-ota/README.md) | Un peer autenticato carica una signed image durante una finestra esplicita. |
 | ✅ | [280 — Console remota](280-remote-console/README.md) | `make monitor` usa USB o un canale di rete autenticato. |
 | 🟨 | [290 — Qualificazione update](290-update-qualification/README.md) | Tool e matrice sono pronti; le prove fisiche devono ancora produrre evidenze. |
+| ⬜ | [300 — Port e trasporti V1](300-port-transport-v1/README.md) | Port espone bus differenti e serializza controller condivisi senza hardware inventato. |
+| ⬜ | [310 — Schemi e valori V1](310-schema-values-v1/README.md) | Config, record e comandi usano proprietà tipizzate e descrittori enumerabili. |
+| ⬜ | [320 — Module Driver V2](320-module-driver-v2/README.md) | Un driver porta schema e operazioni e si registra senza tabelle centrali. |
+| ⬜ | [330 — Config e wire V2](330-config-wire-v2/README.md) | Config e Storage usano CBOR canonico generico e versionato. |
+| ⬜ | [340 — Data, Runtime e regole V2](340-data-runtime-rules-v2/README.md) | Record, schedule e rule plug-in non dipendono da INA219 o Relay. |
+| ⬜ | [350 — Discovery multi-provider V1](350-discovery-providers-v1/README.md) | Manuale, EEPROM, probe, analogico e 1-Wire convivono come strategie opzionali. |
+| ⬜ | [360 — Communication Protocol V1](360-communication-protocol-v1/README.md) | Un envelope CBOR comune espone catalogo, stato, Config, Discovery e comandi. |
+| ⬜ | [370 — MQTT per Node-RED V1](370-mqtt-node-red-v1/README.md) | Node-RED riceve record e invia richieste con risposta correlata. |
+| ⬜ | [380 — Tool sviluppatore V1](380-developer-tools-v1/README.md) | Un CLI JSON nasconde CBOR, trasporti e aggiornamenti. |
+| ⬜ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti congelati, estensioni fake provate e gate Node-RED superato. |
 
 ## Da dove iniziare
 
-Il piano OTA è descritto in
-[Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Le fasi 220–280 sono
-complete. La fase 290 è predisposta nel repository; apri ora
-[TASK-290-01 — Qualificare update e recovery](290-update-qualification/TASK-290-01-qualificare-update-e-recovery.md),
-che riusa il confine autenticato senza esporre Telnet in chiaro.
+La fase 290 e le prove fisiche della fase 210 restano aperte finché è disponibile
+l'hardware adatto; non devono essere dichiarate superate con fake. Per continuare ora
+senza Module esterni, segui il
+[piano di chiusura della piattaforma V1](V1-PLATFORM-CLOSURE.md) e apri
+[TASK-300-01 — Generalizzare Port, endpoint e trasporti](300-port-transport-v1/TASK-300-01-generalizzare-port-endpoint-e-trasporti.md).
 
-La [fase 210](210-finalizzazione/README.md) resta aperta come qualificazione finale e
-va chiusa dopo le estensioni OTA, quando tutte le scorciatoie temporanee possono essere
-rimosse insieme.
+La fase 390 riesegue la pulizia software 210 sul modello definitivo e registra
+separatamente ogni gate fisico rinviato. La fase 290 rimane obbligatoria prima della
+release hardware 1.0, ma può procedere in parallelo ai contratti 300–390 verificati con
+fake e `native_sim`.

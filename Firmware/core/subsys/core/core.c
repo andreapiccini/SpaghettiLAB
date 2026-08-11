@@ -38,7 +38,6 @@ static const struct spaghetti_config empty_config = {
 	},
 };
 
-static struct spaghetti_config startup_config;
 static bool startup_config_present;
 static bool core_info_available;
 static struct spaghetti_core_info core_info;
@@ -100,6 +99,7 @@ static int discovery_event_sink(const struct spaghetti_discovery_event *event,
 
 static int retain_startup_config(void)
 {
+	struct spaghetti_config startup_config;
 	struct spaghetti_config_error validation_error;
 	int err = spaghetti_storage_read_config(&startup_config);
 
@@ -375,7 +375,7 @@ int spaghetti_core_start(void)
 {
 	bool confirm_trial;
 	uint32_t generation;
-	struct spaghetti_config current;
+	struct spaghetti_config startup_config;
 	int err = k_mutex_lock(&core_lock, K_FOREVER);
 
 	if (err < 0) {
@@ -388,7 +388,10 @@ int spaghetti_core_start(void)
 
 	if ((core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) &&
 	    startup_config_present) {
-		err = spaghetti_config_get_snapshot(&current, &generation);
+		err = spaghetti_config_get_snapshot(&startup_config, &generation);
+		if (err == 0) {
+			err = spaghetti_storage_read_config(&startup_config);
+		}
 		if (err == 0) {
 			err = spaghetti_config_apply(&startup_config, generation);
 		}

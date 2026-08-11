@@ -1,6 +1,7 @@
 # Spaghetti LAB board support
 
-[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
+[← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) ·
+[Guida per aggiungere un Core](../../EXTENDING_SPAGHETTI_LAB.md#percorso-b-aggiungere-una-nuova-variante-core)
 
 A board definition describes one physical Core variant to Zephyr. It contains facts that are fixed by the schematic: MCU, memory, controllers, pins, Ports, console, flash layout, and real hardware capabilities.
 
@@ -68,7 +69,8 @@ Manager, Runtime and Module drivers contain no board-name branches.
 - Board selection happens with the existing `BOARD` value used by the Docker build.
 - Devicetree contains hardware topology and pin references.
 - Kconfig selects software; it must not carry pin numbers or runtime module assignments.
-- Always inspect `build/zephyr/zephyr.dts` and `build/zephyr/.config` after a board change.
+- With the current sysbuild layout, inspect `build/app/zephyr/zephyr.dts` and
+  `build/app/zephyr/.config` after a board change.
 
 ## Configuration templates
 
