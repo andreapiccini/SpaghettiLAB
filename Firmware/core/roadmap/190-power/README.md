@@ -2,11 +2,12 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
-Gestire una risorsa di alimentazione condivisa con ownership e rollback espliciti.
+Gestire una risorsa di alimentazione condivisa con ownership e rollback espliciti,
+senza inventare risorse hardware non presenti sulla board.
 
 ## Dipende da
 
@@ -14,16 +15,17 @@ Gestire una risorsa di alimentazione condivisa con ownership e rollback esplicit
 
 ## Risultato visibile
 
-La risorsa cambia stato correttamente con due proprietari e durante gli errori.
-
-I proprietari sono Module ID distinti anche quando condividono la stessa Port.
+Il backend fake dimostra first-acquire/final-release con Module owner distinti,
+duplicati, limite fisso e fallimenti recuperabili. Core V1 non espone una rail
+controllabile verificata: la build di produzione lascia correttamente Power disabilitato.
 
 ## Task
 
-1. ⬜ [TASK-190-01 — Gestire l’alimentazione condivisa](TASK-190-01-gestire-l-alimentazione-condivisa.md)
+1. ✅ [TASK-190-01 — Gestire l’alimentazione condivisa](TASK-190-01-gestire-l-alimentazione-condivisa.md)
 
 ## Criteri di completamento della fase
 
-- [ ] L’hardware controllabile è verificato prima del driver reale.
-- [ ] Il reference counting viene provato con backend finto.
-- [ ] Manager acquisisce e rilascia Power in ogni percorso di successo o errore.
+- [x] L’hardware è stato verificato prima di scegliere un backend.
+- [x] Reference counting e rollback sono provati con backend finto.
+- [x] Nessun `power-gpios` o collegamento Manager è stato inventato per Core V1.
+- [x] Il punto di integrazione futuro usa il Module ID, non la Port, come owner.

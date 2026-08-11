@@ -1,0 +1,15 @@
+mainmenu "Spaghetti Power tests"
+
+config SPAGHETTI_POWER
+	bool
+	default y
+
+config SPAGHETTI_POWER_FAKE_BACKEND
+	bool
+	default y
+
+config SPAGHETTI_POWER_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

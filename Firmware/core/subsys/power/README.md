@@ -2,175 +2,88 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-This component is used only when a Core exposes a real controllable resource shared by multiple users, such as a switchable Port rail. It is not required for boards whose power is always on or fully owned by a single device.
+Power coordinates a physical resource shared by multiple live Modules. It performs
+first-acquire activation and final-release deactivation; it is not Zephyr system power
+management, sleep policy, or battery management.
 
-## What this component owns
+## Current hardware status
 
-- Reference count and state for each declared shared resource.
-- First-acquire activation and final-release deactivation.
-- Transition serialization, owner diagnostics, and hardware error reporting.
+Spaghetti LAB Core V1 does not declare a verified controllable rail. Its Port describes
+only the I2C controller on GPIO3/GPIO4. Consequently:
 
-## What this component does not own
+- `CONFIG_SPAGHETTI_POWER` defaults to `n` in production;
+- no speculative `power-gpios`, pin number, or polarity is present;
+- Module Manager does not acquire a fictional resource;
+- `CONFIG_SPAGHETTI_POWER_FAKE_BACKEND` exists only for `tests/power`.
 
-- A speculative battery policy or generic system-wide power strategy.
-- Resources that do not physically exist in the board description.
-- Module lifecycle; Manager only calls this component at defined lifecycle points.
+A future Core may enable this component after its schematic, safe state and electrical
+behaviour have been verified.
 
-## Files
+## Ownership model
 
-| File | Role |
-|---|---|
-| `include/spaghetti/power.h` | Optional resource IDs, states, and acquire/release API. |
-| `subsys/power/power.c` | Reference counts and real transition hooks. |
-| Board DTS / Port binding | Physical control reference and polarity. |
-| Module Manager | Acquires before driver init and releases after deinit/rollback. |
+`spaghetti_power_resource_id_t` identifies the physical shared resource.
+`spaghetti_power_owner_id_t` identifies one live Module. Owner identity is deliberately
+not a Port ID: INA219 Modules at `0x40` and `0x41` on the same Port must hold two
+independent references.
 
-## Data model
+Power owns a fixed table of eight owners per resource and a `k_mutex`; it allocates no
+heap memory. The public `spaghetti_power_status` is a caller-owned snapshot containing
+state, reference count and last transition error.
 
-| Type / object | Owner | Meaning |
-|---|---|---|
-| Resource descriptor | Board/Power | Immutable ID, hardware control, and safe state. |
-| Resource state | Power | OFF, STARTING, ON, STOPPING, or ERROR. |
-| Reference count | Power | Number of current successful owners. |
-| Owner diagnostics | Power | Bounded ownership/debug information. |
+## API
 
-## API contract
+```c
+int spaghetti_power_init(void);
+int spaghetti_power_acquire(spaghetti_power_resource_id_t id,
+			    spaghetti_power_owner_id_t owner);
+int spaghetti_power_release(spaghetti_power_resource_id_t id,
+			    spaghetti_power_owner_id_t owner);
+int spaghetti_power_get_status(spaghetti_power_resource_id_t id,
+			       struct spaghetti_power_status *out);
+```
 
-### `int spaghetti_power_init(void)`
+The first successful acquire invokes the ON backend. Intermediate owners only change
+the table and count. The final release invokes OFF. Ownership is committed only after
+ON succeeds and retained if OFF fails, so the caller can retry without corrupting the
+accounting.
 
-**Purpose:** Validate every configured real resource and establish its safe initial state.
+The API is thread-safe and thread-only because it uses a mutex and may call hardware.
+It must not be called from an ISR.
 
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** `0` when resource states match hardware policy.
-
-**Errors:** Invalid descriptor, unavailable control device, or safe-state write failure.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** Port or Zephyr GPIO/runtime-PM API.
-
-### `int spaghetti_power_acquire(spaghetti_power_resource_id_t id, spaghetti_power_owner_id_t owner)`
-
-**Purpose:** Add one owner and activate hardware only for the first successful owner.
-Manager derives `owner` from the live Module ID, not from Port ID: sibling Modules on
-one shared Port remain independently balanced.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `id` | Declared resource ID. |
-| `owner` | Stable owner used for balance/diagnostics. |
-
-**Returns:** `0` when the resource is ON and ownership recorded.
-
-**Errors:** Unknown resource/owner, duplicate/overflow, busy transition, or activation failure.
-
-**Execution context:** Thread only.
-
-**Calls:** Real hardware-on hook on count transition 0→1.
-
-### `int spaghetti_power_release(spaghetti_power_resource_id_t id, spaghetti_power_owner_id_t owner)`
-
-**Purpose:** Remove one owner and deactivate only after the final release.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `id` | Declared resource ID. |
-| `owner` | Previously acquired owner. |
-
-**Returns:** `0` when ownership/state are coherent.
-
-**Errors:** Unknown owner, underflow, busy transition, or deactivation failure.
-
-**Execution context:** Thread only.
-
-**Calls:** Real hardware-off hook on count transition 1→0.
-
-### `int spaghetti_power_get_status(spaghetti_power_resource_id_t id, struct spaghetti_power_status *out)`
-
-**Purpose:** Copy state, count, and last transition error.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `id` | Resource ID. |
-| `out` | Caller-owned destination. |
-
-**Returns:** `0` with coherent status.
-
-**Errors:** Unknown ID or invalid output.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-## How it works
+## Lifecycle
 
 ```mermaid
 sequenceDiagram
-    participant M0 as Module A
-    participant M1 as Module B
-    participant P as Shared resource
-    participant HW as Physical switch
-    M0->>P: acquire(A)
-    P->>HW: ON because count was 0
-    M1->>P: acquire(B)
-    Note over P: count = 2, no hardware toggle
-    M0->>P: release(A)
-    Note over P: count = 1, stays ON
-    M1->>P: release(B)
-    P->>HW: OFF because count becomes 0
+    participant A as Module A
+    participant B as Module B
+    participant P as Power resource
+    participant H as Verified backend
+    A->>P: acquire(resource, module_a_id)
+    P->>H: ON (count 0 to 1)
+    B->>P: acquire(resource, module_b_id)
+    Note over P: count 2; no hardware transition
+    A->>P: release(resource, module_a_id)
+    Note over P: count 1; remains ON
+    B->>P: release(resource, module_b_id)
+    P->>H: OFF (final owner)
 ```
 
-## Practical example
+## Files and verification
 
-Two INA219 Modules at `0x40` and `0x41` share Port 0 and its switchable 3.3 V rail.
-Initializing the first turns the rail on; initializing the second adds a distinct
-Module-ID owner. Removing either sibling keeps the rail on. The final removal turns
-it off.
+| File | Role |
+|---|---|
+| `include/spaghetti/power.h` | Public types, states and API contract. |
+| `subsys/power/power.c` | Deterministic owner table and transition logic. |
+| `subsys/power/power_internal.h` | Private fake-backend seam. |
+| `tests/power/` | Native fake tests for ownership, limits and rollback. |
 
-## Zephyr integration
+Run:
 
-- Devicetree describes the real GPIO/regulator reference and polarity.
-- A short `k_mutex` protects count/state in thread context.
-- Use Zephyr device runtime PM only when the controlled resource maps to that model; do not wrap it without a real requirement.
-
-## Configuration templates
-
-### Optional DTS property
-
-```dts
-port0: port@0 {
-    compatible = "spaghettilab,port";
-    reg = <0>;
-    power-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>; /* Real schematic value. */
-};
+```sh
+docker compose run --rm --entrypoint sh dev -lc \
+  'west twister -T tests/power -p native_sim/native/64 --inline-logs --clobber-output'
 ```
 
-### Optional `prj.conf`
-
-```ini
-CONFIG_GPIO=y
-# Enable CONFIG_PM / CONFIG_PM_DEVICE_RUNTIME only if the selected design
-# actually uses Zephyr system or device runtime power management.
-```
-
-## Ownership and concurrency
-
-Acquire/release transitions are serialized. The count changes only after the corresponding hardware transition succeeds. Manager rollback always balances a successful acquire.
-
-## Contract guarantees
-
-- No resource exists without a real board-side control contract.
-- Intermediate owners cannot switch off a resource still in use.
-- Owner identity is per live Module, so Port sharing does not collapse references.
-- Underflow, duplicate ownership, and hardware failures are observable.
+When a future board adds a real resource, its Devicetree must contain the verified
+controller, pin and polarity. Only then should a real backend replace the test seam and
+Module Manager acquire before driver init and release after deinit or rollback.

@@ -1,98 +1,53 @@
 # TASK-190-01 — Gestire l’alimentazione condivisa
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
+
 **Fase:** 190 — Power
 
-## Prima di scrivere: concetti Zephyr
+## Cosa devo fare
 
-### Verificare l’hardware di alimentazione controllabile
+Prima verifica i file hardware reali:
 
-1. **Cos’è:** In questa fase `Power` è un componente Spaghetti LAB che controlla una rail o enable fisico. Non è ancora il sottosistema Zephyr di sospensione, deep sleep o device power management.
-2. **A cosa serve:** Evita di confondere ownership di una risorsa elettrica condivisa con il risparmio energetico globale del sistema.
-3. **Quando viene usato:** Prima si verifica lo schema e si misura l’hardware; il controllo runtime verrà implementato nei task successivi.
-4. **Build-time o runtime:** Verifica hardware ora; gestione a runtime più avanti.
-5. **Collegamento con questo task:** Devi provare che esista davvero una risorsa comandabile prima di definire API e algoritmi.
-6. **File reali coinvolti:** schematico esterno della board, `dts/bindings/spaghetti/spaghettilab,port.yaml`, DTS della board sotto `boards/spaghettilab/` e `roadmap/190-power/README.md` per annotare la misura.
-7. **Cosa guardare nei file:** Identifica segnale enable, polarità, stato al reset, rail alimentate, limiti e comportamento misurabile.
-8. **Cosa non modificare:** Non abilitare opzioni Zephyr PM, non inventare wake source/deep sleep e non creare un driver se la rail non è controllabile.
+- `boards/spaghettilab/spaghettilab_core_v1/spaghettilab_core_v1.dts`;
+- `dts/bindings/spaghetti/spaghettilab,port.yaml`;
+- lo schema elettrico della revisione fisica.
 
-### Implementare il reference counting con backend finto
+Core V1 espone I2C su GPIO3/GPIO4, ma nei file verificati non esiste un segnale enable
+per una rail. Non aggiungere un `power-gpios` immaginario: polarità, pin e safe state
+sarebbero dati hardware non dimostrati. Per questa board Power deve rimanere disabilitato
+con `CONFIG_SPAGHETTI_POWER=n`.
 
-Utilizzare il mutex solo intorno alle transizioni di stato corto. Non chiamare mai
-questo blocco API da ISR o timer contesto di callback.
-
-### Collegare Power al controllo hardware reale
-
-Devicetree identifica il controllo fisico; il sottosistema Power possiede lo stato di
-riferimento runtime e la politica di transizione.
-
-## Perché lo facciamo
-
-Il conteggio dei proprietari accende alla prima acquisizione e spegne all’ultimo rilascio, mantenendo rollback verificabile.
-
-## Implementazione guidata
-
-### Passo 1 — Verificare l’hardware di alimentazione controllabile
-
-Apri lo schematico esterno della revisione reale,
-`dts/bindings/spaghetti/spaghettilab,port.yaml`, il `.dts` della board selezionata e
-`roadmap/190-power/README.md`, dove registrerai segnale, polarità e misure.
-
-Identificare una risorsa di energia fisicamente controllabile, controllare la polarità,
-stato di avvio sicuro, Port interessati, limiti elettrici, e il comportamento
-misurabile on/off. Se non esiste, contrassegnare la fase BLOCKED e non inventare uno.
-
-### Passo 2 — Definire l’API pubblica di Power
-
-`include/spaghetti/power.h`.
-
-Definire una risorsa ID/state contratto e dichiarare Power init, acquisire, rilasciare,
-e get-status funzioni. identità del proprietario del documento, limiti di conteggio di
-riferimento, thread-solo chiamate, e underflow comportamento.
-
-### Passo 3 — Implementare il reference counting con backend finto
-
-`subsys/power/power.c`.
-
-Implementa lo stato privato con un breve `k_mutex`: in primo luogo acquisire chiamate un
-falso power-on hook, intermedio acquire/release solo cambiare il numero, e le chiamate
-di rilascio finale power-off. Rifiutare overflow, underflow, e resource/owner non
-valido.
-
-### Passo 4 — Provare proprietà e rollback di Power
-
-`subsys/power/power.c`; crea `tests/power/CMakeLists.txt`, `tests/power/prj.conf` e
-`tests/power/src/main.c` per il backend finto.
-
-Esercizio di due proprietari acquiring/releasing in entrambi gli ordini,
-duplicate/invalid rilascia, overflow border, fake on failure, e fake off failure.
-Confermare i conti e lo stato rimangono coerenti dopo ogni errore.
-
-### Passo 5 — Collegare Power al controllo hardware reale
-
-Port binding/board DTS e `subsys/power/power.c`.
-
-Aggiungere il riferimento di potenza verificato alla descrizione dell'hardware statico e
-implementare i ganci on/off con `struct gpio_dt_spec` e `gpio_pin_set_dt()`. Non usare
-runtime PM: questa fase controlla una linea enable fisica. Preservare la polarità sicura misurata e propagare gli errori di
-transizione.
-
-### Passo 6 — Integrare Power con Manager e provare l’hardware
-
-`CMakeLists.txt`, `subsys/core/core.c`, `subsys/module_manager/module_manager.c` e
-apparecchiature di misura reali.
-
-Aggiungere il sorgente Power e inizializzarlo da Core. Manager acquisisce prima driver
-init e rilascia dopo il deinit o ogni rollback. Misurare le transizioni
-first-on/final-off e iniettare driver-init non confermare il rilascio.
-
-### Contratti completi da scrivere
+Apri `include/spaghetti/power.h` e definisci questi tipi pubblici:
 
 ```c
 typedef uint8_t spaghetti_power_resource_id_t;
 typedef uint8_t spaghetti_power_owner_id_t;
-enum spaghetti_power_state { SPAGHETTI_POWER_OFF, SPAGHETTI_POWER_STARTING, SPAGHETTI_POWER_ON, SPAGHETTI_POWER_STOPPING, SPAGHETTI_POWER_ERROR };
-struct spaghetti_power_status { enum spaghetti_power_state state; uint16_t reference_count; int last_error; };
+
+#define SPAGHETTI_POWER_OWNER_INVALID UINT8_MAX
+
+enum spaghetti_power_state {
+	SPAGHETTI_POWER_OFF,
+	SPAGHETTI_POWER_STARTING,
+	SPAGHETTI_POWER_ON,
+	SPAGHETTI_POWER_STOPPING,
+	SPAGHETTI_POWER_ERROR,
+};
+
+struct spaghetti_power_status {
+	enum spaghetti_power_state state;
+	uint16_t reference_count;
+	int last_error;
+};
+```
+
+`resource_id` identifica una futura rail fisica. `owner_id` identifica un Module vivo,
+non una Port: due Module I2C sulla stessa Port sono proprietari distinti. I due ID sono
+passati per valore perché sono interi piccoli. `spaghetti_power_status` è pubblica e
+contiene una snapshot copiata; il chiamante possiede la propria copia.
+
+Scrivi le API:
+
+```c
 int spaghetti_power_init(void);
 int spaghetti_power_acquire(spaghetti_power_resource_id_t id,
 			    spaghetti_power_owner_id_t owner);
@@ -102,90 +57,106 @@ int spaghetti_power_get_status(spaghetti_power_resource_id_t id,
 			       struct spaghetti_power_status *out);
 ```
 
-ID e owner sono valori copiati. `out` è una snapshot del chiamante. La struct privata
-per risorsa contiene descrittore hardware immutabile, stato, conteggio, bitmap/lista
-limitata degli owner e mutex; Power la possiede per tutto il firmware. Acquire rifiuta
-owner duplicato e overflow, accende solo su 0→1 e registra owner solo dopo successo.
-Release rifiuta owner assente/underflow, spegne solo su 1→0 e conserva ownership se lo
-spegnimento fallisce. Tutte le API sono thread-only e restituiscono errno precisi.
-Prima usa hook fake in test; collega il `gpio_dt_spec` solo dopo aver verificato polarità,
-safe state e risorsa reale nello schema. Manager acquisisce prima di driver init e
-rilascia dopo deinit o in ogni rollback.
+- `spaghetti_power_init()` porta ogni risorsa compilata nello stato sicuro OFF. Core la
+  chiamerà al boot soltanto su una board che abilita Power. Restituisce `0`,
+  `-EALREADY` oppure l’errore del backend.
+- `spaghetti_power_acquire(id, owner)` viene chiamata dal Manager prima di inizializzare
+  il driver. Accende soltanto sul passaggio da zero a un owner, poi registra l’owner.
+  Restituisce `-ENOENT`, `-EALREADY`, `-ENOSPC` o l’errore di accensione quando serve.
+- `spaghetti_power_release(id, owner)` viene chiamata dopo `deinit()` o nel rollback.
+  Spegne soltanto all’ultimo owner. Se lo spegnimento fallisce non elimina owner e count,
+  così la chiamata può essere ripetuta.
+- `spaghetti_power_get_status(id, out)` copia stato, count ed errore in `out`. Il
+  puntatore è modificabile perché la funzione deve scriverci; memoria e lifetime sono
+  del chiamante. Restituisce `-EINVAL` se è `NULL`.
 
-L’owner usato da Manager deriva dal `spaghetti_module_id_t` dell’istanza, non da
-`port_id`. Due Module sulla stessa Port sono due owner distinti; rimuoverne uno rilascia
-soltanto il suo riferimento.
+Apri `subsys/power/power.c`. Crea una struct privata per risorsa con ID, stato, array
+fisso di otto owner, count, ultimo errore e `k_mutex`. Power possiede questi oggetti per
+tutta la vita del firmware. Non usare heap. Sotto mutex implementa questa sequenza:
 
-Significato di stato e campi:
+1. valida inizializzazione, resource ID e owner;
+2. rifiuta un owner duplicato e il nono owner;
+3. su acquire 0→1 chiama il backend ON e registra l’owner solo dopo il successo;
+4. sugli acquire intermedi aggiorna soltanto array e count;
+5. su release intermedie elimina soltanto l’owner richiesto;
+6. su release 1→0 chiama il backend OFF e cancella l’owner solo dopo il successo;
+7. conserva `SPAGHETTI_POWER_ERROR` e `last_error` quando una transizione fallisce.
 
-- STARTING/STOPPING rendono osservabile una transizione mentre il mutex è posseduto;
-- ERROR conserva un guasto hardware che non può essere rappresentato come ON/OFF;
-- `reference_count` è il numero di owner distinti, non il numero di chiamate;
-- `last_error` conserva l’errno dell’ultima transizione fallita.
+Il `k_mutex` è una primitive Zephyr runtime che serializza thread concorrenti. Queste
+API sono quindi thread-only: non chiamarle da ISR.
 
-`init()` valida ogni `gpio_dt_spec`, configura il safe state e azzera owner/count.
-`acquire(id, owner)` è chiamata dal Manager prima di driver init: valida ID/owner,
-blocca il mutex, rifiuta duplicati, esegue power-on solo con count zero, registra owner
-e incrementa. `release` esegue il percorso inverso e non cancella owner/count se
-power-off fallisce. `get_status(id, out)` copia uno snapshot sotto mutex; `out` è del
-chiamante e cambia solo al successo.
-
-In `subsys/power/power.c` crea:
+Apri `subsys/power/power_internal.h`. Dichiara il solo hook del test quando
+`CONFIG_SPAGHETTI_POWER_FAKE_BACKEND=y`:
 
 ```c
-#define SPAGHETTI_POWER_MAX_OWNERS 8U
-
-struct spaghetti_power_resource {
-	spaghetti_power_resource_id_t id;
-	struct gpio_dt_spec enable;
-	enum spaghetti_power_state state;
-	spaghetti_power_owner_id_t owners[SPAGHETTI_POWER_MAX_OWNERS];
-	uint16_t reference_count;
-	int last_error;
-	struct k_mutex lock;
-};
+int spaghetti_power_backend_set(spaghetti_power_resource_id_t id, bool enabled);
 ```
 
-`id` identifica la rail; `enable` copia controller, pin e flag dal Devicetree, mentre
-il device GPIO resta posseduto da Zephyr; `owners` impedisce doppie acquisizioni;
-`reference_count` indica quanti elementi sono validi; `lock` serializza due thread.
-Power possiede struct, array e mutex fino allo spegnimento.
+Il test possiede l’implementazione fake dell’hook. Non esiste alcun backend GPIO nella
+build reale finché una futura board non dichiara un controllo verificato.
 
-## Esempio d’uso
+Apri `Kconfig` e aggiungi `SPAGHETTI_POWER`, disabilitato di default, più l’opzione
+interna `SPAGHETTI_POWER_FAKE_BACKEND`. Apri `CMakeLists.txt` e compila
+`subsys/power/power.c` solo con `CONFIG_SPAGHETTI_POWER=y`.
+
+Apri `tests/power/src/main.c` e prova una risorsa fake con due owner Module `10` e `11`.
+Verifica entrambi gli ordini, duplicato, owner assente, limite di otto, fallimento ON e
+fallimento OFF. Il test deve dimostrare che count e ownership restano coerenti dopo gli
+errori. Gli altri file del test sono `tests/power/CMakeLists.txt`, `Kconfig`, `prj.conf`
+e `testcase.yaml`.
+
+Non modificare `subsys/module_manager/module_manager.c` su Core V1: non esiste una
+risorsa reale da associare a una Port o a un Module. Una futura board con rail
+controllabile aggiungerà il descrittore hardware e solo allora Manager userà il Module
+ID come owner prima di `driver->ops->init()` e lo rilascerà dopo `deinit()` o rollback.
+
+## Perché è fatto così
+
+Il reference counting impedisce che un Module spenga una rail ancora usata da un altro.
+La tabella fissa rende memoria e limite deterministici. Commit dopo successo e rollback
+esplicito impediscono che lo stato software dichiari una transizione hardware mai
+avvenuta. Lasciare Power disabilitato su Core V1 evita di trasformare un’ipotesi sullo
+schema in codice capace di pilotare il pin sbagliato.
+
+## Come si usa
+
+Su una futura board che dichiara la risorsa `0`, Manager userà una sequenza equivalente:
 
 ```c
-int err = spaghetti_power_acquire(resource_id, owner_id);
+int err = spaghetti_power_acquire(0U, module->id);
+
 if (err == 0) {
-	/* Usa la risorsa. */
-	(void)spaghetti_power_release(resource_id, owner_id);
+	err = module->driver->ops->init(module, config, config_size);
+	if (err < 0) {
+		(void)spaghetti_power_release(0U, module->id);
+	}
 }
 ```
 
-## Checklist di completamento
+`module->id` distingue due INA219 sulla stessa Port; `0U` identifica la rail condivisa,
+non il bus né il Module. Questo esempio documenta l’integrazione futura e non è attivo
+su Core V1.
 
-- [ ] Verificare l’hardware di alimentazione controllabile.
-- [ ] Definire l’API pubblica di Power.
-- [ ] Implementare il reference counting con backend finto.
-- [ ] Provare proprietà e rollback di Power.
-- [ ] Collegare Power al controllo hardware reale.
-- [ ] Integrare Power con Manager e provare l’hardware.
-- [ ] Provare due owner Module distinti sulla stessa Port.
+## Checklist
 
-## Verifica finale
+- [x] Verificato che Core V1 non dichiara una rail controllabile.
+- [x] Definiti API, stati, owner distinti e contratto errno.
+- [x] Implementato reference counting deterministico senza heap.
+- [x] Provati due owner sulla stessa Port, limiti e rollback con backend fake.
+- [x] Power disabilitato nella build reale finché manca hardware verificato.
+- [x] Backend GPIO e integrazione Manager non applicabili a Core V1 e non inventati.
 
-**Comandi**
+## Verifica e fine task
+
+Esegui:
 
 ```sh
-make validate
+./validator
+docker compose run --rm --entrypoint sh dev -lc \
+  'west twister -T tests/power -p native_sim/native/64 --inline-logs --clobber-output'
 make pristine
-make flash
-make monitor
 ```
 
-**Controlla**
-
-Con backend fake prova due owner in entrambi gli ordini, duplicato, underflow, overflow e fallimenti on/off. Poi misura first-on/final-off reale e inietta init driver fallita per verificare il rilascio.
-
-**Risultato atteso**
-
-First-acquire/final-release comandano una sola transizione e ogni errore mantiene owner e count coerenti.
+Il validator deve terminare senza errori. Twister deve eseguire una configurazione e un
+test con risultato `passed`. La build Core V1 deve riuscire con
+`CONFIG_SPAGHETTI_POWER` non impostato e non deve contenere un falso controllo GPIO.

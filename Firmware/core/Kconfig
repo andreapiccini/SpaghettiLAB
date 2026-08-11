@@ -22,6 +22,10 @@ module = SPAGHETTI_DISCOVERY
 module-str = spaghetti_discovery
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_POWER
+module-str = spaghetti_power
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_CONFIG
 module-str = spaghetti_config
 source "subsys/logging/Kconfig.template.log_config"
@@ -73,6 +77,20 @@ config SPAGHETTI_DISCOVERY_MAX_RESULTS
 	help
 	  Fixed capacity of the Discovery table indexed by stable Module key.
 	  Several entries may reference the same physical Port.
+
+config SPAGHETTI_POWER
+	bool "Enable shared controllable power resources"
+	default n
+	help
+	  Enable only when the selected Core has a verified controllable rail.
+	  Core V1 has no such hardware and must leave this disabled.
+
+config SPAGHETTI_POWER_FAKE_BACKEND
+	bool
+	depends on SPAGHETTI_POWER
+	default n
+	help
+	  Test-only backend that exposes resource 0 without physical hardware.
 
 config SPAGHETTI_INA219_MAX_INSTANCES
 	int "Maximum number of simultaneous INA219 instances"

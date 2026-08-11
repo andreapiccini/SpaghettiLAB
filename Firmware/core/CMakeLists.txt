@@ -48,6 +48,10 @@ target_sources(app PRIVATE
   subsys/services/wifi_profiles/wifi_profiles_storage.c
 )
 
+target_sources_ifdef(CONFIG_SPAGHETTI_POWER app PRIVATE
+  subsys/power/power.c
+)
+
 get_target_property(APP_SRCS app SOURCES)
 
 message(STATUS "========== APP SOURCES ==========")
