@@ -13,6 +13,8 @@
 #include <ina219.h>
 #include <relay.h>
 
+#include "driver_registry_internal.h"
+
 LOG_MODULE_REGISTER(spaghetti_driver_registry,
 		    CONFIG_SPAGHETTI_DRIVER_REGISTRY_LOG_LEVEL);
 
@@ -36,10 +38,16 @@ static bool type_id_is_valid(const char *type_id)
 	return false;
 }
 
-int spaghetti_driver_registry_init(void)
+int spaghetti_driver_registry_validate(
+	const struct spaghetti_module_driver *const *entries,
+	size_t entry_count)
 {
-	for (size_t driver_idx = 0U; driver_idx < ARRAY_SIZE(drivers); ++driver_idx) {
-		const struct spaghetti_module_driver *driver = drivers[driver_idx];
+	if ((entries == NULL) || (entry_count == 0U)) {
+		return -EINVAL;
+	}
+
+	for (size_t driver_idx = 0U; driver_idx < entry_count; ++driver_idx) {
+		const struct spaghetti_module_driver *driver = entries[driver_idx];
 
 		if ((driver == NULL) || !type_id_is_valid(driver->type_id) ||
 		    (driver->required_capabilities == 0U) || (driver->ops == NULL) ||
@@ -53,14 +61,25 @@ int spaghetti_driver_registry_init(void)
 		}
 
 		for (size_t other_idx = driver_idx + 1U;
-		     other_idx < ARRAY_SIZE(drivers); ++other_idx) {
-			const struct spaghetti_module_driver *other = drivers[other_idx];
+		     other_idx < entry_count; ++other_idx) {
+			const struct spaghetti_module_driver *other = entries[other_idx];
 
 			if ((other != NULL) && type_id_is_valid(other->type_id) &&
 			    (strcmp(driver->type_id, other->type_id) == 0)) {
 				return -EINVAL;
 			}
 		}
+	}
+
+	return 0;
+}
+
+int spaghetti_driver_registry_init(void)
+{
+	int err = spaghetti_driver_registry_validate(drivers, ARRAY_SIZE(drivers));
+
+	if (err < 0) {
+		return err;
 	}
 
 	LOG_INF("ready: drivers=%u", (uint32_t)ARRAY_SIZE(drivers));

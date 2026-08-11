@@ -137,7 +137,7 @@ if (err == 0) {
 non il bus né il Module. Questo esempio documenta l’integrazione futura e non è attivo
 su Core V1.
 
-## Checklist
+## Checklist di completamento
 
 - [x] Verificato che Core V1 non dichiara una rail controllabile.
 - [x] Definiti API, stati, owner distinti e contratto errno.

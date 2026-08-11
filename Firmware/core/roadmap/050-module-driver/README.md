@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -19,11 +19,11 @@ INA219 viene usato soltanto tramite una tabella di operazioni.
 
 ## Task
 
-1. ⬜ [TASK-050-01 — Introdurre Module e Module Driver](TASK-050-01-introdurre-module-e-driver.md)
+1. ✅ [TASK-050-01 — Introdurre Module e Module Driver](TASK-050-01-introdurre-module-e-driver.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Instance, sample e tabella operazioni hanno contratti espliciti.
-- [ ] Il descrittore INA219 è immutabile.
-- [ ] L’endpoint distingue più istanze dello stesso driver sulla stessa Port.
-- [ ] Il chiamante non dipende più direttamente dal wrapper.
+- [x] Instance, sample e tabella operazioni hanno contratti espliciti.
+- [x] Il descrittore INA219 è immutabile.
+- [x] L’endpoint distingue più istanze dello stesso driver sulla stessa Port.
+- [x] Il chiamante non dipende più direttamente dal wrapper.

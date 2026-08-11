@@ -70,6 +70,29 @@ static int fake_describe_endpoint(const void *config, size_t config_size,
 	return 0;
 }
 
+static int fake_describe_exclusive_endpoint(
+	const void *config,
+	size_t config_size,
+	struct spaghetti_module_endpoint *out)
+{
+	int err;
+
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	err = fake_validate_config(config, config_size);
+	if (err < 0) {
+		return err;
+	}
+
+	*out = (struct spaghetti_module_endpoint) {
+		.kind = SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE,
+		.value = 0U,
+	};
+	return 0;
+}
+
 static int fake_init(struct spaghetti_module *module, const void *config,
 		     size_t config_size)
 {
@@ -161,6 +184,21 @@ static const struct spaghetti_module_driver fake_driver = {
 	.ops = &fake_ops,
 };
 
+static const struct spaghetti_module_driver_ops fake_exclusive_ops = {
+	.validate_config = fake_validate_config,
+	.describe_endpoint = fake_describe_exclusive_endpoint,
+	.init = fake_init,
+	.read = fake_read,
+	.command = fake_command,
+	.deinit = fake_deinit,
+};
+
+static const struct spaghetti_module_driver fake_exclusive_driver = {
+	.type_id = "fake-exclusive",
+	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.ops = &fake_exclusive_ops,
+};
+
 const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)
 {
 	return (id == fake_port.id) ? &fake_port : NULL;
@@ -179,6 +217,10 @@ const struct spaghetti_module_driver *spaghetti_driver_registry_find(
 	if ((type_id != NULL) && (strcmp(type_id, fake_driver.type_id) == 0)) {
 		return &fake_driver;
 	}
+	if ((type_id != NULL) &&
+	    (strcmp(type_id, fake_exclusive_driver.type_id) == 0)) {
+		return &fake_exclusive_driver;
+	}
 
 	return NULL;
 }
@@ -194,6 +236,24 @@ static int configure_fake(spaghetti_module_key_t key, uint8_t i2c_address,
 		.key = key,
 		.port_id = 0U,
 		.type_id = "fake",
+		.driver_config = &config,
+		.driver_config_size = sizeof(config),
+		.revision = 1U,
+	};
+
+	return spaghetti_module_manager_configure(&request, out_id);
+}
+
+static int configure_fake_exclusive(spaghetti_module_key_t key,
+				    spaghetti_module_id_t *out_id)
+{
+	const struct fake_driver_config config = {
+		.i2c_address = 0U,
+	};
+	const struct spaghetti_module_request request = {
+		.key = key,
+		.port_id = 0U,
+		.type_id = "fake-exclusive",
 		.driver_config = &config,
 		.driver_config_size = sizeof(config),
 		.revision = 1U,
@@ -244,6 +304,7 @@ ZTEST(module_manager, test_shared_port_lifecycle)
 
 	zassert_equal(configure_fake(10U, 0x42U, 0, &ignored_id), -EEXIST);
 	zassert_equal(configure_fake(13U, 0x40U, 0, &ignored_id), -EADDRINUSE);
+	zassert_equal(configure_fake_exclusive(20U, &ignored_id), -EADDRINUSE);
 	zassert_equal(configure_fake(13U, 0x42U, -EIO, &ignored_id), -EIO);
 	zassert_equal(spaghetti_module_manager_get_by_key(13U, &snapshot), -ENOENT);
 
@@ -269,6 +330,10 @@ ZTEST(module_manager, test_shared_port_lifecycle)
 	zassert_ok(spaghetti_module_manager_remove(id_10, 1U));
 	zassert_ok(spaghetti_module_manager_remove(id_12, 1U));
 	zassert_ok(spaghetti_module_manager_remove(id_13, 1U));
+
+	zassert_ok(configure_fake_exclusive(20U, &id_10));
+	zassert_equal(configure_fake(21U, 0x40U, 0, &ignored_id), -EADDRINUSE);
+	zassert_ok(spaghetti_module_manager_remove(id_10, 1U));
 }
 
 ZTEST_SUITE(module_manager, NULL, NULL, NULL, NULL, NULL);

@@ -24,6 +24,8 @@ Registry entry.
 |---|---|
 | `include/spaghetti/driver_registry.h` | Lookup and enumeration declarations. |
 | `subsys/driver_registry/driver_registry.c` | Descriptor table and validation. |
+| `subsys/driver_registry/driver_registry_internal.h` | Private catalog-validation seam used by host tests. |
+| `tests/driver_registry/` | Invalid-catalog and public lookup tests. |
 | Concrete module headers | Export immutable descriptors referenced by the table. |
 
 ## Data model
@@ -156,6 +158,11 @@ target_sources_ifdef(CONFIG_SPAGHETTI_MODULE_INA219 app PRIVATE
 ## Ownership and concurrency
 
 After successful initialization the Registry is immutable, so lookup requires no lock. Returned descriptors remain valid for firmware lifetime.
+
+The private `spaghetti_driver_registry_validate()` helper accepts an arbitrary catalog
+only so native tests can exercise invalid descriptors and duplicate IDs. Production
+code always calls it with the fixed catalog compiled into `driver_registry.c`; it does
+not make driver registration dynamic.
 
 ## Contract guarantees
 

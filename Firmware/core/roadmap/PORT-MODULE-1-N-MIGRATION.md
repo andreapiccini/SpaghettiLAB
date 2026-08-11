@@ -2,6 +2,8 @@
 
 [← Indice roadmap](README.md) · [Architettura](../ARCHITECTURE.md)
 
+**Stato:** ✅ IMPLEMENTATA
+
 ## Problema corretto
 
 La roadmap precedente usava la Port sia come connessione fisica sia come identità del
@@ -13,7 +15,7 @@ Module. Da questa sovrapposizione derivavano quattro regole errate:
 4. Discovery conservava una sola proposta e una sola generazione per Port.
 
 Una Port I2C è invece un accesso condiviso al controller. INA219 `0x40`, INA219 `0x41`
-e SHT40 `0x44` sono tre istanze diverse sulla stessa Port 0. La Port serializza le
+e INA219 `0x44` sono tre istanze diverse sulla stessa Port 0. La Port serializza le
 transazioni sul bus; non possiede né limita il numero di Module.
 
 ## Nuovo modello
@@ -150,46 +152,26 @@ Queste callback non accedono all’hardware e non modificano stato. Permettono a
 Manager di validare dimensione, range e collisioni prima di occupare uno slot o
 allocare un context. Registry rifiuta un driver privo di queste operazioni.
 
-## Modifiche richieste al codice già presente
+## Modifiche applicate
 
-Questa sezione è un report operativo; nessuna modifica è applicata automaticamente.
+| Area | Implementazione verificata |
+|---|---|
+| Tipi pubblici | `module.h` distingue key persistente, ID runtime, Port ed endpoint. |
+| Module Driver | `validate_config()` e `describe_endpoint()` sono callback pure obbligatorie. |
+| Module Manager | Slot privati, query per key e lista 0:N per Port; nessun `get_by_port()` singolare. |
+| Collisioni | Stessa key o stesso endpoint sulla stessa Port vengono rifiutati; indirizzi diversi sono indipendenti. |
+| Endpoint esclusivo | `PORT_EXCLUSIVE` confligge con qualunque endpoint della Port, in entrambi gli ordini. |
+| Context | INA219 e Relay usano slab statici tipizzati, senza buffer universale o heap. |
+| INA219 runtime | Device I2C dalla Port e indirizzo dalla Config; nessun nodo INA219 statico. |
+| Registry | Catalogo fisso, type ID unici e descrittori completi validati prima dell’uso. |
+| Config e Discovery | Desired state e proposte indicizzati per key; più record ripetono `port_id`. |
+| Runtime e Communication | Riferimenti persistenti per key e diagnostica 0:N per Port. |
 
-| File | Parte da cambiare | Motivo |
-|---|---|---|
-| `include/spaghetti/module.h:22-35` | Conservare qui una sola dichiarazione di `spaghetti_module_id_t`; aggiungere `spaghetti_module_key_t`, endpoint e key/endpoint alla Module/snapshot | Port non identifica più un’istanza. |
-| `include/spaghetti/module_driver.h:16-20` | Aggiungere `validate_config` e `describe_endpoint`; lasciare il context opaco; eliminare il typedef duplicato alle righe 31-34 | Il Manager non deve interpretare address o struct private e l’ID deve avere un solo owner pubblico. |
-| `include/spaghetti/module_manager.h:10-17` | Rimuovere la struct slot pubblica e il buffer universale | Slot e storage privato del driver non sono API. |
-| `include/spaghetti/module_manager.h:33-71` | Sostituire la vecchia `configure(port_id, type_id, out_id)` e rimuovere `get_by_port()`; dichiarare request, snapshot, `get_by_key()` e `list_by_port()` | Config deve passare key e parametri driver; una Port produce zero, uno o molti risultati. |
-| `subsys/module_manager/module_manager.c:5-15` | Conservare privatamente lo slot ma eliminare `driver_context.bytes[SPAGHETTI_MODULE_CONTEXT_SIZE]` | Il context passa al pool statico del driver concreto. |
-| `subsys/module_manager/module_manager.c:23-31` | Ricevere `const struct spaghetti_module_request *request` e `out_id` | La richiesta deve trasportare key, Port, type, config, size e revision in un solo oggetto validabile. |
-| `subsys/module_manager/module_manager.c:44-49` | Eliminare l’intero controllo `slots[i].module.port == port` che restituisce `-EBUSY` | Blocca erroneamente il secondo indirizzo I2C sulla stessa Port. |
-| `subsys/module_manager/module_manager.c:64-113` | Cercare collisioni per key ed endpoint, poi trovare uno slot libero indipendentemente dalla Port; non assegnare `slot->driver_context.bytes` | La capacità è il numero globale di Module e il context appartiene al driver. |
-| `subsys/module_manager/module_manager.c:116-125` | Sostituire gli stub `get_by_port()`/`read()` con get/list/remove/read descritti in TASK-070 | Una query singolare è ambigua e ogni operazione deve validare ID, revisione e stato. |
-| `spaghetti_modules/ina219/ina219.c:9-10` | Rimuovere `DEVICE_DT_GET(DT_NODELABEL(ina219_test))` nella fase 080 | La scorciatoia statica impedisce address e istanze runtime. |
-| `spaghetti_modules/ina219/ina219.c:12-22` | Aggiungere le callback pure all’operation table | Manager deve conoscere l’endpoint senza inizializzare hardware. |
-| `spaghetti_modules/ina219/ina219.c:24-128` | Validare/copiare config, allocare uno `ina219_context` dallo slab, usare `spaghetti_port_i2c_device()` e API I2C dirette con address runtime; liberare lo slab in deinit | Consente `0x40` e `0x41` contemporaneamente sullo stesso controller senza heap. |
-| `subsys/driver_registry/driver_registry.c:11-47` | Validare le due nuove callback; confrontare soltanto coppie con `jdx = idx + 1U` | Ogni driver deve descrivere la propria identità fisica e non confrontarsi con sé stesso. |
-| futuri `config.c` e `discovery.c` | Indicizzare per module key, non per Port | Più desired/proposed Module possono condividere la stessa Port. |
-
-Nel codice osservato, il controllo esclusivo è nel blocco commentato “Check that the
-Port is not already occupied” di `module_manager.c`; è la prima parte da rimuovere
-quando si riprende TASK-070. `module_manager.h` espone inoltre la struct slot e il buffer
-context: entrambi devono diventare privati o sparire secondo il contratto sopra.
-
-## Task completati e revisione
-
-Le fasi segnate DONE sono 000–040:
-
-- 000 Baseline, 010 Core e 020 I2C non dipendono dalla cardinalità e non richiedono
-  cambi di codice;
-- 030 Port resta corretta se rappresenta capacità/device e serializza il bus, senza
-  flag occupied o owner Module; la documentazione viene esplicitata;
-- 040 INA219 è una vertical slice temporanea con una sola istanza statica. Rimane una
-  prova hardware valida e non definisce la cardinalità finale; la scorciatoia viene
-  comunque rimossa in 080 come già previsto.
-
-Le implementazioni parziali locali di 050–070 richiedono invece le modifiche della
-tabella precedente anche se i relativi task sono ancora TODO nella roadmap.
+La migrazione è stata completata progressivamente nelle fasi 050–200.
+`tests/module_manager` verifica tre endpoint simultanei, collisioni e rimozione di un
+solo fratello. `tests/ina219_runtime` usa due istanze vere del driver INA219 sullo
+stesso device I2C fake con indirizzi e context separati. `tests/config` e
+`tests/discovery` verificano riconciliazione e generazioni per key.
 
 ## Flusso runtime 1:N
 
@@ -207,3 +189,27 @@ tabella precedente anche se i relativi task sono ancora TODO nella roadmap.
    proprio sample.
 10. Una Config che rimuove solo la chiave del Module `0x41` esegue deinit e libera quel
     context/slot; `0x40` e `0x44` restano READY sulla stessa Port.
+
+## Checklist finale
+
+- [x] Nessuna Port contiene flag occupied o owner Module.
+- [x] Nessuna API pubblica restituisce un solo Module per Port.
+- [x] Key stabile e ID runtime sono tipi e responsabilità differenti.
+- [x] Collisioni calcolate con Port ed endpoint normalizzato.
+- [x] Endpoint I2C distinti convivono sulla stessa Port.
+- [x] Endpoint esclusivo e condiviso confliggono in entrambi gli ordini.
+- [x] Ogni driver possiede un pool context tipizzato e bounded.
+- [x] Config, Discovery, Runtime e Communication conservano la cardinalità 1:N.
+- [x] Registry rifiuta type ID duplicati e descrittori incompleti.
+
+## Verifica
+
+```sh
+./validator
+docker compose run --rm --entrypoint sh dev -lc \
+  'west twister -T tests -p native_sim/native/64 --inline-logs --clobber-output'
+make pristine
+```
+
+Il validator deve terminare senza errori, tutti i test native devono passare e la build
+ESP32-C3 deve includere gli stessi sorgenti elencati dal CMake applicativo.

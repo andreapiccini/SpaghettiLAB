@@ -1,6 +1,6 @@
 # TASK-050-01 — Introdurre Module e Module Driver
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 050 — Module + Module Driver
 
 ## Cosa devo fare
@@ -152,11 +152,11 @@ if (err == 0) {
 
 ## Checklist di completamento
 
-- [ ] Module distingue ID runtime, key stabile, Port ed endpoint.
-- [ ] Port è documentata come riferimento condivisibile.
-- [ ] Driver espone validate/describe/init/read/deinit.
-- [ ] Il descrittore INA219 non contiene stato per istanza.
-- [ ] Il main temporaneo usa soltanto la operation table.
+- [x] Module distingue ID runtime, key stabile, Port ed endpoint.
+- [x] Port è documentata come riferimento condivisibile.
+- [x] Driver espone validate/describe/init/read/deinit.
+- [x] Il descrittore INA219 non contiene stato per istanza.
+- [x] Il main definitivo non dipende direttamente da INA219.
 
 ## Verifica e fine task
 

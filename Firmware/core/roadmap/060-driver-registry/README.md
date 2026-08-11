@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -20,11 +20,11 @@ Lo stesso descrittore può servire più istanze contemporanee sulla stessa Port.
 
 ## Task
 
-1. ⬜ [TASK-060-01 — Implementare il Driver Registry](TASK-060-01-implementare-il-driver-registry.md)
+1. ✅ [TASK-060-01 — Implementare il Driver Registry](TASK-060-01-implementare-il-driver-registry.md)
 
 ## Criteri di completamento della fase
 
-- [ ] La tabella driver è fissa e validata all’avvio.
-- [ ] Nomi duplicati o descrittori incompleti vengono rifiutati.
-- [ ] Validate-config e describe-endpoint sono obbligatorie e pure.
-- [ ] Core inizializza il registry prima di usarlo.
+- [x] La tabella driver è fissa e validata all’avvio.
+- [x] Nomi duplicati o descrittori incompleti vengono rifiutati.
+- [x] Validate-config e describe-endpoint sono obbligatorie e pure.
+- [x] Core inizializza il registry prima di usarlo.

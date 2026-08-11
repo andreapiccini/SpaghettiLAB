@@ -1,6 +1,6 @@
 # TASK-060-01 — Implementare il Driver Registry
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 060 — Driver Registry
 
 ## Perché lo facciamo
@@ -107,12 +107,12 @@ if (driver == NULL) {
 
 ## Checklist di completamento
 
-- [ ] Dichiarare l’API di Driver Registry.
-- [ ] Implementare la tabella statica dei driver.
-- [ ] Convalidare le voci del registry.
-- [ ] Verificare che uno stesso descrittore serva due richieste indipendenti.
-- [ ] Inizializzare Driver Registry da Core.
-- [ ] Provare la ricerca di driver noti e sconosciuti.
+- [x] Dichiarare l’API di Driver Registry.
+- [x] Implementare la tabella statica dei driver.
+- [x] Convalidare le voci del registry.
+- [x] Verificare che uno stesso descrittore serva due richieste indipendenti.
+- [x] Inizializzare Driver Registry da Core.
+- [x] Provare la ricerca di driver noti e sconosciuti.
 
 ## Verifica finale
 

@@ -4,8 +4,8 @@ Questa cartella contiene i task eseguibili del firmware. Apri un solo task alla
 volta, completa la relativa checklist e aggiorna lo stato.
 
 > [!IMPORTANT]
-> La relazione corretta è Port 1:N Module. Leggi il
-> [report di migrazione](PORT-MODULE-1-N-MIGRATION.md) prima di riprendere la fase 050.
+> La relazione Port 1:N Module è implementata e verificata. Consulta il
+> [report della migrazione](PORT-MODULE-1-N-MIGRATION.md) per contratti e test.
 
 ## Legenda degli stati
 
@@ -79,8 +79,8 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [020 — Scheda attuale / I2C](020-board-i2c/README.md) | Il DTS generato contiene il controller I2C reale e abilitato. |
 | ✅ | [030 — Port](030-port/README.md) | Port 0 espone la capacità I2C e possiede un device Zephyr pronto. |
 | ✅ | [040 — Sezione verticale INA219](040-ina219/README.md) | Bus voltage, current e power reali compaiono nei log. |
-| ⬜ | [050 — Module + Module Driver](050-module-driver/README.md) | Module distingue key, ID runtime, Port ed endpoint; INA219 usa la operation table. |
-| ⬜ | [060 — Driver Registry](060-driver-registry/README.md) | La ricerca di `ina219` riesce e un tipo sconosciuto fallisce correttamente. |
+| ✅ | [050 — Module + Module Driver](050-module-driver/README.md) | Module distingue key, ID runtime, Port ed endpoint; INA219 usa la operation table. |
+| ✅ | [060 — Driver Registry](060-driver-registry/README.md) | La ricerca di `ina219` riesce e un tipo sconosciuto fallisce correttamente. |
 | ✅ | [070 — Module Manager](070-module-manager/README.md) | Il Manager gestisce più endpoint simultanei sulla stessa Port. |
 | ✅ | [080 — INA219 rimovibile a runtime](080-runtime-removable-ina219/README.md) | Due INA219 condividono Port 0 con address e context runtime distinti. |
 | ✅ | [090 — Config interna](090-config/README.md) | Config riconcilia Module per key e accetta Port ripetute con endpoint distinti. |
