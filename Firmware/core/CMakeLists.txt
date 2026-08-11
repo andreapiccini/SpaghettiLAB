@@ -40,6 +40,7 @@ target_sources(app PRIVATE
   subsys/runtime/runtime.c
   subsys/communication/communication.c
   subsys/communication/communication_shell.c
+  subsys/services/mqtt/mqtt.c
 )
 
 get_target_property(APP_SRCS app SOURCES)

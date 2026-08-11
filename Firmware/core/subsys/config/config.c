@@ -11,6 +11,7 @@
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/mqtt.h>
 #include <spaghetti/runtime.h>
 
 LOG_MODULE_REGISTER(spaghetti_config, CONFIG_SPAGHETTI_CONFIG_LOG_LEVEL);
@@ -38,6 +39,26 @@ static bool type_id_is_valid(const char *type_id)
 	}
 
 	return memchr(type_id, '\0', SPAGHETTI_CONFIG_TYPE_ID_SIZE) != NULL;
+}
+
+static bool mqtt_config_is_valid(const struct spaghetti_mqtt_config *mqtt)
+{
+	const char *host_end = memchr(mqtt->host, '\0', sizeof(mqtt->host));
+	const char *topic_end = memchr(mqtt->base_topic, '\0',
+				       sizeof(mqtt->base_topic));
+
+	if (!mqtt->enabled) {
+		return (mqtt->host[0] == '\0') && (mqtt->port == 0U) &&
+		       (mqtt->base_topic[0] == '\0');
+	}
+	if ((host_end == NULL) || (host_end == mqtt->host) ||
+	    (topic_end == NULL) || (topic_end == mqtt->base_topic) ||
+	    (mqtt->port == 0U)) {
+		return false;
+	}
+
+	return (mqtt->base_topic[0] != '/') &&
+	       (topic_end[-1] != '/');
 }
 
 static bool endpoint_is_valid(const struct spaghetti_module_endpoint *endpoint)
@@ -272,6 +293,52 @@ static int configure_runtime(const struct spaghetti_config *config)
 	return err;
 }
 
+static bool mqtt_configs_are_equal(
+	const struct spaghetti_mqtt_config *first,
+	const struct spaghetti_mqtt_config *second)
+{
+	return (first->enabled == second->enabled) &&
+	       (first->port == second->port) &&
+	       (strcmp(first->host, second->host) == 0) &&
+	       (strcmp(first->base_topic, second->base_topic) == 0);
+}
+
+static int configure_mqtt(const struct spaghetti_mqtt_config *mqtt)
+{
+	struct spaghetti_mqtt_status status;
+	int err = spaghetti_mqtt_get_status(&status);
+
+	if (err < 0) {
+		return err;
+	}
+	if (status.state != SPAGHETTI_MQTT_STOPPED) {
+		err = spaghetti_mqtt_stop(
+			K_MSEC(CONFIG_SPAGHETTI_MQTT_STOP_TIMEOUT_MS));
+		if ((err < 0) && (err != -EALREADY)) {
+			return err;
+		}
+	}
+
+	err = spaghetti_mqtt_init(mqtt);
+	if ((err == 0) && mqtt->enabled) {
+		err = spaghetti_mqtt_start();
+	}
+
+	return err;
+}
+
+static int restore_runtime(const struct spaghetti_config *config)
+{
+	int err = spaghetti_runtime_stop(
+		K_MSEC(CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS));
+
+	if ((err < 0) && (err != -EALREADY)) {
+		return err;
+	}
+
+	return configure_runtime(config);
+}
+
 static bool module_is_absent(spaghetti_module_key_t key)
 {
 	struct spaghetti_module_snapshot ignored;
@@ -325,7 +392,8 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate)
 
 	if ((candidate == NULL) ||
 	    (candidate->version != SPAGHETTI_CONFIG_VERSION) ||
-	    (candidate->module_count > SPAGHETTI_CONFIG_MAX_MODULES)) {
+	    (candidate->module_count > SPAGHETTI_CONFIG_MAX_MODULES) ||
+	    !mqtt_config_is_valid(&candidate->mqtt)) {
 		return -EINVAL;
 	}
 
@@ -393,6 +461,8 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 	struct spaghetti_config_transaction transaction = {0};
 	struct spaghetti_config old_config = {0};
 	bool had_old_config;
+	bool mqtt_changed;
+	bool mqtt_reconfigured = false;
 	int apply_error = 0;
 	int err;
 
@@ -410,6 +480,8 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 	if (had_old_config) {
 		old_config = current_config;
 	}
+	mqtt_changed = !had_old_config ||
+		!mqtt_configs_are_equal(&old_config.mqtt, &candidate->mqtt);
 	if (had_old_config &&
 	    (old_config.sampling.enabled ||
 	     old_config.threshold_rule.enabled)) {
@@ -484,6 +556,15 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 		goto rollback;
 	}
 
+	if (mqtt_changed) {
+		mqtt_reconfigured = true;
+		err = configure_mqtt(&candidate->mqtt);
+		if (err < 0) {
+			apply_error = err;
+			goto rollback;
+		}
+	}
+
 	current_config = *candidate;
 	has_current_config = true;
 	k_mutex_unlock(&config_lock);
@@ -499,8 +580,17 @@ rollback:
 			.version = SPAGHETTI_CONFIG_VERSION,
 		};
 
-		err = configure_runtime(had_old_config ? &old_config :
-							       &empty_config);
+		err = restore_runtime(had_old_config ? &old_config :
+							     &empty_config);
+	}
+	if (mqtt_reconfigured) {
+		const struct spaghetti_mqtt_config mqtt_disabled = {0};
+		const int mqtt_error = configure_mqtt(
+			had_old_config ? &old_config.mqtt : &mqtt_disabled);
+
+		if ((err == 0) && (mqtt_error < 0)) {
+			err = mqtt_error;
+		}
 	}
 	k_mutex_unlock(&config_lock);
 	if (err < 0) {

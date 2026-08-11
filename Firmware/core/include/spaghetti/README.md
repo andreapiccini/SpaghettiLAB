@@ -30,6 +30,7 @@ This directory contains contracts shared between firmware components. Headers ex
 | `data.h` | Normalized values and events. |
 | `runtime.h` | Autonomous behavior contract. |
 | `communication.h` | Transport-independent request/response boundary. |
+| `mqtt.h` | Optional bounded MQTT service contract. |
 | `discovery.h` | Optional normalized identification proposal. |
 | `power.h` | Optional shared-resource contract. |
 

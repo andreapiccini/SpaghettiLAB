@@ -25,6 +25,14 @@ static const uint8_t valid_payload[] = {
 	0x02U, 0xF5U,
 };
 
+static const uint8_t mqtt_fields[] = {
+	0x03U, 0xA4U,
+	0x00U, 0xF5U,
+	0x01U, 0x66U, 'b', 'r', 'o', 'k', 'e', 'r',
+	0x02U, 0x19U, 0x07U, 0x5BU,
+	0x03U, 0x68U, 'l', 'a', 'b', '/', 'c', 'o', 'r', 'e',
+};
+
 static uint32_t validation_count;
 
 static int find_module_index(const struct spaghetti_config *candidate,
@@ -80,6 +88,16 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate)
 	if (candidate->sampling.enabled &&
 	    (find_module_index(candidate,
 			       candidate->sampling.source_key) < 0)) {
+		return -EINVAL;
+	}
+	if ((!candidate->mqtt.enabled &&
+	     ((candidate->mqtt.host[0] != '\0') ||
+	      (candidate->mqtt.port != 0U) ||
+	      (candidate->mqtt.base_topic[0] != '\0'))) ||
+	    (candidate->mqtt.enabled &&
+	     ((candidate->mqtt.host[0] == '\0') ||
+	      (candidate->mqtt.port == 0U) ||
+	      (candidate->mqtt.base_topic[0] == '\0')))) {
 		return -EINVAL;
 	}
 
@@ -139,6 +157,7 @@ ZTEST(config_codec, test_valid_payload_decodes_two_modules_on_one_port)
 	zassert_equal(decoded.sampling.period_ms, 1000U);
 	zassert_true(decoded.sampling.enabled);
 	zassert_false(decoded.threshold_rule.enabled);
+	zassert_false(decoded.mqtt.enabled);
 
 	memcpy(&first_config, decoded.modules[0].driver_config,
 	       sizeof(first_config));
@@ -148,6 +167,28 @@ ZTEST(config_codec, test_valid_payload_decodes_two_modules_on_one_port)
 	zassert_equal(first_config.shunt_milliohm, 100U);
 	zassert_equal(first_config.current_lsb_microamp, 200U);
 	zassert_equal(second_config.i2c_address, 0x41U);
+}
+
+ZTEST(config_codec, test_wire_v1_decodes_mqtt_configuration)
+{
+	uint8_t payload[sizeof(valid_payload) + sizeof(mqtt_fields)];
+	struct spaghetti_config decoded;
+
+	memcpy(payload, valid_payload, sizeof(valid_payload));
+	payload[0] = 0xA4U;
+	payload[2] = 0x02U;
+	memcpy(&payload[sizeof(valid_payload)], mqtt_fields,
+	       sizeof(mqtt_fields));
+
+	zassert_ok(spaghetti_config_decode_cbor(payload, sizeof(payload),
+					       &decoded));
+	zassert_true(decoded.mqtt.enabled);
+	zassert_equal(strcmp(decoded.mqtt.host, "broker"), 0);
+	zassert_equal(decoded.mqtt.port, 1883U);
+	zassert_equal(strcmp(decoded.mqtt.base_topic, "lab/core"), 0);
+
+	payload[sizeof(valid_payload) + 3U] = 0xF4U;
+	assert_decode_failure(payload, sizeof(payload), -EINVAL);
 }
 
 ZTEST(config_codec, test_public_boundaries_and_malformed_payloads)
@@ -173,7 +214,7 @@ ZTEST(config_codec, test_public_boundaries_and_malformed_payloads)
 	assert_decode_failure(changed, sizeof(valid_payload) + 1U, -EBADMSG);
 
 	memcpy(changed, valid_payload, sizeof(valid_payload));
-	changed[2] = 0x02U;
+	changed[2] = 0x03U;
 	assert_decode_failure(changed, sizeof(valid_payload), -ENOTSUP);
 
 	memcpy(changed, valid_payload, sizeof(valid_payload));

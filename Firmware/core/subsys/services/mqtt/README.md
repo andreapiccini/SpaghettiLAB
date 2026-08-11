@@ -2,198 +2,103 @@
 
 [← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md)
 
-MQTT is one optional output/input adapter for products that communicate through an MQTT broker. It is not part of the central firmware architecture: removing it leaves Port, drivers, Manager, Config, Data, and Runtime unchanged.
+MQTT is an optional Data output adapter. Removing it does not change Port, Module,
+Module Manager, Runtime, or the electrical Data schema.
 
-## What this component owns
+## Responsibilities and files
 
-- MQTT client/socket state, keepalive, reconnect, and subscriptions selected by product requirements.
-- Copied endpoint/topic config, fixed buffers, bounded outbound queue, and diagnostics.
-- Translation between generic Data/commands and MQTT topic/payload formats.
-
-## What this component does not own
-
-- Wi-Fi provisioning policy, module lifecycle, sensor scheduling, Runtime rules, or Data schemas.
-- Unlimited offline history or source-code credentials.
-
-## Files
+The service copies its Config, owns the Zephyr `mqtt_client`, DNS lookup, socket,
+fixed client buffers, bounded publication queue, reconnect policy, and counters.
+The zbus adapter only formats and queues copied data: it never performs network I/O.
 
 | File | Role |
 |---|---|
-| `mqtt.h` | Adapter config, lifecycle, publish, and status API. |
-| `mqtt.c` | Zephyr MQTT client, socket state machine, queue, and worker. |
-| Data adapter/codec | Maps generic values to selected topics/payloads. |
-| Config | Supplies copied enabled/endpoint/topic settings. |
+| `include/spaghetti/mqtt.h` | Public bounded configuration, lifecycle, publication, and status API. |
+| `subsys/services/mqtt/mqtt.c` | Network callback, zbus adapter, MQTT worker, queue, and reconnect state. |
+| `subsys/services/mqtt/mqtt_internal.h` | Private formatter exposed only to native tests. |
+| `tests/mqtt/` | Native lifecycle, queue, topic, JSON, and zbus adapter tests. |
 
-## Data model
+`struct spaghetti_mqtt_config` contains `enabled`, a copied host of at most 63
+characters, a TCP port, and a copied base topic of at most 95 characters. An enabled
+configuration requires non-empty host and base topic, a non-zero port, and no leading
+or trailing slash in the base topic. The disabled canonical form has zero/empty fields.
 
-| Type / object | Owner | Meaning |
-|---|---|---|
-| MQTT config | MQTT after copy | Enabled flag, host, port, client ID, base topic, security reference. |
-| Outbound item | Queue then MQTT worker | Copied topic suffix, payload, QoS, retain flag. |
-| Client buffers/context | MQTT | Private fixed Zephyr MQTT state. |
-| MQTT status | MQTT | Network/client state, reconnect, queued, published, dropped counters. |
+`struct spaghetti_mqtt_publication` contains a relative topic suffix and at most 128
+payload bytes. It has no borrowed pointers. The service copies the whole object into
+a static `k_msgq`; when that queue is full, the newest publication is dropped and
+`spaghetti_mqtt_publish()` returns `-ENOMSG`.
 
-## API contract
-
-### `int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)`
-
-**Purpose:** Validate/copy config and create fixed client, queue, and worker resources.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `config` | Complete bounded endpoint/topic/client configuration. |
-
-**Returns:** `0` when STOPPED/READY.
-
-**Errors:** Invalid host/topic/port/buffer sizes or worker resource failure.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** Zephyr MQTT client initialization and network-event registration.
-
-### `int spaghetti_mqtt_start(void)`
-
-**Purpose:** Request the worker to connect when usable IP networking is available.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** `0` when the start request is accepted.
-
-**Errors:** Disabled/uninitialized, already running, or command queue full.
-
-**Execution context:** Calling thread; socket work occurs in MQTT thread.
-
-**Calls:** Worker command queue.
-
-### `int spaghetti_mqtt_stop(k_timeout_t timeout)`
-
-**Purpose:** Stop reconnect, disconnect, and reach STOPPED within a bound.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `timeout` | Maximum wait for worker acknowledgement. |
-
-**Returns:** `0` when stopped.
-
-**Errors:** Timeout, command queue full, or disconnect failure.
-
-**Execution context:** Calling thread.
-
-**Calls:** Worker command queue and Zephyr MQTT disconnect.
-
-### `int spaghetti_mqtt_publish(const struct spaghetti_mqtt_publication *publication)`
-
-**Purpose:** Copy one bounded publication into the outbound queue without network I/O in the caller.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `publication` | Topic suffix, payload bytes, QoS, retain policy; all bounded. |
-
-**Returns:** `0` when queued.
-
-**Errors:** Invalid/oversized topic or payload, disabled/disconnected policy, or full queue.
-
-**Execution context:** Calling thread or Data subscriber worker.
-
-**Calls:** `k_msgq_put()`; worker calls Zephyr `mqtt_publish()`.
-
-### `int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out)`
-
-**Purpose:** Copy connection state and counters.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `out` | Caller-owned destination. |
-
-**Returns:** `0` with coherent snapshot.
-
-**Errors:** Invalid output or uninitialized adapter.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-## How it works
+## Flow
 
 ```mermaid
 flowchart LR
-    DATA["Generic Data value"] --> MAP["MQTT mapping adapter"]
-    MAP --> QUEUE["Bounded outbound queue"]
-    NET["Network-ready event"] --> WORKER["MQTT worker thread"]
+    RUNTIME["Runtime sample"] --> DATA["Electrical zbus channel"]
+    DATA --> ADAPTER["MQTT adapter thread"]
+    ADAPTER --> QUEUE["Bounded publication queue"]
+    IPV4["IPv4 address event"] --> WORKER["MQTT worker"]
     QUEUE --> WORKER
-    WORKER --> BROKER["MQTT broker"]
-    BROKER --> WORKER
-    WORKER --> COMMAND["Optional generic command adapter"]
+    WORKER --> DNS["DNS + TCP socket"]
+    DNS --> BROKER["MQTT broker"]
 ```
 
-## Practical example
+The network callback only updates an atomic readiness flag and wakes the worker after
+`NET_EVENT_IPV4_ADDR_ADD` or `NET_EVENT_IPV4_ADDR_DEL`. The MQTT worker alone calls
+`zsock_getaddrinfo()`, `mqtt_connect()`, `zsock_poll()`, `mqtt_input()`, `mqtt_live()`,
+`mqtt_publish()`, and disconnect. Failed connections retry after 1 second, doubling
+up to 30 seconds. Runtime and Data producers therefore never wait for DNS or a broker.
 
-A generic electrical sample from stable Module key 10 becomes topic
-`devices/core-1/modules/10/electrical` with a bounded voltage/current/power payload.
-The topic uses the stable key, not Port 0 or the ephemeral runtime ID, so a sibling at
-address `0x41` remains distinct and reboot does not rename the stream. The Data
-publisher only enqueues it. If the broker restarts, the MQTT worker reconnects
-without blocking Runtime.
+Each electrical sample becomes:
 
-## Zephyr integration
-
-- Wait for usable IP address/network events, not only Wi-Fi association.
-- One worker thread owns socket poll, `mqtt_input`, keepalive, connect/disconnect, and publish.
-- `k_msgq` bounds outbound memory and makes full-queue policy explicit.
-- TLS options and credentials are enabled only by the selected product security configuration.
-
-## Configuration templates
-
-### `prj.conf` for an IPv4 MQTT product
-
-```ini
-CONFIG_NETWORKING=y
-CONFIG_NET_IPV4=y
-CONFIG_NET_TCP=y
-CONFIG_NET_SOCKETS=y
-CONFIG_NET_MGMT=y
-CONFIG_NET_MGMT_EVENT=y
-CONFIG_MQTT_LIB=y
-
-# Select the actual network interface and address mechanism separately.
-# CONFIG_WIFI=y
-# CONFIG_NET_DHCPV4=y
-# CONFIG_DNS_RESOLVER=y
+```text
+topic:   <base_topic>/modules/<source_key>/electrical
+payload: {"module_key":10,"bus_uv":12000000,"current_ua":125000,"power_uw":1500000}
 ```
 
-### Bounded adapter config
+The stable Module key distinguishes two devices on the same Port. QoS is currently
+0, retain is false, transport is unencrypted TCP, and the development port is normally
+1883. TLS and broker authentication are not implemented in this phase.
+
+## API and ownership
 
 ```c
-struct spaghetti_mqtt_config {
-    bool enabled;
-    char host[SPAGHETTI_MQTT_HOST_MAX];
-    uint16_t port;
-    char client_id[SPAGHETTI_MQTT_CLIENT_ID_MAX];
-    char base_topic[SPAGHETTI_MQTT_TOPIC_MAX];
-};
+int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config);
+int spaghetti_mqtt_start(void);
+int spaghetti_mqtt_stop(k_timeout_t timeout);
+int spaghetti_mqtt_publish(
+	const struct spaghetti_mqtt_publication *publication);
+int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out);
 ```
 
-MQTT credentials and certificates must be referenced through the selected
-secure credential/storage mechanism, not embedded as string literals.
+`init()` validates and copies borrowed Config; it also enables or disables the zbus
+observer. Reconfiguration is accepted only while stopped. `start()` asks the worker
+to wait for IPv4 and connect. `stop()` stops reconnect, disconnects, purges queued
+publications, and waits up to `timeout`. `publish()` validates and copies without
+socket I/O. `get_status()` copies a coherent caller-owned snapshot. All persistent
+MQTT objects and buffers are static; status counters intentionally wrap as `uint32_t`.
 
-## Ownership and concurrency
+## Development Wi-Fi and broker test
 
-The MQTT worker exclusively owns the client/socket. Producers copy into a bounded queue. Network callbacks only update/signal state; they do not connect or publish inline.
+The ESP32-C3 build uses Wi-Fi station mode, DHCPv4, DNS, and Zephyr's MQTT library.
+Credentials are entered at runtime through the Zephyr shell and are never stored in
+the repository. With a WPA2 access point, run on the serial shell:
 
-## Contract guarantees
+```text
+wifi scan
+wifi connect -s "YOUR_SSID" -p "YOUR_PASSWORD" -k 1
+```
 
-- MQTT can be removed without changing central component contracts.
-- Network stalls never block Data or Runtime producers.
-- Reconnect, queue-full, and disconnected publication policies are explicit and measurable.
+`-k 1` selects WPA2-PSK in Zephyr 4.4. Use `wifi status` to check association and
+`net iface` to verify that DHCP added an IPv4 address. Do not paste a real password in
+committed logs or Markdown files.
+
+Apply a Config V1 payload with `mqtt.enabled=true`, the reachable broker hostname or
+IPv4 address, port `1883`, and a base topic such as `spaghetti/dev`. On a development
+machine subscribed to the broker, for example:
+
+```sh
+mosquitto_sub -h BROKER_HOST -p 1883 -t 'spaghetti/dev/modules/+/electrical' -v
+```
+
+Disconnect Wi-Fi or stop the broker to verify that Runtime continues sampling; after
+connectivity returns the worker reconnects automatically. The bounded queue is not an
+offline-history store, so samples may be dropped while disconnected.

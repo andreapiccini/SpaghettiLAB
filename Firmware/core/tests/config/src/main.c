@@ -40,6 +40,52 @@ static bool fake_runtime_running;
 static bool fake_runtime_rule_enabled;
 static uint32_t fake_runtime_start_count;
 static uint32_t fake_runtime_stop_count;
+static struct spaghetti_mqtt_config fake_mqtt_config;
+static enum spaghetti_mqtt_state fake_mqtt_state = SPAGHETTI_MQTT_STOPPED;
+
+int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
+{
+	if ((config == NULL) || (fake_mqtt_state != SPAGHETTI_MQTT_STOPPED)) {
+		return -EINVAL;
+	}
+
+	fake_mqtt_config = *config;
+	return 0;
+}
+
+int spaghetti_mqtt_start(void)
+{
+	if (!fake_mqtt_config.enabled) {
+		return -EACCES;
+	}
+
+	fake_mqtt_state = SPAGHETTI_MQTT_WAIT_NETWORK;
+	return 0;
+}
+
+int spaghetti_mqtt_stop(k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+
+	if (fake_mqtt_state == SPAGHETTI_MQTT_STOPPED) {
+		return -EALREADY;
+	}
+
+	fake_mqtt_state = SPAGHETTI_MQTT_STOPPED;
+	return 0;
+}
+
+int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	*out = (struct spaghetti_mqtt_status) {
+		.state = fake_mqtt_state,
+	};
+	return 0;
+}
 
 int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)
 {
@@ -316,6 +362,9 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	candidate.sampling.source_key = 99U;
 	zassert_equal(spaghetti_config_validate(&candidate), -EINVAL);
 	candidate = baseline;
+	candidate.mqtt.enabled = true;
+	zassert_equal(spaghetti_config_validate(&candidate), -EINVAL);
+	candidate = baseline;
 	candidate.threshold_rule.enabled = true;
 	candidate.threshold_rule.source_key = 10U;
 	candidate.threshold_rule.lower_current_microamps = 500000;
@@ -348,6 +397,11 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	candidate.threshold_rule.upper_current_microamps = 500000;
 	candidate.threshold_rule.relay_key = 12U;
 	candidate.threshold_rule.relay_on_above = true;
+	candidate.mqtt.enabled = true;
+	memcpy(candidate.mqtt.host, "broker.local", sizeof("broker.local"));
+	candidate.mqtt.port = 1883U;
+	memcpy(candidate.mqtt.base_topic, "spaghetti/test",
+	       sizeof("spaghetti/test"));
 	zassert_ok(spaghetti_config_apply(&candidate));
 	zassert_true(fake_runtime_running);
 	zassert_equal(fake_runtime_start_count, 3U);
@@ -364,6 +418,8 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	zassert_true(fake_runtime_rule_enabled);
 	zassert_equal(fake_runtime_rule.source_id, key_11_after.id);
 	zassert_equal(fake_runtime_rule.lower_current_microamps, 450000);
+	zassert_equal(fake_mqtt_state, SPAGHETTI_MQTT_WAIT_NETWORK);
+	zassert_equal(strcmp(snapshot.mqtt.host, "broker.local"), 0);
 }
 
 ZTEST_SUITE(config, NULL, NULL, NULL, NULL, NULL);

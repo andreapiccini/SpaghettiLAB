@@ -1,0 +1,39 @@
+mainmenu "Spaghetti MQTT tests"
+
+config SPAGHETTI_DATA_LOGGER
+	bool
+	default n
+
+config SPAGHETTI_DATA_LOGGER_STACK_SIZE
+	int
+	default 1024
+
+config SPAGHETTI_DATA_LOGGER_PRIORITY
+	int
+	default 5
+
+config SPAGHETTI_DATA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_MQTT_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_MQTT_QUEUE_DEPTH
+	int
+	default 4
+
+config SPAGHETTI_MQTT_WORKER_STACK_SIZE
+	int
+	default 4096
+
+config SPAGHETTI_MQTT_ADAPTER_STACK_SIZE
+	int
+	default 1536
+
+config SPAGHETTI_MQTT_PRIORITY
+	int
+	default 5
+
+source "Kconfig.zephyr"

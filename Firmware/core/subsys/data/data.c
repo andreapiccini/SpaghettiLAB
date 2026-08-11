@@ -12,6 +12,7 @@ LOG_MODULE_REGISTER(spaghetti_data, CONFIG_SPAGHETTI_DATA_LOG_LEVEL);
 ZBUS_MSG_SUBSCRIBER_DEFINE(electrical_logger_subscriber);
 ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(electrical_test_subscriber, false);
 ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(electrical_runtime_subscriber, false);
+ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(electrical_mqtt_subscriber, false);
 
 ZBUS_CHAN_DEFINE(spaghetti_electrical_chan,
 		 struct spaghetti_electrical_message,
@@ -19,7 +20,8 @@ ZBUS_CHAN_DEFINE(spaghetti_electrical_chan,
 		 NULL,
 		 ZBUS_OBSERVERS(electrical_logger_subscriber,
 				electrical_test_subscriber,
-				electrical_runtime_subscriber),
+				electrical_runtime_subscriber,
+				electrical_mqtt_subscriber),
 		 ZBUS_MSG_INIT(0));
 
 static atomic_t is_initialized;

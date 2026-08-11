@@ -9,6 +9,7 @@
 #include <spaghetti/data.h>
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/mqtt.h>
 #include <spaghetti/port.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/storage.h>
@@ -60,6 +61,7 @@ static int load_persisted_config(void)
 
 int spaghetti_core_init(void)
 {
+	const struct spaghetti_mqtt_config mqtt_disabled = {0};
 	int ret;
 
 	ret = spaghetti_port_init_all();
@@ -94,6 +96,13 @@ int spaghetti_core_init(void)
 	if (ret < 0) {
 		core_state = SPAGHETTI_CORE_ERROR;
 		LOG_ERR("Runtime initialization failed: err=%d", ret);
+		return ret;
+	}
+
+	ret = spaghetti_mqtt_init(&mqtt_disabled);
+	if (ret < 0) {
+		core_state = SPAGHETTI_CORE_ERROR;
+		LOG_ERR("MQTT initialization failed: err=%d", ret);
 		return ret;
 	}
 

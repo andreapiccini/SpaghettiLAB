@@ -16,4 +16,8 @@ config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
 	int
 	default 1000
 
+config SPAGHETTI_MQTT_STOP_TIMEOUT_MS
+	int
+	default 2000
+
 source "Kconfig.zephyr"

@@ -38,6 +38,10 @@ module = SPAGHETTI_COMMUNICATION
 module-str = spaghetti_communication
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_MQTT
+module-str = spaghetti_mqtt
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"
@@ -130,5 +134,43 @@ config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
 	help
 	  Maximum time Config waits for an active sampling operation to finish
 	  before it refuses to replace live Modules.
+
+config SPAGHETTI_MQTT_QUEUE_DEPTH
+	int "MQTT outbound publication queue depth"
+	range 1 16
+	default 4
+	help
+	  Fixed number of copied publications retained while the network or broker
+	  is unavailable. A full queue drops the newest publication.
+
+config SPAGHETTI_MQTT_WORKER_STACK_SIZE
+	int "MQTT network worker stack size"
+	range 2048 8192
+	default 4096
+	help
+	  Static stack bytes reserved for DNS, socket, and MQTT client work.
+
+config SPAGHETTI_MQTT_ADAPTER_STACK_SIZE
+	int "MQTT Data adapter stack size"
+	range 1024 4096
+	default 1536
+	help
+	  Static stack bytes reserved for receiving zbus electrical samples and
+	  formatting bounded JSON publications.
+
+config SPAGHETTI_MQTT_PRIORITY
+	int "MQTT worker and adapter priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority used by both MQTT-owned threads.
+
+config SPAGHETTI_MQTT_STOP_TIMEOUT_MS
+	int "MQTT stop timeout in milliseconds"
+	range 100 10000
+	default 2000
+	help
+	  Maximum time Config waits for the worker to stop before rejecting a new
+	  MQTT configuration.
 
 source "Kconfig.zephyr"

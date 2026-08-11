@@ -24,8 +24,9 @@ the same Port is a collision.
 | `include/spaghetti/config.h` | Bounded desired-state model and transaction API. |
 | `include/spaghetti/config_codec.h` | Bounded CBOR decode boundary. |
 | `subsys/config/config.c` | Validation, reconciliation, commit, and rollback. |
-| `subsys/config/config_cbor.c` | Strict wire V0 decoder. |
-| `subsys/config/spaghetti_config_v0.cddl` | Authoritative wire V0 schema. |
+| `subsys/config/config_cbor.c` | Strict wire V0/V1 decoder. |
+| `subsys/config/spaghetti_config_v0.cddl` | Authoritative legacy wire V0 schema. |
+| `subsys/config/spaghetti_config_v1.cddl` | Wire V1 schema with MQTT settings. |
 | `tests/config/src/main.c` | Native transaction tests. |
 | `tests/config_codec/src/main.c` | Native codec and boundary tests. |
 
@@ -39,19 +40,19 @@ int spaghetti_config_get_snapshot(struct spaghetti_config *out);
 
 `spaghetti_config_decode_cbor()` accepts 1–256 borrowed bytes, parses into a temporary
 snapshot, calls `spaghetti_config_validate()`, and copies to `out` only on complete
-success. It never applies Config. The wire V0 version is `1`; it maps explicit fields
-into the current internal `SPAGHETTI_CONFIG_VERSION`, so the persistent C struct is
-never treated as a network ABI. V0 supports INA219 and sampling; the later threshold
-rule remains disabled when a V0 payload is decoded.
+success. It never applies Config. Legacy wire V0 has version `1` and decodes with MQTT
+disabled. Wire V1 has version `2` and adds a bounded MQTT map containing enabled,
+host, TCP port, and base topic. Both map explicit fields into internal Config version
+`3`, so the persistent C struct is never treated as a network ABI.
 
 `spaghetti_config_validate()` checks version, bounds, keys, Ports, drivers,
-capabilities, concrete configuration, endpoint conflicts, sampling, and threshold
-references without hardware I/O. The sampling source must support `read`; the rule
-target must support `command`.
+capabilities, concrete configuration, endpoint conflicts, sampling, threshold
+references, and canonical MQTT settings without hardware I/O. The sampling source
+must support `read`; the rule target must support `command`.
 
 `spaghetti_config_apply()` reconciles by stable key and publishes only after success.
-On failure it removes new instances and restores the previous Modules and Runtime
-state. `spaghetti_config_get_snapshot()` returns a coherent caller-owned copy and
+On failure it removes new instances and restores the previous Modules, Runtime, and
+MQTT state. `spaghetti_config_get_snapshot()` returns a coherent caller-owned copy and
 leaves its output unchanged when no Config has been applied.
 
 ## Flow and ownership

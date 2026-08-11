@@ -22,7 +22,7 @@ Apri `include/spaghetti/config.h`, `subsys/config/config.c` e
 Config interna con questo contenitore generico:
 
 ```c
-#define SPAGHETTI_CONFIG_VERSION 2U
+#define SPAGHETTI_CONFIG_VERSION 3U
 #define SPAGHETTI_CONFIG_MAX_MODULES 8U
 #define SPAGHETTI_CONFIG_TYPE_ID_SIZE 24U
 #define SPAGHETTI_DRIVER_CONFIG_MAX 64U
@@ -50,13 +50,6 @@ struct spaghetti_threshold_rule_config {
 	bool relay_on_above;
 };
 
-struct spaghetti_mqtt_config {
-	bool enabled;
-	char host[64];
-	uint16_t port;
-	char base_topic[96];
-};
-
 struct spaghetti_config {
 	uint32_t version;
 	size_t module_count;
@@ -82,8 +75,10 @@ struct spaghetti_config {
 
 Usa la `struct spaghetti_config` completa mostrata sopra al posto delle forme
 intermedie dei task precedenti. È pubblica, priva di puntatori e interamente copiata da
-Config. Il decoder CBOR V0 continua ad
-accettare il payload INA219 del task 150, costruisce una
+Config. `struct spaghetti_mqtt_config` è già definita nell'API pubblica
+`include/spaghetti/mqtt.h` e non va duplicata. Il decoder CBOR V0 continua ad accettare
+il payload INA219 del task 150 con MQTT disabilitato; il decoder V1 aggiunge la mappa
+MQTT. Entrambi costruiscono una
 `struct spaghetti_ina219_config` temporanea e la copia in `driver_config`:
 
 ```c
@@ -161,17 +156,17 @@ In `subsys/config/config.c` implementa `spaghetti_config_apply()` in questo ordi
     e restituisce l’errore originale; se anche il rollback fallisce, restituisce `-EIO`
     e registra entrambi gli errori.
 
-Per consentire il cambio MQTT a runtime, apri `subsys/services/mqtt/mqtt.h` e `.c` e
-aggiungi:
+Per il cambio MQTT a runtime, apri `include/spaghetti/mqtt.h` e
+`subsys/services/mqtt/mqtt.c` e conserva l'API già implementata:
 
 ```c
-int spaghetti_mqtt_configure(const struct spaghetti_mqtt_config *config);
+int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config);
 ```
 
 `config` è un prestito `const` copiato dal servizio e valido solo durante la chiamata.
 La funzione è chiamata da Config con MQTT fermo, valida host/porta/topic, sostituisce la
 copia privata e restituisce `0`, `-EINVAL` o `-EBUSY`. La transazione Config esegue
-`stop → configure → start` quando cambia MQTT e ripristina la configurazione precedente
+`stop → init → start` quando cambia MQTT e ripristina la configurazione precedente
 se uno dei passaggi successivi fallisce.
 
 Il Manager resta l’unico proprietario delle `struct spaghetti_module`; Config conserva

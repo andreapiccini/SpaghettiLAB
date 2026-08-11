@@ -3,7 +3,7 @@
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
 Data distribuisce misure normalizzate senza esporre ai consumer il driver che le ha
-prodotte. Logger, test e futuri adapter MQTT conoscono il messaggio elettrico, non
+prodotte. Logger, test e adapter MQTT conoscono il messaggio elettrico, non
 `ina219.h` né i dettagli I2C.
 
 ## Responsabilità
@@ -67,9 +67,10 @@ CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_POOL_SIZE=8
 CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_STATIC_DATA_SIZE=64
 ```
 
-Non viene usato heap. Il logger subscriber è consumato continuamente da un thread
-bounded. Il subscriber di test esiste staticamente ma è disabilitato nel firmware
-normale; il test lo abilita soltanto mentre riceve e verifica il fan-out.
+Non viene usato heap. Logger e adapter MQTT hanno subscriber e thread bounded. Il
+subscriber MQTT è disabilitato quando MQTT è disabilitato da Config. Il subscriber di
+test esiste staticamente ma è disabilitato nel firmware normale; il test lo abilita
+soltanto mentre riceve e verifica il fan-out.
 
 ## Backpressure
 
@@ -83,12 +84,14 @@ flowchart LR
     READ["Module Manager read"] --> MESSAGE["Messaggio elettrico owned"]
     MESSAGE --> CHANNEL["Channel zbus"]
     CHANNEL --> LOGGER["FIFO logger"]
+    CHANNEL --> MQTT["FIFO adapter MQTT, opzionale"]
     CHANNEL --> TEST["FIFO test, disabilitata normalmente"]
     LOGGER --> LOG["LOG_INF"]
+    MQTT --> MQTTQ["Coda pubblicazioni bounded"]
 ```
 
 ## Ownership e concorrenza
 
 Il publisher mantiene valido il proprio oggetto soltanto fino al ritorno; zbus e i
 subscriber lavorano su copie. I contatori sono atomici, stack e pool sono statici e
-bounded. Il logger è l'unico proprietario della lettura dalla propria FIFO.
+bounded. Logger e adapter MQTT sono ciascuno l'unico consumer della propria FIFO.

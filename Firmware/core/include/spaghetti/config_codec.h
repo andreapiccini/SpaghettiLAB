@@ -18,10 +18,11 @@
 /**
  * @brief Decode and validate one complete Config V0 CBOR payload.
  *
- * Decode wire schema version 1 into the current in-memory Config model. The
- * decoder accepts only the complete bounded INA219 schema documented in
- * `subsys/config/spaghetti_config_v0.cddl`. It validates the temporary Config
- * through @ref spaghetti_config_validate before publishing it to @p out.
+ * Decode wire V0 version 1 or wire V1 version 2 into the current in-memory
+ * Config model. V0 leaves MQTT disabled; V1 adds the bounded MQTT endpoint
+ * documented in `subsys/config/spaghetti_config_v1.cddl`. The decoder validates
+ * the temporary Config through @ref spaghetti_config_validate before publishing
+ * it to @p out.
  *
  * @param[in] bytes Caller-owned encoded bytes borrowed only for this call.
  *                  The pointer must be non-NULL and @p length bytes must be

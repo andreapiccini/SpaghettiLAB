@@ -10,11 +10,13 @@
 
 #include <ina219.h>
 
-#define SPAGHETTI_CONFIG_CBOR_WIRE_VERSION 1U
+#define SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V0 1U
+#define SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V1 2U
 #define SPAGHETTI_CONFIG_CBOR_BACKUP_COUNT 4U
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_VERSION 0U
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MODULES 1U
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_SAMPLING 2U
+#define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MQTT 3U
 #define SPAGHETTI_CONFIG_CBOR_MODULE_KEY_STABLE_KEY 0U
 #define SPAGHETTI_CONFIG_CBOR_MODULE_KEY_PORT 1U
 #define SPAGHETTI_CONFIG_CBOR_MODULE_KEY_TYPE 2U
@@ -26,6 +28,10 @@
 #define SPAGHETTI_CONFIG_CBOR_SAMPLING_KEY_PERIOD 1U
 #define SPAGHETTI_CONFIG_CBOR_SAMPLING_KEY_ENABLED 2U
 #define SPAGHETTI_CONFIG_CBOR_SAMPLING_PERIOD_MAX_MS 86400000U
+#define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_ENABLED 0U
+#define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_HOST 1U
+#define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_PORT 2U
+#define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_BASE_TOPIC 3U
 
 static int expect_key(zcbor_state_t *state, uint32_t expected)
 {
@@ -200,6 +206,69 @@ static int decode_sampling(
 	return 0;
 }
 
+static int copy_text(const struct zcbor_string *text, char *destination,
+		     size_t capacity)
+{
+	if (text->len >= capacity) {
+		return -EMSGSIZE;
+	}
+
+	memcpy(destination, text->value, text->len);
+	destination[text->len] = '\0';
+	return 0;
+}
+
+static int decode_mqtt(zcbor_state_t *state,
+		       struct spaghetti_mqtt_config *mqtt)
+{
+	struct zcbor_string host;
+	struct zcbor_string base_topic;
+	uint32_t port;
+	bool enabled;
+	int err;
+
+	if (!zcbor_map_start_decode(state)) {
+		return -EBADMSG;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_ENABLED);
+	if ((err < 0) || !zcbor_bool_decode(state, &enabled)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_HOST);
+	if ((err < 0) || !zcbor_tstr_decode(state, &host)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_PORT);
+	if ((err < 0) || !zcbor_uint32_decode(state, &port)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_BASE_TOPIC);
+	if ((err < 0) || !zcbor_tstr_decode(state, &base_topic)) {
+		return -EBADMSG;
+	}
+	if (!zcbor_map_end_decode(state)) {
+		return -EBADMSG;
+	}
+	if (port > UINT16_MAX) {
+		return -EINVAL;
+	}
+
+	err = copy_text(&host, mqtt->host, sizeof(mqtt->host));
+	if (err < 0) {
+		return err;
+	}
+	err = copy_text(&base_topic, mqtt->base_topic,
+			sizeof(mqtt->base_topic));
+	if (err < 0) {
+		return err;
+	}
+
+	mqtt->enabled = enabled;
+	mqtt->port = (uint16_t)port;
+	return 0;
+}
+
 int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 				 struct spaghetti_config *out)
 {
@@ -227,7 +296,8 @@ int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 	if ((err < 0) || !zcbor_uint32_decode(state, &wire_version)) {
 		return -EBADMSG;
 	}
-	if (wire_version != SPAGHETTI_CONFIG_CBOR_WIRE_VERSION) {
+	if ((wire_version != SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V0) &&
+	    (wire_version != SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V1)) {
 		return -ENOTSUP;
 	}
 
@@ -247,6 +317,17 @@ int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 	err = decode_sampling(state, &temporary.sampling);
 	if (err < 0) {
 		return err;
+	}
+
+	if (wire_version == SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V1) {
+		err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MQTT);
+		if (err < 0) {
+			return err;
+		}
+		err = decode_mqtt(state, &temporary.mqtt);
+		if (err < 0) {
+			return err;
+		}
 	}
 	if (!zcbor_map_end_decode(state) ||
 	    (state->payload != state->payload_end)) {

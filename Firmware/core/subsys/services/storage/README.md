@@ -45,8 +45,9 @@ copia RAM soltanto dopo il successo del backend.
 Il record privato contiene:
 
 - magic `0x53504754`, che identifica un record Spaghetti;
-- versione uguale a `SPAGHETTI_CONFIG_VERSION`;
-- una `struct spaghetti_config` completa e senza puntatori.
+- versione uguale a `SPAGHETTI_CONFIG_VERSION` (attualmente `3`);
+- una `struct spaghetti_config` completa e senza puntatori, inclusa la Config MQTT
+  bounded con host, porta e base topic.
 
 ```mermaid
 sequenceDiagram
@@ -66,8 +67,10 @@ sequenceDiagram
 
 Al primo avvio Core continua senza Config. `main` applica la Config iniziale con due
 INA219 sulla Port 0 e solo dopo il successo la salva. Ai boot successivi Core carica,
-valida e applica lo snapshot prima di diventare READY. Le key vengono ripristinate;
-gli ID runtime non sono persistiti e possono cambiare.
+valida e applica lo snapshot, compreso l'avvio MQTT quando abilitato, prima di diventare
+READY. Le key vengono ripristinate; gli ID runtime non sono persistiti e possono
+cambiare. Un record creato con una versione Config precedente viene rifiutato in modo
+sicuro con `-EBADMSG`.
 
 ## Zephyr e partizione
 

@@ -12,10 +12,11 @@
 #include <stdint.h>
 
 #include <spaghetti/module.h>
+#include <spaghetti/mqtt.h>
 #include <spaghetti/port.h>
 
 /** Current in-memory Config schema version. */
-#define SPAGHETTI_CONFIG_VERSION 2U
+#define SPAGHETTI_CONFIG_VERSION 3U
 
 /** Maximum number of desired Modules in one Config snapshot. */
 #define SPAGHETTI_CONFIG_MAX_MODULES 8U
@@ -71,6 +72,7 @@ struct spaghetti_config {
 		modules[SPAGHETTI_CONFIG_MAX_MODULES]; /**< Owned desired Modules. */
 	struct spaghetti_runtime_sampling_config sampling; /**< Runtime selection. */
 	struct spaghetti_runtime_threshold_config threshold_rule; /**< Runtime rule. */
+	struct spaghetti_mqtt_config mqtt; /**< Optional copied MQTT endpoint. */
 };
 
 /**

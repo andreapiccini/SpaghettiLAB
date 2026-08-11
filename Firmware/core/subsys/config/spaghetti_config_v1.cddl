@@ -1,0 +1,24 @@
+spaghetti-config-v1 = {
+  0: 2,
+  1: [* module],
+  2: sampling,
+  3: mqtt
+}
+module = {
+  0: 1..4294967295,
+  1: 0..255,
+  2: "ina219",
+  3: ina219-config
+}
+ina219-config = {
+  0: 64..79,
+  1: 1..65535,
+  2: 1..65535
+}
+sampling = { 0: 1..4294967295, 1: 1..86400000, 2: bool }
+mqtt = {
+  0: bool,
+  1: tstr .size (0..63),
+  2: 0..65535,
+  3: tstr .size (0..95)
+}

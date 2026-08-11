@@ -99,6 +99,12 @@ static struct spaghetti_config make_config(void)
 			.relay_key = 11U,
 			.relay_on_above = true,
 		},
+		.mqtt = {
+			.enabled = true,
+			.host = "broker.local",
+			.port = 1883U,
+			.base_topic = "spaghetti/test",
+		},
 	};
 
 	set_module(&config.modules[0], 10U, 0x40U);
@@ -144,6 +150,10 @@ ZTEST(storage, test_absent_round_trip_corruption_and_backend_errors)
 	zassert_equal(output.threshold_rule.source_key, 10U);
 	zassert_equal(output.threshold_rule.relay_key, 11U);
 	zassert_equal(output.threshold_rule.upper_current_microamps, 500000);
+	zassert_true(output.mqtt.enabled);
+	zassert_equal(strcmp(output.mqtt.host, "broker.local"), 0);
+	zassert_equal(output.mqtt.port, 1883U);
+	zassert_equal(strcmp(output.mqtt.base_topic, "spaghetti/test"), 0);
 
 	valid_size = persistent_size;
 	memcpy(valid_record, persistent_bytes, valid_size);
