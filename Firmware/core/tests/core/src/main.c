@@ -35,6 +35,7 @@ static enum init_step steps[16];
 static size_t step_count;
 static struct spaghetti_config initialized_defaults;
 static int trial_confirm_count;
+static int wifi_connect_request_count;
 
 static int record_step(enum init_step step)
 {
@@ -185,6 +186,12 @@ int spaghetti_wifi_profiles_init_offline(void)
 	return record_step(STEP_WIFI);
 }
 
+int spaghetti_wifi_profiles_request_connect(void)
+{
+	++wifi_connect_request_count;
+	return 0;
+}
+
 int spaghetti_ota_init(void)
 {
 	return record_step(STEP_OTA);
@@ -308,6 +315,7 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 	zassert_equal(info.state, SPAGHETTI_CORE_RUNNING);
 	zassert_equal(trial_confirm_count,
 		IS_ENABLED(CONFIG_SPAGHETTI_TEST_TRIAL_IMAGE) ? 1 : 0);
+	zassert_equal(wifi_connect_request_count, normal ? 1 : 0);
 	zassert_true(info.image_confirmed);
 	zassert_equal(spaghetti_core_start(), -EACCES);
 }

@@ -188,6 +188,17 @@ make remote-console-provision PORT=/dev/cu.usbmodem1101 \
   CREDENTIALS=.keys/core-v1-console.json
 ```
 
+For first-time onboarding, prefer the single command:
+
+```sh
+make remote-console-enable
+```
+
+It creates the protected host credential when absent, provisions it through local
+Maintenance, preserves an existing valid Config or installs a safe empty Config,
+reboots into Normal mode, verifies the TLS listener, and requests connection when a
+saved Wi-Fi profile exists. It never invents Modules or overwrites a valid Config.
+
 Provisioning automatically requests a one-shot Maintenance reboot when necessary.
 Reboot the device afterwards to return to Normal mode. Then locate authenticated
 devices on an explicitly routed LAN or VPN subnet and connect:
@@ -228,6 +239,7 @@ sudo usermod -aG dialout "$USER"
 | `make host-tools` | Create `.venv/` and install monitor dependencies |
 | `make remote-console-credential CREDENTIALS=...` | Create a protected TLS-PSK file |
 | `make remote-console-provision CREDENTIALS=...` | Install it through local USB Maintenance |
+| `make remote-console-enable` | Complete safe onboarding and enter Normal mode |
 | `make remote-console-list SUBNET=... CREDENTIALS=...` | Find authenticated consoles |
 | `make remote-console-clear [PORT=...]` | Revoke the device console credential |
 | `make update-qualification-manifest ...` | Print hashes and candidate metadata without secrets |

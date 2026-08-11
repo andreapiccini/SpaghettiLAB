@@ -423,6 +423,13 @@ int spaghetti_core_start(void)
 		k_mutex_unlock(&core_lock);
 	}
 
+	if (core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) {
+		err = spaghetti_wifi_profiles_request_connect();
+		if ((err < 0) && (err != -ENOENT) && (err != -ENOTSUP)) {
+			LOG_WRN("Wi-Fi auto-connect was not started: err=%d", err);
+		}
+	}
+
 	return 0;
 }
 

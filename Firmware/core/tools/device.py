@@ -376,7 +376,7 @@ class StyledSerialOutput:
         prompt = match.group(1) if match is not None else value
         self.shell_prompt_seen = True
         self.console.print(
-            self.text_type(prompt, style="bold blue"),
+            self.text_type(prompt),
             end="",
             highlight=False,
         )
@@ -842,6 +842,49 @@ def serial_dependency():
     return serial
 
 
+def open_serial_without_reset(serial, port: str, baud: int):
+    """Open ESP USB-Serial/JTAG without asserting boot or reset lines."""
+    connection = serial.Serial()
+    connection.port = port
+    connection.baudrate = baud
+    connection.timeout = 0.05
+    connection.write_timeout = 0.5
+    connection.dtr = False
+    connection.rts = False
+    # pyserial normally sends DTR/RTS ioctls while opening the port. On the
+    # ESP32-C3 native USB-Serial/JTAG peripheral those transitions reset the
+    # chip. Temporarily mark both lines as flow-controlled so open() leaves
+    # their existing state untouched, then disable flow control without
+    # writing either modem-control line.
+    connection.dsrdtr = True
+    connection.rtscts = True
+    try:
+        connection.open()
+        if os.name != "nt":
+            import fcntl
+            import struct
+            import termios
+
+            # Release DTR and RTS together. Updating them one after the other
+            # passes through the ESP32-C3 USB-JTAG boot/reset sequence.
+            tiocmset = getattr(termios, "TIOCMSET", 0x5418)
+            fcntl.ioctl(connection.fileno(), tiocmset, struct.pack("I", 0))
+            attributes = termios.tcgetattr(connection.fileno())
+            attributes[2] &= ~termios.HUPCL
+            termios.tcsetattr(
+                connection.fileno(), termios.TCSANOW, attributes
+            )
+        else:
+            connection.dtr = False
+            connection.rts = False
+        connection.dsrdtr = False
+        connection.rtscts = False
+    except Exception:
+        connection.close()
+        raise
+    return connection
+
+
 def read_serial_until(connection, markers: tuple[bytes, ...], timeout: float) -> bytes:
     """Read bounded serial output until one marker is observed."""
     deadline = time.monotonic() + timeout
@@ -862,13 +905,15 @@ def open_local_shell(serial, port: str, baud: int):
     """Open and synchronize the development USB Zephyr Shell."""
     connection = None
     try:
-        connection = serial.Serial(
-            port=port, baudrate=baud, timeout=0.05, write_timeout=0.5
-        )
+        connection = open_serial_without_reset(serial, port, baud)
         connection.reset_input_buffer()
-        connection.write(b"\x03\r")
+        connection.write(b"\x03")
         connection.flush()
         read_serial_until(connection, (b":~$ ",), 3.0)
+        # Discard bytes that arrived immediately after the synchronization
+        # prompt, so they cannot terminate the first real command early.
+        time.sleep(0.05)
+        connection.reset_input_buffer()
         return connection
     except (OSError, serial.SerialException, ToolError) as exc:
         if connection is not None:
@@ -878,10 +923,21 @@ def open_local_shell(serial, port: str, baud: int):
 
 def shell_command(connection, command: str, timeout: float = 5.0) -> str:
     """Execute one local Shell command and return output through its next prompt."""
+    connection.reset_input_buffer()
     connection.write(command.encode("ascii") + b"\r")
     connection.flush()
     response = read_serial_until(connection, (b":~$ ",), timeout)
     return clean_terminal_text(response.decode("utf-8", errors="replace"))
+
+
+def write_paced_line(connection, value: bytes) -> None:
+    """Send hidden input without overflowing a small firmware RX ring buffer."""
+    for offset in range(0, len(value), 8):
+        connection.write(value[offset : offset + 8])
+        connection.flush()
+        time.sleep(0.01)
+    connection.write(b"\r")
+    connection.flush()
 
 
 def ensure_usb_maintenance(serial, port: str, baud: int):
@@ -891,7 +947,11 @@ def ensure_usb_maintenance(serial, port: str, baud: int):
     mode_match = re.search(r"\bmode=(normal|maintenance|unprovisioned)\b", status)
     if mode_match is None:
         connection.close()
-        raise ToolError("The USB Shell did not return a recognizable Core mode.")
+        detail = status.strip() or "<empty response>"
+        raise ToolError(
+            "The USB Shell did not return a recognizable Core mode. "
+            f"Response: {detail}"
+        )
     if mode_match.group(1) != "normal":
         return connection, mode_match.group(1), False
 
@@ -917,6 +977,49 @@ def ensure_usb_maintenance(serial, port: str, baud: int):
     raise ToolError("The Core did not reconnect over USB in Maintenance mode.")
 
 
+def provision_remote_credential(connection, identity: str, psk: bytes) -> None:
+    """Install one credential through an already-active local Maintenance Shell."""
+    command = f"spaghetti remote provision {identity}"
+    connection.write(command.encode("ascii") + b"\r")
+    connection.flush()
+    read_serial_until(
+        connection, (b"PSK (64 hex digits; input is hidden):",), 5.0
+    )
+    time.sleep(0.1)
+    write_paced_line(connection, psk.hex().encode("ascii"))
+    response = read_serial_until(
+        connection,
+        (
+            b"Remote-console credential saved",
+            b"credential was not saved",
+            b"PSK input failed",
+            b"PSK must contain",
+            b"PSK contains a non-hexadecimal character",
+            b":~$ ",
+        ),
+        15.0,
+    )
+    if b"Remote-console credential saved" not in response:
+        detail = clean_terminal_text(response.decode(errors="replace")).strip()
+        raise ToolError(f"Device rejected remote-console credential: {detail}")
+
+
+def wait_for_usb_mode(serial, port: str, baud: int, expected: str):
+    """Wait for reboot/reconnect and return a Shell in the requested Core mode."""
+    deadline = time.monotonic() + 20.0
+    while time.monotonic() < deadline:
+        time.sleep(0.5)
+        try:
+            connection = open_local_shell(serial, port, baud)
+            status = shell_command(connection, "spaghetti status")
+        except ToolError:
+            continue
+        if f"mode={expected}" in status:
+            return connection
+        connection.close()
+    raise ToolError(f"The Core did not reconnect over USB in {expected} mode.")
+
+
 def run_remote_console_credential(args: argparse.Namespace) -> int:
     """Generate a protected host credential used by provisioning and TLS."""
     path = create_network_credentials(args.credentials, args.identity)
@@ -936,26 +1039,56 @@ def run_remote_console_provision(args: argparse.Namespace) -> int:
     port = selected_port(args.port)
     connection, mode, rebooted = ensure_usb_maintenance(serial, port, args.baud)
     try:
-        command = f"spaghetti remote provision {identity}"
-        connection.write(command.encode("ascii") + b"\r")
-        connection.flush()
-        read_serial_until(connection, (b"PSK (64 hex digits; input is hidden):",), 5.0)
-        connection.write(psk.hex().encode("ascii") + b"\r")
-        connection.flush()
-        response = read_serial_until(
-            connection,
-            (b"Remote-console credential saved", b"credential was not saved"),
-            10.0,
-        )
-        if b"Remote-console credential saved" not in response:
-            raise ToolError(
-                clean_terminal_text(response.decode(errors="replace")).strip()
-            )
+        provision_remote_credential(connection, identity, psk)
     finally:
         connection.close()
     print(f"Provisioned identity {identity!r} through {port} in {mode} mode.")
     if rebooted:
         print("The Core remains in Maintenance; reboot it to return to Normal mode.")
+    return 0
+
+
+def run_remote_console_enable(args: argparse.Namespace) -> int:
+    """Provision credentials, create safe Config if absent, and enter Normal mode."""
+    credential_path = Path(args.credentials).expanduser()
+    if not credential_path.exists():
+        create_network_credentials(str(credential_path), args.identity)
+        print(f"Created remote-console credential: {credential_path}")
+    identity, psk = network_credentials(str(credential_path))
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", identity):
+        raise ToolError("Credential identity is not safe for the local Shell.")
+
+    serial = serial_dependency()
+    port = selected_port(args.port)
+    connection, _, _ = ensure_usb_maintenance(serial, port, args.baud)
+    try:
+        provision_remote_credential(connection, identity, psk)
+        response = shell_command(connection, "spaghetti maintenance finish")
+        if "rebooting into Normal mode" not in response:
+            raise ToolError(
+                "The Core did not accept Normal-mode activation: " + response.strip()
+            )
+    finally:
+        connection.close()
+
+    connection = wait_for_usb_mode(serial, port, args.baud, "normal")
+    try:
+        remote_status = shell_command(connection, "spaghetti remote status")
+        wifi_profiles = shell_command(connection, "spaghetti wifi list")
+        profile_match = re.search(r"\bprofiles=(\d+)\b", wifi_profiles)
+        profile_count = int(profile_match.group(1)) if profile_match else 0
+        if profile_count > 0:
+            shell_command(connection, "spaghetti wifi connect")
+    finally:
+        connection.close()
+
+    if "credentials=1" not in remote_status or "state=listening" not in remote_status:
+        raise ToolError("Normal mode started, but the remote listener is not ready.")
+    print(f"Normal mode and remote console are enabled on {port}.")
+    if profile_count > 0:
+        print("Wi-Fi connection requested using the saved profiles.")
+    else:
+        print("No Wi-Fi profile is saved; add one over USB before connecting remotely.")
     return 0
 
 
@@ -1126,11 +1259,8 @@ def run_monitor(args: argparse.Namespace) -> int:
                 if connection is None:
                     try:
                         if transport == "serial":
-                            connection = serial.Serial(
-                                port=serial_port,
-                                baudrate=args.baud,
-                                timeout=0.05,
-                                write_timeout=0.5,
+                            connection = open_serial_without_reset(
+                                serial, serial_port, args.baud
                             )
                         else:
                             connection, _, _ = open_network_monitor(
@@ -1275,6 +1405,15 @@ def build_parser() -> argparse.ArgumentParser:
     provision.add_argument("--baud", type=int, default=115200)
     provision.add_argument("--credentials", required=True)
 
+    enable = subparsers.add_parser(
+        "remote-console-enable",
+        help="provision USB, create safe Config, and enter Normal mode",
+    )
+    enable.add_argument("--port", help="development USB Shell serial device")
+    enable.add_argument("--baud", type=int, default=115200)
+    enable.add_argument("--credentials", required=True)
+    enable.add_argument("--identity", default="core-v1")
+
     clear = subparsers.add_parser(
         "remote-console-clear",
         help="clear TLS-PSK through the local development USB Shell",
@@ -1312,6 +1451,8 @@ def main() -> int:
             return run_remote_console_credential(args)
         if args.command == "remote-console-provision":
             return run_remote_console_provision(args)
+        if args.command == "remote-console-enable":
+            return run_remote_console_enable(args)
         if args.command == "remote-console-clear":
             return run_remote_console_clear(args)
         if args.command == "remote-console-list":

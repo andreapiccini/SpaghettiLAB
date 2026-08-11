@@ -10,6 +10,7 @@
 #include <spaghetti/communication.h>
 #include <spaghetti/config_codec.h>
 #include <spaghetti/core.h>
+#include <spaghetti/maintenance_link.h>
 #include <spaghetti/module.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
@@ -24,6 +25,7 @@ static int decode_error;
 static int apply_error;
 static uint32_t decode_count;
 static uint32_t apply_count;
+static bool stored_config_present;
 
 FUNC_NORETURN void sys_reboot(int type)
 {
@@ -34,6 +36,46 @@ FUNC_NORETURN void sys_reboot(int type)
 
 int spaghetti_storage_request_maintenance_once(void)
 {
+	return 0;
+}
+
+enum spaghetti_maintenance_link_state spaghetti_maintenance_link_get_state(void)
+{
+	return SPAGHETTI_MAINTENANCE_LINK_ACTIVE;
+}
+
+int spaghetti_storage_read_config(struct spaghetti_config *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+	if (!stored_config_present) {
+		return -ENOENT;
+	}
+	*out = (struct spaghetti_config) {
+		.version = SPAGHETTI_CONFIG_VERSION,
+	};
+	return 0;
+}
+
+int spaghetti_storage_write_config(const struct spaghetti_config *config)
+{
+	if (config == NULL) {
+		return -EINVAL;
+	}
+	stored_config_present = true;
+	return 0;
+}
+
+int spaghetti_config_validate(
+	const struct spaghetti_config *candidate,
+	struct spaghetti_config_error *error)
+{
+	ARG_UNUSED(error);
+	if ((candidate == NULL) ||
+	    (candidate->version != SPAGHETTI_CONFIG_VERSION)) {
+		return -EINVAL;
+	}
 	return 0;
 }
 

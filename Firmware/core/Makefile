@@ -31,7 +31,7 @@ WEST_CMAKE_ARGS := -- -DBOARD_ROOT=/opt/zephyrproject/app \
 
 .PHONY: image shell signing-key validate build pristine flash screen monitor \
 	host-tools ports remote-console-credential remote-console-provision \
-	remote-console-clear remote-console-list update-qualification-manifest \
+	remote-console-enable remote-console-clear remote-console-list update-qualification-manifest \
 	update-qualification-check clean
 
 $(HOST_TOOLS_STAMP): tools/requirements.txt
@@ -116,6 +116,11 @@ remote-console-credential:
 remote-console-provision: $(HOST_TOOLS_STAMP)
 	@$(HOST_VENV_PYTHON) tools/device.py remote-console-provision \
 		$(PORT_ARG) $(CREDENTIALS_ARG) --baud "$(BAUD)"
+
+remote-console-enable: $(HOST_TOOLS_STAMP)
+	@$(HOST_VENV_PYTHON) tools/device.py remote-console-enable \
+		$(PORT_ARG) $(CREDENTIALS_ARG) --identity "$(IDENTITY)" \
+		--baud "$(BAUD)"
 
 remote-console-clear: $(HOST_TOOLS_STAMP)
 	@$(HOST_VENV_PYTHON) tools/device.py remote-console-clear \

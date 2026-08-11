@@ -13,6 +13,8 @@
 #include <zephyr/sys/util.h>
 
 #include <spaghetti/core.h>
+#include <spaghetti/config.h>
+#include <spaghetti/maintenance_link.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/wifi_profiles.h>
@@ -464,6 +466,55 @@ static int cmd_maintenance_reboot(
 	return 0;
 }
 
+static int cmd_maintenance_finish(
+	const struct shell *shell, size_t argc, char **argv)
+{
+	const struct spaghetti_config safe_empty_config = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+		.sampling = {
+			.enabled = false,
+			.period_ms = 1000U,
+		},
+	};
+	struct spaghetti_config stored_config;
+	bool config_replaced = false;
+	int err;
+
+	ARG_UNUSED(argv);
+	if (argc != 1U) {
+		shell_error(shell, "usage: spaghetti maintenance finish");
+		return -EINVAL;
+	}
+	if (spaghetti_maintenance_link_get_state() !=
+	    SPAGHETTI_MAINTENANCE_LINK_ACTIVE) {
+		shell_error(shell, "Local Maintenance is not active");
+		return -EACCES;
+	}
+
+	err = spaghetti_storage_read_config(&stored_config);
+	if (err == 0) {
+		err = spaghetti_config_validate(&stored_config, NULL);
+	}
+	if ((err == -ENOENT) || (err == -EBADMSG) || (err == -EINVAL) ||
+	    (err == -ENOTSUP) || (err == -EEXIST) ||
+	    (err == -EADDRINUSE) || (err == -ERANGE)) {
+		err = spaghetti_storage_write_config(&safe_empty_config);
+		config_replaced = err == 0;
+	}
+	if (err < 0) {
+		shell_error(shell, "Normal-mode Config was not saved: %d", err);
+		return err;
+	}
+
+	shell_print(shell, config_replaced ?
+		"Safe empty Config saved; rebooting into Normal mode" :
+		"Existing Config preserved; rebooting into Normal mode");
+	(void)k_work_reschedule(
+		&maintenance_reboot_work,
+		K_MSEC(CONFIG_SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS));
+	return 0;
+}
+
 static int cmd_remote_console_provision(
 	const struct shell *shell, size_t argc, char **argv)
 {
@@ -481,14 +532,20 @@ static int cmd_remote_console_provision(
 	shell_print(shell, "PSK (64 hex digits; input is hidden):");
 	(void)shell_obscure_set(shell, true);
 	err = shell_readline(
-		shell, psk_hex, sizeof(psk_hex),
+		shell, (uint8_t *)psk_hex, sizeof(psk_hex),
 		K_SECONDS(CONFIG_SPAGHETTI_REMOTE_CONSOLE_CREDENTIAL_INPUT_TIMEOUT_SECONDS));
 	(void)shell_obscure_set(shell, false);
 	shell_print(shell, "");
+	if (err < 0) {
+		wipe_sensitive(psk_hex, sizeof(psk_hex));
+		shell_error(shell, "PSK input failed: %d", err);
+		return err;
+	}
 	if (err != (int)(SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE * 2U)) {
 		wipe_sensitive(psk_hex, sizeof(psk_hex));
-		shell_error(shell, "PSK must contain exactly 64 hex digits");
-		return (err < 0) ? err : -EINVAL;
+		shell_error(shell,
+			"PSK must contain exactly 64 hex digits; received=%d", err);
+		return -EINVAL;
 	}
 
 	for (size_t byte_idx = 0U; byte_idx < sizeof(psk); ++byte_idx) {
@@ -578,6 +635,8 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	spaghetti_maintenance_subcommands,
 	SHELL_CMD(reboot, NULL, "Reboot once into local Maintenance mode",
 		  cmd_maintenance_reboot),
+	SHELL_CMD(finish, NULL, "Save safe Config and enter Normal mode",
+		  cmd_maintenance_finish),
 	SHELL_SUBCMD_SET_END
 );
 

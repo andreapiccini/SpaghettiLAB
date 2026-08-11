@@ -406,6 +406,15 @@ config SPAGHETTI_WIFI_PROFILE_WORKER_PRIORITY
 	range 0 15
 	default 5
 
+config SPAGHETTI_WIFI_PROFILE_STARTUP_DELAY_MS
+	int "Delay before the first automatic Wi-Fi scan"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 0 10000
+	default 3000
+	help
+	  Give the SoC radio and network stack time to settle after boot before the
+	  first automatic scan. Later manual reconnects and retries are immediate.
+
 config SPAGHETTI_WIFI_SCAN_TIMEOUT_SECONDS
 	int "Wi-Fi scan timeout in seconds"
 	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT

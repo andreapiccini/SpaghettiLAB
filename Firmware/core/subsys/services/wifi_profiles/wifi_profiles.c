@@ -51,6 +51,7 @@ static atomic_t connect_event_received;
 static atomic_t connect_status;
 static atomic_t wifi_is_connected;
 static atomic_t force_reconnect;
+static atomic_t startup_delay_pending;
 K_SEM_DEFINE(worker_sem, 0, 1);
 K_SEM_DEFINE(scan_done_sem, 0, 1);
 K_SEM_DEFINE(connect_done_sem, 0, 1);
@@ -529,6 +530,10 @@ static void wifi_worker_thread_entry(void *first, void *second, void *third)
 
 	while (true) {
 		(void)k_sem_take(&worker_sem, K_FOREVER);
+		if (atomic_cas(&startup_delay_pending, 1, 0)) {
+			k_sleep(K_MSEC(
+				CONFIG_SPAGHETTI_WIFI_PROFILE_STARTUP_DELAY_MS));
+		}
 
 		while (true) {
 			const int err = run_connection_cycle();
@@ -624,6 +629,7 @@ static int wifi_profiles_init(bool allow_network)
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
 	if (allow_network) {
+		atomic_set(&startup_delay_pending, 1);
 		net_mgmt_init_event_callback(
 		&wifi_event_callback, wifi_event_handler,
 		NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE |
@@ -631,9 +637,6 @@ static int wifi_profiles_init(bool allow_network)
 		NET_EVENT_WIFI_DISCONNECT_RESULT);
 		net_mgmt_add_event_callback(&wifi_event_callback);
 		k_thread_start(wifi_profiles_worker_id);
-		if (loaded_profile_count > 0U) {
-			k_sem_give(&worker_sem);
-		}
 	}
 #endif
 

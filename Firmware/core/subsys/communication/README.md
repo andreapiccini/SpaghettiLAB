@@ -74,6 +74,7 @@ spaghetti wifi unprefer
 spaghetti wifi remove <ssid>
 spaghetti wifi connect
 spaghetti maintenance reboot
+spaghetti maintenance finish
 spaghetti remote provision <identity>
 spaghetti remote clear
 spaghetti remote status
@@ -166,6 +167,12 @@ make remote-console-clear PORT=/dev/cu.usbmodem1101
 Credential creation uses 32 random bytes, creates the JSON with mode `0600`, and
 refuses to overwrite an existing file. Clearing the device does not delete that
 host file; retain it only if it is still needed as an audit/backup artifact.
+
+For a new device, `make remote-console-enable` composes the complete local flow. The
+firmware command `spaghetti maintenance finish` is accepted only while Maintenance
+Link is active. It preserves a valid stored Config; when Config is absent, corrupt or
+invalid, it writes the safe zero-Module Config and reboots. Normal mode therefore
+remains derived from persistent Config rather than from an independent mutable flag.
 
 The client requires Python 3.13+ with TLS-PSK, fixes TLS to
 `PSK-AES128-GCM-SHA256`, and has no option to skip authentication. Serial and
