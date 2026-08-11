@@ -157,15 +157,36 @@ The current `safe` tier ([`theme/safe/`](theme/safe/)):
 - `header-icon.png` and `favicon.ico` are cropped from the existing
   repository logo (`spaghetti-logo-blu.png`).
 
+There is also a `deep` tier ([`theme/deep/`](theme/deep/)) with a more
+"designed", app-like look — rounded corners, soft elevation shadows, pill
+buttons, rounded flow nodes on the canvas. It builds on everything the
+`safe` tier does, but additionally styles Node-RED's internal, undocumented
+class names, so it can need a look after Node-RED editor upgrades in a way
+`safe` doesn't. Full explanation and trade-offs in
+[`theme/README.md`](theme/README.md).
+
+To use it, set in `.env`:
+
+```text
+NODE_RED_THEME=deep
+```
+
+then `docker compose up -d`. To go back to the conservative default, set it
+back to `safe` (or delete the line — `safe` is the built-in default) and
+run `docker compose up -d` again. Either direction only swaps the mounted
+theme files; flows, credentials, and installed nodes in the `node-red-data`
+volume are never touched by switching tiers.
+
 The whole `theme/` folder is mounted read-only, so nothing you do inside the
 editor can modify these files; they are plain repository content, tracked
 like any other file. Node-RED itself still owns `/data` (flows,
 credentials, installed nodes) through the persistent `node-red-data` volume
 described above.
 
-To change colors, edit `theme/safe/custom.css` and run `docker compose up -d`
-again — no rebuild is needed since these are bind-mounted files, but Node-RED
-must be restarted to reload `settings.js`.
+To change colors, edit `theme/safe/custom.css` (or `theme/deep/custom.css`
+if you're using that tier) and run `docker compose up -d` again — no
+rebuild is needed since these are bind-mounted files, but Node-RED must be
+restarted to reload `settings.js`.
 
 ## Scope of this version
 
