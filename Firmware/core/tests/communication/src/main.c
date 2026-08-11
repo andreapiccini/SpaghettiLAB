@@ -12,6 +12,7 @@
 #include <spaghetti/module.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
+#include <spaghetti/wifi_profiles.h>
 
 #include "communication_internal.h"
 
@@ -21,6 +22,60 @@ static int decode_error;
 static int apply_error;
 static uint32_t decode_count;
 static uint32_t apply_count;
+
+int spaghetti_wifi_profiles_set(
+	const struct spaghetti_wifi_profile_config *config)
+{
+	return (config != NULL) ? 0 : -EINVAL;
+}
+
+int spaghetti_wifi_profiles_remove(const char *ssid)
+{
+	return (ssid != NULL) ? 0 : -EINVAL;
+}
+
+int spaghetti_wifi_profiles_set_preferred(const char *ssid)
+{
+	return (ssid != NULL) ? 0 : -EINVAL;
+}
+
+int spaghetti_wifi_profiles_clear_preferred(void)
+{
+	return 0;
+}
+
+int spaghetti_wifi_profiles_list(
+	struct spaghetti_wifi_profile_summary *out,
+	size_t capacity,
+	size_t *out_count)
+{
+	ARG_UNUSED(out);
+	ARG_UNUSED(capacity);
+	if (out_count == NULL) {
+		return -EINVAL;
+	}
+
+	*out_count = 0U;
+	return 0;
+}
+
+int spaghetti_wifi_profiles_request_connect(void)
+{
+	return 0;
+}
+
+int spaghetti_wifi_profiles_get_status(
+	struct spaghetti_wifi_profiles_status *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	*out = (struct spaghetti_wifi_profiles_status) {
+		.state = SPAGHETTI_WIFI_PROFILES_IDLE,
+	};
+	return 0;
+}
 
 int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 				 struct spaghetti_config *out)

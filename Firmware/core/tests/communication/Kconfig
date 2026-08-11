@@ -8,4 +8,12 @@ config SPAGHETTI_COMMUNICATION_LOG_LEVEL
 	int
 	default 0
 
+config SPAGHETTI_WIFI_PROFILE_MAX_COUNT
+	int
+	default 4
+
+config SPAGHETTI_WIFI_PASSWORD_INPUT_TIMEOUT_SECONDS
+	int
+	default 60
+
 source "Kconfig.zephyr"

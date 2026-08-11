@@ -42,6 +42,10 @@ module = SPAGHETTI_MQTT
 module-str = spaghetti_mqtt
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_WIFI_PROFILES
+module-str = spaghetti_wifi_profiles
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"
@@ -172,5 +176,61 @@ config SPAGHETTI_MQTT_STOP_TIMEOUT_MS
 	help
 	  Maximum time Config waits for the worker to stop before rejecting a new
 	  MQTT configuration.
+
+config SPAGHETTI_WIFI_PROFILE_MAX_COUNT
+	int "Maximum number of persistent Wi-Fi profiles"
+	range 1 8
+	default 4
+	help
+	  Fixed number of encrypted profile slots. The service uses no heap, so a
+	  larger value reserves more static RAM and persistent records.
+
+config SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	bool "Automatically connect to a known Wi-Fi network"
+	default y
+	help
+	  Scan after boot and disconnection. A visible preferred profile is tried
+	  first; other visible profiles are tried by descending signal strength.
+
+config SPAGHETTI_WIFI_PROFILE_WORKER_STACK_SIZE
+	int "Wi-Fi profile worker stack size"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 2048 8192
+	default 4096
+
+config SPAGHETTI_WIFI_PROFILE_WORKER_PRIORITY
+	int "Wi-Fi profile worker priority"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 0 15
+	default 5
+
+config SPAGHETTI_WIFI_SCAN_TIMEOUT_SECONDS
+	int "Wi-Fi scan timeout in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 60
+	default 15
+
+config SPAGHETTI_WIFI_CONNECT_TIMEOUT_SECONDS
+	int "Wi-Fi connection timeout in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 120
+	default 30
+
+config SPAGHETTI_WIFI_DISCONNECT_TIMEOUT_SECONDS
+	int "Wi-Fi disconnection timeout in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 30
+	default 5
+
+config SPAGHETTI_WIFI_RETRY_SECONDS
+	int "Wi-Fi reselection interval in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 3600
+	default 30
+
+config SPAGHETTI_WIFI_PASSWORD_INPUT_TIMEOUT_SECONDS
+	int "Hidden Wi-Fi password prompt timeout in seconds"
+	range 10 300
+	default 60
 
 source "Kconfig.zephyr"

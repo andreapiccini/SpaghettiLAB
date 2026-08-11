@@ -41,6 +41,8 @@ target_sources(app PRIVATE
   subsys/communication/communication.c
   subsys/communication/communication_shell.c
   subsys/services/mqtt/mqtt.c
+  subsys/services/wifi_profiles/wifi_profiles.c
+  subsys/services/wifi_profiles/wifi_profiles_storage.c
 )
 
 get_target_property(APP_SRCS app SOURCES)

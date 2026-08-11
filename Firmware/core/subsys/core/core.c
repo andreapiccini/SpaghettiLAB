@@ -13,6 +13,7 @@
 #include <spaghetti/port.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/storage.h>
+#include <spaghetti/wifi_profiles.h>
 
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
 
@@ -109,6 +110,13 @@ int spaghetti_core_init(void)
 	ret = load_persisted_config();
 	if (ret < 0) {
 		core_state = SPAGHETTI_CORE_ERROR;
+		return ret;
+	}
+
+	ret = spaghetti_wifi_profiles_init();
+	if (ret < 0) {
+		core_state = SPAGHETTI_CORE_ERROR;
+		LOG_ERR("Wi-Fi Profiles initialization failed: err=%d", ret);
 		return ret;
 	}
 
