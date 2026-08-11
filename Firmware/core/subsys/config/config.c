@@ -9,14 +9,14 @@
 #include <zephyr/sys/util.h>
 
 #include <spaghetti/driver_registry.h>
+#include <spaghetti/discovery.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/runtime.h>
+#include <spaghetti/storage.h>
 
 LOG_MODULE_REGISTER(spaghetti_config, CONFIG_SPAGHETTI_CONFIG_LOG_LEVEL);
-
-#define SPAGHETTI_CONFIG_MODULE_REVISION 1U
 
 struct spaghetti_config_transaction {
 	bool old_removed[SPAGHETTI_CONFIG_MAX_MODULES];
@@ -26,11 +26,14 @@ struct spaghetti_config_transaction {
 };
 
 static struct spaghetti_config current_config;
-static bool has_current_config;
+static uint32_t current_generation;
+static bool is_initialized;
 K_MUTEX_DEFINE(config_lock);
 
 BUILD_ASSERT(SPAGHETTI_CONFIG_MAX_MODULES <= CONFIG_SPAGHETTI_MAX_MODULES);
 BUILD_ASSERT(SPAGHETTI_CONFIG_TYPE_ID_SIZE == SPAGHETTI_TYPE_ID_MAX);
+
+static bool module_is_absent(spaghetti_module_key_t key);
 
 static bool type_id_is_valid(const char *type_id)
 {
@@ -199,27 +202,32 @@ static bool module_configs_are_equal(
 
 static int configure_module(
 	const struct spaghetti_module_config *module_config,
+	uint32_t revision,
 	struct spaghetti_module_snapshot *out)
 {
-	const struct spaghetti_module_request request = {
+	struct spaghetti_discovery_result result = {
 		.key = module_config->key,
 		.port_id = module_config->port_id,
-		.type_id = module_config->type_id,
-		.driver_config = module_config->driver_config,
 		.driver_config_size = module_config->driver_config_size,
-		.revision = SPAGHETTI_CONFIG_MODULE_REVISION,
+		.source = SPAGHETTI_DISCOVERY_SOURCE_CONFIG,
+		.generation = revision,
 	};
-	spaghetti_module_id_t id;
-	int err = spaghetti_module_manager_configure(&request, &id);
+	int err;
+
+	memcpy(result.type_id, module_config->type_id,
+	       strlen(module_config->type_id) + 1U);
+	memcpy(result.driver_config, module_config->driver_config,
+	       module_config->driver_config_size);
+	err = spaghetti_discovery_submit_manual(&result);
 
 	if (err < 0) {
 		return err;
 	}
 
-	err = spaghetti_module_manager_get_by_id(id, out);
+	err = spaghetti_module_manager_get_by_key(module_config->key, out);
 	if (err < 0) {
-		(void)spaghetti_module_manager_remove(
-			id, SPAGHETTI_CONFIG_MODULE_REVISION);
+		(void)spaghetti_discovery_invalidate(module_config->key,
+						     revision);
 	}
 
 	return err;
@@ -227,10 +235,21 @@ static int configure_module(
 
 static int remove_module(const struct spaghetti_module_snapshot *module)
 {
-	return spaghetti_module_manager_remove(module->id, module->revision);
+	int err = spaghetti_discovery_invalidate(module->key, module->revision);
+
+	if ((err < 0) && module_is_absent(module->key)) {
+		const int cleanup_error = spaghetti_discovery_invalidate(
+			module->key, module->revision);
+
+		if ((cleanup_error < 0) && (cleanup_error != -ENOENT)) {
+			return -EIO;
+		}
+	}
+
+	return err;
 }
 
-static int configure_runtime(const struct spaghetti_config *config)
+static int load_runtime(const struct spaghetti_config *config)
 {
 	struct spaghetti_runtime_sampling_task task = {0};
 	struct spaghetti_module_snapshot source;
@@ -285,6 +304,13 @@ static int configure_runtime(const struct spaghetti_config *config)
 	if (err < 0) {
 		return err;
 	}
+	return 0;
+}
+
+static int start_runtime(const struct spaghetti_config *config)
+{
+	int err;
+
 	if (!config->sampling.enabled && !config->threshold_rule.enabled) {
 		return 0;
 	}
@@ -336,7 +362,12 @@ static int restore_runtime(const struct spaghetti_config *config)
 		return err;
 	}
 
-	return configure_runtime(config);
+	err = load_runtime(config);
+	if (err < 0) {
+		return err;
+	}
+
+	return start_runtime(config);
 }
 
 static bool module_is_absent(spaghetti_module_key_t key)
@@ -375,7 +406,8 @@ static int rollback_transaction(
 		}
 
 		const int err = configure_module(&old_config->modules[old_idx],
-						 &restored);
+			transaction->old_live[old_idx].revision,
+			&restored);
 
 		if ((err < 0) && (first_error == 0)) {
 			first_error = err;
@@ -385,16 +417,61 @@ static int rollback_transaction(
 	return first_error;
 }
 
-int spaghetti_config_validate(const struct spaghetti_config *candidate)
+static int validation_failure(struct spaghetti_config_error *error,
+			      enum spaghetti_config_error_field field,
+			      size_t index,
+			      enum spaghetti_config_error_reason reason,
+			      int err)
+{
+	if (error != NULL) {
+		error->field = field;
+		error->index = index;
+		error->reason = reason;
+	}
+
+	return err;
+}
+
+int spaghetti_config_init(const struct spaghetti_config *defaults)
+{
+	int err = spaghetti_config_validate(defaults, NULL);
+
+	if (err < 0) {
+		return err;
+	}
+
+	err = k_mutex_lock(&config_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (is_initialized) {
+		k_mutex_unlock(&config_lock);
+		return -EALREADY;
+	}
+
+	current_config = *defaults;
+	current_generation = 1U;
+	is_initialized = true;
+	k_mutex_unlock(&config_lock);
+	LOG_INF("ready: generation=1");
+	return 0;
+}
+
+int spaghetti_config_validate(const struct spaghetti_config *candidate,
+			      struct spaghetti_config_error *error)
 {
 	struct spaghetti_module_endpoint
 		endpoints[SPAGHETTI_CONFIG_MAX_MODULES];
 
 	if ((candidate == NULL) ||
 	    (candidate->version != SPAGHETTI_CONFIG_VERSION) ||
-	    (candidate->module_count > SPAGHETTI_CONFIG_MAX_MODULES) ||
-	    !mqtt_config_is_valid(&candidate->mqtt)) {
-		return -EINVAL;
+	    (candidate->module_count > SPAGHETTI_CONFIG_MAX_MODULES)) {
+		return validation_failure(error, SPAGHETTI_CONFIG_ERROR_ROOT, 0U,
+			SPAGHETTI_CONFIG_ERROR_RANGE, -EINVAL);
+	}
+	if (!mqtt_config_is_valid(&candidate->mqtt)) {
+		return validation_failure(error, SPAGHETTI_CONFIG_ERROR_MQTT, 0U,
+			SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -EINVAL);
 	}
 
 	for (size_t module_idx = 0U; module_idx < candidate->module_count;
@@ -403,21 +480,33 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate)
 					  &endpoints[module_idx]);
 
 		if (err < 0) {
-			return err;
+			const enum spaghetti_config_error_reason reason =
+				(err == -ENOTSUP) ?
+				SPAGHETTI_CONFIG_ERROR_UNKNOWN_TYPE :
+				SPAGHETTI_CONFIG_ERROR_INCONSISTENT;
+
+			return validation_failure(error,
+				SPAGHETTI_CONFIG_ERROR_MODULE, module_idx,
+				reason, err);
 		}
 
 		for (size_t previous_idx = 0U; previous_idx < module_idx;
 		     ++previous_idx) {
 			if (candidate->modules[previous_idx].key ==
 			    candidate->modules[module_idx].key) {
-				return -EEXIST;
+				return validation_failure(error,
+					SPAGHETTI_CONFIG_ERROR_MODULE, module_idx,
+					SPAGHETTI_CONFIG_ERROR_DUPLICATE, -EEXIST);
 			}
 
 			if ((candidate->modules[previous_idx].port_id ==
 			     candidate->modules[module_idx].port_id) &&
 			    endpoints_conflict(&endpoints[previous_idx],
 					       &endpoints[module_idx])) {
-				return -EADDRINUSE;
+				return validation_failure(error,
+					SPAGHETTI_CONFIG_ERROR_MODULE, module_idx,
+					SPAGHETTI_CONFIG_ERROR_DUPLICATE,
+					-EADDRINUSE);
 			}
 		}
 	}
@@ -427,11 +516,15 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate)
 		    (candidate->sampling.period_ms == 0U) ||
 		    (find_module_index(candidate,
 				       candidate->sampling.source_key) < 0)) {
-			return -EINVAL;
+			return validation_failure(error,
+				SPAGHETTI_CONFIG_ERROR_SAMPLING, 0U,
+				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -EINVAL);
 		}
 		if (!module_supports_read(candidate,
 					  candidate->sampling.source_key)) {
-			return -ENOTSUP;
+			return validation_failure(error,
+				SPAGHETTI_CONFIG_ERROR_SAMPLING, 0U,
+				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -ENOTSUP);
 		}
 	}
 
@@ -445,46 +538,63 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate)
 		     rule->upper_current_microamps) ||
 		    (find_module_index(candidate, rule->source_key) < 0) ||
 		    (find_module_index(candidate, rule->relay_key) < 0)) {
-			return -EINVAL;
+			return validation_failure(error,
+				SPAGHETTI_CONFIG_ERROR_THRESHOLD_RULE, 0U,
+				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -EINVAL);
 		}
 		if (!module_supports_read(candidate, rule->source_key) ||
 		    !module_supports_command(candidate, rule->relay_key)) {
-			return -ENOTSUP;
+			return validation_failure(error,
+				SPAGHETTI_CONFIG_ERROR_THRESHOLD_RULE, 0U,
+				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -ENOTSUP);
 		}
 	}
 
 	return 0;
 }
 
-int spaghetti_config_apply(const struct spaghetti_config *candidate)
+int spaghetti_config_apply(const struct spaghetti_config *candidate,
+			   uint32_t expected_generation)
 {
 	struct spaghetti_config_transaction transaction = {0};
 	struct spaghetti_config old_config = {0};
-	bool had_old_config;
 	bool mqtt_changed;
 	bool mqtt_reconfigured = false;
+	bool candidate_persisted = false;
+	uint32_t next_generation;
 	int apply_error = 0;
 	int err;
 
-	err = spaghetti_config_validate(candidate);
+	err = spaghetti_config_validate(candidate, NULL);
 	if (err < 0) {
 		return err;
+	}
+	if (expected_generation == 0U) {
+		return -EINVAL;
 	}
 
 	err = k_mutex_lock(&config_lock, K_FOREVER);
 	if (err < 0) {
 		return err;
 	}
-
-	had_old_config = has_current_config;
-	if (had_old_config) {
-		old_config = current_config;
+	if (!is_initialized) {
+		err = -EACCES;
+		goto unlock;
 	}
-	mqtt_changed = !had_old_config ||
-		!mqtt_configs_are_equal(&old_config.mqtt, &candidate->mqtt);
-	if (had_old_config &&
-	    (old_config.sampling.enabled ||
-	     old_config.threshold_rule.enabled)) {
+	if (expected_generation != current_generation) {
+		err = -ESTALE;
+		goto unlock;
+	}
+	if (current_generation == UINT32_MAX) {
+		err = -EOVERFLOW;
+		goto unlock;
+	}
+
+	old_config = current_config;
+	next_generation = current_generation + 1U;
+	mqtt_changed = !mqtt_configs_are_equal(&old_config.mqtt,
+					       &candidate->mqtt);
+	if (old_config.sampling.enabled || old_config.threshold_rule.enabled) {
 		err = spaghetti_runtime_stop(
 			K_MSEC(CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS));
 		if ((err < 0) && (err != -EALREADY)) {
@@ -542,6 +652,7 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 		}
 
 		err = configure_module(&candidate->modules[candidate_idx],
+				       next_generation,
 				       &transaction.candidate_live[candidate_idx]);
 		if (err < 0) {
 			apply_error = err;
@@ -550,7 +661,7 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 		transaction.candidate_added[candidate_idx] = true;
 	}
 
-	err = configure_runtime(candidate);
+	err = load_runtime(candidate);
 	if (err < 0) {
 		apply_error = err;
 		goto rollback;
@@ -565,48 +676,67 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate)
 		}
 	}
 
+	err = spaghetti_storage_write_config(candidate);
+	if (err < 0) {
+		apply_error = err;
+		goto rollback;
+	}
+	candidate_persisted = true;
+
+	err = start_runtime(candidate);
+	if (err < 0) {
+		apply_error = err;
+		goto rollback;
+	}
+
 	current_config = *candidate;
-	has_current_config = true;
+	current_generation = next_generation;
 	k_mutex_unlock(&config_lock);
 
-	LOG_INF("applied: modules=%u sampling=%u", (uint32_t)candidate->module_count,
+	LOG_INF("applied: generation=%u modules=%u sampling=%u",
+		current_generation, (uint32_t)candidate->module_count,
 		candidate->sampling.enabled ? 1U : 0U);
 	return 0;
 
 rollback:
 	err = rollback_transaction(&old_config, &transaction);
 	if (err == 0) {
-		const struct spaghetti_config empty_config = {
-			.version = SPAGHETTI_CONFIG_VERSION,
-		};
-
-		err = restore_runtime(had_old_config ? &old_config :
-							     &empty_config);
+		err = restore_runtime(&old_config);
 	}
 	if (mqtt_reconfigured) {
-		const struct spaghetti_mqtt_config mqtt_disabled = {0};
-		const int mqtt_error = configure_mqtt(
-			had_old_config ? &old_config.mqtt : &mqtt_disabled);
+		const int mqtt_error = configure_mqtt(&old_config.mqtt);
 
 		if ((err == 0) && (mqtt_error < 0)) {
 			err = mqtt_error;
 		}
 	}
+	if (candidate_persisted) {
+		const int storage_error = spaghetti_storage_write_config(&old_config);
+
+		if ((err == 0) && (storage_error < 0)) {
+			err = storage_error;
+		}
+	}
 	k_mutex_unlock(&config_lock);
 	if (err < 0) {
 		LOG_ERR("apply failed: err=%d rollback=%d", apply_error, err);
-		return err;
+		return -EIO;
 	}
 
 	LOG_WRN("apply rejected and previous state restored: err=%d", apply_error);
 	return apply_error;
+
+unlock:
+	k_mutex_unlock(&config_lock);
+	return err;
 }
 
-int spaghetti_config_get_snapshot(struct spaghetti_config *out)
+int spaghetti_config_get_snapshot(struct spaghetti_config *out,
+				  uint32_t *generation)
 {
 	int err;
 
-	if (out == NULL) {
+	if ((out == NULL) || (generation == NULL)) {
 		return -EINVAL;
 	}
 
@@ -615,12 +745,13 @@ int spaghetti_config_get_snapshot(struct spaghetti_config *out)
 		return err;
 	}
 
-	if (!has_current_config) {
+	if (!is_initialized) {
 		k_mutex_unlock(&config_lock);
-		return -ENOENT;
+		return -EACCES;
 	}
 
 	*out = current_config;
+	*generation = current_generation;
 	k_mutex_unlock(&config_lock);
 	return 0;
 }

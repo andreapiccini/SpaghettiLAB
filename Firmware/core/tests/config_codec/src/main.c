@@ -48,10 +48,12 @@ static int find_module_index(const struct spaghetti_config *candidate,
 	return -1;
 }
 
-int spaghetti_config_validate(const struct spaghetti_config *candidate)
+int spaghetti_config_validate(const struct spaghetti_config *candidate,
+			      struct spaghetti_config_error *error)
 {
 	struct spaghetti_ina219_config configs[SPAGHETTI_CONFIG_MAX_MODULES];
 
+	ARG_UNUSED(error);
 	++validation_count;
 	if ((candidate == NULL) ||
 	    (candidate->version != SPAGHETTI_CONFIG_VERSION) ||

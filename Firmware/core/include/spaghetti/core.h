@@ -12,8 +12,10 @@
  */
 enum spaghetti_core_state {
 	SPAGHETTI_CORE_UNINITIALIZED, /**< Core initialization has not started. */
-	SPAGHETTI_CORE_READY,         /**< Core initialization completed successfully. */
-	SPAGHETTI_CORE_ERROR          /**< Core initialization failed. */
+	SPAGHETTI_CORE_INITIALIZING, /**< Mandatory dependencies are being initialized. */
+	SPAGHETTI_CORE_READY, /**< Initialization completed; start is allowed. */
+	SPAGHETTI_CORE_RUNNING, /**< Infrastructure is running and accepts requests. */
+	SPAGHETTI_CORE_FAILED, /**< A mandatory dependency failed. */
 };
 
 /**
@@ -32,9 +34,22 @@ enum spaghetti_core_state {
  * @retval -ETIMEDOUT A bounded hardware operation timed out.
  *
  * @note Call once from the boot thread. Missing or corrupt stored Config is
- *       handled as a safe empty state; valid Config is applied before READY.
+ *       handled as a safe empty state; a valid record is retained for start.
  */
 int spaghetti_core_init(void);
+
+/**
+ * @brief Start the initialized engine and apply a retained startup Config.
+ *
+ * A stored Config that cannot be applied because removable hardware is absent
+ * is reported but does not make the communication infrastructure unavailable.
+ *
+ * @retval 0 Core reached @ref SPAGHETTI_CORE_RUNNING.
+ * @retval -EACCES Core is not in @ref SPAGHETTI_CORE_READY.
+ *
+ * @note Call once from the boot thread after @ref spaghetti_core_init.
+ */
+int spaghetti_core_start(void);
 
 /**
  * @brief Return the current Core state.

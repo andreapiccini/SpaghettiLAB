@@ -177,11 +177,18 @@ int spaghetti_communication_handle_request(
 		}
 	} else {
 		struct spaghetti_config candidate;
+		struct spaghetti_config current;
+		uint32_t generation;
 
 		result.status = spaghetti_config_decode_cbor(
 			request->payload, request->payload_size, &candidate);
 		if (result.status == 0) {
-			result.status = spaghetti_config_apply(&candidate);
+			result.status = spaghetti_config_get_snapshot(
+				&current, &generation);
+		}
+		if (result.status == 0) {
+			result.status = spaghetti_config_apply(
+				&candidate, generation);
 		}
 	}
 

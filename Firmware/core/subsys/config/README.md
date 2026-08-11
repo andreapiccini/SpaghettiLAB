@@ -31,11 +31,13 @@ the same Port is a collision.
 | `tests/config_codec/src/main.c` | Native codec and boundary tests. |
 
 ```c
-int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
-				 struct spaghetti_config *out);
-int spaghetti_config_validate(const struct spaghetti_config *candidate);
-int spaghetti_config_apply(const struct spaghetti_config *candidate);
-int spaghetti_config_get_snapshot(struct spaghetti_config *out);
+int spaghetti_config_init(const struct spaghetti_config *defaults);
+int spaghetti_config_validate(const struct spaghetti_config *candidate,
+			      struct spaghetti_config_error *error);
+int spaghetti_config_apply(const struct spaghetti_config *candidate,
+			   uint32_t expected_generation);
+int spaghetti_config_get_snapshot(struct spaghetti_config *out,
+				  uint32_t *generation);
 ```
 
 `spaghetti_config_decode_cbor()` accepts 1–256 borrowed bytes, parses into a temporary
@@ -45,15 +47,17 @@ disabled. Wire V1 has version `2` and adds a bounded MQTT map containing enabled
 host, TCP port, and base topic. Both map explicit fields into internal Config version
 `3`, so the persistent C struct is never treated as a network ABI.
 
+`spaghetti_config_init()` copies the safe empty desired state as generation 1.
 `spaghetti_config_validate()` checks version, bounds, keys, Ports, drivers,
 capabilities, concrete configuration, endpoint conflicts, sampling, threshold
-references, and canonical MQTT settings without hardware I/O. The sampling source
-must support `read`; the rule target must support `command`.
+references, and canonical MQTT settings without hardware I/O. Its optional diagnostic
+identifies the section, Module index, and stable reason.
 
-`spaghetti_config_apply()` reconciles by stable key and publishes only after success.
-On failure it removes new instances and restores the previous Modules, Runtime, and
-MQTT state. `spaghetti_config_get_snapshot()` returns a coherent caller-owned copy and
-leaves its output unchanged when no Config has been applied.
+`spaghetti_config_apply()` rejects stale generations, sends changed descriptions
+through Discovery, reconciles by stable key, loads Runtime/MQTT, persists through
+Storage, and publishes only after complete success. On failure it restores Modules,
+Runtime, MQTT and the prior persistent record. `get_snapshot()` atomically copies both
+the desired state and generation.
 
 ## Flow and ownership
 
@@ -62,11 +66,13 @@ flowchart LR
     INPUT["Storage / Communication bytes"] --> DECODE["temporary decoded Config"]
     DECODE --> VALIDATE["complete validation"]
     VALIDATE -->|"error"| REJECT["no output or live-state change"]
-    VALIDATE -->|"valid"| APPLY["reconcile by stable key"]
-    APPLY -->|"success"| COMMIT["publish owned snapshot"]
-    APPLY -->|"error"| ROLLBACK["restore previous Modules and Runtime"]
+    VALIDATE -->|"valid generation"| DISCOVERY["Discovery UPSERT / REMOVE"]
+    DISCOVERY --> APPLY["Manager + Runtime + MQTT"]
+    APPLY --> STORAGE["persist candidate"]
+    STORAGE -->|"success"| COMMIT["publish snapshot + generation"]
+    APPLY -->|"error"| ROLLBACK["restore live and persistent state"]
 ```
 
-The snapshot contains no pointers. Config copies strings and concrete driver bytes;
-decoder and caller buffers are borrowed only during each call. A mutex serializes
-apply and snapshot reads. All storage is statically bounded and no heap is used.
+The snapshot contains no pointers. A mutex serializes apply and snapshot reads, and
+the expected generation prevents lost updates from concurrent adapters. All storage
+is statically bounded and no heap is used.

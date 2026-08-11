@@ -75,10 +75,50 @@ struct spaghetti_config {
 	struct spaghetti_mqtt_config mqtt; /**< Optional copied MQTT endpoint. */
 };
 
+/** Config section associated with one validation failure. */
+enum spaghetti_config_error_field {
+	SPAGHETTI_CONFIG_ERROR_ROOT, /**< Version or top-level capacity. */
+	SPAGHETTI_CONFIG_ERROR_MODULE, /**< One Module description. */
+	SPAGHETTI_CONFIG_ERROR_SAMPLING, /**< Periodic sampling selection. */
+	SPAGHETTI_CONFIG_ERROR_THRESHOLD_RULE, /**< Current threshold rule. */
+	SPAGHETTI_CONFIG_ERROR_MQTT, /**< MQTT endpoint configuration. */
+};
+
+/** Stable reason associated with one validation failure. */
+enum spaghetti_config_error_reason {
+	SPAGHETTI_CONFIG_ERROR_REQUIRED, /**< A mandatory value is absent. */
+	SPAGHETTI_CONFIG_ERROR_RANGE, /**< A bounded value is outside its range. */
+	SPAGHETTI_CONFIG_ERROR_DUPLICATE, /**< A key or endpoint is repeated. */
+	SPAGHETTI_CONFIG_ERROR_UNKNOWN_TYPE, /**< Driver type is unavailable. */
+	SPAGHETTI_CONFIG_ERROR_INCONSISTENT, /**< Related fields disagree. */
+};
+
+/** Optional caller-owned validation diagnostic. */
+struct spaghetti_config_error {
+	enum spaghetti_config_error_field field; /**< Section containing the error. */
+	size_t index; /**< Module index, or zero for a singleton section. */
+	enum spaghetti_config_error_reason reason; /**< Transport-independent reason. */
+};
+
+/**
+ * @brief Initialize Config with one complete safe desired-state snapshot.
+ *
+ * @param[in] defaults Caller-owned snapshot borrowed only during this call.
+ *
+ * @retval 0 The copied defaults are generation 1.
+ * @retval -EINVAL @p defaults is invalid.
+ * @retval -EALREADY Config was initialized previously.
+ * @retval -errno Complete validation rejected @p defaults.
+ *
+ * @note Call once from the boot thread after Port and Registry initialization.
+ */
+int spaghetti_config_init(const struct spaghetti_config *defaults);
+
 /**
  * @brief Validate a complete Config without changing live state.
  *
  * @param[in] candidate Caller-owned snapshot borrowed for this call.
+ * @param[out] error Optional caller-owned diagnostic written only on failure.
  *
  * @retval 0 The complete candidate is valid.
  * @retval -EINVAL A pointer, version, count, key, string, size, endpoint, or
@@ -91,7 +131,8 @@ struct spaghetti_config {
  *
  * @note Callable from thread context. This function performs no hardware I/O.
  */
-int spaghetti_config_validate(const struct spaghetti_config *candidate);
+int spaghetti_config_validate(const struct spaghetti_config *candidate,
+			      struct spaghetti_config_error *error);
 
 /**
  * @brief Reconcile live Modules with a complete desired Config transaction.
@@ -102,9 +143,11 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate);
  *
  * @param[in] candidate Caller-owned snapshot borrowed for this call and copied
  *                      only after a successful transaction.
+ * @param[in] expected_generation Generation returned with the caller's snapshot.
  *
  * @retval 0 The candidate is live and is now the current Config snapshot.
  * @retval -EINVAL The candidate or one of its fields is invalid.
+ * @retval -EACCES Config has not been initialized.
  * @retval -ENOENT A Port, previous live Module, or sampling source is missing.
  * @retval -ENOTSUP A driver is unknown, incomplete, or incompatible with a Port.
  * @retval -EEXIST Stable Module keys are duplicated or conflict with live state.
@@ -120,19 +163,22 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate);
  *
  * @note Call from thread context. Apply may perform bounded hardware I/O.
  */
-int spaghetti_config_apply(const struct spaghetti_config *candidate);
+int spaghetti_config_apply(const struct spaghetti_config *candidate,
+			   uint32_t expected_generation);
 
 /**
  * @brief Copy the last successfully applied Config snapshot.
  *
  * @param[out] out Caller-owned destination written only on success.
+ * @param[out] generation Caller-owned current-generation destination.
  *
  * @retval 0 The coherent current snapshot was copied to @p out.
  * @retval -EINVAL @p out is NULL.
- * @retval -ENOENT No Config has completed a successful apply yet.
+ * @retval -EACCES Config has not been initialized.
  *
  * @note Thread-safe and callable from thread context. No hardware is accessed.
  */
-int spaghetti_config_get_snapshot(struct spaghetti_config *out);
+int spaghetti_config_get_snapshot(struct spaghetti_config *out,
+				  uint32_t *generation);
 
 #endif /* SPAGHETTI_CONFIG_H */

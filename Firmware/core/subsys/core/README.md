@@ -27,9 +27,9 @@ Core is the firmware startup coordinator. It initializes required components in 
 
 | Type / object | Owner | Meaning |
 |---|---|---|
-| `spaghetti_core_state` | Core | UNINITIALIZED, INITIALIZING, READY, RUNNING, DEGRADED, or FAILED. |
-| `spaghetti_core_info` | Core | Immutable firmware identity and capability summary. |
-| Initialization flags | Core | Private record preventing invalid repeated transitions. |
+| `spaghetti_core_state` | Core | UNINITIALIZED, INITIALIZING, READY, RUNNING, or FAILED. |
+| Startup Config copy | Core | Valid persisted candidate retained between init and start. |
+| Initialization flags | Core | Private state preventing invalid repeated transitions. |
 
 ## API contract
 
@@ -49,11 +49,12 @@ Core is the firmware startup coordinator. It initializes required components in 
 
 **Execution context:** Zephyr main thread; bounded blocking is allowed.
 
-**Calls:** Port, Registry, Manager, Config/Data/Runtime initialization as selected by the application.
+**Calls:** Port, optional Power, Registry, Manager, Data, Runtime, MQTT, Storage,
+Discovery, Config, Wi-Fi Profiles and Communication in dependency order.
 
 ### `int spaghetti_core_start(void)`
 
-**Purpose:** Start asynchronous components after construction is complete.
+**Purpose:** Apply the retained Config and enter RUNNING after construction.
 
 **Parameters**
 
@@ -63,7 +64,8 @@ Core is the firmware startup coordinator. It initializes required components in 
 
 **Returns:** `0` when Core reaches RUNNING; negative start error otherwise.
 
-**Errors:** Called before READY or an asynchronous component fails to start.
+**Errors:** `-EACCES` when called outside READY. A stored removable Module that is
+absent is logged while the empty state and Communication remain available.
 
 **Execution context:** Zephyr main thread.
 
@@ -113,15 +115,19 @@ sequenceDiagram
     participant Core
     participant Port
     participant Registry
-    participant Manager
+    participant Config
+    participant Communication
     Main->>Core: init()
     Core->>Port: init_all()
     Port-->>Core: status
     Core->>Registry: init()
     Registry-->>Core: status
-    Core->>Manager: init()
-    Manager-->>Core: status
-    Core-->>Main: READY or first error
+    Core->>Config: initialize empty generation 1
+    Core->>Communication: initialize Shell
+    Core-->>Main: READY
+    Main->>Core: start()
+    Core->>Config: apply retained Config, if present
+    Core-->>Main: RUNNING
 ```
 
 ## Practical example

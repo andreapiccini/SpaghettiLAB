@@ -48,9 +48,13 @@ INA219/Relay.
 Sempre in `config.h` dichiara:
 
 ```c
-int spaghetti_config_validate(const struct spaghetti_config *candidate);
-int spaghetti_config_apply(const struct spaghetti_config *candidate);
-int spaghetti_config_get_snapshot(struct spaghetti_config *out);
+int spaghetti_config_init(const struct spaghetti_config *defaults);
+int spaghetti_config_validate(const struct spaghetti_config *candidate,
+			      struct spaghetti_config_error *error);
+int spaghetti_config_apply(const struct spaghetti_config *candidate,
+			   uint32_t expected_generation);
+int spaghetti_config_get_snapshot(struct spaghetti_config *out,
+				  uint32_t *generation);
 ```
 
 Gli input `const` sono prestiti validi per la chiamata. Config copia il candidato solo
@@ -141,10 +145,15 @@ cambiato. Array e limiti fissi mantengono RAM e tempi prevedibili senza heap.
 
 ```c
 struct spaghetti_config candidate;
+struct spaghetti_config current;
+uint32_t generation;
 build_two_ina219_config(&candidate);
-int err = spaghetti_config_validate(&candidate);
+int err = spaghetti_config_validate(&candidate, NULL);
 if (err == 0) {
-	err = spaghetti_config_apply(&candidate);
+	err = spaghetti_config_get_snapshot(&current, &generation);
+}
+if (err == 0) {
+	err = spaghetti_config_apply(&candidate, generation);
 }
 ```
 

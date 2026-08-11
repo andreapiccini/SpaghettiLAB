@@ -96,10 +96,28 @@ int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 	return 0;
 }
 
-int spaghetti_config_apply(const struct spaghetti_config *candidate)
+int spaghetti_config_apply(const struct spaghetti_config *candidate,
+			   uint32_t expected_generation)
 {
 	++apply_count;
+	if (expected_generation != 7U) {
+		return -ESTALE;
+	}
 	return (candidate != NULL) ? apply_error : -EINVAL;
+}
+
+int spaghetti_config_get_snapshot(struct spaghetti_config *out,
+				  uint32_t *generation)
+{
+	if ((out == NULL) || (generation == NULL)) {
+		return -EINVAL;
+	}
+
+	*out = (struct spaghetti_config) {
+		.version = SPAGHETTI_CONFIG_VERSION,
+	};
+	*generation = 7U;
+	return 0;
 }
 
 enum spaghetti_core_state spaghetti_core_get_state(void)

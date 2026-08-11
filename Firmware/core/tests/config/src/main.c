@@ -7,6 +7,7 @@
 #include <zephyr/ztest.h>
 
 #include <spaghetti/config.h>
+#include <spaghetti/discovery.h>
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
@@ -42,6 +43,53 @@ static uint32_t fake_runtime_start_count;
 static uint32_t fake_runtime_stop_count;
 static struct spaghetti_mqtt_config fake_mqtt_config;
 static enum spaghetti_mqtt_state fake_mqtt_state = SPAGHETTI_MQTT_STOPPED;
+static struct spaghetti_config fake_stored_config;
+static int fake_storage_error;
+
+int spaghetti_storage_write_config(const struct spaghetti_config *config)
+{
+	if (fake_storage_error < 0) {
+		return fake_storage_error;
+	}
+	if (config == NULL) {
+		return -EINVAL;
+	}
+
+	fake_stored_config = *config;
+	return 0;
+}
+
+static int discovery_sink(const struct spaghetti_discovery_event *event,
+			  void *user_data)
+{
+	struct spaghetti_module_snapshot module;
+	spaghetti_module_id_t id;
+	int err;
+
+	ARG_UNUSED(user_data);
+	if (event->type == SPAGHETTI_DISCOVERY_UPSERT) {
+		const struct spaghetti_module_request request = {
+			.key = event->result.key,
+			.port_id = event->result.port_id,
+			.type_id = event->result.type_id,
+			.driver_config = event->result.driver_config,
+			.driver_config_size = event->result.driver_config_size,
+			.revision = event->result.generation,
+		};
+
+		return spaghetti_module_manager_configure(&request, &id);
+	}
+
+	err = spaghetti_module_manager_get_by_key(event->result.key, &module);
+	if (err == -ENOENT) {
+		return 0;
+	}
+	if (err < 0) {
+		return err;
+	}
+
+	return spaghetti_module_manager_remove(module.id, module.revision);
+}
 
 int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
 {
@@ -335,52 +383,69 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	struct spaghetti_module_snapshot key_11_before;
 	struct spaghetti_module_snapshot key_11_after;
 	struct spaghetti_config snapshot;
+	struct spaghetti_config_error validation_error;
 	struct spaghetti_config baseline = make_config(0x40U, 0x41U);
+	const struct spaghetti_config defaults = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+	};
 	struct spaghetti_config candidate;
+	uint32_t generation;
 
 	zassert_ok(spaghetti_module_manager_init());
-	zassert_equal(spaghetti_config_get_snapshot(&snapshot), -ENOENT);
-	zassert_ok(spaghetti_config_validate(&baseline));
-	zassert_ok(spaghetti_config_apply(&baseline));
+	zassert_ok(spaghetti_discovery_init(discovery_sink, NULL));
+	zassert_equal(spaghetti_config_get_snapshot(&snapshot, &generation),
+		      -EACCES);
+	zassert_ok(spaghetti_config_init(&defaults));
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
+	zassert_equal(generation, 1U);
+	zassert_ok(spaghetti_config_validate(&baseline, NULL));
+	zassert_equal(spaghetti_config_apply(&baseline, 99U), -ESTALE);
+	zassert_ok(spaghetti_config_apply(&baseline, generation));
 	zassert_true(fake_runtime_running);
 	zassert_equal(fake_runtime_task.period_ms, 1000U);
 	zassert_equal(fake_runtime_start_count, 1U);
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot));
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
+	zassert_equal(generation, 2U);
+	zassert_mem_equal(&fake_stored_config, &baseline, sizeof(baseline));
 	zassert_equal(snapshot.module_count, 2U);
 	assert_live_endpoint(10U, 0x40U);
 	assert_live_endpoint(11U, 0x41U);
 
 	candidate = baseline;
 	candidate.modules[1].key = 10U;
-	zassert_equal(spaghetti_config_validate(&candidate), -EEXIST);
+	zassert_equal(spaghetti_config_validate(&candidate, &validation_error),
+		      -EEXIST);
+	zassert_equal(validation_error.reason,
+		      SPAGHETTI_CONFIG_ERROR_DUPLICATE);
 
 	candidate = baseline;
 	set_module(&candidate.modules[1], 11U, 0x40U, 0);
-	zassert_equal(spaghetti_config_validate(&candidate), -EADDRINUSE);
+	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EADDRINUSE);
 
 	candidate = baseline;
 	candidate.sampling.source_key = 99U;
-	zassert_equal(spaghetti_config_validate(&candidate), -EINVAL);
+	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EINVAL);
 	candidate = baseline;
 	candidate.mqtt.enabled = true;
-	zassert_equal(spaghetti_config_validate(&candidate), -EINVAL);
+	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EINVAL);
 	candidate = baseline;
 	candidate.threshold_rule.enabled = true;
 	candidate.threshold_rule.source_key = 10U;
 	candidate.threshold_rule.lower_current_microamps = 500000;
 	candidate.threshold_rule.upper_current_microamps = 450000;
 	candidate.threshold_rule.relay_key = 11U;
-	zassert_equal(spaghetti_config_validate(&candidate), -EINVAL);
+	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EINVAL);
 	assert_live_endpoint(10U, 0x40U);
 	assert_live_endpoint(11U, 0x41U);
 
 	candidate = baseline;
 	set_module(&candidate.modules[1], 11U, 0x42U, -EIO);
-	zassert_equal(spaghetti_config_apply(&candidate), -EIO);
+	zassert_equal(spaghetti_config_apply(&candidate, generation), -EIO);
 	zassert_true(fake_runtime_running);
 	zassert_equal(fake_runtime_start_count, 2U);
 	zassert_equal(fake_runtime_stop_count, 1U);
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot));
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
+	zassert_equal(generation, 2U);
 	zassert_mem_equal(&snapshot, &baseline, sizeof(snapshot));
 	assert_live_endpoint(10U, 0x40U);
 	assert_live_endpoint(11U, 0x41U);
@@ -402,7 +467,7 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	candidate.mqtt.port = 1883U;
 	memcpy(candidate.mqtt.base_topic, "spaghetti/test",
 	       sizeof("spaghetti/test"));
-	zassert_ok(spaghetti_config_apply(&candidate));
+	zassert_ok(spaghetti_config_apply(&candidate, generation));
 	zassert_true(fake_runtime_running);
 	zassert_equal(fake_runtime_start_count, 3U);
 	zassert_equal(fake_runtime_stop_count, 2U);
@@ -412,7 +477,8 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	zassert_equal(key_11_after.id, key_11_before.id);
 	assert_live_endpoint(11U, 0x41U);
 	assert_live_endpoint(12U, 0x42U);
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot));
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
+	zassert_equal(generation, 3U);
 	zassert_equal(snapshot.sampling.source_key, 11U);
 	zassert_true(snapshot.threshold_rule.enabled);
 	zassert_true(fake_runtime_rule_enabled);
@@ -420,6 +486,14 @@ ZTEST(config, test_validation_reconcile_and_rollback)
 	zassert_equal(fake_runtime_rule.lower_current_microamps, 450000);
 	zassert_equal(fake_mqtt_state, SPAGHETTI_MQTT_WAIT_NETWORK);
 	zassert_equal(strcmp(snapshot.mqtt.host, "broker.local"), 0);
+
+	candidate.sampling.period_ms = 2000U;
+	fake_storage_error = -ENOSPC;
+	zassert_equal(spaghetti_config_apply(&candidate, generation), -ENOSPC);
+	fake_storage_error = 0;
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
+	zassert_equal(generation, 3U);
+	zassert_equal(snapshot.sampling.period_ms, 1000U);
 }
 
 ZTEST_SUITE(config, NULL, NULL, NULL, NULL, NULL);

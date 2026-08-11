@@ -8,6 +8,14 @@ config SPAGHETTI_CONFIG_LOG_LEVEL
 	int
 	default 0
 
+config SPAGHETTI_DISCOVERY_MAX_RESULTS
+	int
+	default 8
+
+config SPAGHETTI_DISCOVERY_LOG_LEVEL
+	int
+	default 0
+
 config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
 	int
 	default 0

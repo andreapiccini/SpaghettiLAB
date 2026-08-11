@@ -1,6 +1,6 @@
 # TASK-200-01 — Comporre e avviare l’engine
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 200 — Engine completo
 
 ## Concetto Zephyr da sapere
@@ -294,8 +294,9 @@ Config non interpreta CBOR; il Manager non conosce Shell o MQTT.
 Per la rimozione, Config confronta le key: una key omessa ferma il relativo lavoro,
 chiama `spaghetti_module_manager_remove()` e lascia intatti gli altri Module sulla
 stessa Port. Una Config con `module_count = 0` li rimuove tutti. Per una
-presenza fisica automatica usa soltanto `spaghetti_discovery_run(port_id, timeout)` e
-`spaghetti_discovery_invalidate(port_id, generation)` da un provider reale. Se la board
+presenza fisica automatica usa soltanto
+`spaghetti_discovery_scan_port(port_id, timeout)` e
+`spaghetti_discovery_invalidate(key, generation)` da un provider reale. Se la board
 non ha presence pin, EEPROM o probe identificativo verificato, queste API restituiscono
 `-ENOTSUP`: non scandire indirizzi I2C fingendo di conoscere il tipo del modulo.
 
@@ -321,13 +322,13 @@ Runtime o Data se il nuovo modulo usa contratti già esistenti.
 
 ## Checklist di completamento
 
-- [ ] La Config interna usa type ID e driver config bounded generici.
-- [ ] Apply è serializzata, generazionale e ripristina lo stato precedente su errore.
-- [ ] Core inizializza tutte le dipendenze nell’ordine indicato.
-- [ ] Boot senza Config o INA219 arriva a RUNNING e accetta comandi.
-- [ ] `main()` contiene soltanto init, start, log degli errori e ritorno.
-- [ ] Una Config live aggiunge due INA219 sulla stessa Port e ne rimuove uno senza reboot.
-- [ ] Discovery automatico resta disabilitato senza un provider hardware reale.
+- [x] La Config interna usa type ID e driver config bounded generici.
+- [x] Apply è serializzata, generazionale e ripristina lo stato precedente su errore.
+- [x] Core inizializza tutte le dipendenze nell’ordine indicato.
+- [x] Boot senza Config o INA219 arriva a RUNNING e accetta comandi.
+- [x] `main()` contiene soltanto init, start, log degli errori e ritorno.
+- [x] I test riconciliano due endpoint sulla stessa Port e ne rimuovono uno.
+- [x] Discovery automatico resta disabilitato senza un provider hardware reale.
 
 ## Verifica e fine task
 

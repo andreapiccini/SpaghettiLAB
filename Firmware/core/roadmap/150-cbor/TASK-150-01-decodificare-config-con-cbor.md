@@ -121,7 +121,7 @@ Implementa `spaghetti_config_decode_cbor()` in ordine: valida i tre argomenti; c
 `struct spaghetti_config temporary = {0}`; inizializza lo stato zcbor sul buffer;
 apre la mappa root; decodifica le chiavi nell’ordine previsto verificandone valori e
 numero; chiude tutte le collezioni; verifica che il cursore sia esattamente a fine
-buffer; chiama `spaghetti_config_validate(&temporary)`; infine assegna
+buffer; chiama `spaghetti_config_validate(&temporary, NULL)`; infine assegna
 `*out = temporary`. Nessun ramo di errore deve scrivere `out`.
 
 ## Esempio d’uso
@@ -150,9 +150,14 @@ a4 00 0b 01 00 02 66 69 6e 61 32 31 39
 
 ```c
 struct spaghetti_config decoded;
+struct spaghetti_config current;
+uint32_t generation;
 int err = spaghetti_config_decode_cbor(payload, payload_size, &decoded);
 if (err == 0) {
-	err = spaghetti_config_apply(&decoded);
+	err = spaghetti_config_get_snapshot(&current, &generation);
+}
+if (err == 0) {
+	err = spaghetti_config_apply(&decoded, generation);
 }
 ```
 

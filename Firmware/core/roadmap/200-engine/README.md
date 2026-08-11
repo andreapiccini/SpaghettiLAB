@@ -1,6 +1,6 @@
 # Fase 200 — Engine completo
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 [← Indice roadmap](../README.md)
 
@@ -24,12 +24,12 @@ firmware rimane acceso.
 
 ## Task
 
-1. ⬜ [TASK-200-01 — Comporre e avviare l’engine](TASK-200-01-comporre-e-avviare-engine.md)
+1. ✅ [TASK-200-01 — Comporre e avviare l’engine](TASK-200-01-comporre-e-avviare-engine.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Il boot senza Config e senza moduli lascia Communication disponibile.
-- [ ] Una Config valida crea i Module, carica Runtime e viene persistita.
-- [ ] Rimuovere una key non interrompe i Module fratelli sulla stessa Port.
-- [ ] Una Config non valida o non applicabile non altera lo stato precedente.
-- [ ] Nessun polling finge di riconoscere automaticamente hardware non identificabile.
+- [x] Il boot senza Config e senza moduli lascia Communication disponibile.
+- [x] Una Config valida crea i Module, carica Runtime e viene persistita.
+- [x] Rimuovere una key non interrompe i Module fratelli sulla stessa Port.
+- [x] Una Config non valida o non applicabile non altera lo stato precedente.
+- [x] Nessun polling finge di riconoscere automaticamente hardware non identificabile.

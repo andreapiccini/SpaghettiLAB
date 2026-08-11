@@ -50,9 +50,10 @@ with `memcpy` into `spaghetti_communication_status_payload` before reading them.
 ## SET_CONFIG
 
 SET_CONFIG accepts 1–256 CBOR bytes. Communication decodes them into a temporary
-`spaghetti_config`, then calls `spaghetti_config_apply()` only when decoding and
-semantic validation succeed. A decode failure cannot reach apply; an apply or rollback
-failure is returned unchanged in `response.status`. The dispatch return remains `0`
+`spaghetti_config`, obtains the current snapshot and generation, then calls
+`spaghetti_config_apply(&candidate, generation)`. A concurrent replacement returns
+`-ESTALE` instead of overwriting newer desired state. Decode, apply, persistence or
+rollback errors are returned in `response.status`; the dispatch return remains `0`
 because the request envelope itself was valid.
 
 The decoder does not retain request bytes and Config does not know about CBOR or the

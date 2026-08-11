@@ -334,7 +334,7 @@ int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 		return -EBADMSG;
 	}
 
-	err = spaghetti_config_validate(&temporary);
+	err = spaghetti_config_validate(&temporary, NULL);
 	if (err < 0) {
 		return err;
 	}

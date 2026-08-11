@@ -95,10 +95,10 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [170 — Discovery](170-discovery/README.md) | Discovery emette più risultati per Port e invalida una key alla volta. |
 | ✅ | [180 — Varianti Core multiple](180-multi-core/README.md) | Gli stessi livelli applicativi funzionano su due varianti Core. |
 | ✅ | [190 — Power](190-power/README.md) | Reference counting e rollback sono verificati; Core V1 lascia Power disabilitato perché non espone una rail controllabile. |
-| ⬜ | [200 — Engine completo](200-engine/README.md) | Il Core carica Config, avvia i componenti e accetta riconfigurazioni senza reboot. |
+| ✅ | [200 — Engine completo](200-engine/README.md) | Il Core carica Config, avvia i componenti e accetta riconfigurazioni senza reboot. |
 | ⬜ | [210 — Finalizzazione](210-finalizzazione/README.md) | Nessuna scorciatoia temporanea rimane e il sistema completo supera la matrice end-to-end. |
 
 ## Da dove iniziare
 
-Le fasi 000–040 sono complete. Apri ora
-[TASK-050-01 — Introdurre Module e Module Driver](050-module-driver/TASK-050-01-introdurre-module-e-driver.md).
+Le fasi fino alla 200 sono complete. Apri ora
+[TASK-210-01 — Ripulire e qualificare il firmware completo](210-finalizzazione/TASK-210-01-ripulire-e-qualificare-il-firmware.md).
