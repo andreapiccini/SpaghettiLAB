@@ -754,6 +754,142 @@ def is_monitor_exit_key(key: bytes | None) -> bool:
     return key is not None and (b"\x18" in key or b"\x1d" in key)
 
 
+class NetworkLineEditor:
+    """Keep bounded command history for the restricted network console."""
+
+    HISTORY_LIMIT = 32
+
+    def __init__(self, prompt: bytes = b"network:~$ ") -> None:
+        self.prompt = prompt
+        self.history: list[bytes] = []
+        self.line = bytearray()
+        self.history_index: int | None = None
+        self.draft = b""
+        self.pending_control = bytearray()
+
+    def reset_line(self) -> None:
+        """Discard an incomplete line while preserving session history."""
+        self.line.clear()
+        self.history_index = None
+        self.draft = b""
+        self.pending_control.clear()
+
+    def _replace_line(self, replacement: bytes) -> tuple[bytes, bytes]:
+        wire = (b"\x7f" * len(self.line)) + replacement
+        self.line[:] = replacement
+        echo = b"\r\x1b[2K" + self.prompt + replacement
+        return wire, echo
+
+    def _history_up(self) -> tuple[bytes, bytes]:
+        if not self.history:
+            return b"", b""
+        if self.history_index is None:
+            self.draft = bytes(self.line)
+            self.history_index = len(self.history) - 1
+        else:
+            self.history_index = max(0, self.history_index - 1)
+        return self._replace_line(self.history[self.history_index])
+
+    def _history_down(self) -> tuple[bytes, bytes]:
+        if self.history_index is None:
+            return b"", b""
+        if self.history_index < (len(self.history) - 1):
+            self.history_index += 1
+            replacement = self.history[self.history_index]
+        else:
+            self.history_index = None
+            replacement = self.draft
+        return self._replace_line(replacement)
+
+    def _remember_line(self) -> None:
+        command = bytes(self.line).strip()
+        if command and (not self.history or self.history[-1] != command):
+            self.history.append(command)
+            del self.history[:-self.HISTORY_LIMIT]
+        self.line.clear()
+        self.history_index = None
+        self.draft = b""
+
+    def process(self, keys: bytes) -> tuple[bytes, bytes]:
+        """Return bytes for the device and bytes echoed on the host terminal."""
+        data = bytes(self.pending_control) + keys
+        self.pending_control.clear()
+        wire = bytearray()
+        echo = bytearray()
+        index = 0
+
+        while index < len(data):
+            byte = data[index]
+            if byte == 0x1b:
+                end = index + 1
+                if end >= len(data):
+                    self.pending_control.extend(data[index:])
+                    break
+                if data[end] != ord("["):
+                    index += 2
+                    continue
+                end += 1
+                while end < len(data) and not 0x40 <= data[end] <= 0x7e:
+                    end += 1
+                if end >= len(data):
+                    self.pending_control.extend(data[index:])
+                    break
+                if data[end] == ord("A"):
+                    replacement_wire, replacement_echo = self._history_up()
+                    wire.extend(replacement_wire)
+                    echo.extend(replacement_echo)
+                elif data[end] == ord("B"):
+                    replacement_wire, replacement_echo = self._history_down()
+                    wire.extend(replacement_wire)
+                    echo.extend(replacement_echo)
+                index = end + 1
+                continue
+
+            if byte in (0x00, 0xe0):
+                if (index + 1) >= len(data):
+                    self.pending_control.extend(data[index:])
+                    break
+                code = data[index + 1]
+                if code == ord("H"):
+                    replacement_wire, replacement_echo = self._history_up()
+                    wire.extend(replacement_wire)
+                    echo.extend(replacement_echo)
+                elif code == ord("P"):
+                    replacement_wire, replacement_echo = self._history_down()
+                    wire.extend(replacement_wire)
+                    echo.extend(replacement_echo)
+                index += 2
+                continue
+
+            if byte == 0x03:
+                wire.append(byte)
+                self.reset_line()
+            elif byte == 0x15:
+                replacement_wire, replacement_echo = self._replace_line(b"")
+                wire.extend(replacement_wire)
+                echo.extend(replacement_echo)
+                self.history_index = None
+                self.draft = b""
+            elif byte in (0x08, 0x7f):
+                if self.line:
+                    self.line.pop()
+                    wire.append(0x7f)
+                    echo.extend(b"\b \b")
+                self.history_index = None
+            elif byte in (ord("\r"), ord("\n")):
+                wire.append(byte)
+                echo.append(byte)
+                self._remember_line()
+            elif 0x20 <= byte <= 0x7e:
+                self.line.append(byte)
+                wire.append(byte)
+                echo.append(byte)
+                self.history_index = None
+            index += 1
+
+        return bytes(wire), bytes(echo)
+
+
 def monitor_header(console, panel_type, endpoint: str, detail: str) -> None:
     """Show one calm session summary without consuming vertical space later."""
     console.print(
@@ -1236,6 +1372,7 @@ def run_monitor(args: argparse.Namespace) -> int:
     serial_port = selected_port(args.port) if transport == "serial" else None
     console = Console(highlight=False, soft_wrap=True)
     output = StyledSerialOutput(console, Text, Panel, Table, box)
+    network_editor = NetworkLineEditor()
     connection = None
     disconnected_reported = False
     next_shell_wake = 0.0
@@ -1262,6 +1399,7 @@ def run_monitor(args: argparse.Namespace) -> int:
                                 args.host, args.port, args.credentials
                             )
                         output.begin_connection()
+                        network_editor.reset_line()
                         console.print(
                             "  [green]● connected[/]",
                             highlight=False,
@@ -1307,8 +1445,11 @@ def run_monitor(args: argparse.Namespace) -> int:
                             if is_monitor_exit_key(key):
                                 break
                             if key:
-                                connection.sendall(key)
-                                output.feed(key)
+                                wire, echo = network_editor.process(key)
+                                if wire:
+                                    connection.sendall(wire)
+                                if echo:
+                                    output.feed(echo)
                             continue
                         if received == b"":
                             raise ConnectionResetError("remote console closed")
@@ -1334,8 +1475,11 @@ def run_monitor(args: argparse.Namespace) -> int:
                         if transport == "serial":
                             connection.write(key)
                         else:
-                            connection.sendall(key)
-                            output.feed(key)
+                            wire, echo = network_editor.process(key)
+                            if wire:
+                                connection.sendall(wire)
+                            if echo:
+                                output.feed(echo)
                 except (OSError, ssl.SSLError, serial.SerialException):
                     output.end_connection()
                     connection.close()

@@ -7,6 +7,13 @@ volta, completa la relativa checklist e aggiorna lo stato.
 > La relazione Port 1:N Module è implementata e verificata. Consulta il
 > [report della migrazione](PORT-MODULE-1-N-MIGRATION.md) per contratti e test.
 
+> [!NOTE]
+> La prossima estensione low-energy è stata formalizzata nel
+> [contratto connettività e risorse](../CONNECTIVITY_AND_RESOURCE_CONTRACT.md): BLE come
+> trasporto normale quando richiesto, Wi-Fi on-demand, profili RAM per Core e rimozione
+> dell'arena mbedTLS sempre residente. Il contratto non ha ancora creato o rinumerato
+> alcun task della roadmap.
+
 ## Legenda degli stati
 
 | Simbolo | Stato |

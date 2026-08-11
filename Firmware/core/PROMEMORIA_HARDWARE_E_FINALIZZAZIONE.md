@@ -1,5 +1,8 @@
 # Promemoria hardware e finalizzazione firmware
 
+[← Diario problemi e decisioni](DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md) ·
+[Contratto connettività e risorse](CONNECTIVITY_AND_RESOURCE_CONTRACT.md)
+
 Questo documento raccoglie ciò che è intenzionalmente incompleto o simulato nel
 firmware Spaghetti LAB. Usalo quando progetti la scheda definitiva e come prompt per
 completare il firmware senza inventare dettagli hardware.

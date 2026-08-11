@@ -16,6 +16,13 @@ sensor, protocol, Core model, or product feature.
 > ownership model below while removing the remaining electrical-sample, Relay-command,
 > single-codec and single-provider assumptions.
 
+> [!NOTE]
+> Low-energy BLE, on-demand Wi-Fi, compile-time Core resource profiles, and bounded
+> secure-memory ownership are frozen separately in the
+> [connectivity, energy, and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md).
+> That document describes target behavior; its implementation tasks have not been
+> created yet.
+
 ## The idea in one minute
 
 A Spaghetti LAB **Core** controls external **Modules** connected to physical
@@ -66,7 +73,8 @@ its edges.
 | Data | When values/events exist | Defines values independently of their producer | Current with module key, ID, and timestamp |
 | Runtime | When autonomous behavior exists | Applies product rules | Sample both INA219 instances independently |
 | Input/output adapter | Optional | Connects the firmware to another interface | USB shell, local UI, REST, MQTT |
-| Connectivity profile service | Optional | Owns network credentials and link selection | Preferred Wi-Fi or strongest known fallback |
+| Connectivity Manager | When radios exist | Owns low-energy/online policy and link lifecycle | BLE normally, Wi-Fi on demand |
+| Wi-Fi Profiles | When Wi-Fi exists | Owns saved credentials and network selection | Preferred Wi-Fi or strongest known fallback |
 | Discovery strategy | Optional | Proposes module identity | Manual assignment, EEPROM, electrical probe |
 | Shared-resource coordinator | Optional | Coordinates a real shared resource | A switchable rail used by two Ports |
 | Update coordinator | When firmware update exists | Owns one bounded upload session and test-boot policy | UART or UDP writes one MCUboot candidate |
@@ -95,12 +103,23 @@ flowchart LR
 Removing MQTT must not change the sensor driver, Module Manager, Data contract,
 or Runtime rules. It removes only one adapter.
 
+For a low-energy Core, BLE may carry the common Spaghetti CBOR protocol directly to
+a local Node-RED host or gateway. The gateway may publish MQTT on behalf of the Core.
+Direct MQTT remains available to a Core whose connectivity policy explicitly starts
+Wi-Fi. See the
+[connectivity, energy, and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md).
+
 ### Why Wi-Fi credentials are separate from Config
 
 Wi-Fi credentials configure how this Core reaches a network; they do not describe a
 Module connected to a Port. The persistent Wi-Fi Profiles service therefore owns
 SSID, password, preferred-network policy, scan, and association. Config continues to
 own the desired Module/Runtime/MQTT state without carrying secrets.
+
+Wi-Fi Profiles does not decide when the radio is enabled. The Connectivity Manager
+owns that lifecycle: `LOW_ENERGY` keeps Wi-Fi stopped, while `ONLINE` or an
+authenticated temporary lease permits association. Enabling Wi-Fi never implicitly
+arms OTA or opens Remote Console.
 
 At boot, the service scans known networks. A visible preferred SSID is attempted
 first; when it is absent, visible known SSIDs are tried by descending RSSI. The
@@ -110,6 +129,7 @@ available to the future application. See also:
 - [Persistent Wi-Fi Profiles](subsys/services/wifi_profiles/README.md)
 - [Communication](subsys/communication/README.md)
 - [Optional MQTT adapter](subsys/services/mqtt/README.md)
+- [Connectivity, energy, and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md)
 
 ### Why Power is not always present
 
@@ -720,6 +740,11 @@ The detailed contract is in
 [UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Local transport and OTA
 and the remote console are active; physical interruption qualification remains in
 phase 290.
+
+The target low-energy extension adds BLE as a future Communication and update adapter,
+keeps Wi-Fi on demand, and replaces the dedicated always-resident mbedTLS arena with a
+bounded secure workspace. These are target contracts, not current implementation. See
+[Connectivity, energy, and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md).
 
 ## Discovery strategies
 

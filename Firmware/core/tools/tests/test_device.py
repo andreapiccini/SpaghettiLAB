@@ -7,10 +7,51 @@ import tempfile
 import unittest
 
 from tools.device import (
+    NetworkLineEditor,
     ToolError,
     create_network_credentials,
     network_credentials,
 )
+
+
+class NetworkLineEditorTest(unittest.TestCase):
+    """Verify local editing for the restricted network console."""
+
+    def test_history_replaces_remote_and_visible_line(self) -> None:
+        editor = NetworkLineEditor()
+
+        self.assertEqual(editor.process(b"help"), (b"help", b"help"))
+        self.assertEqual(editor.process(b"\r"), (b"\r", b"\r"))
+        self.assertEqual(editor.process(b"draft"), (b"draft", b"draft"))
+
+        wire, echo = editor.process(b"\x1b[A")
+        self.assertEqual(wire, (b"\x7f" * 5) + b"help")
+        self.assertEqual(echo, b"\r\x1b[2Knetwork:~$ help")
+
+        wire, echo = editor.process(b"\x1b[B")
+        self.assertEqual(wire, (b"\x7f" * 4) + b"draft")
+        self.assertEqual(echo, b"\r\x1b[2Knetwork:~$ draft")
+
+    def test_fragmented_arrow_and_unsupported_cursor_key(self) -> None:
+        editor = NetworkLineEditor()
+        editor.process(b"spaghetti status\r")
+
+        self.assertEqual(editor.process(b"\x1b["), (b"", b""))
+        wire, echo = editor.process(b"A")
+        self.assertEqual(wire, b"spaghetti status")
+        self.assertTrue(echo.endswith(b"spaghetti status"))
+        self.assertEqual(editor.process(b"\x1b[D"), (b"", b""))
+
+    def test_history_is_bounded_and_control_u_clears_line(self) -> None:
+        editor = NetworkLineEditor()
+        for index in range(NetworkLineEditor.HISTORY_LIMIT + 4):
+            editor.process(f"command-{index}\r".encode())
+
+        self.assertEqual(len(editor.history), NetworkLineEditor.HISTORY_LIMIT)
+        editor.process(b"temporary")
+        wire, echo = editor.process(b"\x15")
+        self.assertEqual(wire, b"\x7f" * len(b"temporary"))
+        self.assertEqual(echo, b"\r\x1b[2Knetwork:~$ ")
 
 
 class RemoteConsoleCredentialTest(unittest.TestCase):

@@ -305,7 +305,9 @@ you need its detailed contract.
 | [Extension guide](EXTENDING_SPAGHETTI_LAB.md) | Start-to-finish path for adding a Module driver or a Core/board variant |
 | [V1 platform closure](roadmap/V1-PLATFORM-CLOSURE.md) | Planned generic contracts and tasks required before the main Node-RED work |
 | [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |
+| [Connectivity and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) | Frozen BLE-first, on-demand Wi-Fi, resource-profile, update, and TLS-memory decisions |
 | [Implementation guide](FIRMWARE_IMPLEMENTATION_GUIDE.md) | Mandatory coding rules, decisions, workflow, and copyable templates |
+| [Problem and decision journal](DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md) | Symptoms encountered, verified causes, fixes, checks, and lasting lessons |
 | [Hardware and finalization reminder](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md) | Deferred hardware decisions, production gaps, and the prompt for completing them |
 | [File map](FILE_MAP.md) | What each file contains and what to read before each kind of task |
 | [Firmware validator](VALIDATOR.md) | Pre-build checks, commands, severities, scope, and corrections |

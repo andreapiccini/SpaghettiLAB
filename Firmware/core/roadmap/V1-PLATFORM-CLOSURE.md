@@ -2,7 +2,8 @@
 
 [← Indice roadmap](README.md) ·
 [Guida alle estensioni](../EXTENDING_SPAGHETTI_LAB.md) ·
-[Architettura](../ARCHITECTURE.md)
+[Architettura](../ARCHITECTURE.md) ·
+[Contratto connettività e risorse](../CONNECTIVITY_AND_RESOURCE_CONTRACT.md)
 
 Questo blocco chiude il firmware comune prima del lavoro principale in Node-RED.
 L'obiettivo non è aggiungere molti dispositivi concreti: è fare in modo che un nuovo
@@ -49,8 +50,11 @@ Al termine delle fasi 300–390:
    pienamente supportato tramite Config.
 6. **Probe espliciti.** Un provider dichiara se la prova è autorevole o euristica e se
    può modificare il dispositivo. Le prove invasive restano disabilitate salvo policy.
-7. **Niente heap Spaghetti.** Pool, record, proprietà, code e cataloghi hanno capacità
-   Kconfig o costanti pubbliche.
+7. **Niente heap Spaghetti general-purpose.** Module, record, proprietà, regole, code e
+   cataloghi hanno capacità Kconfig o costanti pubbliche. Lo stato temporaneo di
+   librerie TLS può usare allocazione bounded e ammessa dal Resource Manager, come
+   definito nel contratto connettività; non introduce ownership dinamica nei modelli
+   centrali.
 8. **Node-RED esegue le automazioni di prodotto.** Il Runtime V2 conserva scheduling
    locale e regole plug-in essenziali, ma non tenta di diventare un secondo Node-RED.
 
@@ -83,9 +87,15 @@ l'ordine numerico.
 - Soglie analogiche associate a futuri Module.
 - Registri di identificazione non documentati dai datasheet.
 - Root key/eFuse e provisioning irreversibile di produzione.
+- UUID GATT, MTU, frammentazione e limiti BLE prima delle misure su ESP32-C3.
+- Uno stack Matter/Zigbee soltanto perché una futura variante può avere la radio.
 
 Le API, i provider e i fake vengono predisposti ora. Il backend reale viene aggiunto
 quando schema e Module fisici forniscono dati verificabili.
+
+Il comportamento BLE-first, Wi-Fi on-demand e i profili RAM sono già congelati nel
+[contratto connettività e risorse](../CONNECTIVITY_AND_RESOURCE_CONTRACT.md), ma i task
+relativi verranno aggiunti alla roadmap soltanto dopo la revisione di quel contratto.
 
 ## Gate per passare a Node-RED
 
