@@ -13,7 +13,8 @@ The source code and generated `build/` directory stay on the host computer.
 - About 15 GB of free disk space for the first Docker image build
 - `make` on Linux, macOS, or Windows for the common shortcuts below
 - The host flashing program required by the Zephyr runner selected for the board
-- `screen` on Linux/macOS, or PySerial on Windows, for the serial console
+- `screen` for the raw console on Linux/macOS
+- PySerial and Rich for the styled cross-platform monitor
 
 The current ESP32-C3 build uses `esptool`. Install it on macOS:
 
@@ -32,6 +33,16 @@ On Linux, install it with your package manager or in a Python environment:
 ```sh
 python3 -m pip install esptool
 ```
+
+The first styled-monitor run creates an ignored `.venv/` and installs its host-only
+dependencies there automatically:
+
+```sh
+make monitor
+```
+
+To prepare the virtual environment without opening the serial port, run
+`make host-tools`. Nothing is installed in the global Python environment.
 
 ## Quick start
 
@@ -76,7 +87,7 @@ The same commands work on Linux, macOS, and Windows when `make` is available:
 
 ```sh
 make flash
-make screen
+make monitor
 ```
 
 The commands select the port automatically when exactly one supported USB serial
@@ -91,7 +102,7 @@ provide the port explicitly. The same override is accepted by both commands:
 
 ```sh
 make flash PORT=/dev/cu.usbserial-110
-make screen PORT=/dev/cu.usbserial-110
+make monitor PORT=/dev/cu.usbserial-110
 ```
 
 To keep the selection, copy `.env.example` to `.env` and set `PORT` there.
@@ -101,26 +112,38 @@ Linux example:
 
 ```sh
 make flash PORT=/dev/ttyACM0
-make screen PORT=/dev/ttyACM0
+make monitor PORT=/dev/ttyACM0
 ```
 
 Windows example from a terminal that provides `make`:
 
 ```powershell
 make flash PORT=COM3
-make screen PORT=COM3
+make monitor PORT=COM3
 ```
 
 Override the console or flashing speed only when necessary:
 
 ```sh
-make screen BAUD=9600
+make monitor BAUD=9600
 make flash FLASH_BAUD=115200
 ```
 
-On Linux and macOS, exit `screen` with `Ctrl-A`, then `\`, then `y`. On
-Windows, miniterm exits with `Ctrl-]`. Only one program can use the serial port
-at a time, so close the console before flashing.
+`make monitor` shows a calm Rich header, color-coded Zephyr levels and aligned
+module names. Structured Shell output such as `wifi scan` is rendered as a responsive
+Rich table with signal-strength colors. It preserves interactive input, reconnects
+after a USB reset, and exits
+with `Ctrl-X` (`Ctrl-]` also works on compatible layouts); `Ctrl-C` is forwarded to
+the Zephyr Shell. `make screen` remains the
+unformatted fallback: on Linux and macOS, exit it with `Ctrl-A`, then `\`, then `y`;
+on Windows, miniterm exits with `Ctrl-]`. Only one program can use the serial port at
+a time, so close either console before flashing.
+
+On connection, the styled monitor sends `Ctrl-C` so an already-running Zephyr Shell
+immediately redraws `uart:~$` without adding an empty command to its history. For a
+future binary serial protocol, use
+`.venv/bin/python tools/device.py monitor --no-wake` to open the port without
+transmitting that byte, or use the raw `make screen` path.
 
 `tools/device.py` reads `build/zephyr/runners.yaml`; the microcontroller and
 flash parameters therefore come from the active Zephyr build rather than from
@@ -148,8 +171,9 @@ sudo usermod -aG dialout "$USER"
 | `make shell` | Open a shell in the Zephyr environment |
 | `make ports` | List host USB serial ports detected automatically |
 | `make flash [PORT=...]` | Flash using the runner selected by the build |
-| `make screen [PORT=...]` | Open the serial console at 115200 baud |
-| `make monitor [PORT=...]` | Alias for `make screen` |
+| `make screen [PORT=...]` | Open the raw serial console at 115200 baud |
+| `make monitor [PORT=...]` | Open the styled, reconnecting Rich monitor |
+| `make host-tools` | Create `.venv/` and install monitor dependencies |
 | `make clean` | Remove the CMake build artifacts |
 
 Useful Windows equivalents:
@@ -158,6 +182,7 @@ Useful Windows equivalents:
 # Flash and open the console without make
 py -3 tools/device.py flash
 py -3 tools/device.py screen
+py -3 tools/device.py monitor
 
 # Open the Zephyr shell
 docker compose run --rm dev

@@ -7,12 +7,25 @@ VALIDATOR_ENV := $(if $(VALIDATOR_IS_QUIET),SPAGHETTI_VALIDATOR_QUIET=1 ,)
 HOST_PYTHON := python3
 ifeq ($(OS),Windows_NT)
 HOST_PYTHON := py -3
+HOST_VENV_PYTHON := .venv/Scripts/python.exe
+else
+HOST_VENV_PYTHON := .venv/bin/python
 endif
+HOST_TOOLS_STAMP := .venv/.spaghetti-host-tools-ready
 PORT_ARG := $(if $(strip $(PORT)),--port "$(PORT)",)
 BAUD ?= 115200
 FLASH_BAUD ?= 460800
 
-.PHONY: image shell validate build pristine flash screen monitor ports clean
+.PHONY: image shell validate build pristine flash screen monitor host-tools ports clean
+
+$(HOST_TOOLS_STAMP): tools/requirements.txt
+	@$(HOST_PYTHON) -m venv .venv
+	@$(HOST_VENV_PYTHON) -m pip install --disable-pip-version-check \
+		-r tools/requirements.txt
+	@$(HOST_VENV_PYTHON) -c \
+		"from pathlib import Path; Path('$(HOST_TOOLS_STAMP)').touch()"
+
+host-tools: $(HOST_TOOLS_STAMP)
 
 image:
 	@$(COMPOSE) build
@@ -48,7 +61,8 @@ flash:
 screen:
 	@$(HOST_PYTHON) tools/device.py screen $(PORT_ARG) --baud "$(BAUD)"
 
-monitor: screen
+monitor: $(HOST_TOOLS_STAMP)
+	@$(HOST_VENV_PYTHON) tools/device.py monitor $(PORT_ARG) --baud "$(BAUD)"
 
 ports:
 	@$(HOST_PYTHON) tools/device.py ports
