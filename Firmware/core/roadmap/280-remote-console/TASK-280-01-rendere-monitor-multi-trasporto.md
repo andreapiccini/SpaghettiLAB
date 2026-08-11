@@ -13,7 +13,9 @@ Update.
 
 Il servizio accetta una sola sessione, usa timeout di inattività e code statiche; se il
 client è lento scarta i log più vecchi senza bloccare producer e Runtime. Operazioni
-sensibili come armare OTA richiedono una sessione autenticata e una policy esplicita.
+sensibili come armare OTA o richiedere `maintenance reboot` richiedono una sessione
+autenticata e una policy esplicita. Il comando di reboot salva un marker one-shot
+separato dalla Config e risponde al client prima di riavviare.
 
 Apri `tools/device.py` e aggiungi trasporti host separati mantenendo un solo formatter:
 

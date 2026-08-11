@@ -14,7 +14,7 @@ Separare boot senza Config, esecuzione normale e prova di una nuova immagine.
 
 ## Criteri di completamento della fase
 
-- [ ] Config assente non avvia rete, Runtime o update.
+- [ ] Config assente avvia maintenance UART locale, ma non rete, Runtime o upload.
 - [ ] Config valida avvia il normale Engine con update chiuso.
 - [ ] L'immagine di prova viene confermata solo dopo health check.
 - [ ] Watchdog/reset provoca rollback se la prova non arriva a READY.

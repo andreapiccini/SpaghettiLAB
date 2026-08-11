@@ -15,8 +15,9 @@ La firma MCUboot resta obbligatoria anche con DTLS: DTLS autentica la sessione, 
 autentica l'immagine al boot. Abilita soltanto Image Management e lo stretto gruppo
 Spaghetti; non esporre shell, filesystem, settings o reset generico.
 
-La finestra OTA non parte perché esiste il Wi-Fi: deve essere armata localmente dalla
-base oppure da un futuro canale remoto già autenticato. Usa il callback upload-check
+La finestra OTA non parte perché esiste il Wi-Fi: deve essere armata dalla maintenance
+locale oppure da un canale remoto già autenticato. Il comando remoto può anche salvare
+il marker one-shot e riavviare in maintenance. Usa il callback upload-check
 mcumgr per rifiutare upload quando stato, versione, dimensione o trasporto non sono
 ammessi. Dimensione massima = capacità effettiva di `image-1` meno trailer MCUboot.
 

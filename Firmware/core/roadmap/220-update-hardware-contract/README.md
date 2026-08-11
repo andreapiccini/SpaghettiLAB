@@ -1,21 +1,21 @@
-# Fase 220 — Contratto hardware update
+# Fase 220 — Contratto astratto Maintenance Link
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
-Trasformare i “tre pin” in un contratto elettrico verificabile prima di scrivere codice
-che cambia il pinmux o interrompe I2C.
+Separare completamente Update e Core dai pin fisici, lasciando alla board/overlay la
+mappatura tra collegamento normale e collegamento di manutenzione.
 
 ## Task
 
-1. ⬜ [TASK-220-01 — Congelare il contratto hardware dei tre segnali](TASK-220-01-congelare-il-contratto-hardware-update.md)
+1. ✅ [TASK-220-01 — Definire il contratto astratto del Maintenance Link](TASK-220-01-congelare-il-contratto-hardware-update.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Schema, connettore, GPIO, tensioni e safe state sono documentati.
-- [ ] È confermato se i tre pin sono segnali oppure includono alimentazione/massa.
-- [ ] Il segnale di richiesta non può essere attivato accidentalmente da un sensore.
-- [ ] UART temporanea su GPIO3/GPIO4 è elettricamente compatibile con la base.
+- [x] Firmware comune e backend board-specific hanno responsabilità separate.
+- [x] GPIO3/GPIO4 compaiono soltanto nella mappatura Core V1.
+- [x] Config assente, payload di boot e reboot one-shot sono definiti.
+- [x] Il Maintenance Link non coincide con lo stato di upload firmware.

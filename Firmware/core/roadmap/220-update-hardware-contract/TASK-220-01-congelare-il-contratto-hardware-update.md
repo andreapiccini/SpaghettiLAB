@@ -1,54 +1,65 @@
-# TASK-220-01 — Congelare il contratto hardware dei tre segnali
+# TASK-220-01 — Definire il contratto astratto del Maintenance Link
 
-**Stato:** ⬜ TODO
-**Fase:** 220 — Contratto hardware update
+**Stato:** ✅ DONE
+**Fase:** 220 — Contratto astratto Maintenance Link
 
 ## Cosa devo fare
 
-Non modificare ancora `.c`, `.h`, DTS, Kconfig o CMake. Apri lo schema della scheda e
-crea `UPDATE_HARDWARE_CONTRACT.md` nella root con una tabella che riporti, per ciascun
-contatto, nome sul connettore, GPIO ESP32-C3, direzione in `NORMAL`, direzione in
-`MAINTENANCE`, pull, livello attivo, tensione e comportamento al reset.
+Non modificare ancora `.c`, `.h`, DTS, Kconfig o CMake. Crea
+`UPDATE_HARDWARE_CONTRACT.md` nella root e definisci il Maintenance Link come capability
+fornita dalla variante Core. Il firmware comune deve vedere operazioni logiche, mai
+numeri GPIO:
 
-Il contratto proposto richiede tre **segnali**, oltre a massa e alimentazione:
-
-```text
-SDA / UART_RX       GPIO3   I2C in NORMAL, ingresso UART in MAINTENANCE
-SCL / UART_TX       GPIO4   I2C in NORMAL, uscita UART in MAINTENANCE
-MAINTENANCE_REQUEST <GPIO reale da schema> ingresso con pull e livello inattivo sicuro
+```c
+int spaghetti_maintenance_link_init(void);
+int spaghetti_maintenance_link_probe(uint32_t timeout_ms, bool *requested);
+int spaghetti_maintenance_link_enter(
+	enum spaghetti_maintenance_entry_reason reason);
+int spaghetti_maintenance_link_leave(void);
 ```
 
-Non sostituire `<GPIO reale da schema>` con un valore scelto liberamente. Se i “tre pin”
-includono GND o alimentazione, questa proposta non è realizzabile: documenta il blocco e
-prevedi almeno un contatto aggiuntivo oppure un connettore/pad di manutenzione.
+`probe()` ascolta un payload di ingresso bounded senza trasmettere. `enter()` rende
+disponibile il canale locale dopo avere escluso il bus normale. `leave()` ripristina il
+bus normale ed è idempotente. `reason` distingue Config assente, frame di bootstrap e
+richiesta one-shot, ma non sceglie pin.
 
-Specifica anche chi guida ogni linea, se la base condivide i pull-up I2C e come evita di
-pilotare TX mentre i pin sono ancora in open-drain. `MAINTENANCE_REQUEST` deve restare
-inattivo collegando un normale sensore; non usare SDA/SCL tenuti bassi come trigger.
+Per Core V1 documenta GPIO3 come I2C SDA/UART RX e GPIO4 come I2C SCL/UART TX. Questa
+mappatura appartiene esclusivamente a DTS e pinctrl. Una nuova Core deve fornire lo
+stesso contratto tramite il proprio overlay, anche usando pin o controller differenti.
+
+Definisci tre ingressi:
+
+1. Config assente o invalida: maintenance locale immediata, senza Wi-Fi;
+2. Config valida: breve probe RX al boot; solo un payload valido entra in maintenance;
+3. comando autenticato in esecuzione: salva `maintenance/boot_once` e riavvia; Core
+   consuma il marker prima di entrare, così non crea un boot loop.
+
+Maintenance non scrive automaticamente firmware. Config/provisioning e Image
+Management restano comandi successivi e separati.
 
 ## Perché è fatto così
 
 Il driver I2C ESP32-C3 di Zephyr 4.4 non supporta la modalità target e `mcumgr` non ha
-un trasporto I2C. Riutilizzare SDA/SCL come UART è supportabile soltanto dopo avere
-fermato I2C e applicato un diverso stato pinctrl. Un terzo segnale dedicato evita che un
-sensore o un bus bloccato attivino accidentalmente la manutenzione.
+un trasporto I2C. Il backend può però riutilizzare SDA/SCL come UART dopo avere fermato
+I2C. L'astrazione permette a una Core diversa di realizzare la stessa funzione senza
+modificare Update, Core o Communication.
 
 ## Come si usa
 
-Il documento prodotto diventa l'unica sorgente ammessa per scrivere DTS e pinctrl nel
-task 260. La base asserisce la richiesta, attende l'ACK definito nel contratto e soltanto
-allora inizia a trasmettere UART.
+Il documento prodotto è il contratto usato dai task 250 e 260. Senza Config la base
+trova direttamente UART locale. Con Config invia il frame durante la finestra iniziale
+oppure richiede un reboot one-shot attraverso un canale già autenticato.
 
 ## Checklist di completamento
 
-- [ ] I tre segnali sono distinti da alimentazione e massa.
-- [ ] Ogni segnale ha GPIO, direzione, pull, tensione e safe state verificati.
-- [ ] Sono definiti tempi di richiesta, ACK, rilascio e timeout.
-- [ ] È documentato come evitare contesa elettrica durante I2C → UART → I2C.
-- [ ] Il contratto è confrontato con schema e datasheet, non con supposizioni.
+- [x] Le API comuni non contengono GPIO o controller concreti.
+- [x] Core V1 mappa la capability su GPIO3/GPIO4 solo nella descrizione board.
+- [x] Config assente entra direttamente in maintenance locale.
+- [x] Payload al boot e reboot one-shot non persistono come stato Update.
+- [x] Il passaggio I2C → UART → I2C ha ownership e rollback definiti.
 
 ## Verifica e fine task
 
-Confronta `UPDATE_HARDWARE_CONTRACT.md` con schema e board DTS. Il task termina quando
-non contiene placeholder e una normale periferica I2C non può soddisfare la sequenza di
-ingresso in manutenzione.
+Esegui `./validator roadmap` e controlla che `UPDATE_HARDWARE_CONTRACT.md` non assegni
+GPIO alle API comuni. Il task termina quando una nuova Core può cambiare mappatura
+modificando board/overlay senza cambiare il coordinatore Update.

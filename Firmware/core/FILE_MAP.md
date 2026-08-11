@@ -65,6 +65,7 @@ flowchart TD
 | `README.md` | Supported hosts, Docker workflow, build/flash commands, navigation, licensing summary | First checkout; environment, build, flash, or documentation navigation changes |
 | `tools/device.py` | Cross-platform serial-port discovery, Zephyr runner selection, host flashing, and console launch | Changing `make flash`, `make screen`, port detection, or support for another flash runner |
 | `ARCHITECTURE.md` | Generic ownership, boundaries, static/runtime split, data/control flow | Any new component, dependency, shared state, protocol adapter, or lifecycle change |
+| `UPDATE_HARDWARE_CONTRACT.md` | Board-independent Maintenance Link, boot-entry policy, and Core V1 mapping | Implementing provisioning, pinmux switching, MCUboot, OTA, recovery, or a new Core backend |
 | `FIRMWARE_IMPLEMENTATION_GUIDE.md` | Normative code/API/type/memory/thread/logging/testing rules | Before writing or reviewing firmware code |
 | `FILE_MAP.md` | This reading map and file-purpose catalog | When deciding what must be read for a task |
 | `VALIDATOR.md` | Validator commands, colors, scope, rules, severities, quiet/strict modes, and limitations | When a finding appears or validation behavior changes |

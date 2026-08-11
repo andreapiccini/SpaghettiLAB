@@ -15,7 +15,8 @@ attivabile da un sensore.
 
 ## Criteri di completamento della fase
 
-- [ ] Il pinmux cambia soltanto dopo la richiesta fisica verificata.
+- [ ] Il pinmux è scelto dal backend board, non dai servizi comuni.
+- [ ] Config assente abilita direttamente UART; Config valida usa probe o reboot one-shot.
 - [ ] Runtime e Module sono fermi prima di lasciare I2C.
 - [ ] Config/Wi-Fi e firmware usano frame bounded e versionati.
 - [ ] Timeout ripristina I2C e scarta upload incompleti.

@@ -18,6 +18,9 @@ matrice seguente per UART e Wi-Fi:
 8. crash, deadlock simulato e watchdog durante `TRIAL_BOOT`;
 9. Config assente, Config corrotta e Storage temporaneamente illeggibile;
 10. perdita Wi-Fi e console remota durante l'upload.
+11. Config assente: UART maintenance attiva, rete spenta e nessun upload automatico;
+12. Config valida con bootstrap assente, frame invalido e frame valido;
+13. `maintenance reboot`: marker consumato una volta e nessun boot loop.
 
 Per ogni prova registra versione iniziale/finale, slot attivo, swap type, stato Update,
 Config preservata e motivo dell'esito. Verifica inoltre che la chiave privata di firma,

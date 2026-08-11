@@ -243,9 +243,12 @@ prova almeno:
 - watchdog, recovery e aggiornamento firmware, se richiesti dal prodotto;
 - test prolungato con Wi-Fi, MQTT, Runtime e più Module simultanei.
 
-OTA, watchdog e low-power globale non sono automaticamente promessi
-dall’architettura corrente: devono diventare requisiti espliciti prima di essere
-implementati.
+OTA e console remota sono ora pianificati nelle fasi 220–290. Il Maintenance Link è
+indipendente dai pin: Core V1 riusa GPIO3/GPIO4 come I2C oppure UART, mentre ogni altra
+board/overlay deve fornire la stessa capability con il proprio hardware. Config assente
+entra direttamente in maintenance UART locale; con Config valida si usa un payload
+bounded nella finestra di boot oppure un marker one-shot seguito da reboot. Watchdog e
+low-power globale richiedono comunque implementazione e qualificazione dedicate.
 
 ## Ordine consigliato
 

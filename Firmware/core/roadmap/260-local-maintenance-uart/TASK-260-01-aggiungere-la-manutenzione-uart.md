@@ -5,15 +5,17 @@
 
 ## Cosa devo fare
 
-Questo task può iniziare soltanto quando `UPDATE_HARDWARE_CONTRACT.md` non contiene
-placeholder. Apri il DTS della nuova revisione e aggiungi due stati pinctrl reali:
-GPIO3/GPIO4 come I2C normale e gli stessi GPIO come RX/TX UART di manutenzione. Aggiungi
-il GPIO di richiesta con polarità presa dal contratto.
+Apri `UPDATE_HARDWARE_CONTRACT.md`, il binding Maintenance Link e il DTS/overlay della
+Core selezionata. Aggiungi due stati pinctrl board-specific. Su Core V1 sono GPIO3/GPIO4
+come I2C normale e gli stessi GPIO come RX/TX UART. Nessun file comune deve nominare
+questi GPIO; un'altra overlay può fornire pin e controller diversi.
 
-Crea `subsys/services/maintenance_link/`. Il servizio osserva il segnale dedicato,
-chiede a Core di fermare Runtime e rimuovere i Module, acquisisce Port 0 in modo
-esclusivo, sospende I2C, applica pinctrl UART e abilita SMP UART. Non cambia pinmux da
-ISR: l'ISR segnala un worker bounded.
+Crea `subsys/services/maintenance_link/` e implementa le API del contratto. Con Config
+assente `enter(CONFIG_ABSENT)` abilita direttamente UART. Con Config valida `probe()`
+mantiene TX inattivo e accetta un solo frame bounded/versionato/autenticato nella
+finestra Devicetree. Un comando già autenticato può salvare il marker one-shot e
+riavviare. Prima di `enter()`, Core ferma Runtime e Module, acquisisce la Port in modo
+esclusivo, sospende I2C, applica pinctrl UART e abilita SMP UART.
 
 Usa il framing SMP UART di Zephyr 4.4 per Image Management. Aggiungi un gruppo mcumgr
 Spaghetti limitato a: leggere stato/versione, installare una Config CBOR e aggiungere o
@@ -32,16 +34,17 @@ sensore venga interpretato come programmatore.
 
 ## Come si usa
 
-La base asserisce `MAINTENANCE_REQUEST`, attende ACK, invia prima Config/profilo Wi-Fi e
-poi, se necessario, l'immagine firmata tramite SMP UART. Senza richiesta il modulino
-resta in I2C normale oppure passivo se non configurato.
+Senza Config la base trova UART locale già attiva. Con Config invia il payload durante
+la finestra di boot oppure usa `maintenance reboot` attraverso un canale autenticato.
+Dopo l'ingresso invia Config/profilo Wi-Fi e, separatamente, l'immagine firmata tramite
+SMP UART.
 
 ## Checklist di completamento
 
-- [ ] Nessun GPIO o livello attivo è inventato.
+- [ ] Nessun GPIO compare fuori da board DTS/overlay e pinctrl.
 - [ ] Entrata/uscita dalla manutenzione sono atomiche rispetto alla Port.
 - [ ] Password e payload firmware non compaiono nei log.
-- [ ] Sensore, bus bloccato e rumore non attivano la modalità.
+- [ ] Sensore, bus bloccato e frame invalido non attivano la modalità con Config valida.
 
 ## Verifica e fine task
 

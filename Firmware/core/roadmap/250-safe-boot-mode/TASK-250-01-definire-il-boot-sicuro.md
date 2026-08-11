@@ -12,11 +12,12 @@ stato MCUboot.
 
 Sequenza obbligatoria:
 
-1. inizializza Storage, Communication locale passiva e Update;
+1. inizializza Storage, Maintenance Link e Update senza avviare la rete;
 2. se MCUboot segnala un'immagine non confermata, entra `TRIAL`;
-3. se Config è assente, entra `UNPROVISIONED`: non avvia scansione Wi-Fi, MQTT,
-   Discovery, Runtime o listener OTA;
-4. se Config è valida, entra `NORMAL` e avvia l'Engine con trasporti update chiusi;
+3. se Config è assente o invalida, entra `UNPROVISIONED` e attiva direttamente la UART
+   locale di maintenance; non avvia Wi-Fi, MQTT, Discovery, Runtime o OTA di rete;
+4. se Config è valida, consuma prima un eventuale marker one-shot; in sua assenza apre
+   la sola finestra RX di bootstrap e poi entra `NORMAL` se non riceve un frame valido;
 5. in `TRIAL`, avvia gli stessi componenti della Config e conferma con
    `boot_write_img_confirmed()` solo dopo Core READY, Storage leggibile, Communication
    viva e una finestra di stabilità;
@@ -36,7 +37,8 @@ segreti. L'utente non può invocare direttamente `boot_write_img_confirmed()`.
 
 ## Checklist di completamento
 
-- [ ] Boot senza Config resta passivo e configurabile localmente.
+- [ ] Boot senza Config entra in UART locale senza avviare rete o upload automatico.
+- [ ] Marker one-shot e payload valido entrano in maintenance senza boot loop.
 - [ ] Boot normale non espone listener update.
 - [ ] Trial sano viene confermato dopo la finestra prevista.
 - [ ] Trial guasto o bloccato viene riportato alla versione precedente.

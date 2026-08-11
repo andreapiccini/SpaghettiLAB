@@ -611,6 +611,42 @@ protocol. MQTT belongs here if the product chooses it.
 An adapter does not own modules, modify Manager internals, or define the common
 Data representation.
 
+## Planned maintenance and firmware-update boundary
+
+Maintenance is a Core capability, not a property of a runtime Module and not a fixed
+GPIO pair in common code. A board/overlay supplies a Maintenance Link that can switch
+one physical connection between its normal role and a local maintenance transport.
+
+```mermaid
+flowchart LR
+    CORE["Core boot policy"] --> LINK["Maintenance Link contract"]
+    LINK --> BOARD["Board / overlay backend"]
+    BOARD --> NORMAL["Normal controller"]
+    BOARD --> LOCAL["Local maintenance transport"]
+    UPDATE["Update coordinator"] --> LINK
+```
+
+On Core V1 the board mapping is I2C SDA/SCL on GPIO3/GPIO4 in normal operation and
+UART RX/TX on the same pins during maintenance. Those numbers remain board facts. A
+future Core may use different pins or controllers while preserving the same operations:
+initialize, probe for a bounded boot request, enter maintenance and leave maintenance.
+
+Boot policy is distinct from image-upload state:
+
+- no valid Config enters local maintenance directly, while Wi-Fi and network OTA stay
+  disabled;
+- a valid Config normally starts the Engine after a short receive-only bootstrap probe;
+- a valid bootstrap payload may enter maintenance;
+- an authenticated running system may save a one-shot marker and reboot into
+  maintenance; the marker is consumed before entry;
+- entering maintenance does not write flash. Image Management must separately ask the
+  Update coordinator to receive into the secondary slot.
+
+The detailed contract is in
+[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Its implementation is
+planned in roadmap phases 230–290; this section does not claim that OTA is already
+active in the production firmware.
+
 ## Discovery strategies
 
 Discovery is optional. It answers one question: “what module identity is being

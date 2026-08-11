@@ -231,6 +231,11 @@ The `build/` directory is generated locally and can be safely recreated.
 
 ## Documentation
 
+For the planned USB-free provisioning, A/B update and remote-console work, start from
+[the Maintenance Link hardware contract](UPDATE_HARDWARE_CONTRACT.md) and the
+[OTA roadmap](roadmap/OTA-REMOTE-MAINTENANCE.md). GPIO and controller selection belong
+to each board/overlay; the common update architecture does not contain pin numbers.
+
 Start with the architecture overview, then open a component document only when
 you need its detailed contract.
 
