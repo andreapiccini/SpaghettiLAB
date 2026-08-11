@@ -1,0 +1,23 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Runtime configuration and descriptor for Example Module.
+ */
+
+#ifndef SPAGHETTI_EXAMPLE_MODULE_H
+#define SPAGHETTI_EXAMPLE_MODULE_H
+
+#include <stdint.h>
+
+struct spaghetti_module_driver;
+
+/** Configuration copied into one Example Module context. */
+struct spaghetti_example_module_config {
+	uint8_t i2c_address; /**< 7-bit address; replace range with the datasheet range. */
+};
+
+/** Immutable descriptor shared by every Example Module instance. */
+extern const struct spaghetti_module_driver spaghetti_example_module_driver;
+
+#endif /* SPAGHETTI_EXAMPLE_MODULE_H */

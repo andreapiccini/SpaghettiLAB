@@ -1,0 +1,7 @@
+# Enable only hardware required for this board to boot and expose verified devices.
+CONFIG_SERIAL=y
+CONFIG_CONSOLE=y
+CONFIG_GPIO=y
+CONFIG_I2C=y
+
+# Product policy, Module assignments and network credentials do not belong here.

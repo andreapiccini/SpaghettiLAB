@@ -6,7 +6,7 @@ Communication V0 separates transport-specific input from bounded firmware
 requests. Zephyr Shell is the first adapter; future transports reuse the same
 `spaghetti_communication_handle_request()` dispatch.
 
-## Contratti
+## Contracts
 
 `include/spaghetti/communication.h` defines caller-owned request and response
 envelopes with a fixed 256-byte payload. Communication never retains pointers to

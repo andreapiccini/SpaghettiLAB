@@ -1,44 +1,45 @@
-# Diario dei problemi, delle soluzioni e delle decisioni
+# Diary of problems, solutions and decisions
 
-[← README](README.md) · [Architettura](ARCHITECTURE.md) ·
-[Contratto connettività e risorse](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) ·
-[Promemoria hardware](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md)
+[← README](README.md) · [Architecture](ARCHITECTURE.md) · [Connectivity and resource
+contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) · [Hardware
+reminder](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md)
 
-Questo documento conserva gli incidenti tecnici incontrati durante lo sviluppo del
-firmware Spaghetti LAB, la causa effettivamente accertata, la soluzione adottata e la
-decisione architetturale che ne è derivata. È un registro operativo aggiornato fino
-all'11 agosto 2026, non un sostituto dei test o della documentazione dei componenti.
+This document preserves the technical incidents encountered during the development of
+the Spaghetti LAB firmware, the actual cause, the solution adopted and the architectural
+decision derived from it. It is an operational record updated through 11 August 2026, not
+a substitute for testing or documentation of components.
 
-## Come leggere il registro
+## How to read this record
 
-Ogni voce usa uno di questi stati:
+Each entry uses one of these states:
 
-| Stato | Significato |
+| State | Meaning |
 |---|---|
-| **Risolto** | Causa e correzione sono implementate o documentate con una verifica ripetibile. |
-| **Atteso** | Il comportamento osservato è corretto e non richiede una correzione. |
-| **Mitigato** | Il sistema funziona, ma la causa o la soluzione definitiva richiede altre prove. |
-| **Pianificato** | La decisione è congelata, ma non esiste ancora l'implementazione. |
-| **Rinviato** | Servono hardware reale o decisioni di produzione non ancora disponibili. |
+| **Fixed** | Cause and correction are implemented or documented with repeatable verification. |
+| **Expected** | The observed behavior is correct and requires no correction. |
+| **Mitigated** | The system works, but the cause or final solution requires further evidence. |
+| **Planned** | The decision is frozen, but implementation is not complete. |
+| **Deferred** | Real hardware or unavailable production decisions are required. |
 
-Non trasformare una voce **Mitigata**, **Pianificata** o **Rinviata** in una promessa di
-prodotto. Prima di cambiare una soluzione già adottata, rileggi il campo “Risultato e
-regola permanente”: spesso spiega quale regressione la soluzione stava evitando.
+Do not turn a **Mitigated**, **Planned**, or **Deferred** entry into a product
+promise. Before changing a solution already adopted, read the “Result and permanent
+rule” field: often explains what regression the solution was avoiding.
 
-## Diagnosi rapida
+## Quick diagnosis
 
-Quando compare un problema nuovo, usa questo ordine:
+When a new problem appears, use this order:
 
-1. conserva il primo errore completo, non soltanto l'ultima riga di Ninja;
-2. esegui `make validate` per controllare esattamente le sorgenti viste da CMake;
-3. se sono cambiati Kconfig, CMake o Devicetree, esegui `make pristine`;
-4. per un errore hardware, separa “driver compilato” da “dispositivo realmente
-   collegato e pronto”;
-5. per rete o TLS, salva stato Wi-Fi, stato del servizio e primo errore handshake;
-6. per crash o `-ENOMEM`, misura stack e memoria nel carico reale, non soltanto a boot;
-7. per OTA, non cancellare mai l'immagine confermata durante la diagnosi.
+1. preserve the first complete error, not only Ninja's final line;
+2. run `make validate` to check exactly the sources selected by CMake;
+3. if Kconfig, CMake or Devicetree have changed, run `make pristine`;
+4. for a hardware error, distinguish “driver compiled” from “physically connected and ready
+   device”;
+5. for network or TLS, save Wi-Fi status, service status and first handshake error;
+6. for a crash or `-ENOMEM`, measure stacks and memory under the real workload, not only
+   at boot;
+7. for OTA, never delete the image confirmed during diagnosis.
 
-Comandi di prima diagnosi:
+First diagnosis commands:
 
 ```sh
 make validate
@@ -48,7 +49,7 @@ make monitor
 make screen
 ```
 
-Comandi Shell utili sul dispositivo:
+Shell commands on the device:
 
 ```text
 spaghetti status
@@ -58,13 +59,13 @@ spaghetti remote status
 kernel thread stacks
 ```
 
-## Formattazione e validator
+## Formatting and validator
 
-### Indentazione a spazi, whitespace finale e contratti header
+### Space indentation, trailing whitespace, and header contracts
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Sintomi osservati:**
+**Observed symptoms:**
 
 ```text
 ERROR [C001] ... Block indentation uses spaces
@@ -73,223 +74,215 @@ ERROR [HDR004] ... Public function parameter is undocumented
 ERROR [HDR005] ... Public function return contract is incomplete
 ```
 
-**Causa:** il firmware segue lo stile C di Zephyr: un livello di blocco usa un tab
-reale, mentre gli spazi sono riservati all'allineamento delle continuazioni. Gli
-header pubblici devono inoltre documentare parametri, direzione, ownership, lifetime e
-risultati. Premere il tasto Tab non basta se l'editor lo converte automaticamente in
-spazi.
+**Cause:** the firmware follows Zephyr C style: each block level uses a real tab, while
+spaces are reserved for continuation alignment. Public headers must also document
+parameters, direction, ownership, lifetime, and results. Pressing the Tab key is not enough
+if the editor automatically converts it to spaces.
 
-**Soluzione:** configurare l'editor per inserire tab nei file C, rimuovere gli spazi a
-fine riga e completare Doxygen con `@param`, `@retval` o `@return`. Per vedere i
-caratteri invisibili di una riga:
+**Solution:** configure the editor to insert tabs in C files, remove trailing whitespace, and
+complete Doxygen with `@param`, `@retval` or `@return`. To see the invisible characters
+of a row:
 
 ```sh
 sed -n '33l' spaghetti_modules/ina219/ina219.c
 ```
 
-`\t` rappresenta un tab reale; spazi o tab prima di `$` indicano whitespace finale.
-La guida normativa è
+`\t` represents a real tab; spaces or tabs before `$` indicate trailing whitespace. The
+authoritative guide is
 [FIRMWARE_IMPLEMENTATION_GUIDE.md](FIRMWARE_IMPLEMENTATION_GUIDE.md).
 
-**Verifica:** `make validate` e, durante una modifica locale,
-`./validator percorso/del/file`.
+**Check:** `make validate` and, during a local change, `./validator path/to/file`.
 
-**Risultato e regola permanente:** correggere prima il primo errore strutturale, perché
-un parser confuso può produrre altri errori HDR secondari. Non disabilitare una regola
-per aggirare la configurazione dell'editor.
+**Result and permanent rule:** fix first structural error, because a confused parser can
+produce other secondary HDR errors. Do not disable a rule to bypass the editor
+configuration.
 
-### Il validator controllava file che la build non compilava
+### The validator checked files that the build didn't build
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Problema:** una scansione ricorsiva della cartella segnalava file futuri, incompleti
-o non selezionati dalla build. Il risultato non rappresentava ciò che `make` avrebbe
-compilato.
+**Problem:** a recurring scan of the folder reported future, incomplete or unselected
+files from the build. The result was not what `make` would compile.
 
-**Soluzione:** CMake valuta le proprietà `SOURCES` e `INCLUDE_DIRECTORIES` del target
-`app` e le passa al validator. Gli header entrano attraverso il grafo reale degli
-include. `make validate`, `make build`, `make pristine` e un `west build` diretto
-condividono quindi lo stesso scope.
+**Solution:** CMake evaluates `SOURCES` and `INCLUDE_DIRECTORIES` properties of `app`
+target and passes them to validator. Headers enter through the real graph of include.
+`make validate`, `make build`, `make pristine` and a direct `west build` therefore share
+the same source set.
 
-**Risultato e regola permanente:** il validator non deve tornare a scandire tutto il
-repository per impostazione predefinita. Per controllare esplicitamente roadmap,
-overlay o un file non compilato si passa il percorso a `./validator`. Dettagli in
-[VALIDATOR.md](VALIDATOR.md).
+**Result and permanent rule:** the validator should not return to scan the whole
+repository by default. To explicitly check roadmap, overlay or unfinished file, you pass
+the path to `./validator`. Details in [VALIDATOR.md](VALIDATOR.md).
 
-## Compilazione e linking
+## Compiling and linking
 
-### Header INA219 non trovato
+### INA219 header not found
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Sintomo:**
+**Symptom:**
 
 ```text
 fatal error: spaghetti_modules/ina219/ina219.h: No such file or directory
 ```
 
-**Causa:** la forma dell'`#include` non corrispondeva alle directory esportate al
-compilatore. Aggiungere `spaghetti_modules/ina219` agli include path rende disponibile
-`<ina219.h>`, non automaticamente
-`<spaghetti_modules/ina219/ina219.h>`.
+**Cause:** the form of the `#include` did not correspond to the directories exported to
+the compiler. Adding `spaghetti_modules/ina219` to the include path makes `<ina219.h>`
+available, not automatically `<spaghetti_modules/ina219/ina219.h>`.
 
-**Soluzione adottata:** i driver concreti espongono il proprio include directory
-privato dal `CMakeLists.txt` dell'applicazione e i chiamanti usano:
+**Adopted solution:** concrete drivers expose their own private include directory
+from the application `CMakeLists.txt` and callers use:
 
 ```c
 #include <ina219.h>
 ```
 
-**Verifica:** leggere il comando compiler completo o `compile_commands.json`, quindi
-controllare che il percorso desiderato sia presente fra le opzioni `-I`.
+**Check:** read the full compiler or `compile_commands.json` command, then check that
+the desired path is present between `-I` options.
 
-**Risultato e regola permanente:** non correggere un include copiando header in
-cartelle casuali. Decidere prima se il contratto è pubblico sotto `include/spaghetti/`
-oppure privato del driver e mantenere coerenti include e CMake.
+**Result and permanent rule:** do not fix an include by copying headers into arbitrary
+folders. Decide first whether the contract is public under `include/spaghetti/` or
+private to the driver, then keep includes and CMake consistent.
 
 ### `undefined reference to spaghetti_ina219_driver`
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Sintomo:** la compilazione degli header terminava, ma il linker non trovava il
-descrittore `spaghetti_ina219_driver` usato dal Registry.
+**Symptom:** header compilation completed, but the linker could not find the
+`spaghetti_ina219_driver` descriptor used by the Registry.
 
-**Causa generale:** un errore di linker significa che la dichiarazione è visibile, ma
-la definizione non è entrata nell'immagine con lo stesso nome e linkage. Le cause da
-controllare sono: sorgente assente da `target_sources`, simbolo dichiarato `static`,
-nome differente o compilazione condizionale non attiva.
+**Root cause:** a linker error means that the statement is visible, but the
+definition did not enter the image with the same name and linkage. The causes to check
+are: source absent from `target_sources`, symbol declared `static`, different name or
+non-active conditional compilation.
 
-**Soluzione adottata:** `spaghetti_modules/ina219/ina219.c` è una sorgente esplicita del
-target `app`; `ina219.h` dichiara il descrittore con `extern` e il `.c` lo definisce con
-linkage esterno.
+**Adopted solution:** `spaghetti_modules/ina219/ina219.c` is an explicit source of the
+`app` target; `ina219.h` declares the descriptor with `extern` and `.c` defines it with
+external linkage.
 
-**Risultato e regola permanente:** distinguere sempre:
+**Result and permanent rule:** always distinguish:
 
-- `No such file or directory`: problema di include/compilazione;
-- `undefined reference`: problema di oggetto o simbolo al link.
+- `No such file or directory`: include or compilation problem;
+- `undefined reference`: object or symbol problem at the link.
 
-Non aggiungere una seconda definizione nel Registry per far sparire l'errore.
+Do not add a second definition in the Registry to make the error disappear.
 
-## Hardware e Module
+## Hardware and Module
 
-### INA219 initialization failed con `-19`
+### INA219 initialization failed with `-19`
 
-**Stato:** Atteso quando il sensore non è collegato.
+**State:** Expected when the sensor is not connected.
 
-**Sintomo:**
+**Symptom:**
 
 ```text
 INA219 initialization failed: -19
 ```
 
-**Causa:** `-19` è `-ENODEV`: il controller o il dispositivo atteso non è disponibile.
-Nel caso osservato INA219 non era fisicamente collegato.
+**Cause:** `-19` is `-ENODEV`: the expected controller or device is not available. In
+the case observed INA219 was not physically connected.
 
-**Soluzione:** collegare alimentazione, massa, SDA e SCL, verificare pull-up e indirizzo
-I2C, oppure eseguire il firmware senza configurare quel Module. Non trasformare
-l'assenza fisica in un falso successo.
+**Solution:** connect power, mass, SDA and SCL, check pull-ups and I2C address, or run
+firmware without configuring that Module. Do not turn physical absence into a false
+success.
 
-**Risultato e regola permanente:** una build riuscita dimostra che il driver è stato
-compilato; non dimostra che l'hardware risponda. Un Module assente deve fallire in modo
-isolato senza fermare Communication o rendere inutilizzabile il Core.
+**Result and permanent rule:** a successful build shows that the driver has been
+compiled; it does not show that the hardware responds. An absent Module must fail in
+isolation without stopping Communication or making Core unusable.
 
-### L'assunzione errata “una Port uguale un Module”
+### The incorrect assumption “one Port equals one Module”
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Problema:** una Port I2C può ospitare contemporaneamente più dispositivi, per esempio
-INA219 `0x40`, INA219 `0x41` e SHT40 `0x44`. Marcare la Port “occupata” rendeva
-impossibile rappresentare un bus condiviso.
+**Problem:** an I2C Port can host multiple devices simultaneously, such as INA219
+`0x40`, INA219 `0x41`, and SHT40 `0x44`. Marking the Port “occupied” made it impossible to
+represent a shared bus.
 
-**Soluzione:** la relazione è Port 1:N Module. Un Module è identificato da una key
-persistente e da Port, driver e configurazione/endpoint normalizzato. Il Manager offre
-`get_by_key()` e `list_by_port()`; la vecchia ricerca singola per Port è ambigua. Ogni
-driver possiede slab tipizzati per i propri context invece di un buffer universale.
+**Solution:** the relationship is Port 1:N Module. A Module is identified by a persistent key
+and a Port, driver, and normalized configuration/endpoint. The Manager offers `get_by_key()`
+and `list_by_port()`; the old single search for Port is ambiguous. Each driver has slabs
+typed for their contexts instead of a universal buffer.
 
-**Risultato e regola permanente:** Port serializza il controller, ma non possiede i
-Module e non limita artificialmente il bus a una sola istanza. Il rapporto completo è
-in [PORT-MODULE-1-N-MIGRATION.md](roadmap/PORT-MODULE-1-N-MIGRATION.md).
+**Result and permanent rule:** Port serializes the controller, but does not own the
+Module and does not artificially limit the bus to one instance. The full report is in
+[PORT-MODULE-1-N-MIGRATION.md](roadmap/PORT-MODULE-1-N-MIGRATION.md).
 
-## Config, storage e credenziali
+## Config, storage and credentials
 
-### Password Wi-Fi nel repository o nella cronologia Shell
+### Wi-Fi password in the repository or Shell history
 
-**Stato:** Risolto per il percorso di sviluppo; sicurezza fisica di produzione
-rinviata.
+**State:** Fixed for development path; physical safety of postponed production.
 
-**Problema:** passare la password come argomento la rende visibile nella history, nei
-log e nei processi host. Inserirla in `prj.conf` o nell'overlay la porta nel repository
-e nell'immagine.
+**Problem:** pass the password as an argument makes it visible in history, logs and
+host processes. Insert it into `prj.conf` or overlay the port into the repository and
+image.
 
-**Soluzione:** `spaghetti wifi add` legge la password con input nascosto. Wi-Fi
-Profiles la conserva in PSA ITS con trasformazione AES-GCM dentro la partizione NVS.
-List, status e log espongono soltanto metadati non segreti. Le credenziali della console
-remota e dell'OTA sono separate perché concedono autorizzazioni differenti.
+**Solution:** `spaghetti wifi add` reads the password with hidden input. Wi-Fi Profiles
+stores it in PSA ITS with AES-GCM encryption inside the NVS partition. Lists,
+status and logs only expose non-secret metadata. Remote console and OTA credentials are
+separated because they grant different permissions.
 
-**Risultato e regola permanente:** Config dei Module e credenziali di rete hanno owner
-diversi. L'attuale chiave storage derivata dal device ID non è una root of trust contro
-un attacco fisico: eFuse, Secure Boot, Flash Encryption e provisioning industriale
-restano attività esplicite e potenzialmente irreversibili.
+**Result and permanent rule:** Config of Module and network credentials have different
+owners. The current storage key derived from the ID device is not a root of trust
+against a physical attack: eFuse, Secure Boot, Flash Encryption and industrial
+provisioning remain explicit and potentially irreversible.
 
-### Profilo Wi-Fi presente dopo reboot ma dubbi dopo il flash
+### Wi-Fi profile survives reboot but may not survive flashing
 
-**Stato:** Risolto come comportamento documentato.
+**State:** Fixed as documented behavior.
 
-**Comportamento:** un reboot e un normale `make flash` non sono comandi di factory
-reset e la partizione NVS continua a contenere i profili, salvo modifica incompatibile
-della mappa flash o cancellazione completa del chip. `make pristine` cancella e
-ricostruisce gli artefatti host, non la flash del dispositivo.
+**Behavior:** a reboot and a normal `make flash` are not factory-reset commands, and
+the NVS partition continues to contain profiles, except incompatible modification of the
+flash map or complete chip cancellation. `make pristine` deletes and rebuilds host
+artifacts, not device flash.
 
-**Verifica:** dopo il reboot eseguire:
+**Check:** after reboot run:
 
 ```text
 spaghetti wifi list
 ```
 
-**Risultato e regola permanente:** distinguere sempre build pristine, flash delle
-immagini e chip erase. Una futura funzione factory reset dovrà dichiarare esattamente
-quali record elimina.
+**Result and permanent rule:** always distinguish build pristine, flash of images and
+chip erase. A future factory-reset function must declare exactly which records
+it deletes.
 
-### `spaghetti wifi connect` fallisce ma il profilo esiste
+### `spaghetti wifi connect` fails but the profile exists
 
-**Stato:** Mitigato con stato e worker deterministici.
+**State:** Mitigated with state and deterministic worker.
 
-**Diagnosi corretta:** `spaghetti wifi list` separa profilo salvato, rete visibile,
-stato del worker e ultimo errore. `wifi status` mostra invece l'interfaccia Zephyr.
-Un profilo persistente non significa che una richiesta di connessione sia stata
-accettata in quella modalità o che l'access point sia visibile.
+**Correct diagnosis:** `spaghetti wifi list` separates the saved profile, visible network,
+worker status and last error. `wifi status` shows the Zephyr interface. A persistent
+profile does not mean that a connection request was accepted in that mode or that the
+access point is visible.
 
-**Soluzioni adottate:** un solo worker possiede scan e associazione; il profilo
-preferito visibile viene provato per primo, altrimenti vengono provate le reti note in
-ordine RSSI. Un ritardo iniziale evita di avviare il ciclo mentre rete e altri servizi
-stanno ancora completando il boot.
+**Adopted solutions:** a single worker owns scan and association; the visible preferred
+profile is tried first, otherwise the known networks in order RSSI are tested. An
+initial delay avoids starting the cycle while network and other services are still
+completing the boot.
 
-**Risultato e regola permanente:** non interpretare un errno numerico isolato senza lo
-stato del servizio. In `UNPROVISIONED` e `MAINTENANCE` i profili sono modificabili ma
-la rete resta intenzionalmente offline.
+**Result and permanent rule:** do not interpret an isolated numeric errno without the
+status of the service. In `UNPROVISIONED` and `MAINTENANCE` the profiles are editable
+but the network remains intentionally offline.
 
-## Console seriale e strumenti host
+## Serial console and host tools
 
-### `make screen` e `make monitor`
+### `make screen` and `make monitor`
 
-**Stato:** Risolto e documentato.
+**State:** Fixed and documented.
 
-`make screen` è il terminale seriale grezzo. `make monitor` usa
-`tools/device.py`, pyserial e Rich per autodetect, riconnessione, colori e tabelle. Non
-sono lo stesso programma, anche se leggono la stessa UART. Solo un processo può aprire
-la porta alla volta.
+`make screen` is the raw serial terminal. `make monitor` uses `tools/device.py`,
+pyserial and Rich for autodetect, reconnection, colors and tables. They are not the same
+program, even if they read the same UART. Only one process can open the port at a time.
 
-**Regola permanente:** usare `screen` come fallback minimale e `monitor` per il normale
-sviluppo. Chiudere il monitor prima di flashare quando il runner richiede la stessa
-porta.
+**Permanent rule:** use `screen` as a minimal fallback and `monitor` for normal
+development. Close the monitor before flashing when the runner requires the same port.
 
-### Dipendenze Rich/pyserial mancanti
+### Missing Rich/pyserial dependencies
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Sintomo:** `make monitor` chiedeva di installare globalmente `pyserial` e `rich`.
+**Symptom:** `make monitor` asked to install `pyserial` and `rich` globally.
 
-**Soluzione:** usare la virtual environment del repository:
+**Solution:** use the virtual environment of the repository:
 
 ```sh
 make host-tools
@@ -297,71 +290,69 @@ source .venv/bin/activate
 make monitor
 ```
 
-**Risultato e regola permanente:** non installare dipendenze Python del progetto nel
-Python di sistema. `tools/requirements.txt` è la fonte delle dipendenze host.
+**Result and permanent rule:** do not install project Python dependencies in
+the Python system. `tools/requirements.txt` is the source of host dependencies.
 
-### Prompt `uart:~$` assente fino al primo Invio
+### Prompt `uart:~$` absent until the first Enter
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Cause incontrate:** Zephyr non ridisegnava sempre il prompt dopo una riconnessione;
-aprire la USB Serial/JTAG poteva inoltre cambiare DTR/RTS e resettare ESP32-C3. Inviare
-un ritorno a capo per svegliare la Shell aggiungeva una riga vuota alla history e
-contribuiva allo sfasamento del comando precedente.
+**Observed causes:** Zephyr did not always redraw the prompt after a reconnection;
+opening the USB Serial/JTAG could also change DTR/RTS and reset ESP32-C3. Sending a
+return to head to wake up Shell added an empty line to history and contributed to the
+loss of the previous command.
 
-**Soluzione:** il monitor apre la porta senza attraversare la sequenza DTR/RTS di
-boot/reset, disabilita `HUPCL` dove disponibile e invia `Ctrl-C` con tentativi bounded
-finché vede il prompt. L'opzione `--no-wake` preserva un futuro protocollo binario.
+**Solution:** the monitor opens the port without toggling DTR/RTS boot/reset lines, disables
+`HUPCL` where available, and sends `Ctrl-C` with bounded attempts until it sees
+the prompt. The `--no-wake` option preserves a future binary protocol.
 
-**Risultato e regola permanente:** sincronizzare una Shell interattiva con un segnale
-che non diventi un comando storico. Non assumere che aprire una porta seriale sia
-un'operazione elettricamente neutra su USB Serial/JTAG.
+**Result and permanent rule:** synchronize an interactive Shell with a signal that does
+not become a historical command. Do not assume that opening a serial port is an
+electrically neutral operation on USB Serial/JTAG.
 
-### Colore del prompt e output difficili da leggere
+### Prompt color and output difficult to read
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Problemi:** colorare artificialmente `uart:~$` produceva cambi di colore dopo reset
-o comandi; gli output `wifi scan`, `wifi status` e gli help multilinea erano poco
-leggibili.
+**Problems:** artificially colored `uart:~$` produced color changes after reset or
+controls; `wifi scan`, `wifi status` and multiline help were unreadable.
 
-**Soluzione:** il prompt viene inoltrato come byte terminali senza imporre uno stile.
-Il formatter riconosce strutture note e usa tabelle Rich con bordi neutri, colonne e
-colori soltanto per i dati che ne beneficiano. L'output firmware rimane testuale e
-utilizzabile anche con `make screen`.
+**Solution:** the prompt is forwarded as terminal bytes without imposing a style.
+The formatter recognizes known structures and uses Rich tables with neutral borders, columns, and
+colors only for the data they benefit from. The firmware output remains textual and can
+also be used with `make screen`.
 
-Il valore letterale `*float*` mostrato da `wifi status` non era una misura PHY: era il
-segnaposto di `cbprintf` quando il supporto di formattazione floating point non era
-disponibile. La build abilita `CONFIG_CBPRINTF_FP_SUPPORT`; il monitor conserva anche
-un fallback esplicito “unavailable” invece di presentare `*float*` come dato valido.
+The `*float*` literal value shown by `wifi status` was not a PHY measurement: it was the
+`cbprintf` placeholder when floating-point formatting support was unavailable. The build
+enables `CONFIG_CBPRINTF_FP_SUPPORT`; the monitor also retains an explicit “unavailable”
+fallback instead of presenting `*float*` as valid data.
 
-**Risultato e regola permanente:** la presentazione appartiene al tool host, non al
-protocollo firmware. Non cambiare il significato dei messaggi per renderli belli.
+**Result and permanent rule:** the presentation belongs to the host tool, not to the
+firmware protocol. Do not change the meaning of messages to make them beautiful.
 
-### Frecce e history della console remota
+### Remote console arrows and history
 
-**Stato:** Risolto nel tool host corrente.
+**State:** Fixed in the current host tool.
 
-**Problema:** la console remota è un parser ristretto, non Zephyr Shell. Le sequenze
-ANSI delle frecce spostavano il cursore locale o lasciavano sul dispositivo una riga
-diversa da quella mostrata.
+**Problem:** remote console is a small parser, not Zephyr Shell. ANSI arrow sequences
+moved the local cursor or left a different line on the device than the one shown.
 
-**Soluzione:** `NetworkLineEditor` mantiene una history host bounded a 32 elementi,
-interpreta freccia su/giù, sostituisce sia la riga visibile sia quella già inviata al
-peer e gestisce sequenze ANSI frammentate. Frecce laterali non supportate vengono
-ignorate invece di corrompere il comando.
+**Solution:** `NetworkLineEditor` maintains a host history bounded to 32 elements,
+interprets up/down arrows, replaces both the visible line and the line already sent to the
+peer and manages fragmented ANSI sequences. Unsupported left/right arrows are ignored
+instead of corrupting the command.
 
-**Risultato e regola permanente:** la restricted network console non deve fingere di
-essere una Shell completa. Editing e history restano nel client, mentre il firmware
-riceve una linea coerente e bounded.
+**Result and permanent rule:** the restricted network console should not pretend to be a
+complete Shell. Editing and history remain in the client, while the firmware receives a
+consistent and bounded line.
 
-## Console remota autenticata
+## Authenticated remote console
 
-### Provisioning in timeout o modalità non riconosciuta
+### Provisioning timeout or unrecognized mode
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-**Sintomi:**
+**Symptoms:**
 
 ```text
 Timed out waiting for device response
@@ -369,24 +360,24 @@ The USB Shell did not return a recognizable Core mode
 The Core did not accept Normal-mode activation
 ```
 
-**Cause:** prompt residui potevano terminare prematuramente la lettura della risposta;
-la PSK inviata tutta insieme poteva saturare il piccolo percorso RX; il tool doveva
-gestire esplicitamente Normal, Maintenance e Unprovisioned, compresi reboot e
-riconnessione USB.
+**Cause:** prompt remnants could prematurely end response reading; sending the PSK all
+together could saturate the small RX path; the tool had to explicitly manage Normal,
+Maintenance and Unprovisioned, including reboot and reconnection USB.
 
-**Soluzioni:** sincronizzazione sul prompt, pulizia bounded del buffer prima del primo
-comando, invio cadenzato della PSK nascosta e flusso composto
-`make remote-console-enable`. Quest'ultimo preserva una Config valida o installa una
-Config vuota sicura, entra in Maintenance, provisiona e torna in Normal.
+**Solutions:** synchronization on the prompt, bounded cleaning of the buffer before the
+first command, paced transmission of the hidden PSK, and the compound
+`make remote-console-enable`
+flow. It preserves a valid Config or installs a secure blank Config,
+enters Maintenance, provisions the credential, and returns to Normal.
 
-**Risultato e regola permanente:** il provisioning di una credenziale non deve
-dipendere da un prompt casuale e non deve copiare la PSK in argv o history.
+**Result and permanent rule:** provisioning a credential should not depend on a random
+prompt and should not copy the PSK into argv or history.
 
-### Errori TLS `-113`, handshake ripetuti e socket esauriti
+### TLS `-113` errors, repeated handshake and exhausted sockets
 
-**Stato:** Risolto per l'implementazione corrente; memoria TLS da riprogettare.
+**State:** Fixed for current implementation; TLS memory to be redesigned.
 
-**Sintomi:**
+**Symptoms:**
 
 ```text
 TLS client accept failed: -113
@@ -394,34 +385,33 @@ TLS handshake error
 Cannot allocate a new TCP connection
 ```
 
-**Cause combinate accertate:** fallimenti di accept/invio non chiudevano sempre il
-client nello stesso percorso; il loop poteva riutilizzare descrittori del poll
-precedente immediatamente dopo un accept; il client host ritentava troppo rapidamente.
-La libreria TLS aveva inoltre bisogno di un'arena sufficientemente grande per il
-carico reale.
+**Confirmed combined causes:** accept/send failures did not always close the client
+through the same path; the loop could reuse stale socket descriptors immediately after
+an accept; the host client retried too quickly. The mbedTLS library also required a
+sufficiently large arena for real load.
 
-**Soluzione adottata:** chiusura centralizzata del client in ogni errore, nuovo ciclo
-poll dopo accept, errori di send/receive propagati, pausa bounded prima della
-riconnessione host e arena mbedTLS dedicata da 60.000 byte.
+**Adopted solution:** centralized client closure on every error, a new loop cycle after
+accept, propagated send/receive errors, bounded pause before the host reconnection and
+mbedTLS arena dedicated by 60,000 bytes.
 
-**Verifica:** connessione diretta autenticata:
+**Check:** direct authenticated connection:
 
 ```sh
 make monitor TRANSPORT=network HOST=192.168.1.23
 ```
 
-La console deve mostrare `network:~$`, accettare `help` e `spaghetti status`, quindi
-liberare il client dopo `Ctrl-X` senza una tempesta di socket.
+The console must show `network:~$`, accept `help` and `spaghetti status`, then release
+the client after `Ctrl-X` without a socket storm.
 
-**Risultato e regola permanente:** i 60 KiB non possono essere rimossi ignorando il
-motivo per cui furono aggiunti. La sostituzione futura deve ripetere handshake,
-disconnessioni, retry e allocazioni fallite sotto carico.
+**Result and permanent rule:** 60 KiB cannot be removed by ignoring why they were added.
+Future replacement must repeat handshake, disconnections, retry and failed allocations
+under load.
 
-### Device non trovato da `remote-console-list`
+### Device not found by `remote-console-list`
 
-**Stato:** Mitigato.
+**State:** Mitigated.
 
-**Diagnosi:** prima verificare sul dispositivo:
+**Diagnosis:** before checking on your device:
 
 ```text
 spaghetti wifi list
@@ -429,231 +419,229 @@ wifi status
 spaghetti remote status
 ```
 
-`state=listening`, una credenziale presente e un indirizzo IP raggiungibile sono
-prerequisiti distinti. La scansione richiede un subnet CIDR realmente instradato e la
-stessa identità/PSK. Quando l'IP è noto, la connessione diretta è la prova più semplice.
+`state=listening`, a present credential, and a reachable IP address are distinct
+prerequisites. Scanning requires a truly routed CIDR subnet and the same identity/PSK.
+When IP is known, direct connection is the simplest proof.
 
-**Risultato e regola permanente:** la discovery della console accetta soltanto peer che
-completano l'autenticazione; non deve annunciare in chiaro la presenza del servizio e
-non sostituisce routing, firewall o VPN.
+**Result and permanent rule:** the discovery of the console accepts only peers who
+complete authentication; it must not clearly announce the presence of the service and
+does not replace routing, firewall or VPN.
 
-## Boot, MCUboot e aggiornamenti
+## Boot, MCUboot and updates
 
-### Modalità del Core non visibile nei log
+### Core mode not visible in logs
 
-**Stato:** Risolto.
+**State:** Fixed.
 
-Il boot ora riporta separatamente modalità operativa, stato immagine, slot,
-conferma e versione, per esempio:
+The boot now reports separately operating mode, image status, slot, confirmation and
+version, for example:
 
 ```text
 boot: mode=unprovisioned image=confirmed slot=0 confirmed=1 version=0.1.0+0
 ```
 
-**Risultato e regola permanente:** `NORMAL/MAINTENANCE/UNPROVISIONED` e
-`TRIAL/CONFIRMED` sono dimensioni indipendenti. `NORMAL + TRIAL` è valido durante la
-health window; non introdurre una modalità unica che mescoli le due cose.
+**Result and permanent rule:** `NORMAL/MAINTENANCE/UNPROVISIONED` and `TRIAL/CONFIRMED`
+are independent sizes. `NORMAL + TRIAL` is valid during the health window; do not
+introduce a unique mode that mixes the two things.
 
-### Verifica di MCUboot e immagini A/B
+### MCUboot and A/B images verification
 
-**Stato:** Risolto per build e boot di sviluppo.
+**State:** Fixed for build and boot development.
 
-Sysbuild produce MCUboot e l'applicazione firmata. `tools/device.py flash --dry-run`
-ha mostrato gli offset reali estratti dai runner generati invece di indirizzi copiati
-nel Makefile. Una nuova immagine parte come trial e diventa confermata soltanto dopo
-che Core raggiunge RUNNING e supera la health window. Un reset precedente permette il
-rollback.
+Sysbuild produces MCUboot and the signed application. `tools/device.py flash --dry-run`
+showed real offsets extracted from runners generated instead of copied addresses in the
+Makefile. A new image starts as a trial and becomes confirmed only after Core reaches
+RUNNING and exceeds the window health. A previous reset allows rollback.
 
-**Risultato e regola permanente:** l'applicazione in esecuzione non conferma una
-immagine durante l'upload. MCUboot verifica la firma prima dell'esecuzione e Update
-scrive soltanto lo slot secondario.
+**Result and permanent rule:** the application running does not confirm an image during
+upload. MCUboot checks the signature before the execution and Update writes only the
+secondary slot.
 
-### `update-qualification-check` elenca tutti i casi Pending
+### `update-qualification-check` lists all Pending cases
 
-**Stato:** Atteso finché non sono registrate prove fisiche.
+**State:** Expected until physical evidence is recorded.
 
-Il manifest con hash, versioni e metadata dimostra che gli artefatti sono identificati;
-non dimostra interruzioni, rollback e recovery. `Final results: 0` seguito dai casi
-`Q-*` pending è quindi il gate che rifiuta una qualificazione incompleta, non un errore
-del firmware.
+The manifest with hashes, versions, and metadata shows that artifacts are identified; it does
+not show interruptions, rollback and recovery. `Final results: 0` followed by `Q-*`
+pending cases is therefore the gate that refuses an incomplete qualification, not a
+firmware error.
 
-**Risultato e regola permanente:** non marcare la fase 290 completata usando fake o un
-manifest vuoto. Le evidenze hardware vengono aggiunte progressivamente mentre ESP32-C3
-e i prototipi sono disponibili.
+**Result and permanent rule:** does not mark the completed 290 phase using fake or an
+empty manifest. Hardware evidence is added progressively while ESP32-C3 boards and prototypes are
+available.
 
-## Crash, stack e RAM
+## Crash, stack and RAM
 
-### Instruction Access fault subito dopo il boot
+### Instruction Access fault immediately after boot
 
-**Stato:** Mitigato; la pressione sugli stack è stata misurata.
+**State:** Mitigated; the pressure on the stacks has been measured.
 
-**Sintomo:** eccezione CPU con program counter/return address non validi mentre il log
-indicava il thread idle. Questo pattern è compatibile con corruzione di memoria, ma il
-solo crash dump non dimostra quale buffer l'abbia causata.
+**Symptom:** CPU exception with an invalid program counter/return address while the log
+indicated the idle thread. This pattern is compatible with memory corruption, but the
+only crash dump does not show which buffer caused it.
 
-**Evidenza successiva:** il percorso PSA ITS/AES-GCM durante il boot richiedeva più
-stack del default precedente; Wi-Fi Profiles documenta che 2048 byte erano
-insufficienti e potevano corrompere lo stack adiacente. Gli stack sono stati resi
-espliciti e il comando `kernel thread stacks` viene usato per misurare il watermark.
+**Subsequent evidence:** the PSA initialization path during boot required several
+stacks larger than the previous defaults. Wi-Fi Profiles documents that 2048 bytes were insufficient and could
+corrupt the adjacent stack. The stacks were made explicit and the `kernel thread stacks`
+command is used to measure the watermark.
 
-**Risultato e regola permanente:** non attribuire automaticamente ogni Instruction
-Access fault all'idle thread mostrato nel dump. Il thread corrente può essere la
-vittima della corruzione. Conservare il call trace, aumentare temporaneamente i margini
-e misurare il percorso che usa crypto, rete e logging.
+**Result and permanent rule:** does not automatically attribute each Instruction Access
+fault to the idle thread shown in the dump. The current thread can be the victim of
+corruption. Store call trace, temporarily increase margins and measure the path that
+uses crypto, network and logging.
 
-### Shell al 96% e riduzione degli stack
+### Shell to 96% and stack reduction
 
-**Stato:** Risolto per i carichi provati, da ripetere quando arrivano BLE e MQTT TLS.
+**State:** Fixed for tested loads, to be repeated when BLE and MQTT TLS arrive.
 
-Misure osservate:
+Observed measurements:
 
 ```text
-shell_uart 4096 byte: 3972 usati, 96%
-shell_uart 5120 byte: 3972 usati, 77%
-wifi_profiles_worker 4096 byte: 2440 usati, 59%
-spaghetti_remote 6144 byte: picchi osservati fra 33% e 66%
-logging 768 byte: circa 384-400 usati nei test osservati
+shell_uart 4096 bytes: 3972 used, 96%
+shell_uart 5120 bytes: 3972 used, 77%
+wifi_profiles_worker 4096 bytes: 2440 used, 59%
+spaghetti_remote 6144 bytes: observed peaks between 33% and 66%
+logging 768 bytes: about 384-400 used in the observed tests
 ```
 
-La Shell è stata portata a 5120 byte invece di ridurla. Lo stack logging è stato
-ridotto dopo misura. Stack OTA e MQTT apparentemente vuoti non sono stati ridotti,
-perché i percorsi pesanti non erano ancora stati esercitati.
+Shell was brought to 5120 bytes instead of reducing it. The logging stack was reduced
+after measurement. Stack OTA and MQTT seemingly empty were not reduced, because heavy
+routes had not yet been exercised.
 
-**Risultato e regola permanente:** dimensionare sul massimo percorso realmente
-eseguito più margine, non sulla percentuale a boot. Ripetere le misure con scan Wi-Fi,
-TLS, OTA, errori, log flood, BLE e numero massimo di Module.
+**Result and permanent rule:** size for the maximum path actually executed, including adequate
+margin, not from the boot percentage. Repeat measurements with Wi-Fi, TLS, OTA, errors,
+log flood, BLE and maximum Module number.
 
-### IRQ stack al 100%
+### IRQ stack 100%
 
-**Stato:** Mitigato; misura non usata come unica prova.
+**State:** Mitigated; measurement not used as a single test.
 
-Il watermark IRQ su ESP32-C3/RISC-V è risultato al 100% anche aumentando molto lo
-stack, indicando che inizializzazione/strumentazione può sporcare tutta l'area e
-rendere il watermark poco rappresentativo del normale uso. L'override sperimentale è
-stato rimosso.
+The IRQ watermark on ESP32-C3/RISC-V has been 100% even increasing the stack a lot,
+indicating that initialization/instrumentation can touch the whole area and make the
+watermark little representative of normal use. The experimental override was removed.
 
-**Risultato e regola permanente:** non continuare ad aumentare RAM sulla base del solo
-watermark IRQ. Servono crash riproducibile, canary affidabile o misura supportata dalla
-porta Zephyr.
+**Result and permanent rule:** does not continue to increase RAM on the basis of the IRQ
+watermark alone. We need reproducible crash, reliable canary or supported by the Zephyr
+port.
 
-### RAM statica circa all'85%
+### Static RAM at about 85%
 
-**Stato:** Pianificata una soluzione architetturale.
+**State:** Planning an architectural solution.
 
-La build ESP32-C3 ha mostrato circa 307 KiB usati su 365 KiB disponibili, lasciando
-circa 58 KiB statici. Una prima revisione degli stack ha recuperato circa 4,6 KiB, ma
-ha anche mostrato che micro-ottimizzare stack non esercitati sarebbe pericoloso.
+The ESP32-C3 build showed about 307 KiB used on 365 KiB available, leaving about 58
+static KiBs. A first review of stacks recovered about 4.6 KiB, but also showed that
+micro-optimizing unexercised stacks would be dangerous.
 
-I principali blocchi individuati sono:
+The main blocks identified are:
 
-- arena privata mbedTLS da 60.000 byte;
-- heap aggiuntivo richiesto dal Wi-Fi Espressif;
-- stack statici di servizi che non lavorano sempre;
-- buffer e code di rete, Shell, MQTT, OTA e console remota.
+- private 60,000-byte mbedTLS arena;
+- additional heap required by Wi-Fi Espressif;
+- static stacks of services that do not always work;
+- buffer and network code, Shell, MQTT, OTA and remote console.
 
-**Risultato e regola permanente:** il problema non si risolve tagliando alla cieca.
-Servono profili Core, lifecycle dei servizi, capacità bounded e prove del caso peggiore.
+**Result and permanent rule:** the problem is not solved by cutting blindly. We need
+Core profiles, service lifecycle, bounded capacity and worst case testing.
 
-### Perché esiste l'arena mbedTLS da 60 KiB e come verrà sostituita
+### Why the 60 KiB mbedTLS arena exists and how it will be replaced
 
-**Stato:** Pianificato, non ancora implementato.
+**State:** Planned, not yet implemented.
 
-L'arena fu aggiunta per stabilizzare TLS. Non contiene il firmware OTA completo e non
-è una feature: è memoria di lavoro esclusiva per handshake, record, cifratura e
-contesti. Resta però sottratta al resto del firmware anche senza connessioni.
+The arena was added to stabilize TLS. It does not contain the complete OTA firmware and
+is not a feature: it is exclusive work memory for handshake, record, encryption and
+contexts. However, it remains unavailable to the rest of the firmware even when no connection is active.
 
-La decisione congelata è mantenere mbedTLS e le funzioni TLS/DTLS, ma sostituire
-l'arena sempre residente con un workspace bounded acquisito quando serve. Sul profilo
-Minimal una sola operazione TLS pesante è ammessa: MQTT si disconnette prima di OTA e
-la console remota di produzione non viene compilata.
+The frozen decision is to retain mbedTLS and TLS/DTLS functionality, but replace the
+arena always resident with a bounded workspace acquired when needed. On the Minimal
+profile only one heavy secure operation is allowed: MQTT disconnects before OTA and
+the remote production console is not compiled.
 
-**Prove obbligatorie prima della rimozione:**
+**Mandatory tests before removal:**
 
-- console e MQTT TLS con credenziale corretta ed errata;
-- handshake ripetuti e disconnessioni durante l'handshake;
-- OTA Wi-Fi completo, timeout e perdita rete;
-- allocazione fallita senza perdita di Config o immagine confermata;
-- Wi-Fi e BLE logicamente connessi nello stesso carico;
-- assenza di leak o frammentazione dopo cicli ripetuti.
+- console and MQTT TLS with correct and incorrect credentials;
+- repeated handshakes and disconnections during the handshake;
+- OTA Wi-Fi complete, timeout and network loss;
+- failed allocation without loss of Config or confirmed image;
+- Wi-Fi and BLE logically connected in the same load;
+- absence of leak or fragmentation after repeated cycles.
 
-Il contratto completo è in
+The complete contract is in
 [CONNECTIVITY_AND_RESOURCE_CONTRACT.md](CONNECTIVITY_AND_RESOURCE_CONTRACT.md).
 
-## Decisioni di connettività ed energia derivate
+## Connectivity and derived energy decisions
 
-### BLE-first e Wi-Fi on-demand
+### BLE-first and Wi-Fi on-demand
 
-**Stato:** Pianificato.
+**State:** Planned.
 
-Per un Core a basso consumo, il risultato delle analisi è:
+For a low consumption Core, the result is:
 
 ```text
 NORMAL + LOW_ENERGY
-    Runtime attivo
-    BLE spento, advertising o connesso secondo policy
-    Wi-Fi, MQTT, OTA e TLS spenti
+    Runtime active
+    BLE off, advertising, or connected according to policy
+    Wi-Fi, MQTT, OTA, and TLS off
 
 NORMAL + ONLINE
-    Runtime attivo
-    BLE verso un peer
-    Wi-Fi/MQTT verso un altro peer
+    Runtime active
+    BLE connected to one peer
+    Wi-Fi/MQTT connected to another peer
 ```
 
-Un peer BLE autenticato può richiedere una lease Wi-Fi temporanea, una sessione di
-manutenzione di rete o un aggiornamento. Abilitare Wi-Fi non apre automaticamente OTA
-o console remota. Maintenance e Update hanno timeout e non diventano Config persistente.
+An authenticated BLE peer can request a temporary Wi-Fi lease, network maintenance
+session or update. Enable Wi-Fi does not automatically open OTA or remote console.
+Maintenance and Update have timeout and do not become persistent Config.
 
-**Risultato e regola permanente:** BLE è un adapter del protocollo CBOR comune, non un
-secondo modello Config. Node-RED può comunicare direttamente via BLE su un host locale
-oppure attraverso una base; MQTT sul Core non è obbligatorio.
+**Result and permanent rule:** BLE is a common CBOR protocol adapter, not a second
+Config model. Node-RED can communicate directly via BLE on a local host or through a
+base; MQTT on Core is not mandatory.
 
-### ESP32-C3, S3, C6, Matter e Zigbee
+### ESP32-C3, S3, C6, Matter and Zigbee
 
-**Stato:** Decisione hardware aperta, confine architetturale congelato.
+**State:** Hardware decision open; architectural boundary frozen.
 
-- ESP32-C3 offre Wi-Fi e BLE, ma non IEEE 802.15.4; Wi-Fi e BLE condividono la radio e
-  possono essere logicamente attivi mentre l'accesso RF viene alternato.
-- ESP32-S3 offre più SRAM e può avere PSRAM. Supporta Matter over Wi-Fi, ma non Matter
-  over Thread senza una radio 802.15.4 esterna.
-- ESP32-C6 integra Wi-Fi, BLE e IEEE 802.15.4 per Thread/Zigbee, ma disponibilità e RAM
-  dello stack concreto devono essere verificate con Zephyr e l'hardware scelto.
+- ESP32-C3 offers Wi-Fi and BLE, but not IEEE 802.15.4; Wi-Fi and BLE share radio and
+  can be logically active while RF access is alternating.
+- ESP32-S3 offers more SRAM and can have PSRAM. Supports Matter over Wi-Fi, but does not
+  Matter over Thread without an external 802.15.4 radio.
+- ESP32-C6 integrates Wi-Fi, BLE and IEEE 802.15.4 for Thread/Zigbee, but availability
+  and RAM of the concrete stack must be verified with Zephyr and the hardware chosen.
 
-**Risultato e regola permanente:** Matter, Thread e Zigbee non sono requisiti V1. Una
-base può fare bridge BLE-MQTT/Matter/Zigbee senza caricare questi stack su ogni Core.
-Non dichiarare una capability soltanto perché il SoC potrebbe supportarla.
+**Result and permanent rule:** Matter, Thread and Zigbee are not V1 requirements. A base
+can act as a BLE-MQTT/Matter/Zigbee bridge without loading these stacks onto every Core. Do
+not declare a capability only because the SoC could support it.
 
-## Problemi ancora aperti
+## Remaining open problems
 
-Queste voci non hanno ancora una soluzione implementata:
+These items do not yet have an implemented solution:
 
-| Area | Stato reale |
+| Area | Current state |
 |---|---|
-| Discovery hardware | Rinviata finché EEPROM, registri, analogico, 1-Wire o presence non sono definiti su hardware reale. |
-| Qualificazione update | Fase 290 pronta, ma prove fisiche e risultati `Q-*` ancora pending. |
-| Root of trust | Provider device-ID solo di sviluppo; eFuse, Secure Boot, Flash Encryption e debug policy da progettare. |
-| MQTT di produzione | Trasporto corrente non sicuro; TLS, autenticazione broker e protocollo bidirezionale sono futuri. |
-| BLE | Architettura congelata, adapter GATT, autenticazione, framing e OTA non ancora implementati. |
-| Memoria TLS dinamica | Arena statica ancora presente; sostituzione e stress test non ancora implementati. |
-| Low power | Nessuna dichiarazione finale finché non vengono misurati consumi e tempi sul PCB definitivo. |
-| Matter/Zigbee | Fuori dalla V1; eventuale valutazione ESP32-C6 o gateway successiva. |
+| Hardware discovery | Deferred until EEPROM, registers, analog, 1-Wire, or presence detection is defined on real hardware. |
+| Update qualification | Phase 290 is ready, but physical evidence and `Q-*` results are still pending. |
+| Root of trust | Development-only device-ID provider; eFuse, Secure Boot, Flash Encryption, and debug policy remain to be designed. |
+| Production MQTT | Current transport is insecure; TLS, broker authentication, and the bidirectional protocol are future work. |
+| BLE | Architecture frozen; GATT adapter, authentication, framing, and OTA are not yet implemented. |
+| Dynamic TLS memory | Static arena still present; replacement and stress tests are not yet implemented. |
+| Low power | No final statement until consumption and timing are measured on the final PCB. |
+| Matter/Zigbee | Outside V1; evaluate ESP32-C6 or a later gateway. |
 
-Il dettaglio delle decisioni hardware rinviate è in
-[PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md).
+The detail of the hardware decisions postponed is in
+[hardware and firmware finalization reminder](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md).
 
-## Modello per aggiungere un nuovo incidente
+## Template for recording a new incident
 
-Quando un problema nuovo viene risolto, aggiungi una voce usando questo schema:
+When a new problem is solved, add an entry using this template:
 
 ```text
-### Titolo riconoscibile dal sintomo
+### Title recognizable from the symptom
 
-Stato: Risolto / Atteso / Mitigato / Pianificato / Rinviato
-Sintomo: output completo e condizioni in cui compare
-Causa: solo ciò che è stato dimostrato
-Soluzione: modifica o procedura adottata
-Verifica: comando, carico e risultato atteso
-Risultato e regola permanente: cosa non dobbiamo dimenticare
+State: Fixed / Expected / Mitigated / Planned / Deferred
+Symptom: complete output and the conditions in which it appears
+Cause: only what has been demonstrated
+Solution: adopted change or procedure
+Verification: command, load, and expected result
+Result and permanent rule: what must not be forgotten
 ```
 
-Se la causa non è stata dimostrata, scrivi **Mitigato** e conserva le ipotesi come tali.
-Una coincidenza temporale dopo una modifica non è una root cause.
+If the cause has not been demonstrated, write **Mitigated** and retain the hypotheses as
+such. A time coincidence after a change is not a root cause.

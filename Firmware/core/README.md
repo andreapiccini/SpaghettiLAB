@@ -307,7 +307,7 @@ you need its detailed contract.
 | Guide | Use it for |
 |---|---|
 | [Documentation index](DOCUMENTATION_INDEX.md) | Single ordered entry point for every documentation path |
-| [Extension guide](EXTENDING_SPAGHETTI_LAB.md) | How-to per Module, Core e Config, template Zephyr e caveat specifici del firmware |
+| [Extension guide](EXTENDING_SPAGHETTI_LAB.md) | Module, Core, and Config how-to, Zephyr templates, and firmware-specific caveats |
 | [V1 platform closure](roadmap/V1-PLATFORM-CLOSURE.md) | Planned generic contracts and tasks required before the main Node-RED work |
 | [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |
 | [Connectivity and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) | Frozen BLE-first, on-demand Wi-Fi, resource-profile, update, and TLS-memory decisions |

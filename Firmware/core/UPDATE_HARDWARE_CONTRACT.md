@@ -1,12 +1,12 @@
-# Contratto hardware astratto per la manutenzione
+# Abstract hardware contract for maintenance
 
-Questo documento definisce ciò che ogni variante Core deve offrire per supportare
-provisioning e aggiornamento senza USB. Il firmware comune non contiene numeri GPIO e
-non assume quale controller realizzi il collegamento.
+This document defines what each Core variant must offer to support provisioning and
+updating without USB. The common firmware does not contain GPIO numbers and does not
+assume which controller implements the connection.
 
-## Confine tra firmware comune e board
+## Boundary between common firmware and board
 
-Il firmware comune conosce un solo `maintenance link` con queste operazioni logiche:
+The common firmware knows only one `maintenance link` with these logical operations:
 
 ```c
 enum spaghetti_maintenance_entry_reason {
@@ -24,24 +24,24 @@ int spaghetti_maintenance_link_set_key(const uint8_t *key, size_t key_size);
 enum spaghetti_maintenance_link_state spaghetti_maintenance_link_get_state(void);
 ```
 
-`timeout_ms` è passato per valore perché è un limite numerico piccolo. `requested` è
-un puntatore modificabile posseduto dal chiamante: viene scritto solo quando la probe
-termina correttamente. `reason` è passato per valore e serve per diagnostica e policy,
-non seleziona pin. Queste API vengono chiamate dal Core boot thread e dal coordinatore
-Update, mai da ISR.
+`timeout_ms` is passed by value because it is a small numerical limit. `requested` is a
+mutable caller-owned pointer: it is written only when the probe completes successfully.
+`reason` is passed by value and is used for diagnostics and policy; it does not select
+pins. These APIs are called by the Core boot thread and the Update coordinator, never
+from an ISR.
 
-Il backend di board deve garantire che:
+The board backend must ensure that:
 
-- `probe()` ascolti soltanto, senza trasmettere né iniziare un aggiornamento;
-- `enter()` renda disponibile il trasporto locale e impedisca l'uso contemporaneo del
-  collegamento normale;
-- `leave()` chiuda il trasporto, ripristini pin/controller normali e sia ripetibile;
-- ogni errore lasci i pin in uno stato noto e non abiliti due periferiche insieme.
+- `probe()` only listens, without transmitting or starting an update;
+- `enter()` makes the local transport available and prevents concurrent use of the
+  normal connection;
+- `leave()` closes the transport, restores the normal pins/controller, and is repeatable;
+- every error leaves the pins in a known state and never enables two peripherals together.
 
-## Descrizione tramite Devicetree
+## Devicetree description
 
-La variante Core descrive un nodo compatibile `spaghettilab,maintenance-link`. Il
-binding deve richiedere riferimenti logici, non numeri GPIO nell'API comune:
+The Core variant describes a `spaghettilab,maintenance-link` compatible node. The
+binding must require logical references, not GPIO numbers in the common API:
 
 ```dts
 maintenance_link0: maintenance-link {
@@ -53,90 +53,91 @@ maintenance_link0: maintenance-link {
 };
 ```
 
-`normal-bus` è il controller usato dall'Engine. `maintenance-uart` è il device Zephyr
-usato dal backend locale. `bootstrap-window-ms` limita l'ascolto quando esiste già una
-Config. Pin, pinmux e controller concreti restano nei nodi/pinctrl della board o nel
-suo overlay. Core V1 usa realmente `uart1`; Core V2 build-only usa lo stesso controller
-con una mappatura pin diversa.
+`normal-bus` is the controller used by the Engine. `maintenance-uart` is the Zephyr
+device used by the local backend. `bootstrap-window-ms` limits listening when there is
+already a Config. Pins, pinmux, and concrete controllers remain in the board nodes,
+pinctrl definitions, or overlay. Core V1 uses `uart1`; the build-only Core V2 uses the same
+controller with a different pin mapping.
 
-Una variante che non fornisce il nodo non espone la capability. Kconfig/CMake devono
-rifiutare l'abilitazione della manutenzione locale su quella build; il firmware comune
-non deve creare un fallback con pin hard-coded.
+A variant that does not provide the node does not expose the capability. Kconfig/CMake
+must refuse local maintenance on that build; the common firmware should not create a
+fallback with hard-coded pins.
 
-## Mappatura verificata per Core V1
+## Verified mapping for Core V1
 
-Core V1 riusa i due segnali già documentati:
+Core V1 reuses the two already documented signals:
 
-| Ruolo logico | Modalità normale | Modalità manutenzione |
+| Logical role | Normal mode | Maintenance mode |
 |---|---|---|
 | Data 0 | GPIO3, I2C SDA open-drain | UART RX |
 | Data 1 | GPIO4, I2C SCL open-drain | UART TX |
-| Riferimento | massa comune | massa comune |
+| Reference | common ground | common ground |
 
-GPIO3 e GPIO4 compaiono soltanto nei file board/pinctrl. Non devono apparire in Update,
-Core, Communication, Maintenance Link pubblico o nel tool host. Su un'altra Core la
-stessa API può usare altri pin o un altro backend dichiarato dall'overlay.
+GPIO3 and GPIO4 appear only in board and pinctrl files. They must not appear in Update,
+Core, Communication, the public Maintenance Link API, or the host tool. On another Core, the same API
+can use other pins or another backend declared by the overlay.
 
-Durante la finestra di bootstrap con Config valida, il backend mantiene TX inattivo e
-ascolta un frame di 40 byte sulla linea RX: `SPLM`, versione `1`, comando `1`, due byte
-riservati a zero e HMAC-SHA256 dell'header seguito dal device ID Zephyr. La chiave da
-32 byte è per-device e viene salvata in PSA ITS. Solo un frame completo e autenticato
-autorizza `enter()`. Un sensore I2C non trasmette spontaneamente quel frame; assenza di
-frame o rumore riportano i pin a I2C al termine della finestra. La versione 1 non ha
-nonce ed è replayable: è una protezione di bootstrap locale, non autenticazione remota.
+During the bootstrap window with Config valid, the backend keeps TX inactive and listens
+for a 40-byte frame on the RX line: `SPLM`, version `1`, command `1`, two bytes reserved
+as zero, and an HMAC-SHA256 of the header followed by the Zephyr device ID. The 32-byte key is
+per-device and is saved in PSA ITS. Only a complete and authenticated frame authorizes
+`enter()`. An I2C sensor does not spontaneously transmit that frame; an absent frame or
+noise returns the pins to I2C at the end of the window. Version 1 has no nonce and is
+replayable: it is a local bootstrap protection, not remote authentication.
 
-## Trasporto locale implementato
+## Implemented local transport
 
-Zephyr SMP UART fornisce framing seriale Base64 e CRC sul `zephyr,uart-mcumgr` scelto
-dalla board. Il firmware registra soltanto il gruppo Spaghetti 64 con operazioni
-bounded per stato, Config CBOR, profili Wi-Fi, chiave bootstrap, chunk firmware e
-cancel. I gruppi mcumgr Shell, File System, OS e Image standard restano disabilitati:
-la scrittura del firmware deve passare da `spaghetti_update_arm()`,
-`spaghetti_update_begin()`, `spaghetti_update_write()` e
-`spaghetti_update_finish()` e non può confermare autonomamente un trial.
+Zephyr SMP UART provides Base64 and CRC serial framing on the `zephyr,uart-mcumgr`
+chosen by the board. The firmware registers only Spaghetti group 64, with bounded
+operations for status, Config CBOR, Wi-Fi profiles, bootstrap key, firmware chunks, and
+cancel. Shell, File System, OS, and standard Image mcumgr groups remain disabled:
+firmware writing must pass through `spaghetti_update_arm()`, `spaghetti_update_begin()`,
+`spaghetti_update_write()` and `spaghetti_update_finish()` and cannot independently
+confirm a trial.
 
-UART non espone un segnale portabile di presenza del cavo. La perdita del collegamento
-durante un upload viene quindi gestita dalla scadenza assoluta del coordinatore Update:
-la secondaria incompleta viene cancellata e l'immagine confermata resta intatta. La
-modalità maintenance rimane in ascolto fino al reset; con Config valida il reset
-ripristina I2C e la Config precedente.
+UART does not provide a portable cable-presence signal. Connection loss during an
+upload is therefore managed by the Update coordinator's absolute deadline: the
+incomplete secondary is deleted and the confirmed image remains intact. Maintenance mode
+remains listening until reset; with a valid Config, reset restores I2C and the previous
+Config.
 
-## Regole di ingresso al boot
+## Boot entry rules
 
-L'ordine è deterministico:
+The order is deterministic:
 
-1. Core inizializza Storage e Maintenance Link senza avviare Wi-Fi, Runtime o Module.
-2. Config assente o non decodificabile: entra direttamente in maintenance locale e vi
-   resta in attesa di Config o firmware. Wi-Fi e OTA di rete rimangono spenti.
-3. Marker one-shot `maintenance/boot_once` presente: Core lo cancella prima di entrare
-   in maintenance. Un reset successivo non crea un loop, salvo Config ancora assente.
-4. Config valida senza marker: `probe()` apre la sola finestra RX di bootstrap. Un
-   payload valido entra in maintenance; timeout o payload invalido avviano `NORMAL`.
-5. In `NORMAL`, una richiesta autenticata può salvare il marker one-shot e riavviare.
+1. Core initializes Storage and Maintenance Link without starting Wi-Fi, Runtime or
+   Module.
+2. If Config is absent or cannot be decoded, Core enters local maintenance directly and remains
+   waiting for Config or firmware. Wi-Fi and OTA network remain off.
+3. If the one-shot `maintenance/boot_once` marker is present, Core deletes it before
+   entering maintenance. A later reset does not create a loop unless Config is still absent.
+4. Config valid without marker: `probe()` opens the only RX bootstrap window. A valid
+   payload enters maintenance; timeout or invalid payload start `NORMAL`.
+5. In `NORMAL`, an authenticated request can save the one-shot marker and restart.
 
-Il marker non fa parte della Config utente e non rappresenta uno stato Update. È una
-richiesta transitoria separata: viene consumata una volta. Maintenance rende disponibile
-il canale locale, ma la scrittura di `image-1` comincia soltanto dopo un comando Image
-Management accettato dal coordinatore Update.
+The marker is not part of the user Config and does not represent an Update status. It is
+a separate transitional request: it is consumed once. Maintenance makes available the
+local channel, but the writing of `image-1` begins only after an Image Management
+command has been accepted by the Update coordinator.
 
-Quando una nuova Config viene ricevuta correttamente mentre il dispositivo era senza
-Config, il comportamento predefinito è rispondere alla base, chiudere maintenance e
-riavviare in `NORMAL`. Un upload incompleto viene invece cancellato prima del riavvio.
+When a new Config is received correctly while the device was without Config, the default
+behavior is to respond to the base, close maintenance and restart in `NORMAL`. An
+incomplete upload is deleted before rebooting.
 
-## Proprietà di sicurezza
+## Security properties
 
-- Nessun valore persistente può forzare `RECEIVING` o confermare una nuova immagine.
-- Il probe di boot non trasmette sui pin condivisi prima di un frame valido.
-- Config assente abilita solo manutenzione locale, non Wi-Fi o listener OTA di rete.
-- Un payload di ingresso non contiene l'immagine: autorizza soltanto la modalità.
-- Timeout, frame errato e reset ripristinano firmware precedente e stato deterministico.
-- Il firmware attivo resta in `image-0`; un candidato usa soltanto `image-1`.
+- No persistent value can force `RECEIVING` or confirm a new image.
+- The boot probe does not broadcast on shared pins before a valid frame.
+- An absent Config enables only local maintenance, not Wi-Fi or the network OTA listener.
+- An input payload does not contain the image; it only authorizes the mode.
+- Timeout, incorrect frame and reset restore previous firmware and deterministic status.
+- The active firmware remains in `image-0`; a candidate uses only `image-1`.
 
-## Cosa deve verificare ogni nuova Core
+## What to verify for every new Core
 
-- Il controller normale e quello di manutenzione possono essere sospesi e riattivati.
-- Gli stati pinctrl non abilitano contemporaneamente due periferiche sugli stessi pin.
-- Livelli, pull e tensione sono compatibili con base e Module collegati.
-- TX rimane inattivo durante probe e reset.
-- La base e il dispositivo condividono un riferimento elettrico.
-- Overlay e DTS generato contengono soltanto pin reali della variante.
+- The normal controller and maintenance controller can be suspended and reactivated.
+- Pinctrl states do not simultaneously enable two peripherals on the same pins.
+- Levels, pull and voltage are compatible with base and connected Module.
+- TX remains inactive during probe and reset.
+- The base and the device share an electrical reference.
+- Overlay and DTS contain only real pins of the variant.

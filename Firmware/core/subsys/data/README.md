@@ -2,36 +2,36 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-Data distribuisce misure normalizzate senza esporre ai consumer il driver che le ha
-prodotte. Logger, test e adapter MQTT conoscono il messaggio elettrico, non
-`ina219.h` né i dettagli I2C.
+Data distributes normalized measurements without exposing the producing driver to
+consumers. The logger, tests, and MQTT adapter know the electrical message, not
+`ina219.h` or I2C details.
 
-## Responsabilità
+## Responsibilities
 
-Data possiede il channel zbus, gli observer statici e i contatori diagnostici. Non
-esegue acquisizioni, non possiede Module o Port e non conserva puntatori del publisher.
+Data owns the zbus channel, static observers, and diagnostic counters. It does not
+perform acquisitions, own Modules or Ports, or retain publisher pointers.
 
 ## File
 
-| File | Ruolo |
+| File | Role |
 |---|---|
-| `include/spaghetti/data.h` | Messaggio, statistiche e API pubbliche. |
-| `subsys/data/data.c` | Channel, subscriber, logger e publish. |
-| `tests/data/` | Test fan-out e pool pieno. |
+| `include/spaghetti/data.h` |Public Message, Statistics and API.|
+| `subsys/data/data.c` |Channel, subscriber, logger and publish.|
+| `tests/data/` |Fan-out test and full pool.|
 
-## Messaggio
+## Message
 
-`struct spaghetti_electrical_message` è priva di puntatori e contiene:
+`struct spaghetti_electrical_message` is without pointers and contains:
 
-- `source_id`, handle dell'istanza Module viva;
-- `source_key`, identità Config stabile anche dopo un reboot;
-- bus voltage, current firmata e power nelle stesse microunità di
-  `struct spaghetti_sample`;
-- uptime di acquisizione in millisecondi;
-- sequence del publisher, con wrap unsigned intenzionale.
+- `source_id`, handle of the live Module instance;
+- `source_key`, the stable Config identity that survives a reboot;
+- bus voltage, current signed and power in the same microunits as `struct
+  spaghetti_sample`;
+- acquisition uptime in milliseconds;
+- publisher sequence, with intentional unsigned wrap.
 
-Due Module sulla stessa Port restano distinti tramite ID e key. Data non usa la Port
-come identità e non assume che la sorgente sia un INA219.
+Two Module on the same Port remain distinguished by ID and key. Data does not use the
+Port as an identity and does not assume that the source is a INA219.
 
 ## API
 
@@ -43,20 +43,20 @@ int spaghetti_data_publish_electrical(
 int spaghetti_data_get_stats(struct spaghetti_data_stats *out);
 ```
 
-`spaghetti_data_init()` azzera i contatori una sola volta. Channel e observer sono
-oggetti statici che Zephyr prepara prima di `main`.
+`spaghetti_data_init()` removes counters once. Channel and observer are static objects
+that Zephyr prepares before `main`.
 
-`spaghetti_data_publish_electrical()` presta il messaggio a zbus per la durata della
-chiamata. zbus ne copia il contenuto nel channel e poi crea una copia per ciascun
-observer abilitato. `K_NO_WAIT` è la policy usata dal producer firmware.
+`spaghetti_data_publish_electrical()` lends the message to zbus for the duration of the
+call. zbus copies the content in the channel and then creates a copy for each enabled
+observer. `K_NO_WAIT` is the policy used by the firmware producer.
 
-`spaghetti_data_get_stats()` restituisce i contatori atomici di publish completate,
-chiamate rifiutate ed errori di consegna. I contatori possono fare wrap.
+`spaghetti_data_get_stats()` returns the complete atomic publishing meters, rejected
+calls and delivery errors. Counters can wrap.
 
-## zbus e capacità
+## zbus and capacity
 
-Le FIFO dei message subscriber sono separate, ma in Zephyr 4.4 i loro messaggi usano
-un pool globale di `net_buf`. Il firmware configura 8 buffer statici da 64 byte:
+The FIFO of message subscribers are separated, but in Zephyr 4.4 their messages use a
+global pool of `net_buf`. The firmware configures 8 static buffers from 64 bytes:
 
 ```ini
 CONFIG_ZBUS=y
@@ -67,31 +67,31 @@ CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_POOL_SIZE=8
 CONFIG_ZBUS_MSG_SUBSCRIBER_NET_BUF_STATIC_DATA_SIZE=64
 ```
 
-Non viene usato heap. Logger e adapter MQTT hanno subscriber e thread bounded. Il
-subscriber MQTT è disabilitato quando MQTT è disabilitato da Config. Il subscriber di
-test esiste staticamente ma è disabilitato nel firmware normale; il test lo abilita
-soltanto mentre riceve e verifica il fan-out.
+Heap is not used. Logger and adapter MQTT have subscriber and thread bounded. The MQTT
+subscriber is disabled when MQTT is disabled by Config. The test subscriber exists
+statically but is disabled in the normal firmware; the test only enables it while
+receiving and checking the fan-out.
 
 ## Backpressure
 
-Se il pool non può completare tutte le copie, zbus restituisce `-ENOMEM`. Le notifiche
-sono sequenziali: un observer precedente può avere già ricevuto il messaggio, quindi
-l'errore rappresenta un fan-out incompleto. Data incrementa `delivery_errors`; il
-producer non ritenta e continua. I consumer usano `sequence` per riconoscere buchi.
+If the pool cannot complete all copies, zbus returns `-ENOMEM`. Notifications are
+sequential: a previous observer may have already received the message, so the error
+represents an incomplete fan-out. Data increases `delivery_errors`; the producer does
+not contain and continues. Consumers use `sequence` to recognize holes.
 
 ```mermaid
 flowchart LR
-    READ["Module Manager read"] --> MESSAGE["Messaggio elettrico owned"]
+    READ["Module Manager read"] --> MESSAGE["Owned electrical message"]
     MESSAGE --> CHANNEL["Channel zbus"]
     CHANNEL --> LOGGER["FIFO logger"]
-    CHANNEL --> MQTT["FIFO adapter MQTT, opzionale"]
-    CHANNEL --> TEST["FIFO test, disabilitata normalmente"]
+    CHANNEL --> MQTT["Optional MQTT adapter FIFO"]
+    CHANNEL --> TEST["Test FIFO, normally disabled"]
     LOGGER --> LOG["LOG_INF"]
-    MQTT --> MQTTQ["Coda pubblicazioni bounded"]
+    MQTT --> MQTTQ["Bounded publication queue"]
 ```
 
-## Ownership e concorrenza
+## Ownership and competition
 
-Il publisher mantiene valido il proprio oggetto soltanto fino al ritorno; zbus e i
-subscriber lavorano su copie. I contatori sono atomici, stack e pool sono statici e
-bounded. Logger e adapter MQTT sono ciascuno l'unico consumer della propria FIFO.
+The publisher retains its object only until the return; zbus and subscribers work on
+copies. Counters are atomic, stack and pool are static and bounded. Logger and adapter
+MQTT are each the only consumer of its FIFO.

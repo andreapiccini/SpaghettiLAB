@@ -1,7 +1,7 @@
 # Spaghetti LAB board support
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) ·
-[Guida per aggiungere un Core](../../EXTENDING_SPAGHETTI_LAB.md#percorso-b-aggiungere-una-nuova-variante-core)
+[Guide for adding a Core](../../EXTENDING_SPAGHETTI_LAB.md#route-b-add-a-new-core-variant)
 
 A board definition describes one physical Core variant to Zephyr. It contains facts that are fixed by the schematic: MCU, memory, controllers, pins, Ports, console, flash layout, and real hardware capabilities.
 

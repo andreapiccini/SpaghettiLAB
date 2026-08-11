@@ -1,7 +1,7 @@
 # Spaghetti module drivers
 
 [← Project README](../README.md) · [Architecture](../ARCHITECTURE.md) ·
-[Guida per aggiungere un Module](../EXTENDING_SPAGHETTI_LAB.md#percorso-a-aggiungere-un-nuovo-module)
+[Guide for adding a Module](../EXTENDING_SPAGHETTI_LAB.md#route-a-add-a-new-module)
 
 Each child directory implements one external module type through the common module-driver contract. The code executes on the Core; the external module is a peripheral, not another Zephyr application.
 
@@ -9,7 +9,7 @@ Each child directory implements one external module type through the common modu
 > This README describes the implemented V0 API. Registry is still a central table,
 > Config CBOR accepts only INA219, and Port does not yet serialize direct I2C calls from
 > independent driver threads. Tasks 300–340 replace these limits. Follow the
-> [extension guide](../EXTENDING_SPAGHETTI_LAB.md#stato-reale-dellestensibilità)
+> [extension guide](../EXTENDING_SPAGHETTI_LAB.md#current-extensibility-status)
 > before adding a production driver.
 
 ## What this component owns
