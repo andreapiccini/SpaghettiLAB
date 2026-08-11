@@ -86,6 +86,19 @@ struct spaghetti_wifi_profiles_status {
 int spaghetti_wifi_profiles_init(void);
 
 /**
+ * @brief Load persistent profiles without starting network activity.
+ *
+ * This maintenance-only variant enables encrypted profile set/remove calls but
+ * does not register Wi-Fi callbacks, start the worker, scan, or connect.
+ *
+ * @retval 0 Profiles are available in storage-only mode.
+ * @retval -EALREADY The service was initialized previously.
+ *
+ * @note Core calls this only in UNPROVISIONED or MAINTENANCE mode.
+ */
+int spaghetti_wifi_profiles_init_offline(void);
+
+/**
  * @brief Add or atomically replace one persistent Wi-Fi profile.
  *
  * An existing profile with the same SSID keeps its slot. A new profile uses one

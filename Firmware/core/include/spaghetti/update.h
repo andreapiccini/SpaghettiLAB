@@ -8,6 +8,7 @@
 #define SPAGHETTI_UPDATE_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /** Transport currently authorized to deliver one firmware candidate. */
@@ -91,6 +92,27 @@ int spaghetti_update_arm(uint32_t timeout_ms);
  * @note Thread context only. This call may erase the complete secondary slot.
  */
 int spaghetti_update_begin(enum spaghetti_update_transport transport);
+
+/**
+ * @brief Append one ordered firmware chunk to the owned secondary slot.
+ *
+ * @param[in] offset Expected zero-based byte offset. Chunks must be contiguous.
+ * @param[in] data Caller-owned bytes borrowed only for this synchronous call.
+ * @param[in] data_size Number of bytes at @p data; must be non-zero.
+ * @param[in] last True only for the final chunk, which flushes buffered flash data.
+ *
+ * @retval 0 The complete chunk was accepted at @p offset.
+ * @retval -EINVAL A pointer, size, offset, or final-chunk contract is invalid.
+ * @retval -EACCES The coordinator is not initialized.
+ * @retval -EPERM No transport owns a RECEIVING session.
+ * @retval -ETIMEDOUT The whole-session deadline expired.
+ * @retval -EIO The flash stream rejected the write.
+ * @retval -errno The selected flash backend rejected the operation.
+ *
+ * @note Thread context only. The coordinator retains no caller buffer.
+ */
+int spaghetti_update_write(uint32_t offset, const uint8_t *data,
+			   size_t data_size, bool last);
 
 /**
  * @brief Finalize the received candidate and request one MCUboot test boot.

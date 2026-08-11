@@ -78,6 +78,11 @@ worker performs scans, waits for association events, and retries; Shell, Runtime
 MQTT never block on this policy. MQTT still waits for an IPv4 address and reconnects
 through its existing behavior.
 
+In `UNPROVISIONED` and `MAINTENANCE`, Core instead calls
+`spaghetti_wifi_profiles_init_offline()`. Profiles can still be added or removed by
+the local maintenance protocol and are persisted with the same protection, but no
+network callback or worker is started and `request_connect()` returns `-ENOTSUP`.
+
 `CONFIG_MAIN_STACK_SIZE=4096` is explicit because boot loads and authenticates PSA ITS
 records from the main thread. The previous 2048-byte default was insufficient for the
 ESP32-C3 crypto call chain and could corrupt the adjacent idle stack during boot.

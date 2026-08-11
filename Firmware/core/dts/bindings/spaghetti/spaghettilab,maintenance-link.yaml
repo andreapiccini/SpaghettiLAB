@@ -1,0 +1,21 @@
+description: Shared normal-bus and local-maintenance connection
+
+compatible: "spaghettilab,maintenance-link"
+
+include: base.yaml
+
+properties:
+  normal-bus:
+    type: phandle
+    required: true
+    description: Controller that owns the shared pins during normal operation
+
+  maintenance-uart:
+    type: phandle
+    required: true
+    description: UART controller used only during local maintenance
+
+  bootstrap-window-ms:
+    type: int
+    required: true
+    description: Maximum receive-only authenticated boot probe duration

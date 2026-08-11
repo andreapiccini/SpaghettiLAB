@@ -9,6 +9,10 @@
 #include <zephyr/dfu/mcuboot.h>
 #include <zephyr/storage/flash_map.h>
 
+static struct flash_img_context upload_context;
+static uint32_t upload_offset;
+static bool upload_prepared;
+
 static int erase_secondary_slot(void)
 {
 	const struct flash_area *area;
@@ -56,6 +60,7 @@ int spaghetti_update_backend_active_slot(uint8_t *slot)
 int spaghetti_update_backend_prepare(void)
 {
 	const int swap_type = mcuboot_swap_type();
+	const uint8_t area_id = flash_img_get_upload_slot();
 	int err;
 
 	if (swap_type < 0) {
@@ -65,7 +70,38 @@ int spaghetti_update_backend_prepare(void)
 		return -EBUSY;
 	}
 
+	upload_prepared = false;
+	upload_offset = 0U;
 	err = erase_secondary_slot();
+	if (err < 0) {
+		return err;
+	}
+	err = flash_img_init_id(&upload_context, area_id);
+	if (err == 0) {
+		upload_offset = 0U;
+		upload_prepared = true;
+	}
+	return err;
+}
+
+int spaghetti_update_backend_write(uint32_t offset, const uint8_t *data,
+				   size_t data_size, bool last)
+{
+	int err;
+
+	if (!upload_prepared) {
+		return -EACCES;
+	}
+	if ((data == NULL) || (data_size == 0U) ||
+	    (offset != upload_offset) ||
+	    (data_size > (UINT32_MAX - upload_offset))) {
+		return -EINVAL;
+	}
+
+	err = flash_img_buffered_write(&upload_context, data, data_size, last);
+	if (err == 0) {
+		upload_offset += (uint32_t)data_size;
+	}
 	return err;
 }
 
@@ -83,13 +119,21 @@ int spaghetti_update_backend_finalize_test(void)
 		return -EBADMSG;
 	}
 
-	return boot_request_upgrade(BOOT_UPGRADE_TEST);
+	err = boot_request_upgrade(BOOT_UPGRADE_TEST);
+	if (err == 0) {
+		upload_prepared = false;
+	}
+	return err;
 }
 
 int spaghetti_update_backend_cancel(void)
 {
 	const int err = erase_secondary_slot();
 
+	if (err == 0) {
+		upload_prepared = false;
+		upload_offset = 0U;
+	}
 	return err;
 }
 

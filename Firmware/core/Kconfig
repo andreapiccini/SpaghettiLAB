@@ -38,6 +38,10 @@ module = SPAGHETTI_UPDATE
 module-str = spaghetti_update
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_MAINTENANCE_LINK
+module-str = spaghetti_maintenance_link
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_DATA
 module-str = spaghetti_data
 source "subsys/logging/Kconfig.template.log_config"
@@ -200,6 +204,20 @@ config SPAGHETTI_TRIAL_HEALTH_MS
 	default 5000
 	help
 	  Stable RUNNING time required before Core confirms a trial image.
+
+config SPAGHETTI_MAINTENANCE_SESSION_MS
+	int "Maximum local firmware-upload session in milliseconds"
+	range 10000 900000
+	default 300000
+	help
+	  Absolute Update deadline opened by the first accepted UART image chunk.
+
+config SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS
+	int "Delay before reboot after a maintenance response"
+	range 100 5000
+	default 500
+	help
+	  Time reserved for the final SMP UART response to leave the transmitter.
 
 config SPAGHETTI_MQTT_QUEUE_DEPTH
 	int "MQTT outbound publication queue depth"

@@ -13,6 +13,7 @@
 #include <spaghetti/data.h>
 #include <spaghetti/discovery.h>
 #include <spaghetti/driver_registry.h>
+#include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/port.h>
@@ -39,6 +40,7 @@ static struct spaghetti_config startup_config;
 static bool startup_config_present;
 static bool core_info_available;
 static struct spaghetti_core_info core_info;
+static enum spaghetti_maintenance_entry_reason maintenance_reason;
 static atomic_t core_state = ATOMIC_INIT(SPAGHETTI_CORE_UNINITIALIZED);
 K_MUTEX_DEFINE(core_lock);
 
@@ -138,10 +140,12 @@ static int select_boot_mode(const struct spaghetti_update_status *update_status)
 	}
 	if (!startup_config_present) {
 		core_info.mode = SPAGHETTI_CORE_MODE_UNPROVISIONED;
+		maintenance_reason = SPAGHETTI_MAINTENANCE_CONFIG_ABSENT;
 	} else if (maintenance_requested) {
 		core_info.mode = SPAGHETTI_CORE_MODE_MAINTENANCE;
+		maintenance_reason = SPAGHETTI_MAINTENANCE_REBOOT_REQUEST;
 	} else {
-		err = spaghetti_core_bootstrap_probe(
+		err = spaghetti_maintenance_link_probe(
 			CONFIG_SPAGHETTI_BOOTSTRAP_PROBE_MS,
 			&maintenance_requested);
 		if (err < 0) {
@@ -150,6 +154,7 @@ static int select_boot_mode(const struct spaghetti_update_status *update_status)
 		core_info.mode = maintenance_requested ?
 			SPAGHETTI_CORE_MODE_MAINTENANCE :
 			SPAGHETTI_CORE_MODE_NORMAL;
+		maintenance_reason = SPAGHETTI_MAINTENANCE_BOOTSTRAP_FRAME;
 	}
 
 	core_info.image_state = update_status->image_confirmed ?
@@ -203,6 +208,10 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto update_status_failed;
 	}
+	err = spaghetti_maintenance_link_init();
+	if (err < 0) {
+		goto maintenance_link_failed;
+	}
 	err = spaghetti_port_init_all();
 	if (err < 0) {
 		goto port_failed;
@@ -255,6 +264,15 @@ int spaghetti_core_init(void)
 		if (err < 0) {
 			goto wifi_failed;
 		}
+	} else {
+		err = spaghetti_wifi_profiles_init_offline();
+		if (err < 0) {
+			goto wifi_failed;
+		}
+		err = spaghetti_maintenance_link_enter(maintenance_reason);
+		if (err < 0) {
+			goto maintenance_enter_failed;
+		}
 	}
 	err = spaghetti_communication_init();
 	if (err < 0) {
@@ -277,6 +295,9 @@ int spaghetti_core_init(void)
 communication_failed:
 	(void)fail_initialization("Communication", err);
 	goto unlock;
+maintenance_enter_failed:
+	(void)fail_initialization("Maintenance Link enter", err);
+	goto unlock;
 wifi_failed:
 	(void)fail_initialization("Wi-Fi Profiles", err);
 	goto unlock;
@@ -297,6 +318,9 @@ update_failed:
 	goto unlock;
 update_status_failed:
 	(void)fail_initialization("Update status", err);
+	goto unlock;
+maintenance_link_failed:
+	(void)fail_initialization("Maintenance Link", err);
 	goto unlock;
 storage_failed:
 	(void)fail_initialization("Storage", err);

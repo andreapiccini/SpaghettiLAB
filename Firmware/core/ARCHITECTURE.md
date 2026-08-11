@@ -624,7 +624,7 @@ flowchart LR
     LINK --> BOARD["Board / overlay backend"]
     BOARD --> NORMAL["Normal controller"]
     BOARD --> LOCAL["Local maintenance transport"]
-    UPDATE["Update coordinator"] --> LINK
+    LOCAL --> UPDATE["Update coordinator"]
 ```
 
 On Core V1 the board mapping is I2C SDA/SCL on GPIO3/GPIO4 in normal operation and
@@ -673,21 +673,21 @@ sequenceDiagram
 
 The Update coordinator is implemented as one transport-independent state machine. It
 serializes UART and UDP ownership, applies one absolute timeout, erases only the
-secondary slot on cancellation and requests only an MCUboot test boot. The transport
-adapters remain in later roadmap phases. The boot-mode policy and trial confirmation
-are implemented; the production bootstrap backend stays inactive until the shared-pin
-UART adapter is added in phase 260. MCUboot, not the running application, performs the
-definitive ECDSA verification before executing a candidate.
+secondary slot on cancellation and requests only an MCUboot test boot. The local UART
+adapter uses Zephyr SMP framing but registers only the restricted Spaghetti management
+group; it streams ordered chunks through the coordinator and cannot confirm a trial
+image. The UDP adapter remains in phase 270. MCUboot, not the running application,
+performs the definitive ECDSA verification before executing a candidate.
 
 See also:
 
 - [Update coordinator](subsys/services/update/README.md)
+- [Local Maintenance Link](subsys/services/maintenance_link/README.md)
 - [Maintenance Link contract](UPDATE_HARDWARE_CONTRACT.md)
 
 The detailed contract is in
-[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Local transport, OTA,
-remote console and qualification remain in roadmap phases 260–290; this section does
-not claim that firmware reception is already active in the production firmware.
+[UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Local transport is active;
+OTA, remote console and physical interruption qualification remain in phases 270–290.
 
 ## Discovery strategies
 

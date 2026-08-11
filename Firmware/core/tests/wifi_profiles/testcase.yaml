@@ -6,3 +6,12 @@ tests:
       - spaghetti
       - wifi
       - storage
+  spaghetti.wifi_profiles.offline:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_WIFI_PROFILES_TEST_OFFLINE=y
+    tags:
+      - spaghetti
+      - wifi
+      - maintenance

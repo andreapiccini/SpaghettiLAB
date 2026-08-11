@@ -20,6 +20,8 @@ int spaghetti_maintenance_link_probe(uint32_t timeout_ms, bool *requested);
 int spaghetti_maintenance_link_enter(
 	enum spaghetti_maintenance_entry_reason reason);
 int spaghetti_maintenance_link_leave(void);
+int spaghetti_maintenance_link_set_key(const uint8_t *key, size_t key_size);
+enum spaghetti_maintenance_link_state spaghetti_maintenance_link_get_state(void);
 ```
 
 `timeout_ms` è passato per valore perché è un limite numerico piccolo. `requested` è
@@ -45,7 +47,7 @@ binding deve richiedere riferimenti logici, non numeri GPIO nell'API comune:
 maintenance_link0: maintenance-link {
 	compatible = "spaghettilab,maintenance-link";
 	normal-bus = <&i2c0>;
-	maintenance-uart = <&uart_controller_from_this_board>;
+	maintenance-uart = <&uart1>;
 	bootstrap-window-ms = <500>;
 	status = "okay";
 };
@@ -54,8 +56,8 @@ maintenance_link0: maintenance-link {
 `normal-bus` è il controller usato dall'Engine. `maintenance-uart` è il device Zephyr
 usato dal backend locale. `bootstrap-window-ms` limita l'ascolto quando esiste già una
 Config. Pin, pinmux e controller concreti restano nei nodi/pinctrl della board o nel
-suo overlay. Il task 260 sostituirà il nome descrittivo dell'esempio con il node label
-UART realmente presente nella versione Zephyr e nella board selezionata.
+suo overlay. Core V1 usa realmente `uart1`; Core V2 build-only usa lo stesso controller
+con una mappatura pin diversa.
 
 Una variante che non fornisce il nodo non espone la capability. Kconfig/CMake devono
 rifiutare l'abilitazione della manutenzione locale su quella build; il firmware comune
@@ -76,9 +78,28 @@ Core, Communication, Maintenance Link pubblico o nel tool host. Su un'altra Core
 stessa API può usare altri pin o un altro backend dichiarato dall'overlay.
 
 Durante la finestra di bootstrap con Config valida, il backend mantiene TX inattivo e
-ascolta un frame sulla linea RX. Solo un frame completo, versionato, bounded e
-autenticato autorizza `enter()`. Un sensore I2C non trasmette spontaneamente quel frame;
-assenza di frame o rumore riportano i pin a I2C al termine della finestra.
+ascolta un frame di 40 byte sulla linea RX: `SPLM`, versione `1`, comando `1`, due byte
+riservati a zero e HMAC-SHA256 dell'header seguito dal device ID Zephyr. La chiave da
+32 byte è per-device e viene salvata in PSA ITS. Solo un frame completo e autenticato
+autorizza `enter()`. Un sensore I2C non trasmette spontaneamente quel frame; assenza di
+frame o rumore riportano i pin a I2C al termine della finestra. La versione 1 non ha
+nonce ed è replayable: è una protezione di bootstrap locale, non autenticazione remota.
+
+## Trasporto locale implementato
+
+Zephyr SMP UART fornisce framing seriale Base64 e CRC sul `zephyr,uart-mcumgr` scelto
+dalla board. Il firmware registra soltanto il gruppo Spaghetti 64 con operazioni
+bounded per stato, Config CBOR, profili Wi-Fi, chiave bootstrap, chunk firmware e
+cancel. I gruppi mcumgr Shell, File System, OS e Image standard restano disabilitati:
+la scrittura del firmware deve passare da `spaghetti_update_arm()`,
+`spaghetti_update_begin()`, `spaghetti_update_write()` e
+`spaghetti_update_finish()` e non può confermare autonomamente un trial.
+
+UART non espone un segnale portabile di presenza del cavo. La perdita del collegamento
+durante un upload viene quindi gestita dalla scadenza assoluta del coordinatore Update:
+la secondaria incompleta viene cancellata e l'immagine confermata resta intatta. La
+modalità maintenance rimane in ascolto fino al reset; con Config valida il reset
+ripristina I2C e la Config precedente.
 
 ## Regole di ingresso al boot
 

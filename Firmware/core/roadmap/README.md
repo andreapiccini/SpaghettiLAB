@@ -101,7 +101,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [230 — MCUboot e A/B](230-mcuboot-ab/README.md) | Bootloader e applicazione firmata usano gli slot primario e secondario. |
 | ✅ | [240 — Coordinatore update](240-update-coordinator/README.md) | Timeout e cancel scartano il candidato senza toccare il firmware attivo. |
 | ✅ | [250 — Boot sicuro](250-safe-boot-mode/README.md) | Boot senza Config resta sicuro; modalità operativa e trial sono visibili e indipendenti. |
-| ⬜ | [260 — Manutenzione locale UART](260-local-maintenance-uart/README.md) | La base configura e aggiorna il Core usando i pin condivisi in una finestra sicura. |
+| ✅ | [260 — Manutenzione locale UART](260-local-maintenance-uart/README.md) | La base configura e aggiorna il Core usando i pin condivisi in una finestra sicura. |
 | ⬜ | [270 — OTA Wi-Fi](270-wifi-ota/README.md) | Un peer autenticato carica una signed image durante una finestra esplicita. |
 | ⬜ | [280 — Console remota](280-remote-console/README.md) | `make monitor` usa USB o un canale di rete autenticato. |
 | ⬜ | [290 — Qualificazione update](290-update-qualification/README.md) | Interruzioni, rollback e recovery sono verificati end-to-end. |
@@ -109,10 +109,10 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 ## Da dove iniziare
 
 Il piano OTA è descritto in
-[Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Le fasi 220–250 sono
+[Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Le fasi 220–260 sono
 complete. Apri ora
-[TASK-260-01 — Aggiungere provisioning e update UART dalla base](260-local-maintenance-uart/TASK-260-01-aggiungere-la-manutenzione-uart.md),
-che collegherà la policy di boot già pronta al pinmux e al trasporto UART reale.
+[TASK-270-01 — Aggiungere OTA Wi-Fi autenticato](270-wifi-ota/TASK-270-01-aggiungere-ota-wifi-autenticato.md),
+che riusa lo stesso coordinatore Update senza aprire automaticamente la rete.
 
 La [fase 210](210-finalizzazione/README.md) resta aperta come qualificazione finale e
 va chiusa dopo le estensioni OTA, quando tutte le scorciatoie temporanee possono essere

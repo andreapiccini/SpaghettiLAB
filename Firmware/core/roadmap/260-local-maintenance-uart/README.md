@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -11,12 +11,12 @@ attivabile da un sensore.
 
 ## Task
 
-1. ⬜ [TASK-260-01 — Aggiungere provisioning e update UART dalla base](TASK-260-01-aggiungere-la-manutenzione-uart.md)
+1. ✅ [TASK-260-01 — Aggiungere provisioning e update UART dalla base](TASK-260-01-aggiungere-la-manutenzione-uart.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Il pinmux è scelto dal backend board, non dai servizi comuni.
-- [ ] Config assente abilita direttamente UART; Config valida usa probe o reboot one-shot.
-- [ ] Runtime e Module sono fermi prima di lasciare I2C.
-- [ ] Config/Wi-Fi e firmware usano frame bounded e versionati.
-- [ ] Timeout ripristina I2C e scarta upload incompleti.
+- [x] Il pinmux è scelto dal backend board, non dai servizi comuni.
+- [x] Config assente abilita direttamente UART; Config valida usa probe o reboot one-shot.
+- [x] Runtime e Module sono fermi prima di lasciare I2C.
+- [x] Config/Wi-Fi e firmware usano frame bounded e versionati.
+- [x] Il timeout Update scarta upload incompleti senza toccare l'immagine attiva.

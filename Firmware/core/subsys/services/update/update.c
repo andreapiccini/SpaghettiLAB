@@ -261,6 +261,47 @@ unlock:
 	return err;
 }
 
+int spaghetti_update_write(uint32_t offset, const uint8_t *data,
+			   size_t data_size, bool last)
+{
+	int err;
+
+	if ((data == NULL) || (data_size == 0U)) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&update_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		err = -EACCES;
+		goto unlock;
+	}
+	if (context.status.state != SPAGHETTI_UPDATE_RECEIVING) {
+		err = -EPERM;
+		goto unlock;
+	}
+	if (session_has_expired()) {
+		(void)k_work_cancel_delayable(&context.timeout_work);
+		err = discard_candidate_locked(-ETIMEDOUT);
+		if (err == 0) {
+			err = -ETIMEDOUT;
+		}
+		goto unlock;
+	}
+
+	err = spaghetti_update_backend_write(offset, data, data_size, last);
+	if (err < 0) {
+		context.status.state = SPAGHETTI_UPDATE_ERROR;
+		context.status.last_error = err;
+	}
+
+unlock:
+	k_mutex_unlock(&update_lock);
+	return err;
+}
+
 int spaghetti_update_cancel(void)
 {
 	int err = k_mutex_lock(&update_lock, K_FOREVER);

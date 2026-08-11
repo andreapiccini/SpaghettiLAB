@@ -22,7 +22,8 @@ Core is the firmware startup coordinator. It initializes required components in 
 |---|---|
 | `include/spaghetti/core.h` | Public Core state, info, and function declarations. |
 | `subsys/core/core.c` | Private state and startup sequence. |
-| `subsys/core/core_boot_backend.c` | Board-independent bootstrap/reboot backend boundary. |
+| `subsys/core/core_boot_backend.c` | Board-independent reboot backend boundary. |
+| `subsys/services/maintenance_link/` | Shared-pin probe, pinctrl transition, and restricted SMP UART adapter. |
 | `src/main.c` | Calls Core and handles its final boot result. |
 
 ## Data model
@@ -120,14 +121,19 @@ sequenceDiagram
     participant Core
     participant Storage
     participant Update
+    participant Link as Maintenance Link
     participant Engine
     participant Communication
     Main->>Core: init()
     Core->>Storage: load Config and consume one-shot marker
     Core->>Update: read image state and active slot
+    Core->>Link: initialize normal pins and perform the receive-only probe
     Core->>Core: select operational mode
     opt mode is NORMAL
         Core->>Engine: initialize runtime services
+    end
+    opt mode is UNPROVISIONED or MAINTENANCE
+        Core->>Link: switch shared pins to local UART
     end
     Core->>Communication: initialize Shell
     Core-->>Main: READY

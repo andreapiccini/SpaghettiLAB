@@ -39,6 +39,8 @@ target_sources(app PRIVATE
   subsys/config/config.c
   subsys/config/config_cbor.c
   subsys/services/storage/storage.c
+  subsys/services/maintenance_link/maintenance_link.c
+  subsys/services/maintenance_link/maintenance_mgmt.c
   subsys/services/update/update.c
   subsys/services/update/update_mcuboot.c
   subsys/data/data.c

@@ -38,6 +38,7 @@ struct spaghetti_wifi_profiles_context {
 static struct spaghetti_wifi_profiles_context context = {
 	.preferred_slot = SPAGHETTI_WIFI_INVALID_SLOT,
 };
+static atomic_t network_allowed;
 K_MUTEX_DEFINE(profiles_lock);
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
@@ -561,7 +562,7 @@ K_THREAD_DEFINE(wifi_profiles_worker_id,
 		SYS_FOREVER_MS);
 #endif
 
-int spaghetti_wifi_profiles_init(void)
+static int wifi_profiles_init(bool allow_network)
 {
 	char preferred_ssid[SPAGHETTI_WIFI_SSID_SIZE] = {0};
 	size_t loaded_profile_count;
@@ -614,6 +615,7 @@ int spaghetti_wifi_profiles_init(void)
 	};
 	update_profile_count_locked();
 	context.initialized = true;
+	atomic_set(&network_allowed, allow_network ? 1 : 0);
 	loaded_profile_count = context.status.profile_count;
 	has_preferred =
 		context.preferred_slot != SPAGHETTI_WIFI_INVALID_SLOT;
@@ -621,21 +623,33 @@ int spaghetti_wifi_profiles_init(void)
 	k_mutex_unlock(&profiles_lock);
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
-	net_mgmt_init_event_callback(
+	if (allow_network) {
+		net_mgmt_init_event_callback(
 		&wifi_event_callback, wifi_event_handler,
 		NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE |
 		NET_EVENT_WIFI_CONNECT_RESULT |
 		NET_EVENT_WIFI_DISCONNECT_RESULT);
-	net_mgmt_add_event_callback(&wifi_event_callback);
-	k_thread_start(wifi_profiles_worker_id);
-	if (loaded_profile_count > 0U) {
-		k_sem_give(&worker_sem);
+		net_mgmt_add_event_callback(&wifi_event_callback);
+		k_thread_start(wifi_profiles_worker_id);
+		if (loaded_profile_count > 0U) {
+			k_sem_give(&worker_sem);
+		}
 	}
 #endif
 
 	LOG_INF("ready: profiles=%u preferred=%u",
 		(uint32_t)loaded_profile_count, has_preferred ? 1U : 0U);
 	return 0;
+}
+
+int spaghetti_wifi_profiles_init(void)
+{
+	return wifi_profiles_init(true);
+}
+
+int spaghetti_wifi_profiles_init_offline(void)
+{
+	return wifi_profiles_init(false);
 }
 
 int spaghetti_wifi_profiles_set(
@@ -689,7 +703,8 @@ int spaghetti_wifi_profiles_set(
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
 	const bool should_connect =
-		(err == 0) && (atomic_get(&wifi_is_connected) == 0);
+		(err == 0) && (atomic_get(&network_allowed) != 0) &&
+		(atomic_get(&wifi_is_connected) == 0);
 
 	if (should_connect) {
 		k_sem_give(&worker_sem);
@@ -754,10 +769,12 @@ int spaghetti_wifi_profiles_remove(const char *ssid)
 	k_mutex_unlock(&profiles_lock);
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
-	if (was_active) {
+	if ((atomic_get(&network_allowed) != 0) && was_active) {
 		atomic_set(&force_reconnect, 1);
 	}
-	k_sem_give(&worker_sem);
+	if (atomic_get(&network_allowed) != 0) {
+		k_sem_give(&worker_sem);
+	}
 #else
 	ARG_UNUSED(was_active);
 #endif
@@ -803,7 +820,7 @@ int spaghetti_wifi_profiles_set_preferred(const char *ssid)
 	k_mutex_unlock(&profiles_lock);
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
-	if (err == 0) {
+	if ((err == 0) && (atomic_get(&network_allowed) != 0)) {
 		atomic_set(&force_reconnect, 1);
 		k_sem_give(&worker_sem);
 	}
@@ -835,7 +852,7 @@ int spaghetti_wifi_profiles_clear_preferred(void)
 	k_mutex_unlock(&profiles_lock);
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
-	if (err == 0) {
+	if ((err == 0) && (atomic_get(&network_allowed) != 0)) {
 		atomic_set(&force_reconnect, 1);
 		k_sem_give(&worker_sem);
 	}
@@ -907,6 +924,9 @@ int spaghetti_wifi_profiles_request_connect(void)
 	k_mutex_unlock(&profiles_lock);
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	if (atomic_get(&network_allowed) == 0) {
+		return -ENOTSUP;
+	}
 	atomic_set(&force_reconnect, 1);
 	k_sem_give(&worker_sem);
 	return 0;

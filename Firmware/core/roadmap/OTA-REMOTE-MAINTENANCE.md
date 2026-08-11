@@ -31,7 +31,8 @@ La modalità operativa del firmware è sempre una fra:
 2. `NORMAL`: Config valida; Engine e Module usano normalmente le Port. I trasporti di
    aggiornamento sono chiusi.
 3. `MAINTENANCE`: modalità richiesta da marker one-shot o probe valido; Runtime e rete
-   restano spenti. La fase 260 collegherà questa policy al pinmux UART reale.
+   restano spenti. La fase 260 ha collegato questa policy al pinmux UART e al gruppo
+   SMP Spaghetti reale.
 
 La macchina Update può separatamente essere `ARMED` o `RECEIVING`. Lo stato immagine
 può essere `TRIAL` in qualunque modalità operativa: MCUboot avvia il candidato e Core lo
@@ -56,5 +57,6 @@ incompleta. Nessun record Config persistente può impostare direttamente `RECEIV
 
 Non iniziare un task se il precedente non è completato. I task 220–250 hanno fissato
 il confine hardware, predisposto bootloader/firma A/B, implementato il coordinatore
-Update e la policy di boot sicuro. Pin e controller restano proprietà della
-board/overlay; il task 260 implementa il Maintenance Link reale.
+Update e la policy di boot sicuro. Anche il Maintenance Link locale è completo: pin e
+controller restano proprietà della board/overlay. Il prossimo passo è l'adapter OTA
+Wi-Fi della fase 270.

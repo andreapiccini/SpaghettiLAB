@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include <zephyr/kernel.h>
@@ -12,7 +13,9 @@ static int prepare_calls;
 static int finalize_calls;
 static int cancel_calls;
 static int confirm_calls;
+static int write_calls;
 static int next_prepare_error;
+static int next_write_error;
 static int next_finalize_error;
 static int next_cancel_error;
 
@@ -36,6 +39,20 @@ int spaghetti_update_backend_prepare(void)
 
 	++prepare_calls;
 	next_prepare_error = 0;
+	return err;
+}
+
+int spaghetti_update_backend_write(uint32_t offset, const uint8_t *data,
+				   size_t data_size, bool last)
+{
+	const int err = next_write_error;
+
+	zassert_not_null(data);
+	zassert_equal(offset, 0U);
+	zassert_equal(data_size, 4U);
+	zassert_true(last);
+	++write_calls;
+	next_write_error = 0;
 	return err;
 }
 
@@ -84,6 +101,8 @@ ZTEST(update, test_trial_rejects_update_transitions)
 	zassert_equal(spaghetti_update_arm(1000U), -EPERM);
 	zassert_equal(spaghetti_update_begin(
 		SPAGHETTI_UPDATE_TRANSPORT_UART), -EPERM);
+	zassert_equal(spaghetti_update_write(0U, (const uint8_t *)"test",
+		4U, true), -EPERM);
 	zassert_equal(spaghetti_update_finish(), -EPERM);
 	zassert_equal(spaghetti_update_cancel(), -EPERM);
 	zassert_ok(spaghetti_update_confirm_trial());
@@ -108,6 +127,11 @@ ZTEST(update, test_update_lifecycle_and_failures)
 	zassert_equal(spaghetti_update_arm(100U), -EACCES);
 	zassert_equal(spaghetti_update_begin(
 		SPAGHETTI_UPDATE_TRANSPORT_UART), -EACCES);
+	zassert_equal(spaghetti_update_write(0U, (const uint8_t *)"test",
+		4U, true), -EACCES);
+	zassert_equal(spaghetti_update_write(0U, NULL, 4U, true), -EINVAL);
+	zassert_equal(spaghetti_update_write(0U, (const uint8_t *)"test",
+		0U, true), -EINVAL);
 	zassert_equal(spaghetti_update_finish(), -EACCES);
 	zassert_equal(spaghetti_update_cancel(), -EACCES);
 	zassert_equal(spaghetti_update_confirm_trial(), -EACCES);
@@ -133,9 +157,21 @@ ZTEST(update, test_update_lifecycle_and_failures)
 	zassert_equal(spaghetti_update_begin(
 		SPAGHETTI_UPDATE_TRANSPORT_UDP), -EBUSY);
 	zassert_equal(prepare_calls, 1);
+	zassert_ok(spaghetti_update_write(0U, (const uint8_t *)"test",
+		4U, true));
+	zassert_equal(write_calls, 1);
 	zassert_ok(spaghetti_update_cancel());
 	expect_status(SPAGHETTI_UPDATE_IDLE,
 		      SPAGHETTI_UPDATE_TRANSPORT_NONE, 0);
+
+	zassert_ok(spaghetti_update_arm(1000U));
+	zassert_ok(spaghetti_update_begin(SPAGHETTI_UPDATE_TRANSPORT_UART));
+	next_write_error = -EIO;
+	zassert_equal(spaghetti_update_write(0U,
+		(const uint8_t *)"test", 4U, true), -EIO);
+	expect_status(SPAGHETTI_UPDATE_ERROR,
+		      SPAGHETTI_UPDATE_TRANSPORT_UART, -EIO);
+	zassert_ok(spaghetti_update_cancel());
 
 	zassert_ok(spaghetti_update_arm(1000U));
 	next_prepare_error = -EIO;

@@ -21,6 +21,7 @@
 		zephyr,shell-uart = &usb_serial;
 		zephyr,flash = &flash0;
 		zephyr,code-partition = &slot0_partition;
+		zephyr,uart-mcumgr = &uart1;
 	};
 
 	aliases {
@@ -46,6 +47,14 @@
 			status = "okay";
 		};
 	};
+
+	maintenance_link0: maintenance-link {
+		compatible = "spaghettilab,maintenance-link";
+		normal-bus = <&i2c0>;
+		maintenance-uart = <&uart1>;
+		bootstrap-window-ms = <500>;
+		status = "okay";
+	};
 };
 
 &pinctrl {
@@ -55,6 +64,19 @@
 			bias-pull-up;
 			drive-open-drain;
 			output-high;
+		};
+	};
+
+	spaghetti_uart1_maintenance: spaghetti_uart1_maintenance {
+		group1 {
+			pinmux = <UART1_RX_GPIO5>, <UART1_TX_GPIO6>;
+		};
+	};
+
+	spaghetti_uart1_probe: spaghetti_uart1_probe {
+		group1 {
+			pinmux = <UART1_RX_GPIO5>;
+			bias-pull-up;
 		};
 	};
 };
@@ -68,6 +90,14 @@
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&spaghetti_i2c0_default>;
 	pinctrl-names = "default";
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&spaghetti_uart1_probe>;
+	pinctrl-1 = <&spaghetti_uart1_maintenance>;
+	pinctrl-names = "default", "sleep";
 };
 
 &gpio0 {
