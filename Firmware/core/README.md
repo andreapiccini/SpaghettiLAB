@@ -238,6 +238,7 @@ you need its detailed contract.
 |---|---|
 | [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |
 | [Implementation guide](FIRMWARE_IMPLEMENTATION_GUIDE.md) | Mandatory coding rules, decisions, workflow, and copyable templates |
+| [Hardware and finalization reminder](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md) | Deferred hardware decisions, production gaps, and the prompt for completing them |
 | [File map](FILE_MAP.md) | What each file contains and what to read before each kind of task |
 | [Firmware validator](VALIDATOR.md) | Pre-build checks, commands, severities, scope, and corrections |
 | [Public interfaces](include/spaghetti/README.md) | Shared types and public API boundaries |
