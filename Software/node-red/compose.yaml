@@ -1,0 +1,15 @@
+services:
+  node-red:
+    image: nodered/node-red:5.0.4
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Rome}
+    ports:
+      - "127.0.0.1:${NODE_RED_PORT:-1880}:1880"
+    volumes:
+      - node-red-data:/data
+      - ./theme/${NODE_RED_THEME:-safe}:/data/theme:ro
+      - ./theme/${NODE_RED_THEME:-safe}/settings.js:/data/settings.js:ro
+
+volumes:
+  node-red-data:
