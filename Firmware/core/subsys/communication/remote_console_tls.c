@@ -383,6 +383,7 @@ static int accept_client(void)
 	net_socklen_t address_size = sizeof(address);
 	const int client = zsock_accept(
 		context.server_socket, &address, &address_size);
+	int err;
 
 	if (client < 0) {
 		return -errno;
@@ -393,10 +394,14 @@ static int accept_client(void)
 	}
 	context.client_socket = client;
 	atomic_set(&client_connected, 1);
-	if ((send_text(client, "Spaghetti LAB authenticated network console\n") < 0) ||
-	    (send_prompt(client, NULL, 0U) < 0)) {
+	err = send_text(
+		client, "Spaghetti LAB authenticated network console\n");
+	if (err == 0) {
+		err = send_prompt(client, NULL, 0U);
+	}
+	if (err < 0) {
 		close_client();
-		return -ECONNRESET;
+		return err;
 	}
 	return 0;
 }
@@ -496,13 +501,16 @@ static void listener_entry(void *first, void *second, void *third)
 			    (context.client_socket >= 0)) {
 				line_size = 0U;
 				last_activity_ms = k_uptime_get();
+				continue;
 			}
 		}
 		if (context.client_socket < 0) {
 			continue;
 		}
-		if (drain_log_queue(
-			context.client_socket, line, line_size) < 0) {
+		const int drain_err = drain_log_queue(
+			context.client_socket, line, line_size);
+
+		if (drain_err < 0) {
 			close_client();
 			continue;
 		}
@@ -511,11 +519,14 @@ static void listener_entry(void *first, void *second, void *third)
 			close_client();
 			continue;
 		}
-		if ((descriptors[1].revents & ZSOCK_POLLIN) != 0 &&
-		    (receive_client_data(
-			line, &line_size, &last_activity_ms) < 0)) {
-			close_client();
-			continue;
+		if ((descriptors[1].revents & ZSOCK_POLLIN) != 0) {
+			const int receive_err = receive_client_data(
+				line, &line_size, &last_activity_ms);
+
+			if (receive_err < 0) {
+				close_client();
+				continue;
+			}
 		}
 		if ((k_uptime_get() - last_activity_ms) >=
 		    CONFIG_SPAGHETTI_REMOTE_CONSOLE_IDLE_TIMEOUT_MS) {

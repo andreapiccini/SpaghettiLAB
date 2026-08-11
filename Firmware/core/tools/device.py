@@ -370,16 +370,9 @@ class StyledSerialOutput:
         self.console.file.buffer.flush()
 
     def _print_shell_prompt(self, data: bytes) -> None:
-        """Render a Zephyr shell prompt while preserving interactive input."""
-        value = clean_terminal_text(data.decode("utf-8", errors="replace"))
-        match = re.search(r"([A-Za-z0-9_.-]+:~\$ )$", value)
-        prompt = match.group(1) if match is not None else value
+        """Forward a Zephyr shell prompt without changing its terminal style."""
         self.shell_prompt_seen = True
-        self.console.print(
-            self.text_type(prompt),
-            end="",
-            highlight=False,
-        )
+        self._raw(data)
 
     def _print_line(self, data: bytes) -> None:
         value = clean_terminal_text(data.decode("utf-8", errors="replace"))
@@ -1002,6 +995,8 @@ def provision_remote_credential(connection, identity: str, psk: bytes) -> None:
     if b"Remote-console credential saved" not in response:
         detail = clean_terminal_text(response.decode(errors="replace")).strip()
         raise ToolError(f"Device rejected remote-console credential: {detail}")
+    if b":~$ " not in response:
+        read_serial_until(connection, (b":~$ ",), 3.0)
 
 
 def wait_for_usb_mode(serial, port: str, baud: int, expected: str):
@@ -1345,6 +1340,8 @@ def run_monitor(args: argparse.Namespace) -> int:
                     output.end_connection()
                     connection.close()
                     connection = None
+                    if transport == "network":
+                        time.sleep(0.5)
         finally:
             output.flush()
             if connection is not None:
