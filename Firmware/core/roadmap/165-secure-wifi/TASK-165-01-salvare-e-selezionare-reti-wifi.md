@@ -44,6 +44,10 @@ e usa `psa_its_set/get/remove`. Apri `communication_shell.c`: `wifi add` legge l
 password con `shell_readline()` e `shell_obscure_set()`, mentre list/prefer/remove e
 connect non ricevono segreti.
 
+In `prj.conf`, `CONFIG_MAIN_STACK_SIZE=4096` riserva lo stack usato dal boot per
+caricare e autenticare i record PSA. Non lasciare il default da 2048 byte: la catena
+crittografica ESP32-C3 può oltrepassarlo e corrompere lo stack idle adiacente.
+
 ## Perché è fatto così
 
 Zephyr `net_mgmt` è la API runtime che invia richieste al device Wi-Fi e notifica
@@ -78,6 +82,7 @@ Settings. La app futura usa le stesse funzioni pubbliche; non deve leggere NVS.
 - [x] La preferita vince solo quando è visibile.
 - [x] Senza preferita visibile vince il profilo noto con RSSI più alto.
 - [x] Password e record temporanei vengono azzerati dopo l'uso.
+- [x] Lo stack main copre le letture PSA/AES-GCM eseguite durante il boot.
 - [x] I comandi seriali precedenti sono rimasti invariati.
 
 ## Verifica e fine task

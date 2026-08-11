@@ -77,3 +77,7 @@ Network callbacks only copy scan results, update atomics, and signal semaphores.
 worker performs scans, waits for association events, and retries; Shell, Runtime, and
 MQTT never block on this policy. MQTT still waits for an IPv4 address and reconnects
 through its existing behavior.
+
+`CONFIG_MAIN_STACK_SIZE=4096` is explicit because boot loads and authenticates PSA ITS
+records from the main thread. The previous 2048-byte default was insufficient for the
+ESP32-C3 crypto call chain and could corrupt the adjacent idle stack during boot.
