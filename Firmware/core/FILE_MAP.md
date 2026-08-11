@@ -156,6 +156,8 @@ instances, Runtime policy, or transports.
 | Path | Contains | Read when |
 |---|---|---|
 | `boards/esp32c3_devkitm_esp32c3.overlay` | Verified application additions to the selected development board DTS | Changing console or verified development-board wiring |
+| `boards/spaghettilab/spaghettilab_core_v1/` | Physical ESP32-C3 Core V1 definition and one I2C Port | Building or changing verified Core V1 wiring |
+| `boards/spaghettilab/spaghettilab_core_v2_build_only/` | Simulated two-Port topology used only for portability builds | Verifying common code against a different Port catalog |
 | `boards/spaghettilab/README.md` | Board/Core variant file layout and templates | Creating or reviewing a Spaghetti LAB board definition |
 | `dts/bindings/spaghetti/README.md` | Custom binding purpose, schema, and matching DTS example | Adding/changing a `spaghettilab,*` compatible/property |
 | `dts/bindings/spaghetti/*.yaml` | Machine-validated custom Devicetree schemas when present | Consuming or changing a custom hardware property |

@@ -29,9 +29,8 @@ A Devicetree binding is a YAML schema for static hardware. The Spaghetti Port bi
 | Type / object | Owner | Meaning |
 |---|---|---|
 | `reg` | Board DTS | Stable logical Port index. |
-| `capabilities` | Board DTS | Operations physically supported by the connector. |
-| Bus phandle | Board DTS | Reference to a real static Zephyr controller. |
-| Optional GPIO specifier | Board DTS | Presence, enable, or interrupt line only when physically present. |
+| I2C capability | Binding and Port | The current compatible requires an I2C controller. |
+| `i2c` phandle | Board DTS | Reference to a real static Zephyr controller. |
 
 ## API contract
 
@@ -53,7 +52,8 @@ flowchart LR
 
 ## Practical example
 
-A board declares Port 0 with I2C capability and an `i2c-bus` phandle. The binding rejects the build if the Port has no `reg`, uses an invalid capability string, or references a nonexistent controller.
+A board declares Port 0 with an `i2c` phandle. The binding rejects the build if
+the Port has no `reg` or references a nonexistent controller.
 
 ## Zephyr integration
 
@@ -74,24 +74,13 @@ include: base.yaml
 
 properties:
   reg:
-    type: int
     required: true
-    description: Stable logical Port index
+    description: Stable logical Port index; its cell-array type comes from base.yaml
 
-  capabilities:
-    type: string-array
-    required: true
-    description: >
-      Operations physically supported by this connector. Project-defined
-      values are i2c, spi, and gpio.
-
-  i2c-bus:
+  i2c:
     type: phandle
+    required: true
     description: I2C controller wired to the Port
-
-  power-gpios:
-    type: phandle-array
-    description: Optional real power-enable control
 ```
 
 ### Matching DTS instance
@@ -100,15 +89,14 @@ properties:
 port0: port@0 {
     compatible = "spaghettilab,port";
     reg = <0>;
-    capabilities = "i2c";
-    i2c-bus = <&i2c0>;
+    i2c = <&i2c0>;
     status = "okay";
 };
 ```
 
-Property names and combinations must reflect the final binding. If, for
-example, every I2C-capable Port requires `i2c-bus`, encode that relationship
-in the schema rather than relying on a runtime failure.
+Every Port in the current binding is I2C-capable and therefore requires `i2c`.
+Future capability kinds must extend the schema explicitly instead of relying on
+a runtime failure.
 
 ## Ownership and concurrency
 

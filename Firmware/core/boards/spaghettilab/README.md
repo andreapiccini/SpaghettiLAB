@@ -52,9 +52,16 @@ flowchart LR
     PORT --> COMMON["Common firmware"]
 ```
 
-## Practical example
+## Implemented variants
 
-Core A exposes two I2C Ports while Core B exposes one SPI Port. Their board DTS files differ, but both generate the same `spaghettilab,port` contract, so Module Manager remains unchanged.
+- `spaghettilab_core_v1/esp32c3` is the physical ESP32-C3 Core: USB console,
+  I2C0 on verified GPIO3/GPIO4, and Port 0.
+- `spaghettilab_core_v2_build_only/esp32c3` is a simulated portability target:
+  I2C0 on simulated GPIO5/GPIO6 and Port 0 plus Port 1. It has no default flash
+  runner; never flash this target.
+
+Both variants generate the same `spaghettilab,port` contract, so Port, Module
+Manager, Runtime and Module drivers contain no board-name branches.
 
 ## Zephyr integration
 
@@ -95,7 +102,7 @@ Zephyr version.
 
 ```dts
 / {
-    spaghetti_ports {
+spaghetti_ports {
         compatible = "simple-bus";
         #address-cells = <1>;
         #size-cells = <0>;
@@ -103,8 +110,7 @@ Zephyr version.
         port0: port@0 {
             compatible = "spaghettilab,port";
             reg = <0>;
-            i2c-bus = <&i2c0>; /* Use the controller wired by the schematic. */
-            capabilities = "i2c";
+            i2c = <&i2c0>; /* Use the controller wired by the schematic. */
             status = "okay";
         };
     };

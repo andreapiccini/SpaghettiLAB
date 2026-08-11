@@ -4,7 +4,7 @@ FROM ghcr.io/zephyrproject-rtos/zephyr-build:${ZEPHYR_DOCKER_TAG}
 ARG ZEPHYR_VERSION=v4.4.0
 
 ENV ZEPHYR_BASE=/opt/zephyrproject/zephyr \
-    BOARD=esp32c3_devkitm/esp32c3 \
+    BOARD=spaghettilab_core_v1/esp32c3 \
     CCACHE_DIR=/home/user/.cache/ccache
 
 # Keep the complete, versioned Zephyr workspace in the image. The application

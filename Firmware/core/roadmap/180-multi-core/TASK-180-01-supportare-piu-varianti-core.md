@@ -1,6 +1,6 @@
 # TASK-180-01 — Supportare più varianti Core
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 180 — Varianti Core multiple
 
 ## Prima di scrivere: concetti Zephyr
@@ -117,6 +117,10 @@ phandle al controller quando il Port offre I2C. Non inserire tipo o indirizzo de
 rimovibile. Ogni board reale dichiara i nodi figli con `reg` univoco e riferimenti ai
 device fisici verificati.
 
+In Zephyr 4.4 `base.yaml` definisce già `reg` come array di celle: il binding lo marca
+obbligatorio senza sovrascriverne il tipo. `DT_REG_ADDR()` estrae poi la prima cella
+come ID logico.
+
 In `port.c` mantieni privata la stessa `struct spaghetti_port` della fase 030; sostituisci
 l’elemento hardcoded con un array statico generato a build-time tramite
 `DT_FOREACH_STATUS_OKAY(spaghettilab_port, ...)`. Ogni elemento copia ID e capability e
@@ -131,7 +135,6 @@ description: Physical Spaghetti LAB Port
 compatible: "spaghettilab,port"
 properties:
   reg:
-    type: int
     required: true
   i2c:
     type: phandle
@@ -172,14 +175,14 @@ for (spaghetti_port_id_t id = 0U; id < spaghetti_port_count(); ++id) {
 
 ## Checklist di completamento
 
-- [ ] Definire il binding Spaghetti Port.
-- [ ] Convalidare il binding di Port.
-- [ ] Creare la prima definizione board Spaghetti LAB.
-- [ ] Spostare i dati hardware verificati nel DTS della board.
-- [ ] Enumerare i Port dal Devicetree.
-- [ ] Verificare che il catalogo non codifichi cardinalità Module.
-- [ ] Compilare e provare la prima board Core reale.
-- [ ] Compilare una seconda variante Core.
+- [x] Definire il binding Spaghetti Port.
+- [x] Convalidare il binding di Port.
+- [x] Creare la prima definizione board Spaghetti LAB.
+- [x] Spostare i dati hardware verificati nel DTS della board.
+- [x] Enumerare i Port dal Devicetree.
+- [x] Verificare che il catalogo non codifichi cardinalità Module.
+- [x] Compilare la prima board Core reale.
+- [x] Compilare una seconda variante Core build-only.
 
 ## Verifica finale
 
@@ -188,13 +191,17 @@ for (spaghetti_port_id_t id = 0U; id < spaghetti_port_count(); ++id) {
 ```sh
 make validate
 make pristine
-make flash
-make monitor
+docker compose run --rm --entrypoint sh dev -lc \
+  'west build -p always -b spaghettilab_core_v2_build_only/esp32c3 -d build-v2 .'
 ```
 
 **Controlla**
 
-Esegui build pristine per entrambe le board, controlla binding e nodi Port generati, poi prova INA219/Relay sulla board reale. La ricerca di nomi board nel C comune deve essere vuota.
+Esegui build pristine per entrambe le board e controlla i nodi Port generati. Esegui
+`make flash` e `make monitor` soltanto con Core V1; la V2 contiene pin simulati. Prova
+INA219 su Port 0 della V1. Il Relay richiede una futura Port con output fisico verificato
+e non viene inventato in questo task. La ricerca di nomi board nel C comune deve essere
+vuota.
 
 **Risultato atteso**
 

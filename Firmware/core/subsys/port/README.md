@@ -2,232 +2,99 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-Port converts the static board description into stable runtime objects that concrete module drivers can use without knowing controllers, pins, or Core variants.
+Port converts the selected Core board Devicetree into immutable runtime objects.
+Module drivers can therefore use a physical connector without knowing its controller
+label, GPIO numbers, or board name.
 
-A Port is a shared hardware access point, not a Module slot. When it exposes I2C,
-several runtime Modules may retain the same immutable Port pointer and use different
-addresses. Port serializes each bus transaction; it never stores an `occupied` flag or
-one owning Module ID.
+A Port is a shared hardware access point, not a Module slot. Several runtime Modules
+may retain the same Port pointer and use different I2C addresses. Port never stores an
+`occupied` flag or an owning Module ID.
 
-## What this component owns
+## Ownership
 
-- The catalog of physical Ports generated from Devicetree.
-- Per-Port capabilities and stable Zephyr device/specifier handles.
-- Shared access serialization for a Port resource.
+Port owns the fixed descriptor array generated at build time. Each descriptor owns
+only copied IDs/capabilities and borrowed Zephyr device pointers. Zephyr's Device
+Model owns the referenced `struct device` objects for the complete firmware lifetime.
 
-## What this component does not own
-
-- Runtime module identity or lifecycle.
-- Sensor/actuator protocols.
-- Board-name policy or user configuration.
+Port does not own Module identity, driver contexts, I2C addresses, sensor protocols,
+or runtime configuration. The current binding describes I2C Ports. A future digital
+output requires an explicit verified GPIO property before the existing output API can
+be used on hardware.
 
 ## Files
 
 | File | Role |
 |---|---|
-| `include/spaghetti/port.h` | Opaque Port handle, capability flags, access APIs. |
-| `subsys/port/port.c` | Devicetree enumeration and private descriptors. |
-| Board DTS | Concrete controller/GPIO references validated by bindings. |
-| `spaghettilab,port.yaml` | Static Port schema. |
-
-## Data model
-
-| Type / object | Owner | Meaning |
-|---|---|---|
-| `spaghetti_port_id_t` | Board description | Stable logical Port index. |
-| `spaghetti_port_capability` | Port | Bit flags for real supported operations. |
-| Opaque `spaghetti_port` | Port | Private descriptor containing device/specifier handles and synchronization. |
-| Port snapshot | Caller after query | Copied ID, capabilities, and readiness diagnostics. |
+| `include/spaghetti/port.h` | Opaque Port handle, capability checks and hardware accessors. |
+| `subsys/port/port.c` | Devicetree enumeration and immutable private descriptors. |
+| `dts/bindings/spaghetti/spaghettilab,port.yaml` | Required Port properties. |
+| Board DTS | Concrete Port IDs, controllers and pin routing. |
 
 ## API contract
 
-### `int spaghetti_port_init_all(void)`
+`spaghetti_port_init_all()` checks every referenced I2C device with
+`device_is_ready()`. It returns `0` only when the whole static catalog is usable, or
+`-ENODEV` when a mandatory controller is unavailable.
 
-**Purpose:** Create/validate the fixed Port catalog from enabled Devicetree instances.
+`spaghetti_port_count()` returns the number of enabled `spaghettilab,port` instances.
+`spaghetti_port_get(id)` searches by the `reg` value copied from Devicetree and returns
+an immutable firmware-lifetime pointer, or `NULL` for an unknown ID. IDs therefore do
+not depend on array position.
 
-**Parameters**
+`spaghetti_port_has_capability(port, mask)` checks that every requested bit is present.
+The current binding always supplies `SPAGHETTI_PORT_CAP_I2C` because its `i2c` phandle
+is mandatory.
 
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
+`spaghetti_port_i2c_device(port)` returns the borrowed ready controller for an
+I2C-capable Port, otherwise `NULL`. Concrete drivers pass that device to Zephyr's I2C
+API together with the address received from runtime Config.
 
-**Returns:** `0` when every mandatory Port resource is valid.
-
-**Errors:** Invalid generated description, duplicate ID, unavailable controller, or capacity overflow.
-
-**Execution context:** Main thread during Core initialization.
-
-**Calls:** Devicetree-generated accessors, `DEVICE_DT_GET()`, and `device_is_ready()`.
-
-### `size_t spaghetti_port_count(void)`
-
-**Purpose:** Return the number of enabled physical Ports.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** Fixed catalog size.
-
-**Errors:** None after initialization.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-### `const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)`
-
-**Purpose:** Resolve one stable Port handle.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `id` | Logical Port index. |
-
-**Returns:** Provider-owned immutable handle, or `NULL` when unknown.
-
-**Errors:** Unknown ID is represented by `NULL`.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-### `uint32_t spaghetti_port_get_capabilities(const struct spaghetti_port *port)`
-
-**Purpose:** Return physical capability flags.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `port` | Valid provider-owned Port handle. |
-
-**Returns:** Capability bitmask; `0` for invalid input.
-
-**Errors:** Invalid/null handle.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-### `const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port)`
-
-**Purpose:** Expose the stable I2C controller for an I2C-capable Port.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `port` | Valid Port handle. |
-
-**Returns:** Ready Zephyr device pointer or `NULL`.
-
-**Errors:** Invalid Port, missing capability, or unavailable controller.
-
-**Execution context:** Calling thread.
-
-**Calls:** No transaction; returns the validated handle.
-
-### `int spaghetti_port_acquire(const struct spaghetti_port *port, k_timeout_t timeout)`
-
-**Purpose:** Serialize a multi-step operation on a shared Port resource.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `port` | Port to lock. |
-| `timeout` | Maximum wait; `K_NO_WAIT` is allowed. |
-
-**Returns:** `0` when acquired.
-
-**Errors:** Invalid Port, timeout, or forbidden execution context.
-
-**Execution context:** Thread only.
-
-**Calls:** Private `k_mutex_lock()`.
-
-### `int spaghetti_port_release(const struct spaghetti_port *port)`
-
-**Purpose:** Release a previously acquired Port resource.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `port` | Port acquired by the calling owner. |
-
-**Returns:** `0` on release.
-
-**Errors:** Invalid Port or unbalanced release.
-
-**Execution context:** Thread only.
-
-**Calls:** Private `k_mutex_unlock()`.
+`spaghetti_port_set_output(port, high)` drives a raw electrical level only when the
+selected Port has a verified digital-output resource. The current V1 and build-only V2
+catalogs do not claim that capability, so this call returns `-ENOTSUP` on both.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    DTS["Board Devicetree"] --> INIT["Port init"]
-    INIT --> P0["Port 0 <br/> I2C"]
-    INIT --> P1["Port 1 <br/> GPIO"]
-    DRIVER["Module driver"] -->|"query capability"| P0
-    P0 -->|"stable handle"| BUS["Zephyr I2C device"]
+    BINDING["Port binding"] --> DTS["Selected board DTS"]
+    DTS --> MACROS["Generated Devicetree macros"]
+    MACROS --> CATALOG["const Port catalog"]
+    CATALOG --> DRIVER["Module driver"]
+    DRIVER --> I2C["Zephyr I2C device"]
 ```
 
-## Practical example
-
-A sensor driver receives Port 0. It checks the I2C capability, acquires the Port for its command/read sequence, obtains the ready controller, performs the transaction, and releases the Port.
-
-INA219 `0x40`, INA219 `0x41`, and SHT40 `0x44` repeat this sequence independently on
-the same Port. The lock protects transaction boundaries, not the entire Module
-lifetime.
-
-## Zephyr integration
-
-- Devicetree macros create the catalog at build time; Port validates device readiness at boot.
-- Use `gpio_dt_spec`, `i2c_dt_spec`, or stable `struct device` handles privately where they match the binding.
-- A mutex is for thread context and must not be acquired from ISR.
-
-## Configuration templates
-
-### `prj.conf` capability examples
-
-```ini
-# Enable only the bus classes present in the selected board/Port catalog.
-CONFIG_I2C=y
-CONFIG_SPI=y
-CONFIG_GPIO=y
-```
-
-### Devicetree iteration shape
+The generated initializer has this shape:
 
 ```c
-#define SPAGHETTI_PORT_DEFINE(node_id) \
-    { \
-        .id = DT_REG_ADDR(node_id), \
-        /* Populate capability and bus fields from validated properties. */ \
-    }
+#define SPAGHETTI_PORT_DEFINE(node_id) { \
+	.id = DT_REG_ADDR(node_id), \
+	.capabilities = SPAGHETTI_PORT_CAP_I2C, \
+	.i2c = DEVICE_DT_GET(DT_PHANDLE(node_id, i2c)), \
+},
 
-static struct spaghetti_port ports[] = {
-    DT_FOREACH_STATUS_OKAY(spaghettilab_port, SPAGHETTI_PORT_DEFINE)
+static const struct spaghetti_port ports[] = {
+	DT_FOREACH_STATUS_OKAY(spaghettilab_port, SPAGHETTI_PORT_DEFINE)
 };
 ```
 
-The exact macro shape must follow the final binding properties.
+`node_id` exists only while compiling. `DT_REG_ADDR()` reads the logical ID,
+`DT_PHANDLE()` follows the board's controller reference, and `DEVICE_DT_GET()` creates
+the firmware-lifetime pointer later checked during initialization.
 
-## Ownership and concurrency
+## Current variants
 
-Port handles remain valid for firmware lifetime. Catalog data is read-only after initialization. Each shared bus/Port transaction uses one short, documented lock policy.
+- Core V1 generates Port 0 backed by I2C0 on verified GPIO3/GPIO4.
+- Core V2 build-only generates Port 0 and Port 1 backed by the same simulated I2C bus.
+
+INA219 instances at `0x40` and `0x41` can share either I2C Port because addresses live
+in Module Config, not in Devicetree or the Port descriptor.
 
 ## Contract guarantees
 
+- An invalid board node fails during Devicetree validation.
+- An unavailable controller fails Core initialization with `-ENODEV`.
 - Unknown IDs and unsupported capabilities fail safely.
-- Multiple Modules may share a capable Port; exclusivity exists only for a bounded
-  transaction or an explicitly exclusive endpoint.
-- No caller above Port needs a controller label or pin number.
-- Generated catalog size is bounded at compile time.
+- Multiple Modules may reference the same Port.
+- Common C code contains no board-name conditionals.
+- No removable Module type or address is stored in the board catalog.

@@ -1,0 +1,6 @@
+board:
+  name: spaghettilab_core_v2_build_only
+  full_name: Spaghetti LAB Core V2 Build-Only
+  vendor: spaghettilab
+  socs:
+    - name: esp32c3

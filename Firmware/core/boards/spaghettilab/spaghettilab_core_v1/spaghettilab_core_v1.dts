@@ -1,0 +1,71 @@
+/dts-v1/;
+
+#include <espressif/esp32c3/esp32c3_mini_n4.dtsi>
+#include <espressif/partitions_0x0_default.dtsi>
+#include <zephyr/dt-bindings/pinctrl/esp-pinctrl-common.h>
+#include <zephyr/dt-bindings/pinctrl/esp32c3-pinctrl.h>
+#include <zephyr/dt-bindings/pinctrl/esp32c3-gpio-sigmap.h>
+
+/ {
+	model = "Spaghetti LAB Core V1";
+	compatible = "spaghettilab,core-v1", "espressif,esp32c3";
+
+	chosen {
+		zephyr,sram = &sram1;
+		zephyr,console = &usb_serial;
+		zephyr,shell-uart = &usb_serial;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+	};
+
+	aliases {
+		i2c-0 = &i2c0;
+	};
+
+	spaghetti_ports {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0: port@0 {
+			compatible = "spaghettilab,port";
+			reg = <0>;
+			i2c = <&i2c0>;
+			status = "okay";
+		};
+	};
+};
+
+&pinctrl {
+	spaghetti_i2c0_default: spaghetti_i2c0_default {
+		group1 {
+			pinmux = <I2C0_SDA_GPIO3>, <I2C0_SCL_GPIO4>;
+			bias-pull-up;
+			drive-open-drain;
+			output-high;
+		};
+	};
+};
+
+&usb_serial {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&spaghetti_i2c0_default>;
+	pinctrl-names = "default";
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&trng0 {
+	status = "okay";
+};
+
+&wifi {
+	status = "okay";
+};

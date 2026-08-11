@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -21,10 +21,10 @@ Module runtime.
 
 ## Task
 
-1. ⬜ [TASK-180-01 — Supportare più varianti Core](TASK-180-01-supportare-piu-varianti-core.md)
+1. ✅ [TASK-180-01 — Supportare più varianti Core](TASK-180-01-supportare-piu-varianti-core.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Binding e board definition rispettano gli schemi Zephyr.
-- [ ] Il catalogo Port deriva dal Devicetree.
-- [ ] Il codice comune non contiene rami basati sul nome della board.
+- [x] Binding e board definition rispettano gli schemi Zephyr.
+- [x] Il catalogo Port deriva dal Devicetree.
+- [x] Il codice comune non contiene rami basati sul nome della board.

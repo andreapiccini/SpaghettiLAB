@@ -1,0 +1,15 @@
+description: Physical Spaghetti LAB module Port
+
+compatible: "spaghettilab,port"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+    description: Stable logical Port identifier used by runtime configuration
+
+  i2c:
+    type: phandle
+    required: true
+    description: Zephyr I2C controller physically wired to this shared Port

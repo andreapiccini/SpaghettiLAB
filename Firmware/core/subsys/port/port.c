@@ -17,22 +17,33 @@ struct spaghetti_port {
 	const struct gpio_dt_spec *output;
 };
 
-static struct spaghetti_port ports[] = {
-	{
-		.id = 0U,
-		.capabilities = SPAGHETTI_PORT_CAP_I2C,
-		.i2c = NULL,
-		.output = NULL,
+#define SPAGHETTI_PORT_VALIDATE(node_id) \
+	BUILD_ASSERT(DT_REG_ADDR(node_id) <= UINT8_MAX, \
+		     "Spaghetti Port ID must fit spaghetti_port_id_t");
+
+#define SPAGHETTI_PORT_DEFINE(node_id) \
+	{ \
+		.id = DT_REG_ADDR(node_id), \
+		.capabilities = SPAGHETTI_PORT_CAP_I2C, \
+		.i2c = DEVICE_DT_GET(DT_PHANDLE(node_id, i2c)), \
+		.output = NULL, \
 	},
+
+DT_FOREACH_STATUS_OKAY(spaghettilab_port, SPAGHETTI_PORT_VALIDATE)
+
+static const struct spaghetti_port ports[] = {
+	DT_FOREACH_STATUS_OKAY(spaghettilab_port, SPAGHETTI_PORT_DEFINE)
 };
+
+BUILD_ASSERT(ARRAY_SIZE(ports) > 0U,
+	     "The selected Core board must expose a Spaghetti Port");
 
 int spaghetti_port_init_all(void)
 {
-	ports[0].i2c = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-
-	if (!device_is_ready(ports[0].i2c)) {
-		ports[0].i2c = NULL;
-		return -ENODEV;
+	for (size_t port_idx = 0U; port_idx < ARRAY_SIZE(ports); ++port_idx) {
+		if (!device_is_ready(ports[port_idx].i2c)) {
+			return -ENODEV;
+		}
 	}
 
 	return 0;
@@ -45,11 +56,13 @@ size_t spaghetti_port_count(void)
 
 const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)
 {
-	if (id >= spaghetti_port_count()) {
-		return NULL;
+	for (size_t port_idx = 0U; port_idx < ARRAY_SIZE(ports); ++port_idx) {
+		if (ports[port_idx].id == id) {
+			return &ports[port_idx];
+		}
 	}
 
-	return &ports[id];
+	return NULL;
 }
 
 bool spaghetti_port_has_capability(

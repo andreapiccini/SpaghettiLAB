@@ -1,7 +1,7 @@
 # Zephyr on ESP32-C3
 
 A Docker-based development environment for the Zephyr 4.4.0 firmware running on
-`esp32c3_devkitm/esp32c3`.
+`spaghettilab_core_v1/esp32c3`.
 
 Docker provides Zephyr, West, the RISC-V toolchain, modules, and dependencies.
 The source code and generated `build/` directory stay on the host computer.
@@ -57,6 +57,17 @@ Then build the firmware:
 ```sh
 make build
 ```
+
+The default target is the physical Core V1. Build the simulated second topology
+without changing common firmware code with:
+
+```sh
+docker compose run --rm --entrypoint sh dev -lc \
+  'west build -p always -b spaghettilab_core_v2_build_only/esp32c3 -d build-v2 .'
+```
+
+Core V2 is build-only: its pin and connector assignments are intentionally simulated
+and it intentionally defines no default flash runner.
 
 Every firmware build runs [`validator`](VALIDATOR.md) before compilation. It
 reports objective errors in red and review warnings in orange, including the
