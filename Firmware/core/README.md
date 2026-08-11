@@ -52,18 +52,21 @@ Build the Docker image once:
 make image
 ```
 
-Then build the firmware:
+Create the local development signing key once, then build the firmware:
 
 ```sh
+make signing-key
 make build
 ```
+
+The ECDSA P-256 private key is created in the ignored `.keys/` directory. Back it
+up securely: replacing it also requires provisioning a new MCUboot image over USB.
 
 The default target is the physical Core V1. Build the simulated second topology
 without changing common firmware code with:
 
 ```sh
-docker compose run --rm --entrypoint sh dev -lc \
-  'west build -p always -b spaghettilab_core_v2_build_only/esp32c3 -d build-v2 .'
+BOARD=spaghettilab_core_v2_build_only/esp32c3 make build
 ```
 
 Core V2 is build-only: its pin and connector assignments are intentionally simulated
@@ -79,13 +82,18 @@ On Windows, where `make` may not be installed, use these PowerShell commands:
 
 ```powershell
 docker compose build
-docker compose run --rm dev sh -lc 'west build -p auto -b "$BOARD" -d build .'
+docker compose run --rm --entrypoint sh dev -lc \
+  'imgtool keygen -k .keys/mcuboot-dev-ecdsa-p256.pem -t ecdsa-p256'
+docker compose run --rm dev sh -lc \
+  'west build --sysbuild -p auto -b "$BOARD" -d build . -- \
+  -DBOARD_ROOT=/opt/zephyrproject/app -DDTS_ROOT=/opt/zephyrproject/app'
 ```
 
-The flashable firmware is generated at:
+Sysbuild generates the bootloader and signed application at:
 
 ```text
-build/zephyr/zephyr.bin
+build/mcuboot/zephyr/zephyr.bin
+build/app/zephyr/zephyr.signed.bin
 ```
 
 The first image build can take a while because it downloads Zephyr, the West
@@ -156,9 +164,11 @@ future binary serial protocol, use
 `.venv/bin/python tools/device.py monitor --no-wake` to open the port without
 transmitting that byte, or use the raw `make screen` path.
 
-`tools/device.py` reads `build/zephyr/runners.yaml`; the microcontroller and
-flash parameters therefore come from the active Zephyr build rather than from
-the Makefile. It directly supports the generated Espressif runner. Other
+`tools/device.py` reads `build/domains.yaml` and each domain's generated
+`runners.yaml`; the image order, microcontroller, addresses and flash parameters
+therefore come from sysbuild rather than from hard-coded Makefile values. For Core
+V1, one `make flash` writes MCUboot and the signed primary application. It directly
+supports the generated Espressif runner. Other
 Zephyr runners are delegated to a compatible host `west` installation and may
 require their own host utility or debug-probe driver. A board without a serial
 console can still be flashed by its runner, but `make screen` naturally requires
@@ -176,6 +186,7 @@ sudo usermod -aG dialout "$USER"
 | Command | Description |
 |---|---|
 | `make image` | Build the Docker development image |
+| `make signing-key` | Create and preserve the ignored development ECDSA signing key |
 | `make validate` | Check firmware writing conventions without compiling |
 | `make build` | Run an incremental firmware build |
 | `make pristine` | Reconfigure and rebuild from scratch |
@@ -199,7 +210,9 @@ py -3 tools/device.py monitor
 docker compose run --rm dev
 
 # Rebuild from scratch
-docker compose run --rm dev sh -lc 'west build -p always -b "$BOARD" -d build .'
+docker compose run --rm dev sh -lc \
+  'west build --sysbuild -p always -b "$BOARD" -d build . -- \
+  -DBOARD_ROOT=/opt/zephyrproject/app -DDTS_ROOT=/opt/zephyrproject/app'
 
 # Remove build artifacts
 docker compose run --rm dev west build -d build -t pristine

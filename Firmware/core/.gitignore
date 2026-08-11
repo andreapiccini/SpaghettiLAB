@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+/.keys/
 
 # Zephyr, CMake, and Ninja build output
 /build/

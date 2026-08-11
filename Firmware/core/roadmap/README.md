@@ -98,7 +98,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [200 — Engine completo](200-engine/README.md) | Il Core carica Config, avvia i componenti e accetta riconfigurazioni senza reboot. |
 | ⬜ | [210 — Finalizzazione](210-finalizzazione/README.md) | Nessuna scorciatoia temporanea rimane e il sistema completo supera la matrice end-to-end. |
 | ✅ | [220 — Contratto Maintenance Link](220-update-hardware-contract/README.md) | Board/overlay scelgono pin e controller; il firmware comune usa un'API astratta. |
-| ⬜ | [230 — MCUboot e A/B](230-mcuboot-ab/README.md) | Bootloader e applicazione firmata usano gli slot primario e secondario. |
+| 🟨 | [230 — MCUboot e A/B](230-mcuboot-ab/README.md) | Bootloader e applicazione firmata usano gli slot primario e secondario; resta il provisioning hardware. |
 | ⬜ | [240 — Coordinatore update](240-update-coordinator/README.md) | Timeout e cancel scartano il candidato senza toccare il firmware attivo. |
 | ⬜ | [250 — Boot sicuro](250-safe-boot-mode/README.md) | Boot senza Config entra in maintenance locale; un'immagine trial è confermata solo se sana. |
 | ⬜ | [260 — Manutenzione locale UART](260-local-maintenance-uart/README.md) | La base configura e aggiorna il Core usando i pin condivisi in una finestra sicura. |
@@ -113,4 +113,5 @@ Le fasi fino alla 200 sono complete. Prima dell'estensione OTA apri ora
 
 Il piano successivo è descritto in
 [Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Dopo la fase 210, il
-task OTA 220 è completo. Dopo la finalizzazione, prosegui con MCUboot A/B nel task 230.
+task OTA 220 è completo. La parte software di MCUboot A/B è pronta: completa il
+provisioning hardware indicato nel task 230 prima di aprire il task 240.

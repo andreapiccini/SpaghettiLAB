@@ -19,8 +19,7 @@ from typing import Iterator
 
 ROOT = Path(__file__).resolve().parent.parent
 BUILD = ROOT / "build"
-RUNNERS_FILE = BUILD / "zephyr" / "runners.yaml"
-CONFIG_FILE = BUILD / "zephyr" / ".config"
+DOMAINS_FILE = BUILD / "domains.yaml"
 ANSI_ESCAPE_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|[@-_])")
 ZEPHYR_LOG_RE = re.compile(
     r"^\[(?P<time>[^]]+)]\s+<(?P<level>[^>]+)>\s+"
@@ -107,13 +106,61 @@ def read_required(path: Path, purpose: str) -> str:
         ) from exc
 
 
-def zephyr_runner() -> tuple[str, str]:
-    """Return the selected flash runner and generated runners file text."""
-    text = read_required(RUNNERS_FILE, "Zephyr runner configuration")
-    match = re.search(r"(?m)^flash-runner:\s*(\S+)\s*$", text)
-    if not match:
-        raise ToolError("The Zephyr build does not define a default flash runner.")
-    return match.group(1), text
+def sysbuild_domain_names() -> list[str]:
+    """Return domains in generated flash order, or an empty legacy-build marker."""
+    if not DOMAINS_FILE.is_file():
+        return []
+
+    text = read_required(DOMAINS_FILE, "sysbuild domain configuration")
+    lines = text.splitlines()
+    try:
+        start_idx = lines.index("flash_order:") + 1
+    except ValueError as exc:
+        raise ToolError("The sysbuild domain configuration has no flash_order list.")
+
+    names: list[str] = []
+    for line in lines[start_idx:]:
+        match = re.fullmatch(r"\s+-\s+(\S+)\s*", line)
+        if match is None:
+            break
+        names.append(match.group(1))
+    if not names:
+        raise ToolError("The sysbuild flash_order list is empty.")
+    return names
+
+
+def runner_configurations() -> list[tuple[Path, str]]:
+    """Read runner configurations for a legacy build or all sysbuild domains."""
+    domain_names = sysbuild_domain_names()
+    if not domain_names:
+        path = BUILD / "zephyr" / "runners.yaml"
+        return [(path, read_required(path, "Zephyr runner configuration"))]
+
+    configurations: list[tuple[Path, str]] = []
+    for name in domain_names:
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", name):
+            raise ToolError(f"Invalid sysbuild domain name: {name!r}.")
+        path = BUILD / name / "zephyr" / "runners.yaml"
+        configurations.append(
+            (path, read_required(path, f"runner configuration for domain {name}"))
+        )
+    return configurations
+
+
+def zephyr_runner() -> tuple[str, list[tuple[Path, str]]]:
+    """Return one common flash runner and its ordered image configurations."""
+    configurations = runner_configurations()
+    runner_names: list[str] = []
+
+    for _, text in configurations:
+        match = re.search(r"(?m)^flash-runner:\s*(\S+)\s*$", text)
+        if match is None:
+            raise ToolError("A build domain does not define a default flash runner.")
+        runner_names.append(match.group(1))
+
+    if any(name != runner_names[0] for name in runner_names[1:]):
+        raise ToolError("Sysbuild domains require different flash runners.")
+    return runner_names[0], configurations
 
 
 def yaml_argument(text: str, name: str, default: str | None = None) -> str:
@@ -128,7 +175,13 @@ def yaml_argument(text: str, name: str, default: str | None = None) -> str:
 
 def kconfig_string(name: str) -> str:
     """Read a quoted Kconfig value from the active build."""
-    text = read_required(CONFIG_FILE, "Zephyr build configuration")
+    domain_names = sysbuild_domain_names()
+    config_file = (
+        BUILD / "app" / "zephyr" / ".config"
+        if domain_names
+        else BUILD / "zephyr" / ".config"
+    )
+    text = read_required(config_file, "Zephyr build configuration")
     match = re.search(rf'(?m)^{re.escape(name)}="([^"]+)"$', text)
     if not match:
         raise ToolError(f"The Zephyr build does not define {name}.")
@@ -149,12 +202,33 @@ def esptool_prefix() -> list[str]:
         ) from exc
 
 
-def esp32_command(port: str, baud: int, runner_text: str) -> list[str]:
-    """Build an esptool command from the generated Zephyr runner settings."""
+def esp32_image_arguments(
+    configurations: list[tuple[Path, str]],
+) -> list[str]:
+    """Resolve ordered flash addresses and binaries from generated runner files."""
+    arguments: list[str] = []
+
+    for runners_file, text in configurations:
+        match = re.search(r"(?m)^\s+bin_file:\s*(\S+)\s*$", text)
+        if match is None:
+            raise ToolError(f"Runner file has no bin_file: {runners_file}.")
+        image = runners_file.parent / match.group(1)
+        if not image.is_file():
+            raise ToolError(f"Missing generated firmware image: {image}.")
+        arguments.extend(
+            [yaml_argument(text, "esp-app-address", "0x0"), str(image)]
+        )
+    return arguments
+
+
+def esp32_command(
+    port: str,
+    baud: int,
+    configurations: list[tuple[Path, str]],
+) -> list[str]:
+    """Build one esptool command for a legacy image or all sysbuild domains."""
     chip = kconfig_string("CONFIG_SOC")
-    image = BUILD / "zephyr" / "zephyr.bin"
-    if not image.is_file():
-        raise ToolError("Missing build/zephyr/zephyr.bin. Run 'make build' first.")
+    runner_text = configurations[0][1]
 
     return [
         *esptool_prefix(),
@@ -171,8 +245,7 @@ def esp32_command(port: str, baud: int, runner_text: str) -> list[str]:
         yaml_argument(runner_text, "esp-flash-freq", "keep"),
         "--flash-size",
         yaml_argument(runner_text, "esp-flash-size", "detect"),
-        yaml_argument(runner_text, "esp-app-address", "0x0"),
-        str(image),
+        *esp32_image_arguments(configurations),
     ]
 
 
@@ -189,10 +262,10 @@ def generic_west_command() -> list[str]:
 
 def run_flash(args: argparse.Namespace) -> int:
     """Flash with the runner selected by the active Zephyr build."""
-    runner, runner_text = zephyr_runner()
+    runner, configurations = zephyr_runner()
     if runner == "esp32":
         port = selected_port(args.port)
-        command = esp32_command(port, args.baud, runner_text)
+        command = esp32_command(port, args.baud, configurations)
     else:
         command = generic_west_command()
         if args.port:
@@ -539,6 +612,15 @@ class StyledSerialOutput:
         self.wifi_help_active = False
         self.wifi_help_lines.clear()
 
+    def end_connection(self) -> None:
+        """Close an interrupted interactive line before reconnecting."""
+        had_open_line = bool(self.pending) or not self.at_line_start
+        self.flush()
+        if had_open_line:
+            self._raw(b"\x1b[0m\r\n")
+        self.at_line_start = True
+        self.shell_prompt_seen = False
+
 
 @contextmanager
 def raw_stdin() -> Iterator[None]:
@@ -663,7 +745,7 @@ def run_monitor(args: argparse.Namespace) -> int:
                     if key:
                         connection.write(key)
                 except (OSError, serial.SerialException):
-                    output.flush()
+                    output.end_connection()
                     connection.close()
                     connection = None
         finally:

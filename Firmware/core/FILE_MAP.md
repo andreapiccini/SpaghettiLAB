@@ -72,6 +72,8 @@ flowchart TD
 | `validator` | Executable Python rule engine; read-only against source | Only when implementing/debugging a validation rule |
 | `CMakeLists.txt` | Zephyr application declaration, pre-build validator, compiled source/directory integration | Adding/removing source or changing build integration |
 | `prj.conf` | Application-level Zephyr Kconfig selections | Enabling/configuring a Zephyr subsystem for this application |
+| `sysbuild.conf` | Top-level MCUboot, swap mode and signing selections shared by the build domains | Changing bootloader inclusion, signing algorithm or A/B strategy |
+| `sysbuild/mcuboot.conf` | MCUboot-domain logging and downgrade-prevention selections | Changing bootloader-only behavior |
 | `Makefile` | Portable shortcuts around Docker Compose and West | Changing developer commands; not firmware behavior |
 | `Dockerfile` | Versioned Zephyr workspace, SDK dependencies, blobs, container defaults | Changing Zephyr/toolchain/dependency versions |
 | `compose.yaml` | Source mount, image, environment, ccache, interactive container | Changing common container execution on all hosts |
@@ -206,12 +208,15 @@ diagnostic question:
 
 | Generated path | Read only to answer |
 |---|---|
-| `build/zephyr/.config` | Which Kconfig value was actually selected? |
-| `build/zephyr/zephyr.dts` | Which Devicetree nodes/properties survived merging? |
-| `build/compile_commands.json` | Which compiler command/include/define built a source? |
-| `build/zephyr/zephyr.map` | Where did code/data land and what consumes memory? |
-| `build/zephyr/zephyr.elf` | What symbols/debug information are in the image? |
-| `build/zephyr/zephyr.bin` | Which binary is flashed? Do not inspect as source. |
+| `build/domains.yaml` | Which sysbuild domains exist and in which order are they flashed? |
+| `build/zephyr/.config` | Which top-level sysbuild Kconfig values were selected? |
+| `build/app/zephyr/.config` | Which application Kconfig value was actually selected? |
+| `build/app/zephyr/zephyr.dts` | Which application Devicetree nodes/properties survived merging? |
+| `build/app/compile_commands.json` | Which compiler command/include/define built an application source? |
+| `build/app/zephyr/zephyr.map` | Where did application code/data land and what consumes memory? |
+| `build/app/zephyr/zephyr.elf` | What symbols/debug information are in the application image? |
+| `build/app/zephyr/zephyr.signed.bin` | Which signed application binary is flashed? Do not inspect as source. |
+| `build/mcuboot/zephyr/zephyr.bin` | Which MCUboot binary is provisioned at the boot address? |
 
 Generated files can be deleted and recreated. Never edit or commit them.
 

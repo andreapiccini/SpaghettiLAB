@@ -8,8 +8,9 @@
 
 - La flash ESP32-C3 da 4 MiB è già divisa in `image-0` e `image-1`, entrambe da
   1792 KiB, più `image-scratch`: la base fisica per un aggiornamento A/B esiste.
-- Il firmware non viene ancora costruito con MCUboot/sysbuild. Avere due partizioni
-  non basta: boot di prova, conferma e rollback non sono ancora attivi.
+- Sysbuild costruisce MCUboot e l'applicazione firmata ECDSA P-256. MCUboot usa lo
+  swap tramite move, quindi il rollback è disponibile; la conferma applicativa del
+  boot di prova verrà aggiunta nella fase 250.
 - Zephyr 4.4 include Image Management di `mcumgr`, trasporto SMP UART e trasporto SMP
   UDP. Non include un trasporto SMP I2C.
 - Il driver `i2c_esp32.c` installato espone controller/initiator, ma non le callback
@@ -53,5 +54,6 @@ incompleta. Nessun record Config persistente può impostare direttamente `RECEIV
 8. [290 — Qualificare interruzioni, rollback e recovery](290-update-qualification/README.md)
 
 Non iniziare un task se il precedente non è completato. Il task 220 ha fissato il
-confine: pin e controller sono proprietà della board/overlay; i servizi comuni usano
-soltanto il Maintenance Link.
+confine hardware e il task 230 ha predisposto bootloader, firma e immagini A/B. Pin e
+controller sono proprietà della board/overlay; i servizi comuni usano soltanto il
+Maintenance Link.
