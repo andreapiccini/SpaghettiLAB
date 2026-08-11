@@ -63,7 +63,7 @@ flowchart TD
 | File | Contains | Read before / modify when |
 |---|---|---|
 | `README.md` | Supported hosts, Docker workflow, build/flash commands, navigation, licensing summary | First checkout; environment, build, flash, or documentation navigation changes |
-| `tools/device.py` | Cross-platform serial-port discovery, Zephyr runner selection, host flashing, and console launch | Changing `make flash`, `make screen`, port detection, or support for another flash runner |
+| `tools/device.py` | Cross-platform port discovery, flashing, and shared Rich monitor over serial or authenticated TLS-PSK | Changing flash, screen, monitor transport, or host credential handling |
 | `ARCHITECTURE.md` | Generic ownership, boundaries, static/runtime split, data/control flow | Any new component, dependency, shared state, protocol adapter, or lifecycle change |
 | `UPDATE_HARDWARE_CONTRACT.md` | Board-independent Maintenance Link, boot-entry policy, and Core V1 mapping | Implementing provisioning, pinmux switching, MCUboot, OTA, recovery, or a new Core backend |
 | `FIRMWARE_IMPLEMENTATION_GUIDE.md` | Normative code/API/type/memory/thread/logging/testing rules | Before writing or reviewing firmware code |
@@ -100,6 +100,7 @@ flowchart TD
 | `include/spaghetti/data.h` | Generic messages, publish/subscribe, and statistics | Producing or consuming values/events |
 | `include/spaghetti/runtime.h` | Autonomous task/rule lifecycle | Adding periodic sampling or product behavior |
 | `include/spaghetti/communication.h` | Generic request/response dispatch boundary | Adding an input/output transport adapter |
+| `include/spaghetti/remote_console.h` | Authenticated remote-console lifecycle, credential and status contract | Changing network-console policy or provisioning |
 | `include/spaghetti/discovery.h` | Normalized module-discovery proposal/provider boundary | Adding manual, memory, or probe discovery |
 | `include/spaghetti/power.h` | Optional shared-resource coordination contract | Only when verified switchable/shared power hardware exists |
 | `include/spaghetti/update.h` | Exclusive update-session state, timeout and copied status contract | Arming, cancelling or finalizing firmware updates |

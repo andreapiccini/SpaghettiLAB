@@ -698,12 +698,21 @@ See also:
 - [Update coordinator](subsys/services/update/README.md)
 - [Local Maintenance Link](subsys/services/maintenance_link/README.md)
 - [Authenticated Wi-Fi OTA](subsys/services/ota/README.md)
+- [Authenticated remote console](subsys/communication/README.md#authenticated-remote-console)
 - [Maintenance Link contract](UPDATE_HARDWARE_CONTRACT.md)
+
+Remote Console is a separate Communication adapter. In `NORMAL`, and only when its
+own PSK has been provisioned locally, it opens TLS 1.2 TCP port 1338 for one client.
+It exposes a bounded status/Config/reboot grammar instead of Zephyr Shell, forwards
+domain requests through Communication, and copies logs into a static queue. A slow
+client loses old log fragments rather than delaying Runtime. Its PSK is independent
+from OTA because console access and firmware-upload authorization have different
+lifecycles.
 
 The detailed contract is in
 [UPDATE_HARDWARE_CONTRACT.md](UPDATE_HARDWARE_CONTRACT.md). Local transport and OTA
-are active; remote console and physical interruption qualification remain in phases
-280–290.
+and the remote console are active; physical interruption qualification remains in
+phase 290.
 
 ## Discovery strategies
 

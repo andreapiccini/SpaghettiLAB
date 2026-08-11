@@ -106,3 +106,41 @@ flowchart LR
 
 Core initializes Communication after restoring persisted Config. Before init,
 dispatch returns `-EACCES`; a second init returns `-EALREADY`.
+
+## Authenticated remote console
+
+`remote_console.c` applies lifecycle and authorization policy;
+`remote_console_tls.c` owns the TLS 1.2 TCP socket on port `1338`, the dedicated
+PSK record in PSA ITS, and a bounded log backend. This is deliberately not Zephyr
+Telnet: the remote peer receives only `spaghetti status`, `spaghetti apply <hex>`,
+`maintenance reboot`, and `help`. Status and Config still cross the same
+`spaghetti_communication_handle_request()` boundary used by the serial adapter.
+
+The listener exists only in Normal mode and only after a separate 32-byte console
+PSK and 1–32 byte identity have been provisioned through the local Maintenance Link
+(management command IDs 10 and 11 set/clear them). OTA credentials are independent.
+One authenticated client is accepted; inactivity closes it after five minutes.
+The log backend copies fragments into eight static 256-byte slots without waiting.
+When full, it discards the oldest fragment and increments the status counter, so a
+slow client cannot block Runtime or a log producer.
+
+The current Core V1/V2 secure-storage transform derives its encryption key from the
+device ID. Zephyr warns that this does not establish strong physical at-rest
+protection; production hardware must replace that provider with a protected key.
+
+The host credential file is JSON and must be readable only by its owner:
+
+```json
+{"identity":"core-v1","psk":"64 hexadecimal digits"}
+```
+
+```sh
+chmod 600 .keys/remote-console.json
+make monitor TRANSPORT=network HOST=192.0.2.10 PORT=1338 \
+  CREDENTIALS=.keys/remote-console.json
+```
+
+The client requires Python 3.13+ with TLS-PSK, fixes TLS to
+`PSK-AES128-GCM-SHA256`, and has no option to skip authentication. Serial and
+network bytes feed the same Rich formatter; Ctrl+X remains local and Ctrl+C is sent
+to the selected console.

@@ -50,6 +50,8 @@ target_sources(app PRIVATE
   subsys/runtime/runtime.c
   subsys/communication/communication.c
   subsys/communication/communication_shell.c
+  subsys/communication/remote_console.c
+  subsys/communication/remote_console_tls.c
   subsys/services/mqtt/mqtt.c
   subsys/services/wifi_profiles/wifi_profiles.c
   subsys/services/wifi_profiles/wifi_profiles_storage.c

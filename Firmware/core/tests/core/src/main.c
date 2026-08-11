@@ -28,6 +28,7 @@ enum init_step {
 	STEP_OTA,
 	STEP_MAINTENANCE_ENTER,
 	STEP_COMMUNICATION,
+	STEP_REMOTE_CONSOLE,
 };
 
 static enum init_step steps[16];
@@ -194,6 +195,11 @@ int spaghetti_communication_init(void)
 	return record_step(STEP_COMMUNICATION);
 }
 
+int spaghetti_remote_console_init(void)
+{
+	return record_step(STEP_REMOTE_CONSOLE);
+}
+
 int spaghetti_config_get_snapshot(struct spaghetti_config *out,
 				  uint32_t *generation)
 {
@@ -269,7 +275,7 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 			SPAGHETTI_CORE_IMAGE_CONFIRMED);
 	zassert_equal(strcmp(info.version, "1.2.3+4"), 0);
 	zassert_equal(spaghetti_core_init(), -EALREADY);
-	zassert_equal(step_count, normal ? 14U : 11U);
+	zassert_equal(step_count, normal ? 15U : 11U);
 	zassert_equal(steps[0], STEP_STORAGE);
 	zassert_equal(steps[1], STEP_UPDATE);
 	zassert_equal(steps[2], STEP_MAINTENANCE_INIT);
@@ -278,16 +284,18 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 	zassert_equal(steps[5], STEP_MANAGER);
 	zassert_equal(steps[6], STEP_DATA);
 	zassert_equal(steps[7], STEP_CONFIG);
-	zassert_equal(steps[step_count - 1U], STEP_COMMUNICATION);
 	if (normal) {
 		zassert_equal(steps[8], STEP_RUNTIME);
 		zassert_equal(steps[9], STEP_MQTT);
 		zassert_equal(steps[10], STEP_DISCOVERY);
 		zassert_equal(steps[11], STEP_WIFI);
 		zassert_equal(steps[12], STEP_OTA);
+		zassert_equal(steps[13], STEP_COMMUNICATION);
+		zassert_equal(steps[14], STEP_REMOTE_CONSOLE);
 	} else {
 		zassert_equal(steps[8], STEP_WIFI);
 		zassert_equal(steps[9], STEP_MAINTENANCE_ENTER);
+		zassert_equal(steps[10], STEP_COMMUNICATION);
 	}
 	zassert_equal(initialized_defaults.version, SPAGHETTI_CONFIG_VERSION);
 	zassert_equal(initialized_defaults.module_count, 0U);

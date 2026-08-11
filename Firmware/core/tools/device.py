@@ -6,11 +6,15 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 import glob
+import json
 import os
 from pathlib import Path
 import platform
 import re
 import shutil
+import socket
+import ssl
+import stat
 import subprocess
 import sys
 import time
@@ -355,6 +359,8 @@ class StyledSerialOutput:
         self.wifi_scan_rows: list[list[str]] = []
         self.wifi_help_active = False
         self.wifi_help_lines: list[str] = []
+        self.wifi_status_active = False
+        self.wifi_status_lines: list[str] = []
 
     def _raw(self, data: bytes) -> None:
         self.console.file.buffer.write(data)
@@ -384,6 +390,16 @@ class StyledSerialOutput:
         if self.wifi_help_active:
             if stripped != "Subcommands:":
                 self.wifi_help_lines.append(value)
+            return
+
+        if stripped == "Status: successful":
+            self.wifi_status_active = True
+            self.wifi_status_lines.clear()
+            return
+
+        if self.wifi_status_active:
+            if stripped and set(stripped) != {"="}:
+                self.wifi_status_lines.append(value)
             return
 
         if stripped == "Scan requested":
@@ -541,9 +557,85 @@ class StyledSerialOutput:
         self.console.print(table)
         self.console.print("  [green]● command list complete[/]")
 
+    def _print_wifi_status_table(self) -> None:
+        fields: list[tuple[str, str]] = []
+
+        for line in self.wifi_status_lines:
+            if ":" not in line:
+                continue
+            label, value = line.split(":", 1)
+            label = label.strip()
+            value = value.strip()
+            if value == "*float*":
+                value = "unavailable · firmware float formatting disabled"
+            fields.append((label, value))
+
+        table = self.table_type(
+            title="Wi-Fi connection",
+            box=self.box_style.ROUNDED,
+            border_style="white",
+            header_style="bold blue",
+            title_style="bold white",
+            expand=True,
+            pad_edge=True,
+        )
+        table.add_column("Property", style="bold blue", no_wrap=True)
+        table.add_column("Value", ratio=1)
+
+        for label, value in fields:
+            value_style = "white"
+            if label == "State":
+                value_style = "bold green" if value == "COMPLETED" else "yellow"
+            elif label == "SSID":
+                value_style = "bold white"
+            elif label in {"Security", "MFP"}:
+                value_style = "yellow"
+            elif label in {"Interface Mode", "Link Mode", "Band", "Channel"}:
+                value_style = "cyan"
+            elif label == "RSSI":
+                try:
+                    rssi = int(value)
+                except ValueError:
+                    value_style = "white"
+                else:
+                    if rssi >= -60:
+                        value_style = "green"
+                    elif rssi >= -75:
+                        value_style = "yellow"
+                    else:
+                        value_style = "red"
+                    value = f"{value} dBm"
+            elif "unavailable" in value:
+                value_style = "dim yellow"
+            table.add_row(label, self.text_type(value, style=value_style))
+
+        self.console.print(table)
+        self.console.print("  [green]● Wi-Fi status received[/]")
+
     def feed(self, data: bytes) -> None:
         """Consume serial bytes without delaying the interactive shell prompt."""
         for byte in data:
+            if self.wifi_status_active:
+                self.pending.append(byte)
+                if byte == ord("\n"):
+                    line = bytes(self.pending).rstrip(b"\r\n")
+                    self.pending.clear()
+                    self._print_line(line)
+                    self.at_line_start = True
+                    continue
+
+                visible = clean_terminal_text(
+                    self.pending.decode("utf-8", errors="ignore")
+                )
+                if re.search(r"\w+:~\$ $", visible):
+                    self._print_wifi_status_table()
+                    self.wifi_status_active = False
+                    self.wifi_status_lines.clear()
+                    self._print_shell_prompt(bytes(self.pending))
+                    self.pending.clear()
+                    self.at_line_start = False
+                continue
+
             if self.wifi_help_active:
                 self.pending.append(byte)
                 if byte == ord("\n"):
@@ -611,6 +703,8 @@ class StyledSerialOutput:
         self.wifi_scan_rows.clear()
         self.wifi_help_active = False
         self.wifi_help_lines.clear()
+        self.wifi_status_active = False
+        self.wifi_status_lines.clear()
 
     def end_connection(self) -> None:
         """Close an interrupted interactive line before reconnecting."""
@@ -664,12 +758,12 @@ def is_monitor_exit_key(key: bytes | None) -> bool:
     return key is not None and (b"\x18" in key or b"\x1d" in key)
 
 
-def monitor_header(console, panel_type, port: str, baud: int) -> None:
+def monitor_header(console, panel_type, endpoint: str, detail: str) -> None:
     """Show one calm session summary without consuming vertical space later."""
     console.print(
         panel_type.fit(
-            f"[bold cyan]Spaghetti LAB[/]  [dim]serial monitor[/]\n"
-            f"[green]●[/] [bold]{port}[/]  [dim]@[/] [yellow]{baud} baud[/]\n"
+            f"[bold cyan]Spaghetti LAB[/]  [dim]multi-transport monitor[/]\n"
+            f"[green]●[/] [bold]{endpoint}[/]  [dim]{detail}[/]\n"
             "[dim]Ctrl+X closes · Ctrl+C is sent to console[/]",
             border_style="cyan",
             padding=(0, 2),
@@ -677,10 +771,76 @@ def monitor_header(console, panel_type, port: str, baud: int) -> None:
     )
 
 
+def network_credentials(path_text: str | None) -> tuple[str, bytes]:
+    """Load a protected TLS-PSK credential file without an insecure fallback."""
+    if not path_text:
+        raise ToolError(
+            "Network monitor requires CREDENTIALS=<protected JSON file>."
+        )
+    path = Path(path_text).expanduser()
+    try:
+        mode = stat.S_IMODE(path.stat().st_mode)
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ToolError(f"Cannot read remote-console credentials: {path}.") from exc
+    if os.name != "nt" and mode & 0o077:
+        raise ToolError(
+            f"Credential file {path} is accessible by other users; run "
+            f"'chmod 600 {path}'."
+        )
+    identity = document.get("identity")
+    psk_hex = document.get("psk")
+    if not isinstance(identity, str) or not 1 <= len(identity.encode()) <= 32:
+        raise ToolError("Credential identity must contain 1 to 32 UTF-8 bytes.")
+    if not isinstance(psk_hex, str) or not re.fullmatch(
+        r"[0-9A-Fa-f]{64}", psk_hex
+    ):
+        raise ToolError("Credential psk must contain exactly 64 hexadecimal digits.")
+    return identity, bytes.fromhex(psk_hex)
+
+
+def open_network_monitor(host: str | None, port: str | None, credentials: str | None):
+    """Create one TLS 1.2 socket authenticated with the provisioned PSK."""
+    if not host:
+        raise ToolError("Network monitor requires HOST=<device IPv4 address>.")
+    if not hasattr(ssl.SSLContext, "set_psk_client_callback"):
+        raise ToolError("Network monitor requires Python 3.13 or newer with TLS-PSK.")
+    try:
+        tcp_port = int(port or "1338")
+    except ValueError as exc:
+        raise ToolError("Network PORT must be a decimal TCP port.") from exc
+    if not 1 <= tcp_port <= 65535:
+        raise ToolError("Network PORT must be between 1 and 65535.")
+    identity, psk = network_credentials(credentials)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    context.maximum_version = ssl.TLSVersion.TLSv1_2
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    try:
+        context.set_ciphers("PSK-AES128-GCM-SHA256")
+    except ssl.SSLError as exc:
+        raise ToolError("Host OpenSSL does not provide the required PSK cipher.") from exc
+    context.set_psk_client_callback(lambda _hint: (identity, psk))
+    plain = None
+    try:
+        plain = socket.create_connection((host, tcp_port), timeout=3.0)
+        connection = context.wrap_socket(plain, server_hostname=None)
+        connection.settimeout(0.05)
+    except (OSError, ssl.SSLError) as exc:
+        if plain is not None:
+            plain.close()
+        raise ToolError(
+            "TLS-PSK connection failed; check address, identity and credential."
+        ) from exc
+    return connection, f"{host}:{tcp_port}", f"TLS-PSK · identity {identity}"
+
+
 def run_monitor(args: argparse.Namespace) -> int:
-    """Open a styled, reconnecting serial monitor backed by pyserial."""
+    """Open the shared styled monitor over serial or authenticated TLS."""
     serial, Console, Panel, Table, Text, box = monitor_dependencies()
-    port = selected_port(args.port)
+    transport = "serial" if args.transport == "auto" else args.transport
+    serial_port = selected_port(args.port) if transport == "serial" else None
     console = Console(highlight=False, soft_wrap=True)
     output = StyledSerialOutput(console, Text, Panel, Table, box)
     connection = None
@@ -688,29 +848,50 @@ def run_monitor(args: argparse.Namespace) -> int:
     next_shell_wake = 0.0
     shell_wake_attempts = 0
 
-    monitor_header(console, Panel, port, args.baud)
+    if transport == "serial":
+        monitor_header(
+            console, Panel, str(serial_port), f"serial · {args.baud} baud"
+        )
+    else:
+        endpoint = f"{args.host or 'missing host'}:{args.port or '1338'}"
+        monitor_header(console, Panel, endpoint, "network · authenticated TLS-PSK")
     with raw_stdin():
         try:
             while True:
                 if connection is None:
                     try:
-                        connection = serial.Serial(
-                            port=port,
-                            baudrate=args.baud,
-                            timeout=0.05,
-                            write_timeout=0.5,
-                        )
+                        if transport == "serial":
+                            connection = serial.Serial(
+                                port=serial_port,
+                                baudrate=args.baud,
+                                timeout=0.05,
+                                write_timeout=0.5,
+                            )
+                        else:
+                            connection, _, _ = open_network_monitor(
+                                args.host, args.port, args.credentials
+                            )
                         output.begin_connection()
                         console.print(
                             "  [green]● connected[/]",
                             highlight=False,
                         )
-                        if args.wake_shell:
+                        if args.wake_shell and transport == "serial":
                             connection.write(b"\x03")
                             connection.flush()
                             shell_wake_attempts = 1
                             next_shell_wake = time.monotonic() + 0.35
                         disconnected_reported = False
+                    except ToolError as exc:
+                        if not disconnected_reported:
+                            console.print(
+                                f"  [yellow]○ {exc}; waiting for reconnect[/]"
+                            )
+                            disconnected_reported = True
+                        if is_monitor_exit_key(read_host_key()):
+                            break
+                        time.sleep(0.5)
+                        continue
                     except serial.SerialException:
                         if not disconnected_reported:
                             console.print(
@@ -723,13 +904,30 @@ def run_monitor(args: argparse.Namespace) -> int:
                         continue
 
                 try:
-                    available = connection.in_waiting
-                    received = connection.read(available or 1)
+                    if transport == "serial":
+                        available = connection.in_waiting
+                        received = connection.read(available or 1)
+                    else:
+                        try:
+                            received = connection.recv(1024)
+                        except socket.timeout:
+                            received = None
+                        if received is None:
+                            key = read_host_key()
+                            if is_monitor_exit_key(key):
+                                break
+                            if key:
+                                connection.sendall(key)
+                                output.feed(key)
+                            continue
+                        if received == b"":
+                            raise ConnectionResetError("remote console closed")
                     if received:
                         output.feed(received)
 
                     if (
                         args.wake_shell
+                        and transport == "serial"
                         and not output.shell_prompt_seen
                         and shell_wake_attempts < 4
                         and time.monotonic() >= next_shell_wake
@@ -743,8 +941,12 @@ def run_monitor(args: argparse.Namespace) -> int:
                     if is_monitor_exit_key(key):
                         break
                     if key:
-                        connection.write(key)
-                except (OSError, serial.SerialException):
+                        if transport == "serial":
+                            connection.write(key)
+                        else:
+                            connection.sendall(key)
+                            output.feed(key)
+                except (OSError, ssl.SSLError, serial.SerialException):
                     output.end_connection()
                     connection.close()
                     connection = None
@@ -776,9 +978,14 @@ def build_parser() -> argparse.ArgumentParser:
     screen.add_argument("--baud", type=int, default=115200)
 
     monitor = subparsers.add_parser(
-        "monitor", help="open the styled reconnecting serial monitor"
+        "monitor", help="open the styled serial or TLS-PSK monitor"
     )
-    monitor.add_argument("--port", help="serial device override")
+    monitor.add_argument(
+        "--transport", choices=("auto", "serial", "network"), default="auto"
+    )
+    monitor.add_argument("--port", help="serial device or network TCP port")
+    monitor.add_argument("--host", help="network device IPv4 address")
+    monitor.add_argument("--credentials", help="protected TLS-PSK JSON file")
     monitor.add_argument("--baud", type=int, default=115200)
     monitor.add_argument(
         "--no-wake",

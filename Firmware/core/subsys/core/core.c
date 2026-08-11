@@ -20,6 +20,7 @@
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
 #include <spaghetti/runtime.h>
+#include <spaghetti/remote_console.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
@@ -283,6 +284,12 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto communication_failed;
 	}
+	if (core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) {
+		err = spaghetti_remote_console_init();
+		if (err < 0) {
+			goto remote_console_failed;
+		}
+	}
 
 	atomic_set(&core_state, SPAGHETTI_CORE_READY);
 	core_info.state = SPAGHETTI_CORE_READY;
@@ -297,6 +304,9 @@ int spaghetti_core_init(void)
 	LOG_INF("Spaghetti Core ready");
 	return 0;
 
+remote_console_failed:
+	(void)fail_initialization("Remote Console", err);
+	goto unlock;
 communication_failed:
 	(void)fail_initialization("Communication", err);
 	goto unlock;

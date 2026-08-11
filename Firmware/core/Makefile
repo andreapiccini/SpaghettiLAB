@@ -13,6 +13,9 @@ HOST_VENV_PYTHON := .venv/bin/python
 endif
 HOST_TOOLS_STAMP := .venv/.spaghetti-host-tools-ready
 PORT_ARG := $(if $(strip $(PORT)),--port "$(PORT)",)
+HOST_ARG := $(if $(strip $(HOST)),--host "$(HOST)",)
+CREDENTIALS_ARG := $(if $(strip $(CREDENTIALS)),--credentials "$(CREDENTIALS)",)
+TRANSPORT ?= auto
 BAUD ?= 115200
 FLASH_BAUD ?= 460800
 MCUBOOT_DEV_KEY := .keys/mcuboot-dev-ecdsa-p256.pem
@@ -94,7 +97,8 @@ screen:
 	@$(HOST_PYTHON) tools/device.py screen $(PORT_ARG) --baud "$(BAUD)"
 
 monitor: $(HOST_TOOLS_STAMP)
-	@$(HOST_VENV_PYTHON) tools/device.py monitor $(PORT_ARG) --baud "$(BAUD)"
+	@$(HOST_VENV_PYTHON) tools/device.py monitor --transport "$(TRANSPORT)" \
+		$(PORT_ARG) $(HOST_ARG) $(CREDENTIALS_ARG) --baud "$(BAUD)"
 
 ports:
 	@$(HOST_PYTHON) tools/device.py ports

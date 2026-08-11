@@ -58,6 +58,10 @@ module = SPAGHETTI_COMMUNICATION
 module-str = spaghetti_communication
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_REMOTE_CONSOLE
+module-str = spaghetti_remote_console
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_MQTT
 module-str = spaghetti_mqtt
 source "subsys/logging/Kconfig.template.log_config"
@@ -258,6 +262,70 @@ config SPAGHETTI_OTA_WORK_STACK_SIZE
 	default 1536
 	help
 	  Static stack reserved for timeout and cleanup operations.
+
+config SPAGHETTI_REMOTE_CONSOLE_PORT
+	int "Authenticated remote-console TCP port"
+	range 1024 65535
+	default 1338
+	help
+	  TCP port used by the TLS-PSK remote console. The listener is opened only
+	  in Normal mode and only when a dedicated credential is provisioned.
+
+config SPAGHETTI_REMOTE_CONSOLE_STACK_SIZE
+	int "Remote-console listener stack bytes"
+	range 4096 12288
+	default 6144
+	help
+	  Static stack reserved for the TLS socket and bounded command dispatcher.
+
+config SPAGHETTI_REMOTE_CONSOLE_PRIORITY
+	int "Remote-console listener priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority of the single-client remote-console thread.
+
+config SPAGHETTI_REMOTE_CONSOLE_LINE_SIZE
+	int "Maximum remote command line bytes"
+	range 128 1024
+	default 600
+	help
+	  Fixed input buffer including the terminating null byte.
+
+config SPAGHETTI_REMOTE_CONSOLE_RESPONSE_SIZE
+	int "Maximum formatted remote response bytes"
+	range 128 1024
+	default 256
+	help
+	  Fixed temporary buffer used for one formatted response line.
+
+config SPAGHETTI_REMOTE_CONSOLE_LOG_CHUNK_SIZE
+	int "Maximum copied log chunk bytes"
+	range 64 512
+	default 256
+	help
+	  Fixed size of each log copy. Longer backend fragments are truncated.
+
+config SPAGHETTI_REMOTE_CONSOLE_LOG_QUEUE_DEPTH
+	int "Remote-console log queue depth"
+	range 2 32
+	default 8
+	help
+	  Number of static log chunks. The oldest chunk is dropped when full.
+
+config SPAGHETTI_REMOTE_CONSOLE_POLL_MS
+	int "Remote-console poll period in milliseconds"
+	range 10 1000
+	default 100
+	help
+	  Maximum delay for socket events and queued log forwarding.
+
+config SPAGHETTI_REMOTE_CONSOLE_IDLE_TIMEOUT_MS
+	int "Remote-console inactivity timeout in milliseconds"
+	range 10000 3600000
+	default 300000
+	help
+	  A connected authenticated client is closed after this idle interval.
 
 config SPAGHETTI_OTA_WORK_PRIORITY
 	int "OTA lifecycle workqueue priority"

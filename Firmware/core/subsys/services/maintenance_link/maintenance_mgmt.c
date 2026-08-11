@@ -19,6 +19,7 @@
 #include <spaghetti/core.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/ota.h>
+#include <spaghetti/remote_console.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
@@ -37,6 +38,8 @@ enum spaghetti_mgmt_command_id {
 	SPAGHETTI_MGMT_ID_OTA_CREDENTIALS,
 	SPAGHETTI_MGMT_ID_OTA_ARM,
 	SPAGHETTI_MGMT_ID_OTA_CREDENTIALS_CLEAR,
+	SPAGHETTI_MGMT_ID_REMOTE_CONSOLE_CREDENTIALS,
+	SPAGHETTI_MGMT_ID_REMOTE_CONSOLE_CREDENTIALS_CLEAR,
 	SPAGHETTI_MGMT_ID_COUNT,
 };
 
@@ -482,6 +485,45 @@ static int ota_credentials_clear_write(struct smp_streamer *ctxt)
 		ctxt->writer->zs, spaghetti_ota_clear_credentials());
 }
 
+static int remote_console_credentials_write(struct smp_streamer *ctxt)
+{
+	struct zcbor_string psk = {0};
+	struct zcbor_string identity = {0};
+	zcbor_state_t *zsd = ctxt->reader->zs;
+	zcbor_state_t *zse = ctxt->writer->zs;
+	size_t decoded;
+	struct zcbor_map_decode_key_val fields[] = {
+		ZCBOR_MAP_DECODE_KEY_DECODER("psk", zcbor_bstr_decode, &psk),
+		ZCBOR_MAP_DECODE_KEY_DECODER(
+			"identity", zcbor_tstr_decode, &identity),
+	};
+	const bool ok = zcbor_map_decode_bulk(
+		zsd, fields, ARRAY_SIZE(fields), &decoded) == 0;
+	int err;
+
+	if (!maintenance_is_active()) {
+		return MGMT_ERR_EACCESSDENIED;
+	}
+	if (!ok || (psk.len != SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE) ||
+	    (identity.len == 0U) ||
+	    (identity.len > SPAGHETTI_REMOTE_CONSOLE_IDENTITY_MAX_SIZE)) {
+		return MGMT_ERR_EINVAL;
+	}
+	err = spaghetti_remote_console_set_credentials(
+		psk.value, psk.len, identity.value, identity.len);
+	return encode_result(zse, err);
+}
+
+static int remote_console_credentials_clear_write(
+	struct smp_streamer *ctxt)
+{
+	if (!maintenance_is_active()) {
+		return MGMT_ERR_EACCESSDENIED;
+	}
+	return encode_result(
+		ctxt->writer->zs, spaghetti_remote_console_clear_credentials());
+}
+
 static const struct mgmt_handler spaghetti_mgmt_handlers[] = {
 	[SPAGHETTI_MGMT_ID_STATUS] = {
 		.mh_read = status_read,
@@ -512,6 +554,12 @@ static const struct mgmt_handler spaghetti_mgmt_handlers[] = {
 	},
 	[SPAGHETTI_MGMT_ID_OTA_CREDENTIALS_CLEAR] = {
 		.mh_write = ota_credentials_clear_write,
+	},
+	[SPAGHETTI_MGMT_ID_REMOTE_CONSOLE_CREDENTIALS] = {
+		.mh_write = remote_console_credentials_write,
+	},
+	[SPAGHETTI_MGMT_ID_REMOTE_CONSOLE_CREDENTIALS_CLEAR] = {
+		.mh_write = remote_console_credentials_clear_write,
 	},
 };
 
