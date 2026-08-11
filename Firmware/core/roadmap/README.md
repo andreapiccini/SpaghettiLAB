@@ -97,8 +97,21 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [190 — Power](190-power/README.md) | Reference counting e rollback sono verificati; Core V1 lascia Power disabilitato perché non espone una rail controllabile. |
 | ✅ | [200 — Engine completo](200-engine/README.md) | Il Core carica Config, avvia i componenti e accetta riconfigurazioni senza reboot. |
 | ⬜ | [210 — Finalizzazione](210-finalizzazione/README.md) | Nessuna scorciatoia temporanea rimane e il sistema completo supera la matrice end-to-end. |
+| ⬜ | [220 — Contratto hardware update](220-update-hardware-contract/README.md) | I tre segnali hanno pinout, livelli e safe state verificati. |
+| ⬜ | [230 — MCUboot e A/B](230-mcuboot-ab/README.md) | Bootloader e applicazione firmata usano gli slot primario e secondario. |
+| ⬜ | [240 — Coordinatore update](240-update-coordinator/README.md) | Timeout e cancel scartano il candidato senza toccare il firmware attivo. |
+| ⬜ | [250 — Boot sicuro](250-safe-boot-mode/README.md) | Boot vuoto resta passivo e un'immagine trial viene confermata solo se sana. |
+| ⬜ | [260 — Manutenzione locale UART](260-local-maintenance-uart/README.md) | La base configura e aggiorna il Core usando i pin condivisi in una finestra sicura. |
+| ⬜ | [270 — OTA Wi-Fi](270-wifi-ota/README.md) | Un peer autenticato carica una signed image durante una finestra esplicita. |
+| ⬜ | [280 — Console remota](280-remote-console/README.md) | `make monitor` usa USB o un canale di rete autenticato. |
+| ⬜ | [290 — Qualificazione update](290-update-qualification/README.md) | Interruzioni, rollback e recovery sono verificati end-to-end. |
 
 ## Da dove iniziare
 
-Le fasi fino alla 200 sono complete. Apri ora
+Le fasi fino alla 200 sono complete. Prima dell'estensione OTA apri ora
 [TASK-210-01 — Ripulire e qualificare il firmware completo](210-finalizzazione/TASK-210-01-ripulire-e-qualificare-il-firmware.md).
+
+Il piano successivo è descritto in
+[Piano OTA e manutenzione senza USB](OTA-REMOTE-MAINTENANCE.md). Dopo la fase 210, il
+primo task OTA è il 220: non implementare il pinmux finché il contratto hardware non è
+completo.
