@@ -16,8 +16,10 @@ Scrivi questi limiti pubblici:
 #define SPAGHETTI_SCHEMA_ID_SIZE 32U
 #define SPAGHETTI_FIELD_NAME_SIZE 24U
 #define SPAGHETTI_UNIT_NAME_SIZE 16U
-#define SPAGHETTI_VALUE_BYTES_MAX 32U
-#define SPAGHETTI_PROPERTY_MAX_FIELDS 8U
+#define SPAGHETTI_VALUE_BYTES_MAX CONFIG_SPAGHETTI_VALUE_BYTES_MAX
+#define SPAGHETTI_VALUE_TEXT_MAX CONFIG_SPAGHETTI_VALUE_TEXT_MAX
+#define SPAGHETTI_PROPERTY_MAX_FIELDS \
+	CONFIG_SPAGHETTI_MAX_PROPERTIES_PER_SET
 ```
 
 Poi definisci:
@@ -27,12 +29,18 @@ enum spaghetti_value_type {
 	SPAGHETTI_VALUE_BOOL,
 	SPAGHETTI_VALUE_INT64,
 	SPAGHETTI_VALUE_UINT64,
+	SPAGHETTI_VALUE_TEXT,
 	SPAGHETTI_VALUE_BYTES,
 };
 
 struct spaghetti_bytes_value {
 	size_t size;
 	uint8_t bytes[SPAGHETTI_VALUE_BYTES_MAX];
+};
+
+struct spaghetti_text_value {
+	size_t size;
+	char text[SPAGHETTI_VALUE_TEXT_MAX + 1U];
 };
 
 struct spaghetti_value {
@@ -42,6 +50,7 @@ struct spaghetti_value {
 		bool boolean;
 		int64_t signed_integer;
 		uint64_t unsigned_integer;
+		struct spaghetti_text_value text;
 		struct spaghetti_bytes_value bytes;
 	} data;
 };
@@ -54,9 +63,11 @@ struct spaghetti_property_set {
 
 La union è tagged da `type`: si legge soltanto il membro selezionato. `field_id` è
 stabile nello schema e viene codificato come unsigned esplicito sul wire. INT64 e
-UINT64 coprono fixed-point, timestamp e contatori senza float. BYTES serve per ROM,
-identità e piccoli blob; testo di configurazione generale resta in strutture bounded
-del relativo servizio, non viene trasformato in puntatore.
+UINT64 coprono fixed-point, timestamp e contatori senza float. TEXT contiene UTF-8
+owned, `size` non include il terminatore e `text[size]` deve essere `\0`; serve per
+proprietà configurabili che Node-RED deve mostrare come testo. BYTES contiene piccoli
+blob opachi e non viene interpretato come stringa. I limiti vengono dal profilo 291 e
+nessun valore contiene puntatori.
 
 ### 2. Descrivere i campi senza inserirli in ogni messaggio
 
@@ -64,6 +75,14 @@ del relativo servizio, non viene trasformato in puntatore.
 enum spaghetti_field_flags {
 	SPAGHETTI_FIELD_REQUIRED = BIT(0),
 	SPAGHETTI_FIELD_WRITABLE = BIT(1),
+	SPAGHETTI_FIELD_HAS_DEFAULT = BIT(2),
+	SPAGHETTI_FIELD_ENUM = BIT(3),
+};
+
+struct spaghetti_enum_option {
+	int64_t value;
+	const char *name;
+	const char *description;
 };
 
 struct spaghetti_field_descriptor {
@@ -77,7 +96,11 @@ struct spaghetti_field_descriptor {
 	uint8_t bytes_min_size;
 	uint8_t bytes_max_size;
 	const char *name;
+	const char *description;
 	const char *unit;
+	const struct spaghetti_value *default_value;
+	const struct spaghetti_enum_option *enum_options;
+	size_t enum_option_count;
 };
 
 struct spaghetti_schema_descriptor {
@@ -88,11 +111,21 @@ struct spaghetti_schema_descriptor {
 };
 ```
 
-Descrittori, stringhe e array sono `const` con lifetime firmware e appartengono al
-plug-in che li definisce. Ogni tipo usa la propria coppia di limiti; i campi non
-applicabili sono zero. Nome e unità devono stare nei limiti stringa pubblici.
+Descrittori, stringhe, default e array sono `const` con lifetime firmware e
+appartengono al plug-in che li definisce. `name` è l'identificatore macchina stabile
+usato da JSON e Node-RED; `description` è testo umano breve; `unit` è vuota se non
+applicabile. `default_value` è NULL senza default e deve avere lo stesso field ID e
+tipo del descrittore. Le enum sono ammesse soltanto su INT64/UINT64, hanno nomi stabili
+e valori univoci. Ogni tipo usa la propria coppia di limiti; i campi non applicabili
+sono zero.
 `schema_id` è una stringa stabile come `"spaghetti.ina219.sample"`; `version` cambia
 quando cambia un field ID, tipo o significato incompatibile.
+
+Congela anche la rappresentazione host: INT64/UINT64 vengono decodificati come
+`BigInt`; nell'output JSON e nei messaggi Node-RED diventano stringhe decimali quando
+sono fuori da `Number.MIN_SAFE_INTEGER..Number.MAX_SAFE_INTEGER`. Il catalogo conserva
+sempre il tipo originale, quindi il client può ricostruirli senza perdita. Non
+convertire silenziosamente un intero a `Number`.
 
 ### 3. Definire record e comando generici
 
@@ -115,6 +148,7 @@ struct spaghetti_record_payload {
 struct spaghetti_record {
 	spaghetti_module_id_t source_id;
 	spaghetti_module_key_t source_key;
+	uint64_t boot_id;
 	int64_t timestamp_ms;
 	uint32_t sequence;
 	struct spaghetti_record_payload payload;
@@ -127,8 +161,11 @@ struct spaghetti_module_command {
 ```
 
 Payload e record possiedono tutti i byte. Il driver produce soltanto payload; Manager
-e Runtime aggiungono key, ID, timestamp e sequence formando il record copiabile in
-zbus. Il comando è borrowed durante una chiamata sincrona e contiene valori owned,
+e Runtime aggiungono key, ID, boot ID, timestamp e sequence formando il record copiabile
+in zbus. `timestamp_ms` è uptime monotono da `k_uptime_get()`, non Unix time; `boot_id`
+cambia a ogni boot e rende esplicita la discontinuità. Sequence è per sorgente, parte da
+uno e il rollover `UINT32_MAX` è valido se boot ID e ordine di consegna coincidono.
+Il comando è borrowed durante una chiamata sincrona e contiene valori owned,
 quindi non porta puntatori a stack attraverso code o trasporti.
 
 Per descrivere più comandi nello stesso driver aggiungi:
@@ -166,7 +203,8 @@ int spaghetti_record_validate(
 `find()` restituisce un puntatore immutable borrowed con lifetime della property set o
 NULL. `property_validate()` rifiuta puntatori nulli, count oltre capacità, field ID
 zero/duplicati/sconosciuti, type mismatch, required assenti, flag sconosciuti, range e
-BYTES oltre limite. `payload_validate()` verifica kind, schema ID/version e valori;
+TEXT UTF-8/terminazione, BYTES oltre limite, default incoerenti ed enum non ammesse.
+`payload_validate()` verifica kind, schema ID/version e valori;
 `record_validate()` aggiunge source, timestamp e sequence. Le funzioni restituiscono
 `0`, `-EINVAL`, `-ENOENT`, `-EEXIST`, `-EMSGSIZE`, `-ERANGE` o
 `-EPROTONOSUPPORT`; non modificano input.
@@ -174,7 +212,8 @@ BYTES oltre limite. `payload_validate()` verifica kind, schema ID/version e valo
 ### 5. Aggiungere test indipendenti
 
 Crea `tests/schema/` con CMake, Kconfig, prj.conf, testcase e ztest. Copri ogni tipo,
-min/max, required, duplicati, schema sbagliato, buffer massimo e output immutato.
+min/max, required, default, enum, UTF-8, duplicati, schema sbagliato, buffer massimo e
+output immutato.
 Misura con `sizeof(struct spaghetti_record)` e documenta in `subsys/schema/README.md`
 la RAM consumata da un elemento zbus prima di scegliere le capacità della fase 340.
 
@@ -189,14 +228,20 @@ leggere il catalogo una volta e interpretare i field ID successivi.
 
 Un driver definisce staticamente lo schema e produce `{field_id=1, UINT64=5000000}`.
 Un adapter risolve field 1 nel catalogo come `bus_voltage_microvolts`. Un futuro
-sensore definisce un altro schema senza modificare `schema.c`.
+sensore definisce un altro schema senza modificare `schema.c`. Un editor Node-RED usa
+enum, default, descrizione, unità e writable per costruire il campo corretto senza una
+tabella specifica INA219.
 
 ## Checklist di completamento
 
 - [ ] Property set contiene solo valori owned e bounded.
 - [ ] Descrittori hanno lifetime firmware e schema/version stabili.
+- [ ] Testo, enum, default e descrizioni sono rappresentabili senza puntatori nei valori.
 - [ ] Record e comandi non contengono tipi INA219/Relay.
+- [ ] Timestamp, boot ID, sequence e rollover hanno semantica non ambigua.
 - [ ] Lookup e validazione coprono duplicati, required, tipi e range.
+- [ ] Il mapping lossless INT64/UINT64 per JavaScript è documentato.
+- [ ] Tutte le capacità provengono dal profilo 291.
 - [ ] Dimensione RAM del record è documentata.
 
 ## Verifica e fine task

@@ -12,7 +12,7 @@ sensor, protocol, Core model, or product feature.
 > [!NOTE]
 > The current implementation is being generalized into the stable typed plug-in and
 > protocol contracts described by the
-> [V1 platform closure plan](roadmap/V1-PLATFORM-CLOSURE.md). Phases 300–390 keep the
+> [V1 platform closure plan](roadmap/V1-PLATFORM-CLOSURE.md). Phases 291–390 keep the
 > ownership model below while removing the remaining electrical-sample, Relay-command,
 > single-codec and single-provider assumptions.
 
@@ -20,8 +20,8 @@ sensor, protocol, Core model, or product feature.
 > Low-energy BLE, on-demand Wi-Fi, compile-time Core resource profiles, and bounded
 > secure-memory ownership are frozen separately in the
 > [connectivity, energy, and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md).
-> That document describes target behavior; its implementation tasks have not been
-> created yet.
+> That document describes target behavior and links the implementation tasks; a
+> capability is available only after the corresponding task is complete.
 
 ## The idea in one minute
 

@@ -12,9 +12,9 @@ byte driver con property set:
 
 ```c
 #define SPAGHETTI_CONFIG_VERSION 4U
-#define SPAGHETTI_CONFIG_MAX_MODULES 8U
-#define SPAGHETTI_CONFIG_MAX_SCHEDULES 8U
-#define SPAGHETTI_CONFIG_MAX_RULES 8U
+#define SPAGHETTI_CONFIG_MAX_MODULES CONFIG_SPAGHETTI_MAX_MODULES
+#define SPAGHETTI_CONFIG_MAX_SCHEDULES CONFIG_SPAGHETTI_MAX_SCHEDULES
+#define SPAGHETTI_CONFIG_MAX_RULES CONFIG_SPAGHETTI_MAX_RULES
 
 struct spaghetti_module_config {
 	spaghetti_module_key_t key;
@@ -44,13 +44,17 @@ struct spaghetti_config {
 		schedules[SPAGHETTI_CONFIG_MAX_SCHEDULES];
 	size_t rule_count;
 	struct spaghetti_rule_config rules[SPAGHETTI_CONFIG_MAX_RULES];
+	enum spaghetti_connectivity_policy connectivity_policy;
+	struct spaghetti_energy_policy energy_policy;
 	struct spaghetti_mqtt_config mqtt;
 };
 ```
 
 Config possiede ogni valore e non conserva puntatori. Più schedule sostituiscono la
 singola sorgente. La vecchia `threshold_rule` concreta sparisce dal modello centrale;
-la fase 340 la migra in un rule driver.
+la fase 340 la migra in un rule driver. Connectivity policy ed energy policy sono
+desiderio persistente; lease, connessioni e deadline restano stato runtime del
+Connectivity Manager e non entrano in Config.
 
 ### 2. Definire il contratto dei rule driver prima di validarli
 
@@ -102,17 +106,22 @@ spaghetti-config-v2 = {
   1: [* module],
   2: [* schedule],
   3: [* rule],
-  4: mqtt
+  4: mqtt,
+  5: uint,             ; connectivity policy
+  6: energy-policy
 }
 module = { 0: uint, 1: uint, 2: tstr, 3: properties }
 schedule = { 0: uint, 1: uint, 2: bool }
 rule = { 0: uint, 1: tstr, 2: properties }
-properties = { * uint => (bool / int / uint / bstr) }
+properties = { * uint => (bool / int / uint / tstr / bstr) }
+energy-policy = { 0: uint, 1: uint, 2: uint }
 ```
 
 Chiavi property sono field ID; tipo CBOR viene convertito nel relativo
-`spaghetti_value_type`. Rifiuta float, testo driver, mappe annidate, duplicati, più di
-otto campi e trailing bytes. Dopo il decode, Config trova driver/rule descriptor e
+`spaghetti_value_type`. Rifiuta float, mappe annidate, duplicati, più di
+`CONFIG_SPAGHETTI_MAX_PROPERTIES_PER_SET` campi e trailing bytes. TEXT accetta soltanto
+UTF-8 valido entro il limite del profilo; BYTES resta opaco. Dopo il decode, Config
+trova driver/rule descriptor e
 valida con lo schema e `ops->validate_config()`; `config_cbor.c` non include header di
 driver concreti.
 
@@ -136,15 +145,61 @@ Encode valida prima, produce sempre wire V2 canonico, ordina root/field ID in mo
 deterministico e scrive buffer/written solo al successo. Restituisce `-EINVAL`,
 `-EMSGSIZE`, `-EBADMSG`, `-ENOTSUP`, `-ENOENT`, `-EEXIST`, `-EADDRINUSE`, `-ERANGE`.
 
-### 4. Riconciliare Module, schedule e rule in una transazione
+### 4. Esporre snapshot, revisione e validazione senza effetti
+
+Sostituisci le firme V0 in `include/spaghetti/config.h` con:
+
+```c
+#define SPAGHETTI_CONFIG_HASH_SIZE 32U
+
+struct spaghetti_config_revision {
+	uint32_t generation;
+	uint8_t sha256[SPAGHETTI_CONFIG_HASH_SIZE];
+};
+
+struct spaghetti_config_commit_result {
+	struct spaghetti_config_revision revision;
+	bool changed;
+};
+
+int spaghetti_config_validate(const struct spaghetti_config *candidate,
+			      struct spaghetti_config_failure *failure);
+int spaghetti_config_get_snapshot(
+	struct spaghetti_config *out,
+	struct spaghetti_config_revision *out_revision);
+int spaghetti_config_apply(
+	const struct spaghetti_config *candidate,
+	uint32_t expected_generation,
+	struct spaghetti_config_commit_result *out_result);
+```
+
+`candidate` è borrowed e non viene modificata. Snapshot, revision e result sono
+caller-owned e cambiano solo al successo. L'hash è SHA-256 dei byte CBOR canonici,
+quindi due Config equivalenti hanno lo stesso valore indipendentemente dal layout C.
+`validate()` esegue l'intera validazione server-side ma non ferma Runtime, non modifica
+Module e non scrive Storage. Protocollo e Node-RED useranno la generazione come
+compare-and-swap: un client applica soltanto la Config derivata dalla revisione che ha
+letto.
+
+Se il candidato canonico è identico alla Config corrente, `apply()` restituisce `0`,
+`changed=false`, stessa generazione e stesso hash. Non ferma Runtime e non scrive NVS.
+Questo comportamento evita usura flash quando un flow Node-RED ripete il proprio stato
+desiderato. Se `expected_generation` non coincide restituisce `-ESTALE`, non modifica
+output o stato e obbliga il client a rileggere e rifare il merge.
+
+### 5. Riconciliare Module, schedule e rule in una transazione
 
 Apri `subsys/config/config.c`. Moduli invariati per key restano vivi solo se Port,
 type e property set coincidono. Schedule riferiscono una key esistente con op `read`;
 rule type deve esistere nel Rule Registry. Valida tutto prima del primo cambiamento.
 
-Apply esegue: stop Runtime, prepara nuovi Module, commit Config e Storage, configura le
-schedule e riavvia Runtime. Su qualsiasi errore ripristina Module e schedule
-precedenti. Generation aumenta solo al commit. Nessuna Port viene considerata occupata.
+Apply esegue: stop Runtime, prepara nuovi Module, applica la policy tramite Connectivity
+Manager, commit Config e Storage, configura le schedule e riavvia Runtime. Su qualsiasi
+errore ripristina policy, Module e schedule
+precedenti. Generation aumenta una sola volta al commit realmente diverso. Nessuna
+Port viene considerata occupata. Limita e misura anche la frequenza massima delle
+scritture persistenti: il no-op non consuma il budget, mentre richieste differenti
+troppo rapide restituiscono `-EBUSY` senza iniziare la transazione.
 
 In questa fase Config decodifica, valida e conserva anche le rule, ma rifiuta con
 `-ENOTSUP` un apply con `rule_count > 0`: il lifecycle dei context e il rollback delle
@@ -153,7 +208,7 @@ immediatamente successivo. È una limitazione intermedia esplicita, non un fallb
 silenzioso. I payload senza rule e la migrazione della vecchia threshold restano
 utilizzabili; il task 340 rimuove il rifiuto e completa la transazione.
 
-### 5. Persistire byte canonici, non `struct spaghetti_config`
+### 6. Persistire byte canonici, non `struct spaghetti_config`
 
 Apri `subsys/services/storage/storage.c`. Il record diventa:
 
@@ -179,12 +234,15 @@ risalva V2 solo dopo validazione. Se trova tipo/layout non convertibile restitui
 solo file autorizzato a conoscere il vecchio layout concreto e va rimosso dopo una
 release di migrazione documentata.
 
-### 6. Testare compatibilità e perdita di alimentazione logica
+### 7. Testare compatibilità, concorrenza e perdita di alimentazione logica
 
 Aggiorna `tests/config`, `config_codec`, `storage` e aggiungi `rule_registry`. Copri
 round-trip deterministico, INA219/Relay generici, due schedule, fake rule, legacy
 migration, CRC errato, record troncato, payload massimo, unknown type, rollback e
-output immutato.
+output immutato. Aggiungi due client fake che leggono la stessa generazione: il primo
+commit riesce, il secondo riceve `-ESTALE`; dopo nuova lettura e merge riesce. Prova
+anche validate senza effetti, apply identica senza scrittura Storage né incremento,
+hash stabile dopo reboot e rate limit delle scritture differenti.
 
 ## Perché è fatto così
 
@@ -195,18 +253,23 @@ desiderato e la transazione.
 
 ## Come si usa
 
-Un adapter decodifica CBOR e chiama `spaghetti_config_apply()`. Storage usa lo stesso
-encoder. Un nuovo driver assegna field ID nel proprio schema e non richiede modifiche
-al codec centrale.
+Un adapter legge snapshot e revisione, decodifica CBOR, valida e chiama
+`spaghetti_config_apply(candidate, revision.generation, &result)`. Storage usa lo
+stesso encoder. Un nuovo driver assegna field ID nel proprio schema e non richiede
+modifiche al codec centrale.
 
 ## Checklist di completamento
 
-- [ ] Config contiene Module, schedule e rule generici.
+- [ ] Config contiene Module, schedule, rule e policy connettività/energia generici.
 - [ ] CBOR V2 non contiene switch su driver/rule concreti.
 - [ ] Encoder e decoder fanno round-trip canonico.
+- [ ] Snapshot restituisce generazione e hash canonico.
+- [ ] Validate non produce effetti e apply usa compare-and-swap.
+- [ ] Apply identica non incrementa generazione e non scrive flash.
 - [ ] Storage salva payload versionato con CRC.
 - [ ] Il record precedente migra oppure fallisce senza perdita.
 - [ ] Apply effettua rollback completo per Module/schedule e rifiuta rule non ancora eseguibili.
+- [ ] Tutti i limiti derivano dal profilo 291.
 
 ## Verifica e fine task
 

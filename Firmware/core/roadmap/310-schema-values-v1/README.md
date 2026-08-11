@@ -17,4 +17,6 @@ Runtime, Communication e Node-RED.
 
 - [ ] Nessun valore wire dipende dal layout di una struct C.
 - [ ] Tipi, field ID, unità e limiti sono validabili e descrivibili.
+- [ ] Testo UTF-8, enum, default e interi a 64 bit hanno un mapping Node-RED lossless.
 - [ ] Capacità e dimensioni restano statiche.
+- [ ] Boot ID, uptime e sequence distinguono correttamente reboot e rollover.

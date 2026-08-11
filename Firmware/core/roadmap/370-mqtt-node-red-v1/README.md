@@ -18,3 +18,5 @@ correlate e TLS configurabile per rendere Node-RED il livello di automazione est
 - [ ] Record, stato e candidati sono pubblicati in forma generica.
 - [ ] Config e comandi entrano attraverso Communication.
 - [ ] Node-RED riceve una risposta correlata per ogni richiesta accettata.
+- [ ] Un Config Coordinator esegue read/merge/validate/apply senza lost update.
+- [ ] MQTT è opzionale per profilo e rilascia lifecycle/workspace quando viene fermato.

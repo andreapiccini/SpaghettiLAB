@@ -16,5 +16,7 @@ interroga il catalogo e prepara il passaggio a Node-RED.
 ## Criteri di completamento della fase
 
 - [ ] Un JSON configura Module, schedule e regole.
+- [ ] Config get/validate/apply usa generazione, hash e conflict detection.
 - [ ] Catalogo, Discovery, stato e comandi sono accessibili dallo stesso CLI.
-- [ ] Upload UART e Wi-Fi condividono verifica e progress reporting.
+- [ ] Upload UART, Wi-Fi e BLE condividono verifica e progress reporting.
+- [ ] Capability, lease e reset sono accessibili senza comandi Zephyr interni.

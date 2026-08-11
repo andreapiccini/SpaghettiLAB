@@ -20,7 +20,9 @@ int spaghetti_data_get_stats(struct spaghetti_data_stats *out);
 Il canale diventa `spaghetti_record_chan`; logger, Runtime, MQTT e test ricevono copie.
 Data valida shape/capacità ma non conosce schema INA219. Queue-full conserva la policy
 attuale bounded e incrementa `delivery_errors`. Il logger stampa source, schema,
-version, sequence e field ID/type senza inventare nomi.
+version, boot ID, timestamp, sequence e field ID/type senza inventare nomi. Dopo la
+pubblicazione zbus, passa una copia al confine Record Delivery che verrà completato
+nella fase 345; nessun adapter MQTT/BLE legge direttamente memoria del Runtime.
 
 ### 2. Pianificare più letture indipendenti
 
@@ -127,6 +129,7 @@ BOOL compatibile. Senza rule, i record raggiungono comunque Node-RED.
 - [ ] Rule Registry crea context bounded e rollbackabile.
 - [ ] Threshold non include INA219/Relay.
 - [ ] Errori di una sorgente/regola non fermano le altre.
+- [ ] Ogni record porta boot ID e attraversa un solo confine di consegna.
 
 ## Verifica e fine task
 

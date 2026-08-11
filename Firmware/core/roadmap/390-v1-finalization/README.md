@@ -17,4 +17,5 @@ congelare il contratto usato da Node-RED.
 
 - [ ] Due driver, due schemi, una regola e due provider fake sono plug-in esterni.
 - [ ] Protocollo e compatibilità sono congelati come V1.
-- [ ] Il gate Node-RED del piano V1 è completamente superato.
+- [ ] Il gate Node-RED MQTT e BLE/gateway del piano V1 è completamente superato.
+- [ ] Ogni profilo supera budget RAM, lifecycle e failure test.

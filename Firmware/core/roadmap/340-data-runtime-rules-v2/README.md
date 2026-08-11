@@ -18,3 +18,4 @@ di soglia in un plug-in anziché in logica INA219/Relay centrale.
 - [ ] zbus trasporta record generici.
 - [ ] Runtime pianifica più schedule indipendenti.
 - [ ] La soglia è una rule auto-registrata e non conosce driver concreti.
+- [ ] Record generici raggiungono il confine di consegna senza dipendere dall'adapter.

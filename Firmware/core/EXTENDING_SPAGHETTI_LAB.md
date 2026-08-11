@@ -15,6 +15,26 @@ polarità non possono essere dedotti dal firmware.
 > migrazione alcune firme mostrate qui verranno sostituite da property set, record e
 > comandi tipizzati.
 
+## Stato reale dell'estensibilità
+
+Questa tabella evita di confondere il contratto finale con il codice già disponibile:
+
+| Area | Oggi | Dopo il task indicato |
+|---|---|---|
+| Port 1:N Module | Implementata per identità ed endpoint | 300 serializza anche ogni controller condiviso dentro Port |
+| Driver Registry | Tabella centrale in `driver_registry.c` | 320 usa iterable sections e non richiede patch centrali |
+| Config ricevuta | Il decoder CBOR accetta soltanto INA219 | 310–330 introducono proprietà e codec generici |
+| Data e comandi | Sample elettrico e comando Relay concreti | 310–340 introducono record/comandi descritti da schema |
+| Discovery | Tabella runtime presente, scan hardware non generico | 350 introduce provider indipendenti |
+| Communication | Shell/TLS V0 | 360 congela il Protocol V1 comune |
+| BLE e profili RAM | Non implementati | 291–295 e 365–375 |
+
+Fino al task 300, i driver I2C ottengono direttamente `const struct device *` dalla
+Port: più endpoint sono ammessi, ma il lock del controller condiviso non è ancora nel
+confine Port. Non avviare accessi concorrenti allo stesso bus presumendo una
+serializzazione che il codice attuale non offre. Il Runtime corrente è sequenziale;
+un nuovo thread/ISR del driver renderebbe visibile questo limite.
+
 ## Scegli prima cosa stai aggiungendo
 
 | Obiettivo | Estensione corretta | Codice eseguito dove |
@@ -41,6 +61,13 @@ make validate
 mai `build/`: contiene risultati generati, non sorgenti.
 
 ## Percorso A: aggiungere un nuovo Module
+
+Il template specifico per l'API corrente è
+[`templates/firmware/module_driver.c.template`](templates/firmware/module_driver.c.template),
+affiancato dal relativo
+[`module_driver.h.template`](templates/firmware/module_driver.h.template). I template
+generici `component.c.template` e `public_api.h.template` servono invece per un nuovo
+sottosistema, non per un Module Driver.
 
 ### 1. Scrivi il contratto hardware in cinque righe
 
@@ -386,6 +413,13 @@ la `key` è l'identità persistente usata da Config e Runtime.
 Una variante Core è una board Zephyr: descrive fatti statici dello schema elettrico.
 Non deve conoscere `ina219`, relay o altri Module rimovibili.
 
+Usa i template `board.yml.template`, `board.dts.template` e
+`board_defconfig.template` in `templates/firmware/`. Normalmente un nuovo Core non
+richiede un file `.c`: SoC, memoria, controller, pin, Port e runner appartengono ai file
+Zephyr della board. Crea un backend C specifico soltanto se esiste una risorsa hardware
+che il contratto comune non può ottenere da Devicetree; in quel caso esponila prima
+come capability Port o servizio astratto, senza branch sul nome board.
+
 ### 1. Raccogli i dati che il firmware non può inventare
 
 Prima di copiare file, annota:
@@ -571,6 +605,194 @@ MCU, board, node label e pin fisici.
 - Il codice comune non contiene `#ifdef` o branch sul nome della board.
 - [`PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md`](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md)
   è stato riesaminato voce per voce.
+
+## Percorso C: costruire e applicare una Config
+
+Config è stato desiderato persistente, non una lista di operazioni. Il chiamante invia
+una fotografia completa; Config calcola aggiunte, sostituzioni e rimozioni e aumenta la
+generation soltanto dopo il commit.
+
+### Config C corrente
+
+Per un test o un default interno apri `include/spaghetti/config.h` e costruisci una
+struct posseduta dal chiamante:
+
+```c
+const struct spaghetti_ina219_config ina_config = {
+	.i2c_address = 0x40U,
+	.shunt_milliohm = 100U,
+	.current_lsb_microamp = 200U,
+};
+struct spaghetti_config config = {
+	.version = SPAGHETTI_CONFIG_VERSION,
+	.module_count = 1U,
+	.sampling = {
+		.enabled = true,
+		.source_key = 10U,
+		.period_ms = 1000U,
+	},
+};
+
+config.modules[0].key = 10U;
+config.modules[0].port_id = 0U;
+strcpy(config.modules[0].type_id, "ina219");
+config.modules[0].driver_config_size = sizeof(ina_config);
+memcpy(config.modules[0].driver_config, &ina_config, sizeof(ina_config));
+```
+
+- `key` è persistente, non il runtime ID restituito dal Manager;
+- `port_id` deve esistere nella board generata;
+- `driver_config` possiede una copia, mai un puntatore alla variabile locale;
+- `sampling.source_key` deve riferire una key presente nella stessa fotografia;
+- MQTT disabilitato richiede host, porta e topic vuoti.
+
+Leggi la generation corrente e applica con optimistic concurrency:
+
+```c
+struct spaghetti_config current;
+struct spaghetti_config_error error;
+uint32_t generation;
+int err;
+
+err = spaghetti_config_get_snapshot(&current, &generation);
+if (err == 0) {
+	err = spaghetti_config_validate(&config, &error);
+}
+if (err == 0) {
+	err = spaghetti_config_apply(&config, generation);
+}
+```
+
+`current` serve qui per ottenere una snapshot coerente e la generation; non viene
+modificata. Un altro apply completato nel frattempo rende la generation stale e il
+chiamante deve rileggere, non sovrascrivere alla cieca. Apply può fare I/O e rollback;
+non chiamarlo da ISR, timer o callback di rete.
+
+### Config CBOR corrente
+
+Il formato autorevole è
+[`subsys/config/spaghetti_config_v1.cddl`](subsys/config/spaghetti_config_v1.cddl).
+Oggi il comando è:
+
+```text
+spaghetti apply <config-cbor-hex>
+```
+
+La mappa root wire version 2 usa:
+
+```text
+0 → versione wire, valore 2
+1 → array completo dei Module
+2 → configurazione sampling
+3 → configurazione MQTT
+```
+
+Per ogni INA219: `0=key`, `1=Port`, `2="ina219"`, `3={0=address,
+1=shunt_milliohm, 2=current_lsb_microamp}`. Non usare dump della struct C: padding,
+endianness e puntatori non fanno parte del wire format.
+
+Non esiste ancora un compilatore JSON supportato nel repository. Il task 380 lo
+aggiungerà usando il catalogo. Fino ad allora considera i payload in
+`tests/config_codec/src/main.c` esempi di test, non una comoda interfaccia utente.
+Quando aggiungi oggi un tipo al wire devi modificare CDDL, decoder e test nello stesso
+commit; dal task 330 questa patch centrale non sarà più necessaria.
+
+### Config Zephyr non è Config runtime
+
+I nomi simili indicano livelli diversi:
+
+| File | Decide | Quando |
+|---|---|---|
+| board `.dts` / overlay | MCU, pin, controller, Port, flash | build-time |
+| board `_defconfig` | minimo necessario per avviare quella scheda | build-time |
+| root `Kconfig` | feature e capacità selezionabili | configure-time |
+| `prj.conf` | feature dell'immagine applicativa | build-time |
+| `struct spaghetti_config` / CBOR | Module, schedule, regole e servizi desiderati | runtime |
+
+Un indirizzo I2C di un Module rimovibile appartiene alla Config runtime. I pin SDA/SCL
+e il controller appartengono al DTS. Il numero massimo di istanze appartiene a Kconfig.
+
+## Caveat specifici di Spaghetti LAB
+
+### Ownership e lifetime
+
+- `const struct device *` è posseduto dal Device Model Zephyr e dura per tutto il
+  firmware; non liberarlo e non modificarlo.
+- `struct spaghetti_module` è posseduta dal Module Manager. Il driver può modificare
+  soltanto il proprio `context` nei punti previsti.
+- Config, command e buffer passati alle callback sono borrowed per la sola chiamata;
+  copia ciò che deve sopravvivere.
+- Descriptor driver e operation table sono `static const` o `extern const` con lifetime
+  firmware; non inserirvi stato di una singola istanza.
+- Non trasferire un puntatore a stack attraverso zbus, msgq, work o callback asincrone.
+
+### Concorrenza e contesti Zephyr
+
+- Timer e ISR notificano soltanto; I2C, flash, socket, logging complesso e Config apply
+  vengono eseguiti da thread.
+- Un mutex protegge un invariant, non “un file”. Documenta chi lo acquisisce e non
+  mantenerlo durante callback esterne se non è parte esplicita del contratto.
+- Dopo il task 300 il lock del bus appartiene alla Port. Non aggiungere un mutex per
+  driver: due driver differenti sullo stesso controller non lo condividerebbero.
+- `K_THREAD_DEFINE` e `K_THREAD_STACK_DEFINE` riservano RAM anche quando il thread non
+  lavora. Prima di creare un worker, verifica se basta Runtime o una workqueue esistente.
+- Ogni wait ha timeout o una motivazione di lifetime; un timeout non autorizza a
+  lasciare callback o socket vivi dopo `deinit()`/`stop()`.
+
+### Errori e transazioni
+
+- Scrivi gli output solo al successo: calcola in una variabile locale e copia alla fine.
+- Conserva il primo errore che spiega la causa; un errore di cleanup va loggato ma non
+  deve nasconderlo.
+- Init pubblica context/READY soltanto dopo l'ultimo passo fallibile. Cleanup procede
+  in ordine inverso.
+- Config apply è transazionale. Non aggiornare Storage o generation prima che Module,
+  Runtime e servizi siano riconciliabili; in errore ripristina la fotografia precedente.
+- `-ENODEV` significa hardware non disponibile, non build fallita. `undefined reference`
+  è invece un oggetto/simbolo assente al link.
+
+### Identità, versione e compatibilità
+
+- Port ID identifica una connessione fisica; Module key identifica il desiderio
+  persistente; Module ID identifica uno slot vivo e può cambiare dopo reboot.
+- `type_id`, field ID, command ID, operation ID e schema version sono contratti. Non
+  riutilizzare un ID rimosso con un significato differente.
+- L'endpoint normalizzato decide la collisione: stessa Port non significa conflitto;
+  stessa Port più stesso indirizzo/chip-select sì.
+- `timestamp_ms` corrente è uptime. Dopo la fase 310 usa anche boot ID; non trattarlo
+  come Unix time.
+- Un nuovo wire incompatibile richiede versione/migrazione. Non reinterpretare record
+  NVS scritti con layout C precedente.
+
+### Zephyr e build
+
+- `DEVICE_DT_GET()` non cerca hardware a runtime: produce un riferimento da Devicetree
+  compilato. Per un Module rimovibile usa il controller esposto dalla Port.
+- Controlla sempre `build/app/zephyr/zephyr.dts` e `.config`; non dedurre il risultato
+  finale guardando un solo overlay o `prj.conf`.
+- `make pristine` è necessario dopo cambi strutturali a DTS, Kconfig, CMake o sysbuild.
+- `make validate` vede le sorgenti del target CMake. Un file non aggiunto a
+  `target_sources` può essere perfetto ma non entra nel firmware.
+- Un header trovato non prova che il relativo `.c` sia linkato. Distingui errore include,
+  compile, link e hardware.
+- Il profilo futuro descrive budget software; Devicetree resta l'autorità sull'hardware.
+  Non dichiarare BLE, PSRAM o una Port perché il SoC teoricamente potrebbe averli.
+
+### Sicurezza, update e segreti
+
+- Wi-Fi, MQTT, OTA, BLE e console hanno credenziali e permessi diversi. Non copiarli
+  dentro Config dei Module.
+- Password, PSK e chiavi non entrano in argv, log, README, fixture o repository.
+- `NORMAL`, `MAINTENANCE`, `TRIAL/CONFIRMED` e `LOW_ENERGY/ONLINE` sono dimensioni
+  indipendenti. Non comprimerle in un solo enum o booleano.
+- Abilitare Wi-Fi non apre automaticamente OTA o console remota.
+- Update scrive soltanto lo slot secondario; una perdita di collegamento non cancella
+  l'immagine confermata.
+- L'attuale device-ID storage provider non è una root of trust contro attacchi fisici.
+  eFuse, Secure Boot, Flash Encryption e debug policy restano qualifica di produzione.
+
+Per gli incidenti già incontrati e le soluzioni adottate consulta
+[`DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md`](DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md).
 
 ## Ordine consigliato per il primo contributo
 

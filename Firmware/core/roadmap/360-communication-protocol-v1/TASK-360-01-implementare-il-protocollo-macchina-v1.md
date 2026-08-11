@@ -23,6 +23,31 @@ enum spaghetti_protocol_operation {
 	SPAGHETTI_PROTOCOL_ACCEPT_DISCOVERY = 6,
 	SPAGHETTI_PROTOCOL_MODULE_COMMAND = 7,
 	SPAGHETTI_PROTOCOL_GET_UPDATE_STATUS = 8,
+	SPAGHETTI_PROTOCOL_GET_CAPABILITIES = 9,
+	SPAGHETTI_PROTOCOL_GET_CONNECTIVITY_STATUS = 10,
+	SPAGHETTI_PROTOCOL_ACQUIRE_CONNECTIVITY_LEASE = 11,
+	SPAGHETTI_PROTOCOL_RELEASE_CONNECTIVITY_LEASE = 12,
+	SPAGHETTI_PROTOCOL_OPEN_NETWORK_MAINTENANCE = 13,
+	SPAGHETTI_PROTOCOL_OPEN_WIFI_UPDATE = 14,
+	SPAGHETTI_PROTOCOL_FACTORY_RESET = 15,
+	SPAGHETTI_PROTOCOL_GET_CONFIG = 16,
+	SPAGHETTI_PROTOCOL_VALIDATE_CONFIG = 17,
+	SPAGHETTI_PROTOCOL_GET_AUDIT_LOG = 18,
+	SPAGHETTI_PROTOCOL_GET_JOB_STATUS = 19,
+};
+
+enum spaghetti_protocol_status {
+	SPAGHETTI_PROTOCOL_STATUS_OK = 0,
+	SPAGHETTI_PROTOCOL_STATUS_INVALID_ARGUMENT = 1,
+	SPAGHETTI_PROTOCOL_STATUS_UNSUPPORTED = 2,
+	SPAGHETTI_PROTOCOL_STATUS_UNAUTHORIZED = 3,
+	SPAGHETTI_PROTOCOL_STATUS_CONFLICT = 4,
+	SPAGHETTI_PROTOCOL_STATUS_BUSY = 5,
+	SPAGHETTI_PROTOCOL_STATUS_UNAVAILABLE = 6,
+	SPAGHETTI_PROTOCOL_STATUS_TIMEOUT = 7,
+	SPAGHETTI_PROTOCOL_STATUS_RESOURCE_EXHAUSTED = 8,
+	SPAGHETTI_PROTOCOL_STATUS_MALFORMED_REQUEST = 9,
+	SPAGHETTI_PROTOCOL_STATUS_INTERNAL_ERROR = 10,
 };
 
 struct spaghetti_protocol_payload {
@@ -40,20 +65,23 @@ struct spaghetti_protocol_request {
 struct spaghetti_protocol_response {
 	uint16_t version;
 	uint32_t correlation_id;
-	int32_t status;
+	enum spaghetti_protocol_status status;
 	struct spaghetti_protocol_payload payload;
 };
 ```
 
 Ogni envelope possiede il payload. `correlation_id` viene copiato esattamente nella
-risposta anche quando l'operazione restituisce errno. L'enum C non viene serializzato:
-il codec usa i numeri espliciti mostrati sopra.
+risposta anche quando l'operazione fallisce. Gli enum C non vengono serializzati: il
+codec usa i numeri espliciti mostrati sopra. Lo status pubblico non è un errno Zephyr:
+aggiungi una funzione centrale che traduce gli errori interni nel dominio V1 e non
+cambiare tale mapping fra board o release. Un errno opzionale può comparire soltanto
+nel payload diagnostico autorizzato, mai come significato principale per Node-RED.
 
 Il CBOR canonico è:
 
 ```cddl
 request  = { 0: 1, 1: uint, 2: uint, 3: bstr }
-response = { 0: 1, 1: uint, 2: int,  3: bstr }
+response = { 0: 1, 1: uint, 2: uint, 3: bstr }
 event    = { 0: 1, 1: uint, 2: uint, 3: bstr }
 ```
 
@@ -64,25 +92,25 @@ correlation zero. Gli output cambiano solo al successo.
 ### 2. Registrare operation handler come plug-in
 
 ```c
-enum spaghetti_permission {
-	SPAGHETTI_PERMISSION_READ = BIT(0),
-	SPAGHETTI_PERMISSION_CONFIGURE = BIT(1),
-	SPAGHETTI_PERMISSION_COMMAND = BIT(2),
-	SPAGHETTI_PERMISSION_DISCOVER = BIT(3),
-	SPAGHETTI_PERMISSION_UPDATE = BIT(4),
-	SPAGHETTI_PERMISSION_PROVISION = BIT(5),
-};
-
 struct spaghetti_request_context {
+	spaghetti_principal_id_t principal_id;
 	uint32_t permissions;
-	bool authenticated;
 	bool local;
 	enum spaghetti_core_mode core_mode;
+};
+
+enum spaghetti_operation_execution {
+	SPAGHETTI_OPERATION_IMMEDIATE_READ,
+	SPAGHETTI_OPERATION_SERIALIZED_MUTATION,
+	SPAGHETTI_OPERATION_ASYNC_JOB,
 };
 
 struct spaghetti_operation_handler {
 	enum spaghetti_protocol_operation operation;
 	uint32_t required_permissions;
+	enum spaghetti_operation_execution execution;
+	const struct spaghetti_schema_descriptor *request_schema;
+	const struct spaghetti_schema_descriptor *response_schema;
 	int (*execute)(const struct spaghetti_request_context *context,
 		       const struct spaghetti_protocol_payload *request,
 		       struct spaghetti_protocol_payload *response);
@@ -92,26 +120,43 @@ struct spaghetti_operation_handler {
 	const STRUCT_SECTION_ITERABLE(spaghetti_operation_handler, name)
 ```
 
-Handler e descriptor hanno lifetime firmware. Context e payload request sono borrowed;
-response è caller-owned e scritto solo al successo. Communication trova l'handler in
-iterable section, verifica permessi prima di chiamarlo e non conosce il trasporto.
+Handler, schema e descriptor hanno lifetime firmware. Context e payload request sono
+borrowed; response è caller-owned e scritto solo al successo. Communication trova
+l'handler in iterable section, verifica il principal e i permessi tramite Access
+Control prima di chiamarlo e non conosce il trasporto. `principal_id` identifica il
+peer autenticato anche dopo un reconnect; l'adapter non può inventare permessi maggiori
+di quelli persistiti per quel principal.
 
-### 3. Implementare gli otto handler bounded
+### 3. Implementare i diciannove handler bounded
 
 Dividi `subsys/communication/operations/` per owner:
 
-- catalog: pagina driver/rule/provider e relativi schemi con cursor+limit;
+- catalog: pagina driver/rule/provider/operation e relativi schemi con cursor+limit,
+  versioni Protocol/Config supportate e fingerprint SHA-256 dell'intero catalogo;
 - status: Core, Port, Module, schedule e service status;
-- apply config: payload è Config CBOR V2 completa;
+- get config: restituisce Config CBOR canonica, generation e hash della fase 330;
+- validate config: esegue validazione completa senza effetti e restituisce il failure
+  path tipizzato quando non è valida;
+- apply config: payload contiene `expected_generation` e Config CBOR V2 completa;
+  restituisce `changed`, nuova generation e hash; `-ESTALE` diventa CONFLICT;
 - list discovery: pagina candidati;
 - scan: Port più policy non invasiva/invasiva;
 - accept: candidate ID, key, generation; costruisce/applica nuova Config completa;
 - module command: stable target key, command ID e property arguments;
 - update status: snapshot read-only.
+- capabilities: profilo, variante, trasporti, OTA path e limiti immutabili;
+- connectivity status: policy, servizi attivi, lease/deadline e ultimo errore;
+- acquire/release lease: servizi richiesti e durata bounded;
+- network maintenance e Wi-Fi update: operazioni distinte, mai implicite;
+- factory reset: scope esplicito e solo con permission PROVISION.
+- audit log: pagina metadata principal/operazione/esito/uptime senza payload o segreti;
+- job status: legge stato/progresso/risultato di un job asincrono tramite job ID.
 
 La paginazione evita risposte oltre 2048 byte. Ogni pagina restituisce `next_cursor` o
-zero. Module command risolve key in ID soltanto durante la chiamata; non espone ID
-effimeri come identità persistente.
+zero. Ogni pagina del catalogo ripete il fingerprint: un host invalida la propria cache
+se cambia dopo OTA. Module command risolve key in ID soltanto durante la chiamata; non
+espone ID effimeri come identità persistente. Il Core non effettua merge della Config:
+il client legge, modifica la copia desiderata e applica con compare-and-swap.
 
 ### 4. Dare a ogni adapter una policy costante
 
@@ -124,19 +169,46 @@ int spaghetti_communication_handle_request(
 	struct spaghetti_protocol_response *response);
 ```
 
-Le policy non arrivano dalla rete. Sono `static const` nell'adapter:
+Le policy massime non arrivano dalla rete. Sono `static const` nell'adapter e vengono
+intersecate con i permessi del principal autenticato:
 
 - USB Shell in Maintenance: tutti i permessi;
 - USB Shell in Normal: read/configure/command/discover/update, provisioning sensibile
   continua a richiedere transizione Maintenance;
 - Remote Console TLS: read/configure/command/discover, mai provision;
-- futuro MQTT: read/configure/command/discover secondo credenziale;
+- futuro MQTT: read/configure/command/discover secondo principal della credenziale;
+- futuro BLE autenticato: permessi associati alla credenziale applicativa del peer;
 - Maintenance UART SMP: update/provision soltanto per i command group dedicati.
 
 Mantieni i comandi Shell umani, ma falli costruire request Protocol V1. La Remote
 Console può mantenere la grammatica testuale per debug, ma usa gli stessi handler.
 
-### 5. Pubblicare eventi macchina
+### 5. Centralizzare replay, concorrenza e operazioni lunghe
+
+Crea in Communication una replay cache bounded da
+`CONFIG_SPAGHETTI_MAX_INFLIGHT_REQUESTS`. La chiave è
+`principal_id + correlation_id`; la entry conserva operation, hash SHA-256 della
+request canonica e response completa. Se arriva la stessa request, restituisci la
+response salvata senza eseguire di nuovo l'handler. Se lo stesso principal riutilizza
+il correlation ID con byte o operation differenti, restituisci CONFLICT. La cache ha
+TTL e sostituzione deterministica; non contiene segreti in chiaro. MQTT, BLE, USB e
+gateway non implementano cache proprie.
+
+Documenta per ogni operation se è read-only, mutazione serializzata o job asincrono.
+Le letture immediate usano snapshot e non bloccano callback di rete. Config, command,
+lease e reset entrano in una sola queue bounded posseduta da Communication e vengono
+eseguiti dal worker, mai nel callback MQTT/BLE. Scan invasiva, Maintenance e Update
+restituiscono un `job_id` e proseguono nel rispettivo owner; `GET_JOB_STATUS` permette
+polling fino a `completed`, `failed`, `cancelled` o `expired`. Pool e queue pieni
+restituiscono RESOURCE_EXHAUSTED, non scartano richieste.
+
+Ogni job conserva principal owner, operation, stato, protocol status, progresso e
+deadline; non conserva un puntatore al payload ricevuto. Un principal diverso può
+leggerlo soltanto con ruolo Administrator. Timeout e cancellazione chiamano l'owner e
+rilasciano lo slot. Aggiungi test con MQTT e BLE simultanei, response persa, retry e
+una scan lenta mentre GET_STATUS continua a rispondere.
+
+### 6. Pubblicare eventi macchina
 
 Aggiungi:
 
@@ -145,6 +217,7 @@ enum spaghetti_protocol_event_type {
 	SPAGHETTI_PROTOCOL_EVENT_RECORD = 1,
 	SPAGHETTI_PROTOCOL_EVENT_STATUS = 2,
 	SPAGHETTI_PROTOCOL_EVENT_DISCOVERY = 3,
+	SPAGHETTI_PROTOCOL_EVENT_CONNECTIVITY = 4,
 };
 
 int spaghetti_protocol_encode_event(
@@ -156,15 +229,19 @@ int spaghetti_protocol_encode_event(
 	size_t *written_size);
 ```
 
-Record, status e candidate hanno codec payload separati e bounded. Il catalogo spiega
+Record, status, connectivity e candidate hanno codec payload separati e bounded. Stato
+include device ID pubblico, boot ID, metriche queue/drop, stack/heap high-water esposte
+senza indirizzi o segreti. Il catalogo spiega
 field ID/schema; gli eventi non ripetono descrittori completi.
 
-### 6. Testare indipendenza dal trasporto
+### 7. Testare indipendenza dal trasporto
 
 Aggiorna `tests/communication` e crea `tests/protocol`. Lo stesso request encoded deve
 produrre byte response identici attraverso fake USB, fake TLS e fake MQTT. Copri
 permission denied, handler duplicato, operation unknown, paginazione, payload massimo,
-malformed CBOR, command stable key e correlation preservation.
+malformed CBOR, command stable key, mapping errori stabile, correlation preservation,
+retry cross-transport, correlation riutilizzata con payload diverso, Config stale,
+Config identica, queue piena e job timeout.
 
 ## Perché è fatto così
 
@@ -175,17 +252,25 @@ auto-assegnarsi permessi.
 
 ## Come si usa
 
-Un client legge il catalogo, costruisce Config/comandi usando nomi e field ID, invia
-CBOR su un adapter e abbina la risposta tramite correlation ID. La Shell resta comoda
-per una persona ma non è più il protocollo dell'app.
+Un client legge catalogo e fingerprint, legge Config e generazione, costruisce la nuova
+Config usando nomi e field ID, la valida, quindi la applica con la generazione letta.
+Invia gli stessi byte CBOR su ogni adapter e abbina la risposta tramite correlation ID.
+In caso di CONFLICT rilegge e rifà il merge; non forza una scrittura cieca. La Shell
+resta comoda per una persona ma non è più il protocollo dell'app.
 
 ## Checklist di completamento
 
 - [ ] Envelope V1 ha encoding canonico e limite 2048 byte.
-- [ ] Otto operation handler sono auto-registrati e paginati.
-- [ ] Permessi dipendono dall'adapter, non dalla richiesta.
+- [ ] Diciannove operation ID e status pubblici sono congelati.
+- [ ] Handler e relativi schema request/response sono auto-registrati e catalogati.
+- [ ] Permessi derivano da principal e limite dell'adapter, non dalla richiesta.
+- [ ] GET/VALIDATE/APPLY Config espongono hash, CAS e conflitti senza scritture cieche.
+- [ ] Replay cache centrale impedisce doppi effetti su ogni trasporto.
+- [ ] Mutazioni e job lunghi non vengono eseguiti nei callback degli adapter.
 - [ ] Shell e Remote Console passano da Communication V1.
 - [ ] Eventi record/status/discovery hanno codec bounded.
+- [ ] Capability, connettività, diagnostica e reset hanno contratti macchina.
+- [ ] Catalog fingerprint e versioni permettono cache host invalidabile dopo OTA.
 - [ ] Tre fake transport producono lo stesso risultato.
 
 ## Verifica e fine task

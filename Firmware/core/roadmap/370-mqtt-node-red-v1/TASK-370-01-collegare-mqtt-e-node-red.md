@@ -20,14 +20,15 @@ struct spaghetti_mqtt_config {
 	bool enabled;
 	char host[SPAGHETTI_MQTT_HOST_SIZE];
 	uint16_t port;
-	char core_id[SPAGHETTI_MQTT_CORE_ID_SIZE];
 	char base_topic[SPAGHETTI_MQTT_BASE_TOPIC_SIZE];
 	enum spaghetti_mqtt_security security;
 	uint16_t credential_id;
 };
 ```
 
-`core_id` è identità pubblica configurata, non password e non puntatore. `credential_id`
+`core_id` non è configurabile qui: MQTT usa la rappresentazione canonica del
+`device_id` immutabile definito nella fase 355. Il nome amichevole resta metadata.
+`credential_id`
 seleziona un record secure storage senza mettere CA/password/private key nella Config.
 Plaintext è compilabile soltanto con
 `CONFIG_SPAGHETTI_MQTT_ALLOW_PLAINTEXT_DEVELOPMENT=y`, default `n` nelle board di
@@ -79,19 +80,30 @@ Apri `subsys/services/mqtt/mqtt.c`. Il worker:
 2. pubblica state/catalog retained dopo ogni reconnect;
 3. trasforma record/discovery in eventi Protocol V1;
 4. riceve request, verifica topic/client ID/dimensione;
-5. costruisce context MQTT autenticato con permessi read/configure/command/discover;
+5. risolve la credenziale MQTT nel principal della fase 355 e costruisce il context
+   usando l'intersezione fra permessi MQTT e permessi del principal;
 6. chiama `spaghetti_communication_handle_request()`;
-7. pubblica sempre una response correlata, anche con errno dominio.
+7. pubblica sempre una response correlata con lo status pubblico V1.
 
-Conserva una cache bounded degli ultimi correlation ID per client. Un duplicato QoS 1
-ripubblica la risposta precedente senza riapplicare Config/comando. Client ID ha limite
-32 e viene validato prima di costruire il topic. Nessun callback MQTT esegue Config o
-Manager: copia la request in una queue e lascia lavorare il thread owner.
+MQTT viene registrato nel Service Manager della fase 294 e avviato soltanto dal
+Connectivity Manager. Prima di aprire TLS acquisisce
+`SPAGHETTI_SECURE_OWNER_MQTT`; stop chiude socket, rilascia workspace e restituisce le
+risorse. Sul profilo Minimal è compilato solo quando la board lo abilita esplicitamente.
+
+Non creare una cache correlation nell'adapter: un duplicato QoS 1 viene riconosciuto
+dalla replay cache centrale della fase 360 usando principal e correlation ID, quindi
+la risposta viene ripubblicata senza riapplicare Config/comando. Client ID ha limite 32
+e viene validato prima di costruire il topic. Nessun callback MQTT esegue Config o
+Manager: copia la request nella queue Communication e lascia lavorare il thread owner.
 
 ### 4. Gestire rete assente e backpressure
 
-Record QoS 0 possono essere scartati con contatore quando offline/coda piena; state e
-response QoS 1 hanno pool separato e priorità. Config/command non vengono mai
+MQTT registra un consumer Record Delivery con ID stabile, lo attiva soltanto mentre il
+servizio è operativo e fa ACK per quel consumer solo dopo consegna accettata. L'ACK non
+sposta BLE.
+Se la coda sovrascrive record vecchi, pubblica il contatore di perdita; non crea una
+seconda history privata. State e response QoS 1 hanno pool separato e priorità.
+Config/command non vengono mai
 silenziosamente scartati. Reconnect usa backoff bounded con jitter. Un certificato
 errato, hostname errato o broker non autenticato lascia MQTT DEGRADED senza fermare
 Runtime/USB.
@@ -105,8 +117,12 @@ Crea `examples/node_red/spaghetti_v1_flow.json` e README. Il flow:
 - mantiene una mappa schema/field ID → nome/unità;
 - mostra due schemi diversi in debug/dashboard;
 - genera correlation ID;
-- invia GET_STATUS, APPLY_CONFIG e MODULE_COMMAND;
-- abbina response e mostra errno leggibile;
+- invia GET_STATUS, GET_CONFIG, VALIDATE_CONFIG, APPLY_CONFIG e MODULE_COMMAND;
+- mantiene un solo Config Coordinator: i nodi Module producono frammenti desiderati,
+  il coordinator legge snapshot/generazione, esegue merge, valida e applica CAS;
+- su CONFLICT rilegge Config e ripete il merge, senza forzare una snapshot vecchia;
+- abbina response e mostra lo status V1 leggibile;
+- memorizza il catalogo usando il fingerprint e lo invalida quando cambia;
 - non contiene broker password, PSK o certificati.
 
 Il flow è esempio/importabile, non owner della logica firmware.
@@ -129,9 +145,11 @@ record vengono interpretati senza cambiare `mqtt.c`.
 - [ ] Topic V1 e QoS sono documentati e stabili.
 - [ ] TLS verifica CA e hostname; mutual TLS è supportato.
 - [ ] Credenziali sono provisionate soltanto localmente.
-- [ ] Request duplicate non ripetono effetti.
-- [ ] Backpressure record non blocca response/state.
-- [ ] Flow Node-RED gestisce catalogo, record, Config e comando.
+- [ ] Credenziali risolvono principal revocabili e request duplicate non ripetono effetti.
+- [ ] MQTT ha un consumer record indipendente da BLE.
+- [ ] Backpressure usa Record Delivery e non blocca response/state.
+- [ ] Lifecycle e TLS workspace rispettano profilo e Connectivity Manager.
+- [ ] Flow Node-RED usa un solo Config Coordinator con GET/validate/CAS apply.
 
 ## Verifica e fine task
 
@@ -145,4 +163,6 @@ make pristine
 
 Con un broker TLS di test, verifica CA/hostname corretti, CA errata, reconnect,
 duplicate request e due record schema differenti. Il risultato atteso è Node-RED
-operativo senza dipendenze INA219 nel servizio MQTT.
+operativo senza dipendenze INA219 nel servizio MQTT. Aggiungi due flow che modificano
+la Config dalla stessa generazione: il secondo deve ricevere CONFLICT, rileggere,
+rifare il merge e non perdere la modifica del primo.

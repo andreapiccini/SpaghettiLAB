@@ -74,6 +74,16 @@ Manager, Runtime and Module drivers contain no board-name branches.
 
 ## Configuration templates
 
+Copy the documentation templates from `templates/firmware/`:
+
+- `board.yml.template` for Zephyr metadata;
+- `board.dts.template` for hardware, chosen nodes and Port topology;
+- `board_defconfig.template` for hardware-required Kconfig defaults.
+
+A Core normally has no board-specific application `.c`. If new hardware needs runtime
+code, first define a generic Port capability or service backend so common code never
+branches on `CONFIG_BOARD_*`.
+
 ### Directory layout
 
 ```text
@@ -128,6 +138,10 @@ CONFIG_CONSOLE=y
 ```
 
 Application features belong in `prj.conf`, not in the board defconfig.
+
+After phase 291 each production board also selects one compile-time resource profile.
+That profile controls software capacities; it does not replace SRAM/flash/radio facts
+in Devicetree and must not advertise unverified SoC features.
 
 ## Ownership and concurrency
 

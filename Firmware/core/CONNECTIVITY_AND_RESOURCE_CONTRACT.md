@@ -3,9 +3,9 @@
 [← Architecture](ARCHITECTURE.md) · [V1 closure plan](roadmap/V1-PLATFORM-CLOSURE.md) ·
 [Update hardware contract](UPDATE_HARDWARE_CONTRACT.md)
 
-This document freezes the target contract for connectivity and memory ownership before
-implementation tasks are created. It does not claim that Bluetooth LE, BLE update,
-resource profiles, or dynamic TLS memory are implemented yet.
+This document freezes the target contract for connectivity and memory ownership. The
+corresponding roadmap tasks now exist; this document does not claim they are implemented
+until their checklists are complete.
 
 The design has four goals:
 
@@ -310,20 +310,21 @@ hardware.
 - Low-energy behavior is verified with current measurements on final hardware; a
   Kconfig name alone is not evidence of low power.
 
-## Implementation sequence to turn into tasks
+## Implementation sequence
 
-No task is created by this document. When the roadmap is extended, preserve this order:
+1. [resource profiles and capability report](roadmap/291-resource-profiles/README.md);
+2. [Connectivity Manager and temporary leases](roadmap/292-connectivity-manager/README.md);
+3. [shared TLS workspace](roadmap/293-secure-workspace/README.md);
+4. [dynamic service lifecycle](roadmap/294-service-lifecycle/README.md);
+5. [low-energy policy](roadmap/295-low-energy-power/README.md);
+6. [common Communication Protocol V1](roadmap/360-communication-protocol-v1/README.md);
+7. [authenticated BLE transport](roadmap/365-ble-protocol/README.md);
+8. [BLE update](roadmap/366-ble-ota/README.md);
+9. [BLE-to-Wi-Fi handover](roadmap/367-ble-wifi-handover/README.md);
+10. [Node-RED BLE gateway](roadmap/375-node-red-ble-gateway/README.md).
 
-1. resource profiles, feature gates, capability report, and per-board RAM budgets;
-2. Connectivity Manager with persisted `LOW_ENERGY`/`ONLINE` and temporary leases;
-3. removal of the dedicated mbedTLS arena and secure-workspace admission control;
-4. dynamic lifecycle for Wi-Fi, MQTT, OTA, and optional service stacks;
-5. common Communication Protocol V1;
-6. authenticated BLE transport and Node-RED/gateway adapter;
-7. BLE update using the existing Update coordinator;
-8. Wi-Fi activation/update handover requested over BLE;
-9. coexistence, allocation-failure, power, interrupted-update, and rollback tests;
-10. optional IEEE 802.15.4/Matter/Zigbee evaluation after V1 requirements are met.
+Coexistence, allocation failure, interrupted update and rollback are final V1 gates.
+Optional IEEE 802.15.4, Matter and Zigbee remain outside V1.
 
 Physical Discovery methods remain deliberately deferred until real module hardware
 provides verifiable EEPROM, register, analog, 1-Wire, or presence contracts.

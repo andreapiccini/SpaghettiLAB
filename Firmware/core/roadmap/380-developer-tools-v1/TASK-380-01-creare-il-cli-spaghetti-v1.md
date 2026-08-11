@@ -20,17 +20,24 @@ CLI:
 ```text
 spaghetti catalog
 spaghetti status
+spaghetti capabilities
+spaghetti connectivity status
+spaghetti connectivity lease --services wifi --duration 120s
+spaghetti connectivity release
+spaghetti config get [--output <config.json>]
 spaghetti config validate <config.json>
-spaghetti config apply <config.json>
+spaghetti config apply <config.json> [--expected-generation <n>]
 spaghetti discovery scan --port <id> [--allow-state-changing]
 spaghetti discovery list
 spaghetti discovery accept <candidate> --key <key>
 spaghetti module command <key> <command> [field=value ...]
 spaghetti update uart <signed.bin>
 spaghetti update wifi <host> <signed.bin>
+spaghetti update ble <device-id> <signed.bin>
+spaghetti factory-reset --scope <config|network|credentials|bonds|all>
 ```
 
-Ogni comando accetta `--transport serial|network|mqtt`, `--credentials` dove serve e
+Ogni comando accetta `--transport serial|network|mqtt|ble`, `--credentials` dove serve e
 un timeout finito. Default `auto` è ammesso solo quando esiste una scelta univoca.
 
 ### 2. Usare il catalogo per trasformare JSON in field ID
@@ -58,15 +65,27 @@ Il file utente contiene nomi leggibili:
 }
 ```
 
-Il CLI legge catalogo dal Core, risolve nome → field ID/type/range, produce Config CBOR
-V2 e può salvarla con `--output`. Non possiede una tabella INA219. Se il Core non
-conosce tipo/campo, termina prima di inviare. `validate` non cambia dispositivo.
+Il CLI legge catalogo dal Core, verifica il fingerprint, risolve nome → field
+ID/type/range, produce Config CBOR V2 e può salvarla con `--output`. Non possiede una
+tabella INA219. Se il Core non conosce tipo/campo, termina prima di inviare. `validate`
+chiama VALIDATE_CONFIG sul Core e non cambia dispositivo.
+
+`config get` salva Config, generation e hash. `config apply` usa per default la
+generation appena letta; con un file ottenuto in precedenza richiede la generation
+associata. Su CONFLICT non forza l'apply: mostra che la Config è cambiata e chiede di
+rileggere/mergiare. Un apply identico mostra `changed=false`.
+
+Il JSON segue la regola della fase 310: INT64/UINT64 fuori dal range JavaScript sicuro
+sono stringhe decimali e il catalogo conserva il tipo. Il CLI Python non deve
+normalizzarle in float o produrre un JSON incompatibile con l'SDK della fase 378.
 
 ### 3. Uniformare request, response ed errori
 
 `spaghetti_protocol.py` implementa envelope V1, correlation monotonic random-start,
-paginazione catalog/status/discovery e mapping errno → testo. Ogni transport invia gli
-stessi byte. Il CLI stampa tabelle Rich ma `--json` produce output macchina stabile e
+paginazione catalog/status/discovery, invalidazione cache tramite fingerprint e mapping
+status V1 → testo/exit code. Non espone errno Zephyr come API. Ogni transport invia gli
+stessi byte. Retry conserva correlation e request identiche, così il Core riconosce la
+duplicazione. Il CLI stampa tabelle Rich ma `--json` produce output macchina stabile e
 `--quiet` restituisce soltanto exit status.
 
 Credenziali e password non compaiono in argv quando possono essere lette da prompt/file
@@ -75,7 +94,7 @@ Credenziali e password non compaiono in argv quando possono essere lette da prom
 ### 4. Completare i client update già previsti dal firmware
 
 UART usa framing SMP Zephyr e gruppo Spaghetti 64 sui pin/USB disponibili; Wi-Fi usa
-DTLS-PSK UDP 1337. Entrambi:
+DTLS-PSK UDP 1337; BLE usa service/framing della fase 365. Tutti:
 
 1. verificano localmente `imgtool verify`/header/versione;
 2. leggono status/offset;
@@ -106,10 +125,12 @@ non confonderlo con simboli Kconfig.
 
 ### 6. Testare senza dispositivi
 
-Usa fake transport in-memory con risposte catalog paginato, status, candidate e update
+Usa i golden vector CBOR della fase 378 e un fake transport in-memory con risposte
+catalog paginato, status, candidate e update
 offset. Copri JSON errato, campo sconosciuto, range, timeout, correlation sbagliata,
-response duplicata, disconnect a varie percentuali, resume mismatch, file credential
-con permessi insicuri e output `--json` stabile.
+response duplicata, INT64/UINT64 oltre il safe range, fingerprint cambiato, Config
+conflict/no-op, disconnect a varie percentuali, resume mismatch, file credential con
+permessi insicuri e output `--json` stabile.
 
 ## Perché è fatto così
 
@@ -130,11 +151,14 @@ Dopo questa fase lo stesso JSON può essere generato o inviato dal flow Node-RED
 ## Checklist di completamento
 
 - [ ] CLI usa catalogo, non tabelle driver locali.
-- [ ] JSON viene validato prima dell'invio.
-- [ ] Serial, TLS e MQTT trasportano lo stesso envelope.
-- [ ] UART/DTLS update mostrano progress e verificano trial.
+- [ ] JSON viene validato sul Core prima dell'apply e conserva gli interi a 64 bit.
+- [ ] Config get/apply usa generation/hash e non forza i conflict.
+- [ ] Serial, TLS, MQTT e BLE trasportano lo stesso envelope.
+- [ ] UART/DTLS/BLE update mostrano progress e verificano trial.
+- [ ] CLI espone capability, lease e reset con conferma esplicita.
 - [ ] Nessun segreto entra in argv/log/repository.
 - [ ] Fake coprono errori, reconnect e resume.
+- [ ] Python supera gli stessi golden vector CBOR dell'SDK JavaScript.
 
 ## Verifica e fine task
 

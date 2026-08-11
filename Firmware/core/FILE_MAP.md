@@ -29,7 +29,8 @@ Read these in order:
 
 If the work adds a new removable Module or a new Core/board variant, begin with
 [`EXTENDING_SPAGHETTI_LAB.md`](EXTENDING_SPAGHETTI_LAB.md). It provides the complete
-integration order; return here only to select the detailed component references.
+Module/Core/Config integration order, current-V0 limitations and firmware-specific
+caveats; return here only to select the detailed component references.
 
 ```mermaid
 flowchart TD
@@ -67,8 +68,8 @@ flowchart TD
 | File | Contains | Read before / modify when |
 |---|---|---|
 | `README.md` | Supported hosts, Docker workflow, build/flash commands, navigation, licensing summary | First checkout; environment, build, flash, or documentation navigation changes |
-| `EXTENDING_SPAGHETTI_LAB.md` | End-to-end Italian guide for adding Module drivers and Core/board variants | First file to open when extending supported hardware |
-| `roadmap/V1-PLATFORM-CLOSURE.md` | Ordered plan for generic Port, schema, driver, Config, Runtime, Discovery, protocol and Node-RED contracts | Before implementing phases 300–390 or freezing Protocol V1 |
+| `EXTENDING_SPAGHETTI_LAB.md` | End-to-end Italian guide for Module, Core, Config, Zephyr integration and caveats | First file to open when extending hardware or runtime configuration |
+| `roadmap/V1-PLATFORM-CLOSURE.md` | Ordered plan for resources, generic Port/schema/Config/Runtime, BLE, protocol and Node-RED | Before implementing phases 291–390 or freezing Protocol V1 |
 | `tools/device.py` | Cross-platform port discovery, flashing, and shared Rich monitor over serial or authenticated TLS-PSK | Changing flash, screen, monitor transport, or host credential handling |
 | `ARCHITECTURE.md` | Generic ownership, boundaries, static/runtime split, data/control flow | Any new component, dependency, shared state, protocol adapter, or lifecycle change |
 | `UPDATE_HARDWARE_CONTRACT.md` | Board-independent Maintenance Link, boot-entry policy, and Core V1 mapping | Implementing provisioning, pinmux switching, MCUboot, OTA, recovery, or a new Core backend |
@@ -193,6 +194,11 @@ you which templates to copy and in which order.
 | `CMakeLists.txt.template` | Add component-owned sources |
 | `Kconfig.template` | Add bounded build/resource/log choices |
 | `test_component.c.template` | Start success/invalid/output-preservation ztests |
+| `module_driver.h.template` | Declare current per-instance Module config and descriptor |
+| `module_driver.c.template` | Implement current driver lifecycle with typed slab |
+| `board.yml.template` | Register a Core variant with Zephyr |
+| `board.dts.template` | Describe Core hardware, controller and Port topology |
+| `board_defconfig.template` | Select only board-required hardware features |
 
 Templates are starting points, not build inputs. Copy only the template required
 by the current task, replace every placeholder, and delete unused behavior.

@@ -11,8 +11,8 @@ volta, completa la relativa checklist e aggiorna lo stato.
 > La prossima estensione low-energy è stata formalizzata nel
 > [contratto connettività e risorse](../CONNECTIVITY_AND_RESOURCE_CONTRACT.md): BLE come
 > trasporto normale quando richiesto, Wi-Fi on-demand, profili RAM per Core e rimozione
-> dell'arena mbedTLS sempre residente. Il contratto non ha ancora creato o rinumerato
-> alcun task della roadmap.
+> dell'arena mbedTLS sempre residente. Le fasi 291–295 e 365–375 ne implementano il
+> lifecycle senza cambiare il modello Port → Module → Runtime.
 
 ## Legenda degli stati
 
@@ -112,15 +112,27 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [270 — OTA Wi-Fi](270-wifi-ota/README.md) | Un peer autenticato carica una signed image durante una finestra esplicita. |
 | ✅ | [280 — Console remota](280-remote-console/README.md) | `make monitor` usa USB o un canale di rete autenticato. |
 | 🟨 | [290 — Qualificazione update](290-update-qualification/README.md) | Tool e matrice sono pronti; le prove fisiche devono ancora produrre evidenze. |
+| ⬜ | [291 — Profili risorse](291-resource-profiles/README.md) | Ogni Core compila limiti e capability coerenti con il proprio budget. |
+| ⬜ | [292 — Connectivity Manager](292-connectivity-manager/README.md) | LOW_ENERGY, ONLINE e lease temporanee hanno un solo owner. |
+| ⬜ | [293 — Workspace TLS](293-secure-workspace/README.md) | TLS/DTLS usa memoria condivisa bounded invece dell'arena privata da 60 KiB. |
+| ⬜ | [294 — Lifecycle servizi](294-service-lifecycle/README.md) | I servizi inattivi rilasciano thread, socket, callback e risorse opzionali. |
+| ⬜ | [295 — Low-energy power](295-low-energy-power/README.md) | Radio e PM seguono una policy verificabile senza fermare Runtime. |
 | ⬜ | [300 — Port e trasporti V1](300-port-transport-v1/README.md) | Port espone bus differenti e serializza controller condivisi senza hardware inventato. |
 | ⬜ | [310 — Schemi e valori V1](310-schema-values-v1/README.md) | Config, record e comandi usano proprietà tipizzate e descrittori enumerabili. |
 | ⬜ | [320 — Module Driver V2](320-module-driver-v2/README.md) | Un driver porta schema e operazioni e si registra senza tabelle centrali. |
 | ⬜ | [330 — Config e wire V2](330-config-wire-v2/README.md) | Config e Storage usano CBOR canonico generico e versionato. |
 | ⬜ | [340 — Data, Runtime e regole V2](340-data-runtime-rules-v2/README.md) | Record, schedule e rule plug-in non dipendono da INA219 o Relay. |
+| ⬜ | [345 — Consegna record](345-record-delivery/README.md) | Boot ID, coda RAM e drop rendono esplicite disconnessioni e reboot. |
 | ⬜ | [350 — Discovery multi-provider V1](350-discovery-providers-v1/README.md) | Manuale, EEPROM, probe, analogico e 1-Wire convivono come strategie opzionali. |
+| ⬜ | [355 — Identità e reset](355-identity-security-lifecycle/README.md) | Identità, credenziali, revoca e factory reset hanno ownership e scope definiti. |
 | ⬜ | [360 — Communication Protocol V1](360-communication-protocol-v1/README.md) | Un envelope CBOR comune espone catalogo, stato, Config, Discovery e comandi. |
+| ⬜ | [365 — Protocollo BLE](365-ble-protocol/README.md) | BLE trasporta envelope V1 autenticati con framing bounded. |
+| ⬜ | [366 — OTA BLE](366-ble-ota/README.md) | BLE alimenta Update Coordinator senza duplicare flash o rollback. |
+| ⬜ | [367 — Handover BLE/Wi-Fi](367-ble-wifi-handover/README.md) | Un peer BLE apre lease, manutenzione o OTA Wi-Fi separatamente. |
 | ⬜ | [370 — MQTT per Node-RED V1](370-mqtt-node-red-v1/README.md) | Node-RED riceve record e invia richieste con risposta correlata. |
+| ⬜ | [375 — Gateway BLE Node-RED](375-node-red-ble-gateway/README.md) | Node-RED usa BLE direttamente o tramite gateway senza MQTT sul Core. |
 | ⬜ | [380 — Tool sviluppatore V1](380-developer-tools-v1/README.md) | Un CLI JSON nasconde CBOR, trasporti e aggiornamenti. |
+| ⬜ | [385 — Manuale developer](385-developer-handbook/README.md) | Guide e template V1 coprono Module, Core, rule, provider e transport. |
 | ⬜ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti congelati, estensioni fake provate e gate Node-RED superato. |
 
 ## Da dove iniziare
@@ -129,9 +141,9 @@ La fase 290 e le prove fisiche della fase 210 restano aperte finché è disponib
 l'hardware adatto; non devono essere dichiarate superate con fake. Per continuare ora
 senza Module esterni, segui il
 [piano di chiusura della piattaforma V1](V1-PLATFORM-CLOSURE.md) e apri
-[TASK-300-01 — Generalizzare Port, endpoint e trasporti](300-port-transport-v1/TASK-300-01-generalizzare-port-endpoint-e-trasporti.md).
+[TASK-291-01 — Introdurre profili di risorse e capability](291-resource-profiles/TASK-291-01-introdurre-profili-risorse-e-capability.md).
 
 La fase 390 riesegue la pulizia software 210 sul modello definitivo e registra
 separatamente ogni gate fisico rinviato. La fase 290 rimane obbligatoria prima della
-release hardware 1.0, ma può procedere in parallelo ai contratti 300–390 verificati con
+release hardware 1.0, ma può procedere in parallelo ai contratti 291–390 verificati con
 fake e `native_sim`.

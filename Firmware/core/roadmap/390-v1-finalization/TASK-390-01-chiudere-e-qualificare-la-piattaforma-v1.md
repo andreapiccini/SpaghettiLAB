@@ -48,14 +48,18 @@ ma la release hardware 1.0 no.
 
 ### 3. Congelare il contratto V1
 
-Aggiorna `ARCHITECTURE.md`, `EXTENDING_SPAGHETTI_LAB.md`, README componenti e crea
+Verifica che manuale e template della fase 385 siano coerenti, quindi crea
 `PROTOCOL_V1.md`. Documenta:
 
 - numeric operation/event IDs;
 - CBOR envelope e Config wire version;
 - topic MQTT;
+- UUID, framing, autenticazione e limiti BLE;
 - schema/field/command ID rules;
+- semantica device ID, boot ID, timestamp e sequence;
+- profili risorse, capability e stati connettività;
 - permission matrix;
+- scope di reset e lifecycle credenziali;
 - error mapping;
 - backward compatibility e deprecation;
 - procedura per Module, rule, provider, Core e transport nuovi.
@@ -65,22 +69,27 @@ version. Non riutilizzare ID eliminati con un altro significato.
 
 ### 4. Misurare risorse e applicare limiti
 
-Salva in `verification/v1/RESOURCE_BUDGET.md` per entrambe le board:
+Salva in `verification/v1/RESOURCE_BUDGET.md` per ogni profilo e board:
 
 - flash app/MCUboot e spazio libero slot;
-- RAM statica, heap TLS Zephyr e stack per thread;
+- RAM statica, allocator TLS condiviso, stack per thread e pool dei servizi;
 - dimensione record/property/envelope;
 - capacità queue/slab/cataloghi;
 - massimo Module/schedule/rule/provider/client;
 - tempo peggiore fake per apply, rollback e scan timeout.
+
+Misura boot LOW_ENERGY, BLE advertising, BLE connesso, BLE più Wi-Fi/MQTT, MQTT TLS,
+OTA Wi-Fi, OTA BLE, stop completo dei servizi e allocazione TLS fallita. Sul profilo
+Minimal verifica una sola sessione sicura pesante e assenza della Remote Console di
+produzione. Ripeti 100 cicli start/stop e connect/disconnect.
 
 Fallisci build con `BUILD_ASSERT` quando una relazione statica è invalida. Non ridurre
 limiti silenziosamente in runtime.
 
 ### 5. Superare il gate Node-RED senza Module fisici
 
-Avvia broker TLS di test e importa `examples/node_red/spaghetti_v1_flow.json`. Con
-native/fake o board corrente:
+Esegui due volte lo stesso scenario: con broker TLS/MQTT e con BLE→gateway WebSocket
+della fase 375. Con native/fake o board corrente:
 
 1. Node-RED legge catalogo paginato;
 2. applica Config con due fake Module sulla stessa Port;
@@ -90,7 +99,10 @@ native/fake o board corrente:
 6. accetta soltanto quello autorevole;
 7. riavvia e ritrova Config da Storage;
 8. broker offline non ferma Runtime;
-9. un nuovo fake schema aggiunto dopo il freeze compare senza patch centrali.
+9. BLE/Wi-Fi disconnessi non fermano Runtime e i drop sono visibili;
+10. un nuovo fake schema aggiunto dopo il freeze compare senza patch centrali;
+11. Node-RED legge capability e rifiuta una funzione non compilata;
+12. reboot cambia boot ID ma conserva Config e identità dispositivo.
 
 Registra risultati in `verification/v1/PLATFORM_REPORT.md` con commit, Zephyr, board e
 comandi, senza segreti.
@@ -119,9 +131,11 @@ Nuovi Core aggiungono board/binding/backend Port senza branch applicativi.
 
 - [ ] Sei plug-in fake attraversano il sistema senza patch centrali.
 - [ ] Pulizia software 210 è conclusa e ogni caso hardware rinviato è tracciato.
-- [ ] Protocol, Config wire, schema ID e MQTT topic V1 sono congelati.
-- [ ] Resource budget delle due board è registrato.
-- [ ] Gate Node-RED passa con broker TLS e reboot Storage.
+- [ ] Protocol, Config wire, schema ID, MQTT topic e BLE UUID/framing sono congelati.
+- [ ] Resource budget di ogni profilo/board è registrato nei carichi peggiori.
+- [ ] Gate Node-RED passa sia con MQTT TLS sia con BLE/gateway.
+- [ ] Lifecycle, workspace TLS, lease, reset e record drop superano i failure test.
+- [ ] Manuale e template della fase 385 superano una prova clean-room.
 - [ ] Limiti hardware/produzione restano esplicitamente aperti.
 
 ## Verifica e fine task
@@ -135,7 +149,10 @@ docker compose run --rm --entrypoint sh dev -lc \
 make pristine
 BOARD=spaghettilab_core_v2_build_only/esp32c3 make build
 .venv/bin/python -m unittest discover -s tools/tests -v
+make node-red-mqtt-smoke
+make node-red-ble-smoke
 ```
 
-Il task termina quando il report V1 contiene zero failure, il flow Node-RED completa i
-nove passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema centrale.
+Il task termina quando il report V1 contiene zero failure, entrambi i percorsi Node-RED
+completano i dodici passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema
+centrale.

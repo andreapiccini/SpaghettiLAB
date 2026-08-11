@@ -12,8 +12,14 @@ bordi senza modificare ogni sottosistema centrale.
 
 ## Risultato finale
 
-Al termine delle fasi 300–390:
+Al termine delle fasi 291–390:
 
+- ogni variante Core seleziona un profilo risorse e comunica capability/limiti reali;
+- Connectivity Manager governa LOW_ENERGY, ONLINE e lease temporanee;
+- TLS/DTLS usa un workspace condiviso e i servizi opzionali rilasciano le proprie
+  risorse quando vengono arrestati;
+- BLE è il trasporto low-energy autenticato del protocollo comune e può ricevere OTA o
+  richiedere un handover Wi-Fi bounded;
 - una Port può esporre I2C, SPI, UART, GPIO, ADC o 1-Wire tramite un contratto
   indipendente dalla board;
 - controller condivisi e transazioni sono serializzati dal proprietario corretto;
@@ -28,9 +34,9 @@ Al termine delle fasi 300–390:
 - nessuna EEPROM è obbligatoria: EEPROM, registri I2C, analogico e 1-Wire sono metodi
   opzionali con diversa affidabilità;
 - Communication espone un protocollo CBOR V1 versionato e trasportabile su USB,
-  console autenticata o MQTT;
-- MQTT permette a Node-RED di ricevere record, inviare Config/comandi e correlare le
-  risposte;
+  console autenticata, BLE o MQTT;
+- MQTT oppure BLE/gateway permettono a Node-RED di ricevere record, inviare
+  Config/comandi e correlare le risposte;
 - un tool host trasforma JSON leggibile in CBOR, interroga il catalogo e gestisce
   configurazione, discovery e update;
 - il percorso completo è provato con fake e `native_sim`, anche senza Module fisici.
@@ -57,28 +63,51 @@ Al termine delle fasi 300–390:
    centrali.
 8. **Node-RED esegue le automazioni di prodotto.** Il Runtime V2 conserva scheduling
    locale e regole plug-in essenziali, ma non tenta di diventare un secondo Node-RED.
+9. **Connettività e update sono lifecycle, non effetti collaterali.** Accendere Wi-Fi
+   non apre OTA; una lease scade; un solo trasporto possiede Update.
+10. **Tempo e perdita sono espliciti.** Record porta boot ID e uptime; una coda RAM
+    bounded espone i drop e non promette storico flash.
 
 ## Ordine e dipendenze
 
 ```mermaid
 flowchart TD
+    P291["291 · Profili risorse"] --> P292["292 · Connectivity Manager"]
+    P291 --> P293["293 · Workspace TLS"]
+    P291 --> P355["355 · Identità e reset"]
+    P292 --> P294["294 · Lifecycle servizi"]
+    P293 --> P294
+    P294 --> P295["295 · Low energy"]
     P300["300 · Port e trasporti"] --> P320["320 · Module Driver V2"]
     P310["310 · Schemi e valori"] --> P320
     P320 --> P330["330 · Config e wire V2"]
+    P292 --> P330
     P330 --> P340["340 · Data, Runtime e regole V2"]
+    P340 --> P345["345 · Consegna record"]
     P300 --> P350["350 · Discovery multi-provider"]
     P310 --> P350
     P330 --> P350
-    P340 --> P360["360 · Communication Protocol V1"]
+    P345 --> P360["360 · Communication Protocol V1"]
     P350 --> P360
+    P355 --> P360
+    P295 --> P365
+    P360 --> P365["365 · BLE"]
+    P365 --> P366["366 · OTA BLE"]
+    P365 --> P367["367 · Handover Wi-Fi"]
     P360 --> P370["370 · MQTT per Node-RED"]
+    P365 --> P375["375 · Gateway Node-RED"]
     P360 --> P380["380 · Tool sviluppatore"]
+    P366 --> P380
+    P367 --> P380
+    P375 --> P385["385 · Manuale developer"]
+    P370 --> P385
     P370 --> P390["390 · Chiusura V1"]
     P380 --> P390
+    P385 --> P390
 ```
 
-Le fasi 300 e 310 possono essere sviluppate separatamente. Dalla 320 in avanti segui
-l'ordine numerico.
+La qualifica fisica 290 può procedere in parallelo. Segui l'ordine numerico da 291;
+le fasi 300 e 310 possono essere sviluppate separatamente prima di convergere nella 320.
 
 ## Cosa non viene inventato ora
 
@@ -87,15 +116,16 @@ l'ordine numerico.
 - Soglie analogiche associate a futuri Module.
 - Registri di identificazione non documentati dai datasheet.
 - Root key/eFuse e provisioning irreversibile di produzione.
-- UUID GATT, MTU, frammentazione e limiti BLE prima delle misure su ESP32-C3.
+- Valori prestazionali definitivi di MTU, throughput, intervalli e numero peer prima
+  delle misure su ESP32-C3.
 - Uno stack Matter/Zigbee soltanto perché una futura variante può avere la radio.
 
 Le API, i provider e i fake vengono predisposti ora. Il backend reale viene aggiunto
 quando schema e Module fisici forniscono dati verificabili.
 
-Il comportamento BLE-first, Wi-Fi on-demand e i profili RAM sono già congelati nel
-[contratto connettività e risorse](../CONNECTIVITY_AND_RESOURCE_CONTRACT.md), ma i task
-relativi verranno aggiunti alla roadmap soltanto dopo la revisione di quel contratto.
+Il comportamento BLE-first, Wi-Fi on-demand e i profili RAM è congelato nel
+[contratto connettività e risorse](../CONNECTIVITY_AND_RESOURCE_CONTRACT.md) e viene
+implementato dalle fasi 291–295 e 365–375.
 
 ## Gate per passare a Node-RED
 
@@ -103,12 +133,16 @@ Puoi spostare il lavoro principale su Node-RED quando:
 
 1. un fake Module definito fuori dai sottosistemi centrali compare nel catalogo;
 2. un JSON host crea due Module sulla stessa Port e sopravvive al reboot;
-3. due schemi dati differenti raggiungono MQTT senza modificare MQTT;
+3. due schemi dati differenti raggiungono MQTT e BLE/gateway senza modificare gli
+   adapter;
 4. Node-RED invia un comando generico e riceve una risposta con lo stesso correlation ID;
 5. un provider fake produce candidati, mentre un Module manuale continua a funzionare;
 6. un tipo/provider/regola nuovi non richiedono modifiche a Registry, Config, Data,
    Runtime, Communication o MQTT centrali;
-7. validator, Twister completo e build sysbuild delle due board passano.
+7. capability e profilo impediscono Config/immagini incompatibili;
+8. LOW_ENERGY, lease Wi-Fi, OTA BLE/Wi-Fi e ritorno alla policy superano timeout/errori;
+9. boot ID e contatori drop rendono visibile ogni discontinuità dati;
+10. validator, Twister completo e build sysbuild di ogni profilo/board passano.
 
 La qualificazione fisica della fase 290 resta necessaria prima di dichiarare una
 release hardware di produzione, ma non blocca lo sviluppo del contratto Node-RED con

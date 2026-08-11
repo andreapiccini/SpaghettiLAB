@@ -302,7 +302,7 @@ you need its detailed contract.
 
 | Guide | Use it for |
 |---|---|
-| [Extension guide](EXTENDING_SPAGHETTI_LAB.md) | Start-to-finish path for adding a Module driver or a Core/board variant |
+| [Extension guide](EXTENDING_SPAGHETTI_LAB.md) | How-to per Module, Core e Config, template Zephyr e caveat specifici del firmware |
 | [V1 platform closure](roadmap/V1-PLATFORM-CLOSURE.md) | Planned generic contracts and tasks required before the main Node-RED work |
 | [Firmware architecture](ARCHITECTURE.md) | Generic model, ownership, data flow, and practical examples |
 | [Connectivity and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) | Frozen BLE-first, on-demand Wi-Fi, resource-profile, update, and TLS-memory decisions |

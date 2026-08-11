@@ -5,6 +5,13 @@
 
 Each child directory implements one external module type through the common module-driver contract. The code executes on the Core; the external module is a peripheral, not another Zephyr application.
 
+> [!IMPORTANT]
+> This README describes the implemented V0 API. Registry is still a central table,
+> Config CBOR accepts only INA219, and Port does not yet serialize direct I2C calls from
+> independent driver threads. Tasks 300–340 replace these limits. Follow the
+> [extension guide](../EXTENDING_SPAGHETTI_LAB.md#stato-reale-dellestensibilità)
+> before adding a production driver.
+
 ## What this component owns
 
 - The peripheral protocol for one module type.
@@ -159,6 +166,13 @@ driver directly.
 
 ## Configuration templates
 
+Start from
+[`templates/firmware/module_driver.h.template`](../templates/firmware/module_driver.h.template)
+and
+[`module_driver.c.template`](../templates/firmware/module_driver.c.template). They are
+specific to a removable Module; the generic component templates model a singleton
+subsystem and must not hold per-instance Module state.
+
 ### Descriptor template
 
 ```c
@@ -213,8 +227,10 @@ CONFIG_LOG=y
 ## Ownership and concurrency
 
 Drivers do not create a thread by default. Module Manager owns lifecycle serialization;
-Port owns shared-bus serialization across every Module that references it. An ISR may
-only capture/signal and must defer blocking protocol work.
+an ISR may only capture/signal and must defer blocking protocol work. In the current V0
+implementation direct I2C calls are not yet locked by Port, so do not add concurrent
+driver workers on one controller. Task 300 moves transaction serialization into Port;
+after that change drivers must use the Port transaction API rather than private locks.
 
 ## Contract guarantees
 

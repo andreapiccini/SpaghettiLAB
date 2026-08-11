@@ -18,3 +18,6 @@ record canonico versionato invece di una struct C grezza.
 - [ ] Il codec V2 non contiene confronti con `ina219` o `relay`.
 - [ ] Più schedule e proprietà driver vengono validate tramite schema.
 - [ ] Storage salva byte canonici con lunghezza e CRC.
+- [ ] Snapshot espone generazione/hash e apply compare-and-swap evita conflitti.
+- [ ] Config identica non causa scritture flash né una nuova generazione.
+- [ ] Policy connettività/energia è persistente, mentre lease e deadline non lo sono.

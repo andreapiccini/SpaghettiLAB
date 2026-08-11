@@ -1,9 +1,14 @@
 # Firmware file templates
 
-[← Implementation guide](../../FIRMWARE_IMPLEMENTATION_GUIDE.md)
+[← Implementation guide](../../FIRMWARE_IMPLEMENTATION_GUIDE.md) ·
+[Developer how-to](../../EXTENDING_SPAGHETTI_LAB.md)
 
 These files are starting points, not additional firmware components. Files use
 the neutral name `example`; replace it consistently with the component name.
+
+Choose the correct family: `module_driver.*` is for a removable Module;
+`board.*` is for a Core variant; `component.*` is for a new common subsystem. Do not
+use a generic component singleton as per-instance Module state.
 
 ## Create a component
 
@@ -37,6 +42,15 @@ the neutral name `example`; replace it consistently with the component name.
 | [`CMakeLists.txt.template`](CMakeLists.txt.template) | Component source selection |
 | [`Kconfig.template`](Kconfig.template) | Feature, limits, thread resources, and log level |
 | [`test_component.c.template`](test_component.c.template) | Basic ztest structure |
+| [`module_driver.h.template`](module_driver.h.template) | Current Module config and descriptor declaration |
+| [`module_driver.c.template`](module_driver.c.template) | Current V0 driver callbacks and typed context slab |
+| [`board.yml.template`](board.yml.template) | Zephyr board metadata for a Core variant |
+| [`board.dts.template`](board.dts.template) | Core hardware/Port Devicetree skeleton |
+| [`board_defconfig.template`](board_defconfig.template) | Hardware-only board defaults |
 
 Do not compile the templates directly. They intentionally contain names and
 policy choices that must be adapted to the task.
+
+The Module template intentionally marks the task-300/task-310 migration points. After
+those tasks are complete, phase 385 updates the template to Port transactions, schema
+descriptors and iterable driver registration before the Protocol V1 freeze.
