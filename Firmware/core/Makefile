@@ -32,7 +32,7 @@ WEST_CMAKE_ARGS := -- -DBOARD_ROOT=/opt/zephyrproject/app \
 .PHONY: image shell signing-key validate build pristine flash screen monitor \
 	host-tools ports remote-console-credential remote-console-provision \
 	remote-console-enable remote-console-clear remote-console-list update-qualification-manifest \
-	update-qualification-check resource-report clean
+	update-qualification-check resource-report node-red-ble-smoke clean
 
 $(HOST_TOOLS_STAMP): tools/requirements.txt
 	@$(HOST_PYTHON) -m venv .venv
@@ -40,8 +40,25 @@ $(HOST_TOOLS_STAMP): tools/requirements.txt
 		-r tools/requirements.txt
 	@$(HOST_VENV_PYTHON) -c \
 		"from pathlib import Path; Path('$(HOST_TOOLS_STAMP)').touch()"
+	@# Install loopback CLI name used by docs / TASK-375.
+ifeq ($(OS),Windows_NT)
+	@$(HOST_VENV_PYTHON) -c \
+		"from pathlib import Path; p=Path('.venv/Scripts/spaghetti-gateway.cmd'); \
+		p.write_text('@echo off\r\n\"%~dp0python.exe\" -m tools.spaghetti_gateway %*\r\n', encoding='utf-8')"
+else
+	@printf '%s\n' '#!/bin/sh' \
+		'ROOT="$$(CDPATH= cd -- "$$(dirname "$$0")/../.." && pwd)"' \
+		'export PYTHONPATH="$$ROOT$${PYTHONPATH:+:$$PYTHONPATH}"' \
+		'exec "$$(dirname "$$0")/python" -m tools.spaghetti_gateway "$$@"' \
+		> .venv/bin/spaghetti-gateway
+	@chmod +x .venv/bin/spaghetti-gateway
+endif
 
 host-tools: $(HOST_TOOLS_STAMP)
+
+# Fake BLE → gateway → WebSocket CBOR smoke (no radio, no Node-RED process).
+node-red-ble-smoke: host-tools
+	@PYTHONPATH=. $(HOST_VENV_PYTHON) -m tools.spaghetti_gateway.smoke
 
 image:
 	@$(COMPOSE) build

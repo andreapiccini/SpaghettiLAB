@@ -136,7 +136,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [366 — OTA BLE](366-ble-ota/README.md) | BLE alimenta Update Coordinator senza duplicare flash o rollback. |
 | ✅ | [367 — Handover BLE/Wi-Fi](367-ble-wifi-handover/README.md) | Un peer BLE apre lease, manutenzione o OTA Wi-Fi separatamente. |
 | ✅ | [370 — MQTT per Node-RED V1](370-mqtt-node-red-v1/README.md) | Node-RED riceve record e invia richieste con risposta correlata. |
-| ⬜ | [375 — Gateway BLE Node-RED](375-node-red-ble-gateway/README.md) | Node-RED usa BLE direttamente o tramite gateway senza MQTT sul Core. |
+| ✅ | [375 — Gateway BLE Node-RED](375-node-red-ble-gateway/README.md) | Node-RED usa BLE direttamente o tramite gateway senza MQTT sul Core. |
 | ⬜ | [378 — SDK host e Node-RED](378-host-sdk-node-red/README.md) | TypeScript condivide codec/transport e coordina la Config senza lost update. |
 | ⬜ | [380 — Tool sviluppatore V1](380-developer-tools-v1/README.md) | Un CLI JSON nasconde CBOR, trasporti e aggiornamenti. |
 | ⬜ | [385 — Manuale developer](385-developer-handbook/README.md) | Guide e template V1 coprono Module, Core, rule, provider e transport. |

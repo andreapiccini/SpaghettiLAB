@@ -1,6 +1,6 @@
 # TASK-375-01 — Collegare BLE a Node-RED
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 375 — Gateway BLE per Node-RED
 
 ## Cosa devo fare
@@ -45,13 +45,13 @@ device ID. Il flow non contiene schema INA219: costruisce UI e valori dal catalo
 
 ## Checklist di completamento
 
-- [ ] Gateway usa gli envelope V1 senza seconda API.
-- [ ] Segreti restano fuori da repo e argv.
-- [ ] Reconnect conserva correlation e segnala nuovo boot ID.
-- [ ] Retry riusa lo stesso envelope e dipende dalla replay cache centrale.
-- [ ] Config usa GET/validate/CAS e gestisce CONFLICT senza lost update.
-- [ ] Flow gestisce almeno due schema fake differenti.
-- [ ] MQTT sul Core può restare non compilato.
+- [x] Gateway usa gli envelope V1 senza seconda API.
+- [x] Segreti restano fuori da repo e argv.
+- [x] Reconnect conserva correlation e segnala nuovo boot ID.
+- [x] Retry riusa lo stesso envelope e dipende dalla replay cache centrale.
+- [x] Config usa GET/validate/CAS e gestisce CONFLICT senza lost update.
+- [x] Flow gestisce almeno due schema fake differenti.
+- [x] MQTT sul Core può restare non compilato.
 
 ## Verifica e fine task
 
