@@ -1,6 +1,6 @@
 # UX-S050 — Physical Composition Editor
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S050
 
@@ -40,5 +40,16 @@ dettaglio di `ux/screens/S070-processing-graph-editor/`.
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Physical Composition Editor" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Physical Composition Editor" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S050-physical-composition/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Nodi hardware con anatomia simile a S070 ma tavolozza colori/icone dedicata
+(Backbone/Power/Core/Function Bay/Connector/Dispositivo esterno), lista Module
+espandibile dentro i nodi con form Inspector schema-driven, banner di collisione
+indirizzi esplicito, tray non modale "Candidati rilevati" con diff esplicito e
+Accetta/Rifiuta a pari peso visivo (mai apply automatico), badge Power
+`ENFORCED`/`UNVERIFIED` riusato da `UX-S040`. `backend-behavior.md` cita S050 punto
+per punto (S050 è ancora ⬜ TODO).
