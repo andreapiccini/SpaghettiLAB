@@ -1,7 +1,8 @@
 # Architettura UI/UX SpaghettiLAB React Flow V1
 
 [Architettura funzionale](REACT_FLOW_ARCHITECTURE.md) ·
-[Roadmap e task](roadmap/react-flow-v1/README.md) ·
+[Roadmap backend](roadmap/react-flow-v1/README.md) ·
+[Roadmap UX](roadmap/ux-v1/README.md) ·
 [Schermate](ux/screens/)
 
 ## Scopo
@@ -96,19 +97,22 @@ Layout fisso su tutte le schermate, tre regioni:
 
 ## Elenco schermate (mappate alle fasi backend)
 
-| Schermata | Cartella `ux/screens/` | Fase/i backend | Stato documento |
-|---|---|---|---|
-| Core Connections | `S030-core-connections` | S030 | ⬜ da scrivere |
-| Catalog & Topology Explorer | `S040-catalog-topology` | S041–S043 | ⬜ da scrivere |
-| Physical Composition Editor | `S050-physical-composition` | S050 | ⬜ da scrivere |
-| Device Profile Studio | `S060-device-profile-studio` | S061–S063 | ⬜ da scrivere |
-| Processing Graph Editor | `S070-processing-graph-editor` | S071–S073 | ✅ as-built confermata (prototipo React validato) |
-| Deploy & Diff | `S080-deploy-diff` | S080 | ⬜ da scrivere |
-| Runtime & Diagnostics | `S090-runtime-diagnostics` | S091–S094 | ⬜ da scrivere |
-| Capability Marketplace & OTA | `S100-capability-marketplace` | S101–S103 | ⬜ da scrivere |
-| Cross-Core Automation | `S110-cross-core-automation` | S111–S113 | ⬜ da scrivere |
-| Settings, Security & Recovery | `S120-settings-security` | S121–S124 | ⬜ da scrivere |
-| Project/Workspace Shell | `S010-workspace-shell` | S011–S014 | ⬜ da scrivere |
+| Schermata | Cartella `ux/screens/` | Fase/i backend | Task | Stato documento |
+|---|---|---|---|---|
+| Project/Workspace Shell | `S010-workspace-shell` | S011–S014 | [UX-S010](roadmap/ux-v1/tasks/UX-S010-workspace-shell.md) | ⬜ da scrivere |
+| Core Connections | `S030-core-connections` | S030 | [UX-S030](roadmap/ux-v1/tasks/UX-S030-core-connections.md) | ⬜ da scrivere |
+| Catalog & Topology Explorer | `S040-catalog-topology` | S041–S043 | [UX-S040](roadmap/ux-v1/tasks/UX-S040-catalog-topology.md) | ⬜ da scrivere |
+| Physical Composition Editor | `S050-physical-composition` | S050 | [UX-S050](roadmap/ux-v1/tasks/UX-S050-physical-composition.md) | ⬜ da scrivere |
+| Device Profile Studio | `S060-device-profile-studio` | S061–S063 | [UX-S060](roadmap/ux-v1/tasks/UX-S060-device-profile-studio.md) | ⬜ da scrivere |
+| Processing Graph Editor | `S070-processing-graph-editor` | S071–S073 | — | ✅ as-built confermata (prototipo React validato) |
+| Deploy & Diff | `S080-deploy-diff` | S080 | [UX-S080](roadmap/ux-v1/tasks/UX-S080-deploy-diff.md) | ⬜ da scrivere |
+| Runtime & Diagnostics | `S090-runtime-diagnostics` | S091–S094 | [UX-S090](roadmap/ux-v1/tasks/UX-S090-runtime-diagnostics.md) | ⬜ da scrivere |
+| Capability Marketplace & OTA | `S100-capability-marketplace` | S101–S103 | [UX-S100](roadmap/ux-v1/tasks/UX-S100-capability-marketplace.md) | ⬜ da scrivere |
+| Cross-Core Automation | `S110-cross-core-automation` | S111–S113 | [UX-S110](roadmap/ux-v1/tasks/UX-S110-cross-core-automation.md) | ⬜ da scrivere |
+| Settings, Security & Recovery | `S120-settings-security` | S121–S124 | [UX-S120](roadmap/ux-v1/tasks/UX-S120-settings-security.md) | ⬜ da scrivere |
+
+Il lavoro su ciascuna schermata è tracciato in [`roadmap/ux-v1/`](roadmap/ux-v1/README.md)
+— task indipendenti dalla roadmap backend, possono procedere in parallelo.
 
 **Solo `S070-processing-graph-editor` è scritta per intero, come esempio da validare
 prima di generare le altre dieci.**

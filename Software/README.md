@@ -26,4 +26,6 @@ completa; la UI viene derivata da tali necessità.
   backend) e `backend-behavior.md` (quale comando/operazione SDK parte davvero). La
   separazione permette di modificare una feature senza toccare le altre, e un layer
   senza rischiare gli altri due.
+- [Roadmap UX](roadmap/ux-v1/README.md) — un task per schermata ancora da scrivere,
+  indipendente dalla roadmap backend (nessuna dipendenza dal protocollo firmware).
 
