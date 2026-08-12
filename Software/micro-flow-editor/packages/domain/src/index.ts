@@ -11,4 +11,6 @@ export * from "./project-migrations.js";
 export * from "./commands.js";
 export * from "./connection-profile.js";
 export * from "./permission.js";
+export * from "./project-import-export.js";
+export * from "./audit-guard.js";
 export * from "./ports/index.js";

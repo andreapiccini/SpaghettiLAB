@@ -42,4 +42,6 @@ export const DomainErrorCode = {
   NOTHING_TO_REDO: "domain.command.nothing_to_redo",
   // S121
   PERMISSION_DENIED: "domain.permission.denied",
+  // S123
+  IMPORT_TOO_LARGE: "domain.import.too_large",
 } as const;
