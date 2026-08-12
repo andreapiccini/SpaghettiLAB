@@ -21,7 +21,7 @@
 #include <spaghetti/topology.h>
 
 /** Current in-memory Config schema version. */
-#define SPAGHETTI_CONFIG_VERSION 4U
+#define SPAGHETTI_CONFIG_VERSION 5U
 
 /** Maximum number of desired Modules in one Config snapshot. */
 #define SPAGHETTI_CONFIG_MAX_MODULES CONFIG_SPAGHETTI_MAX_MODULES
@@ -32,11 +32,23 @@
 /** Maximum number of rule instances in one Config snapshot. */
 #define SPAGHETTI_CONFIG_MAX_RULES CONFIG_SPAGHETTI_MAX_RULES
 
-/** Maximum Module or rule type ID bytes, including the terminating NUL. */
+/** Maximum number of processing blocks in one Config snapshot. */
+#define SPAGHETTI_CONFIG_MAX_BLOCKS CONFIG_SPAGHETTI_MAX_PROCESSING_BLOCKS
+
+/** Maximum number of processing edges in one Config snapshot. */
+#define SPAGHETTI_CONFIG_MAX_EDGES CONFIG_SPAGHETTI_MAX_PROCESSING_EDGES
+
+/** Maximum Module, rule, or block type ID bytes, including the terminating NUL. */
 #define SPAGHETTI_CONFIG_TYPE_ID_SIZE 24U
 
 /** SHA-256 digest size for canonical Config revision hashes. */
 #define SPAGHETTI_CONFIG_HASH_SIZE 32U
+
+/** Edge source endpoint kind for @ref spaghetti_edge_config.source_kind. */
+enum spaghetti_edge_source_kind {
+	SPAGHETTI_EDGE_SOURCE_MODULE = 0, /**< Source is a Module record field. */
+	SPAGHETTI_EDGE_SOURCE_BLOCK = 1, /**< Source is a block output port. */
+};
 
 /**
  * @brief Complete owned desired configuration for one Module.
@@ -72,6 +84,30 @@ struct spaghetti_rule_config {
 };
 
 /**
+ * @brief Desired processing-block instance validated against the Block Registry.
+ */
+struct spaghetti_block_config {
+	uint32_t key; /**< Nonzero stable block identity. */
+	char type_id[SPAGHETTI_CONFIG_TYPE_ID_SIZE]; /**< Owned block type ID. */
+	uint16_t min_version; /**< Minimum accepted algorithm_version. */
+	uint16_t exact_version; /**< Exact version, or zero for any >= min. */
+	struct spaghetti_property_set properties; /**< Owned typed block config. */
+};
+
+/**
+ * @brief Desired directed edge in the processing graph.
+ *
+ * UI coordinates and editor metadata are intentionally absent.
+ */
+struct spaghetti_edge_config {
+	uint32_t source_key; /**< Module key or block key. */
+	uint16_t source_port_or_field; /**< Module field_id or block output port. */
+	uint32_t target_key; /**< Target block key. */
+	uint16_t target_input; /**< Target block input port_id. */
+	uint8_t source_kind; /**< @ref spaghetti_edge_source_kind. */
+};
+
+/**
  * @brief Complete bounded desired-state snapshot.
  */
 struct spaghetti_config {
@@ -85,6 +121,12 @@ struct spaghetti_config {
 	size_t rule_count; /**< Used elements in @ref rules. */
 	struct spaghetti_rule_config
 		rules[SPAGHETTI_CONFIG_MAX_RULES]; /**< Owned rule instances. */
+	size_t block_count; /**< Used elements in @ref blocks. */
+	struct spaghetti_block_config
+		blocks[SPAGHETTI_CONFIG_MAX_BLOCKS]; /**< Owned processing blocks. */
+	size_t edge_count; /**< Used elements in @ref edges. */
+	struct spaghetti_edge_config
+		edges[SPAGHETTI_CONFIG_MAX_EDGES]; /**< Owned processing edges. */
 	enum spaghetti_connectivity_policy connectivity_policy; /**< Persistent policy. */
 	struct spaghetti_energy_policy energy_policy; /**< Persistent BLE timing policy. */
 	struct spaghetti_mqtt_config mqtt; /**< Optional copied MQTT endpoint. */
@@ -96,11 +138,12 @@ enum spaghetti_config_failure_field {
 	SPAGHETTI_CONFIG_FAILURE_MODULE, /**< One Module description. */
 	SPAGHETTI_CONFIG_FAILURE_SCHEDULE, /**< One Runtime schedule. */
 	SPAGHETTI_CONFIG_FAILURE_RULE, /**< One rule instance. */
+	SPAGHETTI_CONFIG_FAILURE_BLOCK, /**< One processing block instance. */
+	SPAGHETTI_CONFIG_FAILURE_EDGE, /**< One processing edge. */
 	SPAGHETTI_CONFIG_FAILURE_CONNECTIVITY, /**< Connectivity policy. */
 	SPAGHETTI_CONFIG_FAILURE_ENERGY, /**< Energy policy. */
 	SPAGHETTI_CONFIG_FAILURE_MQTT, /**< MQTT endpoint configuration. */
 };
-
 /** Stable reason associated with one validation failure. */
 enum spaghetti_config_failure_reason {
 	SPAGHETTI_CONFIG_FAILURE_REQUIRED, /**< A mandatory value is absent. */

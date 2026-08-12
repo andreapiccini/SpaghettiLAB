@@ -12,6 +12,7 @@
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
+#include <spaghetti/processing.h>
 #include <spaghetti/rule_driver.h>
 #include <spaghetti/rule_registry.h>
 #include <spaghetti/runtime.h>
@@ -192,6 +193,40 @@ int spaghetti_runtime_configure(
 	if (schedule_count > 0U) {
 		memcpy(fake_runtime_schedules, schedules,
 		       schedule_count * sizeof(schedules[0]));
+	}
+	return 0;
+}
+
+int spaghetti_processing_configure(
+	const struct spaghetti_block_config *blocks,
+	size_t block_count,
+	const struct spaghetti_edge_config *edges,
+	size_t edge_count)
+{
+	if (((blocks == NULL) && (block_count > 0U)) ||
+	    ((edges == NULL) && (edge_count > 0U)) ||
+	    (block_count > SPAGHETTI_CONFIG_MAX_BLOCKS) ||
+	    (edge_count > SPAGHETTI_CONFIG_MAX_EDGES)) {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+int spaghetti_processing_validate_graph(
+	const struct spaghetti_block_config *blocks,
+	size_t block_count,
+	const struct spaghetti_edge_config *edges,
+	size_t edge_count,
+	const struct spaghetti_module_config *modules,
+	size_t module_count)
+{
+	ARG_UNUSED(modules);
+	ARG_UNUSED(module_count);
+	if (((blocks == NULL) && (block_count > 0U)) ||
+	    ((edges == NULL) && (edge_count > 0U)) ||
+	    (block_count > SPAGHETTI_CONFIG_MAX_BLOCKS) ||
+	    (edge_count > SPAGHETTI_CONFIG_MAX_EDGES)) {
+		return -EINVAL;
 	}
 	return 0;
 }

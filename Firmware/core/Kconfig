@@ -54,6 +54,14 @@ module = SPAGHETTI_RULE_REGISTRY
 module-str = spaghetti_rule_registry
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_BLOCK_REGISTRY
+module-str = spaghetti_block_registry
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_PROCESSING
+module-str = spaghetti_processing
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_STORAGE
 module-str = spaghetti_storage
 source "subsys/logging/Kconfig.template.log_config"

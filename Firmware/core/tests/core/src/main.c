@@ -286,6 +286,16 @@ int spaghetti_rule_registry_init(void)
 	return 0;
 }
 
+int spaghetti_block_registry_init(void)
+{
+	return 0;
+}
+
+int spaghetti_processing_init(void)
+{
+	return 0;
+}
+
 int spaghetti_module_manager_configure(
 	const struct spaghetti_module_request *request,
 	spaghetti_module_id_t *out_id)

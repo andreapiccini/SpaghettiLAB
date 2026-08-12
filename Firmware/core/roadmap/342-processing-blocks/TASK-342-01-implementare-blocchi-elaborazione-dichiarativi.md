@@ -1,6 +1,6 @@
 # TASK-342-01 — Implementare blocchi di elaborazione dichiarativi
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 342 — Blocchi di elaborazione dichiarativi
 
 ## Cosa devo fare
@@ -92,12 +92,12 @@ codice arbitrario inviato dall'host.
 
 ## Checklist di completamento
 
-- [ ] Block Registry non contiene elenchi concreti.
-- [ ] Config e wire rappresentano block/edge bounded e UI-neutral.
-- [ ] Ogni grafo è validato per tipi, cicli, risorse e versione.
-- [ ] Stato è allocato soltanto per blocchi attivi.
-- [ ] Kalman opzionale dimostra un blocco aggiunto via firmware e usato via Config.
-- [ ] Errori di una pipeline non fermano Runtime.
+- [x] Block Registry non contiene elenchi concreti.
+- [x] Config e wire rappresentano block/edge bounded e UI-neutral.
+- [x] Ogni grafo è validato per tipi, cicli, risorse e versione.
+- [x] Stato è allocato soltanto per blocchi attivi.
+- [x] Kalman opzionale dimostra un blocco aggiunto via firmware e usato via Config.
+- [x] Errori di una pipeline non fermano Runtime.
 
 ## Verifica e fine task
 

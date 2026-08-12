@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -11,11 +11,11 @@ Config descrive istanze e collegamenti senza introdurre codice nuovo.
 
 ## Task
 
-1. ⬜ [TASK-342-01 — Implementare graph e Block Registry](TASK-342-01-implementare-blocchi-elaborazione-dichiarativi.md)
+1. ✅ [TASK-342-01 — Implementare blocchi di elaborazione dichiarativi](TASK-342-01-implementare-blocchi-elaborazione-dichiarativi.md)
 
 ## Criteri di completamento della fase
 
-- [ ] I blocchi si auto-registrano e dichiarano schema, costi e stato.
-- [ ] Config rappresenta un DAG validabile, non un grafo UI-specifico.
-- [ ] Pipeline aritmetiche e stateful elaborano record generici.
-- [ ] Un tipo di blocco assente è rifiutato prima dell'apply.
+- [x] I blocchi si auto-registrano e dichiarano schema, costi e stato.
+- [x] Config rappresenta un DAG validabile, non un grafo UI-specifico.
+- [x] Pipeline aritmetiche e stateful elaborano record generici.
+- [x] Un tipo di blocco assente è rifiutato prima dell'apply.

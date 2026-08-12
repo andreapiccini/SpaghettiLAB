@@ -13,6 +13,7 @@
 #include <spaghetti/health.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/processing.h>
 #include <spaghetti/rule_driver.h>
 #include <spaghetti/rule_registry.h>
 #include <spaghetti/runtime.h>
@@ -49,6 +50,17 @@ K_SEM_DEFINE(event_published_sem, 0, 8);
 int spaghetti_health_heartbeat(spaghetti_health_component_id_t component_id)
 {
 	ARG_UNUSED(component_id);
+	return 0;
+}
+
+int spaghetti_processing_on_record(
+	const struct spaghetti_record *record,
+	spaghetti_processing_publish_cb_t publish,
+	void *publish_user_data)
+{
+	ARG_UNUSED(record);
+	ARG_UNUSED(publish);
+	ARG_UNUSED(publish_user_data);
 	return 0;
 }
 

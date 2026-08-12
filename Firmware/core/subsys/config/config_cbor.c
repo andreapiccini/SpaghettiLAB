@@ -17,6 +17,7 @@
 #define SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V0 1U
 #define SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V1 2U
 #define SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V2 3U
+#define SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V3 4U
 #define SPAGHETTI_CONFIG_CBOR_BACKUP_COUNT 8U
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_VERSION 0U
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MODULES 1U
@@ -25,6 +26,8 @@
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MQTT 4U
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_CONNECTIVITY 5U
 #define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_ENERGY 6U
+#define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_BLOCKS 7U
+#define SPAGHETTI_CONFIG_CBOR_ROOT_KEY_EDGES 8U
 #define SPAGHETTI_CONFIG_CBOR_MODULE_KEY_STABLE_KEY 0U
 #define SPAGHETTI_CONFIG_CBOR_MODULE_KEY_PORT 1U
 #define SPAGHETTI_CONFIG_CBOR_MODULE_KEY_TYPE 2U
@@ -37,6 +40,16 @@
 #define SPAGHETTI_CONFIG_CBOR_RULE_KEY_STABLE_KEY 0U
 #define SPAGHETTI_CONFIG_CBOR_RULE_KEY_TYPE 1U
 #define SPAGHETTI_CONFIG_CBOR_RULE_KEY_PROPERTIES 2U
+#define SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_STABLE_KEY 0U
+#define SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_TYPE 1U
+#define SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_MIN_VERSION 2U
+#define SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_EXACT_VERSION 3U
+#define SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_PROPERTIES 4U
+#define SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_KEY 0U
+#define SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_PORT 1U
+#define SPAGHETTI_CONFIG_CBOR_EDGE_KEY_TARGET_KEY 2U
+#define SPAGHETTI_CONFIG_CBOR_EDGE_KEY_TARGET_INPUT 3U
+#define SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_KIND 4U
 #define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_ENABLED 0U
 #define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_HOST 1U
 #define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_PORT 2U
@@ -626,6 +639,184 @@ static int encode_rule(zcbor_state_t *state,
 	return zcbor_map_end_encode(state, 3U) ? 0 : -EMSGSIZE;
 }
 
+static int decode_block(zcbor_state_t *state, struct spaghetti_block_config *block)
+{
+	struct zcbor_string type_id;
+	uint32_t key;
+	uint32_t min_version;
+	uint32_t exact_version;
+	int err;
+
+	memset(block, 0, sizeof(*block));
+	if (!zcbor_map_start_decode(state)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_STABLE_KEY);
+	if ((err < 0) || !zcbor_uint32_decode(state, &key)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_TYPE);
+	if ((err < 0) || !zcbor_tstr_decode(state, &type_id)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_MIN_VERSION);
+	if ((err < 0) || !zcbor_uint32_decode(state, &min_version)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_EXACT_VERSION);
+	if ((err < 0) || !zcbor_uint32_decode(state, &exact_version)) {
+		return -EBADMSG;
+	}
+	if (key == 0U) {
+		return -EINVAL;
+	}
+	if ((min_version > UINT16_MAX) || (exact_version > UINT16_MAX)) {
+		return -EINVAL;
+	}
+	if (type_id.len >= sizeof(block->type_id)) {
+		return -EMSGSIZE;
+	}
+
+	block->key = key;
+	memcpy(block->type_id, type_id.value, type_id.len);
+	block->type_id[type_id.len] = '\0';
+	block->min_version = (uint16_t)min_version;
+	block->exact_version = (uint16_t)exact_version;
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_PROPERTIES);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_properties(state, &block->properties);
+	if (err < 0) {
+		return err;
+	}
+	if (!zcbor_map_end_decode(state)) {
+		return -EBADMSG;
+	}
+
+	return 0;
+}
+
+static int encode_block(zcbor_state_t *state,
+			const struct spaghetti_block_config *block)
+{
+	int err;
+
+	if (!zcbor_map_start_encode(state, 5U)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_STABLE_KEY);
+	if ((err < 0) || !zcbor_uint32_put(state, block->key)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_TYPE);
+	if ((err < 0) ||
+	    !zcbor_tstr_put_term(state, block->type_id, sizeof(block->type_id))) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_MIN_VERSION);
+	if ((err < 0) || !zcbor_uint32_put(state, block->min_version)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_EXACT_VERSION);
+	if ((err < 0) || !zcbor_uint32_put(state, block->exact_version)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_BLOCK_KEY_PROPERTIES);
+	if (err < 0) {
+		return err;
+	}
+	err = encode_properties(state, &block->properties);
+	if (err < 0) {
+		return err;
+	}
+
+	return zcbor_map_end_encode(state, 5U) ? 0 : -EMSGSIZE;
+}
+
+static int decode_edge(zcbor_state_t *state, struct spaghetti_edge_config *edge)
+{
+	uint32_t source_key;
+	uint32_t source_port;
+	uint32_t target_key;
+	uint32_t target_input;
+	uint32_t source_kind;
+	int err;
+
+	memset(edge, 0, sizeof(*edge));
+	if (!zcbor_map_start_decode(state)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_KEY);
+	if ((err < 0) || !zcbor_uint32_decode(state, &source_key)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_PORT);
+	if ((err < 0) || !zcbor_uint32_decode(state, &source_port)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_TARGET_KEY);
+	if ((err < 0) || !zcbor_uint32_decode(state, &target_key)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_TARGET_INPUT);
+	if ((err < 0) || !zcbor_uint32_decode(state, &target_input)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_KIND);
+	if ((err < 0) || !zcbor_uint32_decode(state, &source_kind)) {
+		return -EBADMSG;
+	}
+	if (!zcbor_map_end_decode(state)) {
+		return -EBADMSG;
+	}
+	if ((source_port > UINT16_MAX) || (target_input > UINT16_MAX) ||
+	    (source_kind > UINT8_MAX)) {
+		return -EINVAL;
+	}
+
+	edge->source_key = source_key;
+	edge->source_port_or_field = (uint16_t)source_port;
+	edge->target_key = target_key;
+	edge->target_input = (uint16_t)target_input;
+	edge->source_kind = (uint8_t)source_kind;
+	return 0;
+}
+
+static int encode_edge(zcbor_state_t *state,
+		       const struct spaghetti_edge_config *edge)
+{
+	int err;
+
+	if (!zcbor_map_start_encode(state, 5U)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_KEY);
+	if ((err < 0) || !zcbor_uint32_put(state, edge->source_key)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_PORT);
+	if ((err < 0) ||
+	    !zcbor_uint32_put(state, edge->source_port_or_field)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_TARGET_KEY);
+	if ((err < 0) || !zcbor_uint32_put(state, edge->target_key)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_TARGET_INPUT);
+	if ((err < 0) || !zcbor_uint32_put(state, edge->target_input)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_EDGE_KEY_SOURCE_KIND);
+	if ((err < 0) || !zcbor_uint32_put(state, edge->source_kind)) {
+		return -EMSGSIZE;
+	}
+
+	return zcbor_map_end_encode(state, 5U) ? 0 : -EMSGSIZE;
+}
+
 static int decode_mqtt(zcbor_state_t *state, struct spaghetti_mqtt_config *mqtt)
 {
 	struct zcbor_string host;
@@ -831,6 +1022,48 @@ static int decode_array_rules(zcbor_state_t *state,
 	return zcbor_list_end_decode(state) ? 0 : -EBADMSG;
 }
 
+static int decode_array_blocks(zcbor_state_t *state,
+			       struct spaghetti_config *config)
+{
+	if (!zcbor_list_start_decode(state)) {
+		return -EBADMSG;
+	}
+	while (!zcbor_array_at_end(state)) {
+		int err;
+
+		if (config->block_count >= SPAGHETTI_CONFIG_MAX_BLOCKS) {
+			return -EMSGSIZE;
+		}
+		err = decode_block(state, &config->blocks[config->block_count]);
+		if (err < 0) {
+			return err;
+		}
+		++config->block_count;
+	}
+	return zcbor_list_end_decode(state) ? 0 : -EBADMSG;
+}
+
+static int decode_array_edges(zcbor_state_t *state,
+			      struct spaghetti_config *config)
+{
+	if (!zcbor_list_start_decode(state)) {
+		return -EBADMSG;
+	}
+	while (!zcbor_array_at_end(state)) {
+		int err;
+
+		if (config->edge_count >= SPAGHETTI_CONFIG_MAX_EDGES) {
+			return -EMSGSIZE;
+		}
+		err = decode_edge(state, &config->edges[config->edge_count]);
+		if (err < 0) {
+			return err;
+		}
+		++config->edge_count;
+	}
+	return zcbor_list_end_decode(state) ? 0 : -EBADMSG;
+}
+
 static int decode_wire_v2(const uint8_t *bytes, size_t length,
 			  struct spaghetti_config *out)
 {
@@ -905,6 +1138,116 @@ static int decode_wire_v2(const uint8_t *bytes, size_t length,
 		return err;
 	}
 
+	/* Wire V2 has no processing graph; migrate to empty blocks/edges. */
+	temporary.block_count = 0U;
+	temporary.edge_count = 0U;
+
+	if (!zcbor_map_end_decode(state) ||
+	    (state->payload != state->payload_end)) {
+		return -EBADMSG;
+	}
+
+	err = spaghetti_config_validate(&temporary, NULL);
+	if (err < 0) {
+		return err;
+	}
+
+	*out = temporary;
+	return 0;
+}
+
+static int decode_wire_v3(const uint8_t *bytes, size_t length,
+			  struct spaghetti_config *out)
+{
+	struct spaghetti_config temporary = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+	};
+	uint32_t wire_version;
+	uint32_t connectivity;
+	int err;
+
+	ZCBOR_STATE_D(state, SPAGHETTI_CONFIG_CBOR_BACKUP_COUNT, bytes, length,
+		       1U, 0U);
+
+	if (!zcbor_map_start_decode(state)) {
+		return -EBADMSG;
+	}
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_VERSION);
+	if ((err < 0) || !zcbor_uint32_decode(state, &wire_version) ||
+	    (wire_version != SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V3)) {
+		return -EBADMSG;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MODULES);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_array_modules(state, &temporary);
+	if (err < 0) {
+		return err;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_SCHEDULES);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_array_schedules(state, &temporary);
+	if (err < 0) {
+		return err;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_RULES);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_array_rules(state, &temporary);
+	if (err < 0) {
+		return err;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MQTT);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_mqtt(state, &temporary.mqtt);
+	if (err < 0) {
+		return err;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_CONNECTIVITY);
+	if ((err < 0) || !zcbor_uint32_decode(state, &connectivity)) {
+		return -EBADMSG;
+	}
+	temporary.connectivity_policy =
+		(enum spaghetti_connectivity_policy)connectivity;
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_ENERGY);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_energy(state, &temporary.energy_policy);
+	if (err < 0) {
+		return err;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_BLOCKS);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_array_blocks(state, &temporary);
+	if (err < 0) {
+		return err;
+	}
+
+	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_EDGES);
+	if (err < 0) {
+		return err;
+	}
+	err = decode_array_edges(state, &temporary);
+	if (err < 0) {
+		return err;
+	}
+
 	if (!zcbor_map_end_decode(state) ||
 	    (state->payload != state->payload_end)) {
 		return -EBADMSG;
@@ -941,11 +1284,14 @@ int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 		return spaghetti_config_decode_cbor_legacy(bytes, length,
 							   wire_version, out);
 	}
-	if (wire_version != SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V2) {
+	if (wire_version == SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V2) {
+		return decode_wire_v2(bytes, length, out);
+	}
+	if (wire_version != SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V3) {
 		return -ENOTSUP;
 	}
 
-	return decode_wire_v2(bytes, length, out);
+	return decode_wire_v3(bytes, length, out);
 }
 
 int spaghetti_config_encode_cbor(
@@ -971,12 +1317,12 @@ int spaghetti_config_encode_cbor(
 	ZCBOR_STATE_E(state, SPAGHETTI_CONFIG_CBOR_BACKUP_COUNT, buffer,
 		       buffer_capacity, 1U);
 
-	if (!zcbor_map_start_encode(state, 7U)) {
+	if (!zcbor_map_start_encode(state, 9U)) {
 		return -EMSGSIZE;
 	}
 	err = put_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_VERSION);
 	if ((err < 0) ||
-	    !zcbor_uint32_put(state, SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V2)) {
+	    !zcbor_uint32_put(state, SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V3)) {
 		return -EMSGSIZE;
 	}
 
@@ -1048,7 +1394,36 @@ int spaghetti_config_encode_cbor(
 		return err;
 	}
 
-	if (!zcbor_map_end_encode(state, 7U)) {
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_BLOCKS);
+	if ((err < 0) ||
+	    !zcbor_list_start_encode(state, config->block_count)) {
+		return -EMSGSIZE;
+	}
+	for (size_t idx = 0U; idx < config->block_count; ++idx) {
+		err = encode_block(state, &config->blocks[idx]);
+		if (err < 0) {
+			return err;
+		}
+	}
+	if (!zcbor_list_end_encode(state, config->block_count)) {
+		return -EMSGSIZE;
+	}
+
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_EDGES);
+	if ((err < 0) || !zcbor_list_start_encode(state, config->edge_count)) {
+		return -EMSGSIZE;
+	}
+	for (size_t idx = 0U; idx < config->edge_count; ++idx) {
+		err = encode_edge(state, &config->edges[idx]);
+		if (err < 0) {
+			return err;
+		}
+	}
+	if (!zcbor_list_end_encode(state, config->edge_count)) {
+		return -EMSGSIZE;
+	}
+
+	if (!zcbor_map_end_encode(state, 9U)) {
 		return -EMSGSIZE;
 	}
 

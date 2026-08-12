@@ -131,6 +131,32 @@ config SPAGHETTI_MAX_PROCESSING_CONTEXTS
 	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
 	default 32
 
+config SPAGHETTI_PROCESSING_COST_BUDGET
+	int "Maximum abstract cost units per trigger record"
+	range 1 65535
+	default 256 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 512 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 1024
+	help
+	  Sum of block max_cost_per_record values spent while evaluating one
+	  source record. Exceeding the budget aborts only that evaluation.
+
+config SPAGHETTI_PROCESSING_DEPTH_MAX
+	int "Maximum topological depth of a processing graph"
+	range 1 255
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32
+	help
+	  Longest path length accepted when compiling a processing DAG.
+
+config SPAGHETTI_BLOCK_KALMAN
+	bool "Compile the optional Kalman block driver"
+	default n
+	help
+	  When enabled, the Kalman Block Driver is linked into the Block
+	  Registry and may be instantiated from Config like any other block.
+
 config SPAGHETTI_MAX_PROPERTIES_PER_SET
 	int
 	range 1 64

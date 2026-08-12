@@ -23,6 +23,8 @@
 #include <spaghetti/ota.h>
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
+#include <spaghetti/block_registry.h>
+#include <spaghetti/processing.h>
 #include <spaghetti/rule_registry.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/remote_console.h>
@@ -283,6 +285,10 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto rule_registry_failed;
 	}
+	err = spaghetti_block_registry_init();
+	if (err < 0) {
+		goto block_registry_failed;
+	}
 	err = spaghetti_module_manager_init();
 	if (err < 0) {
 		goto manager_failed;
@@ -290,6 +296,10 @@ int spaghetti_core_init(void)
 	err = spaghetti_data_init();
 	if (err < 0) {
 		goto data_failed;
+	}
+	err = spaghetti_processing_init();
+	if (err < 0) {
+		goto processing_failed;
 	}
 	err = spaghetti_config_init(&empty_config);
 	if (err < 0) {
@@ -433,8 +443,14 @@ runtime_failed:
 data_failed:
 	(void)fail_initialization("Data", err);
 	goto unlock;
+processing_failed:
+	(void)fail_initialization("Processing", err);
+	goto unlock;
 manager_failed:
 	(void)fail_initialization("Module Manager", err);
+	goto unlock;
+block_registry_failed:
+	(void)fail_initialization("Block Registry", err);
 	goto unlock;
 rule_registry_failed:
 	(void)fail_initialization("Rule Registry", err);

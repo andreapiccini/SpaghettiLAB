@@ -18,10 +18,12 @@
 /**
  * @brief Decode and validate one complete Config CBOR payload.
  *
- * Decode wire V0 version 1, wire V1 version 2, or wire V2 version 3 into the
- * current in-memory Config model. Legacy wire formats are converted into
- * property sets and schedules. The decoder validates the temporary Config
- * through @ref spaghetti_config_validate before publishing it to @p out.
+ * Decode wire V0 version 1, wire V1 version 2, wire V2 version 3, or wire V3
+ * version 4 into the current in-memory Config model. Legacy wire formats are
+ * converted into property sets and schedules. Wire V2 payloads without a
+ * processing graph migrate to empty blocks/edges. The decoder validates the
+ * temporary Config through @ref spaghetti_config_validate before publishing it
+ * to @p out.
  *
  * @param[in] bytes Caller-owned encoded bytes borrowed only for this call.
  * @param[in] length Exact encoded size in bytes, in the inclusive range 1 to
@@ -47,7 +49,7 @@ int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 				 struct spaghetti_config *out);
 
 /**
- * @brief Encode one validated Config as canonical wire V2 CBOR.
+ * @brief Encode one validated Config as canonical wire V3 CBOR.
  *
  * Validates @p config first, then writes deterministic root and property field
  * order. Buffer contents and @p written_size change only on success.

@@ -14,6 +14,7 @@
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/core.h>
+#include <spaghetti/processing.h>
 #include <spaghetti/rule_driver.h>
 #include <spaghetti/rule_registry.h>
 #include <spaghetti/schema.h>
@@ -189,6 +190,20 @@ static void dispatch_rules(const struct spaghetti_record *record)
 	complete_operation();
 }
 
+static int publish_derived_record(const struct spaghetti_record *record,
+				  void *user_data)
+{
+	int err;
+
+	ARG_UNUSED(user_data);
+	err = spaghetti_data_publish(record, K_NO_WAIT);
+	if (err < 0) {
+		return err;
+	}
+	dispatch_rules(record);
+	return 0;
+}
+
 static int publish_record(struct spaghetti_record *record)
 {
 	int err;
@@ -201,6 +216,8 @@ static int publish_record(struct spaghetti_record *record)
 		return err;
 	}
 
+	(void)spaghetti_processing_on_record(record, publish_derived_record,
+					     NULL);
 	dispatch_rules(record);
 	return 0;
 }

@@ -18,6 +18,7 @@
 #include <spaghetti/power.h>
 #include <spaghetti/rule_driver.h>
 #include <spaghetti/rule_registry.h>
+#include <spaghetti/processing.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/schema.h>
 #include <spaghetti/service.h>
@@ -519,10 +520,22 @@ static bool config_needs_runtime(const struct spaghetti_config *config)
 
 static int load_runtime(const struct spaghetti_config *config)
 {
-	return spaghetti_runtime_configure(config->schedules,
-					   config->schedule_count,
-					   config->rules,
-					   config->rule_count);
+	int err = spaghetti_runtime_configure(config->schedules,
+					      config->schedule_count,
+					      config->rules,
+					      config->rule_count);
+
+	if (err < 0) {
+		return err;
+	}
+
+	err = spaghetti_processing_configure(config->blocks, config->block_count,
+					     config->edges, config->edge_count);
+	if (err < 0) {
+		(void)spaghetti_runtime_configure(NULL, 0U, NULL, 0U);
+	}
+
+	return err;
 }
 
 static int start_runtime(const struct spaghetti_config *config)
@@ -712,7 +725,9 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate,
 	    (candidate->version != SPAGHETTI_CONFIG_VERSION) ||
 	    (candidate->module_count > SPAGHETTI_CONFIG_MAX_MODULES) ||
 	    (candidate->schedule_count > SPAGHETTI_CONFIG_MAX_SCHEDULES) ||
-	    (candidate->rule_count > SPAGHETTI_CONFIG_MAX_RULES)) {
+	    (candidate->rule_count > SPAGHETTI_CONFIG_MAX_RULES) ||
+	    (candidate->block_count > SPAGHETTI_CONFIG_MAX_BLOCKS) ||
+	    (candidate->edge_count > SPAGHETTI_CONFIG_MAX_EDGES)) {
 		return validation_failure(failure, SPAGHETTI_CONFIG_FAILURE_ROOT,
 			0U, SPAGHETTI_CONFIG_FAILURE_RANGE, -EINVAL);
 	}
@@ -844,6 +859,31 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate,
 					SPAGHETTI_CONFIG_FAILURE_INCONSISTENT,
 					err);
 			}
+		}
+	}
+
+	{
+		const int err = spaghetti_processing_validate_graph(
+			candidate->blocks, candidate->block_count,
+			candidate->edges, candidate->edge_count,
+			candidate->modules, candidate->module_count);
+
+		if (err < 0) {
+			enum spaghetti_config_failure_field field =
+				SPAGHETTI_CONFIG_FAILURE_BLOCK;
+			enum spaghetti_config_failure_reason reason =
+				SPAGHETTI_CONFIG_FAILURE_INCONSISTENT;
+
+			if (err == -ENOTSUP) {
+				reason = SPAGHETTI_CONFIG_FAILURE_UNKNOWN_TYPE;
+			} else if (err == -EEXIST) {
+				reason = SPAGHETTI_CONFIG_FAILURE_DUPLICATE;
+			} else if ((err == -ELOOP) || (err == -ENOENT)) {
+				field = SPAGHETTI_CONFIG_FAILURE_EDGE;
+			}
+
+			return validation_failure(failure, field, 0U, reason,
+						  err);
 		}
 	}
 
