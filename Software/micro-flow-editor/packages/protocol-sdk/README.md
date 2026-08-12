@@ -30,6 +30,12 @@ across a boot boundary, and fingerprint-aware catalog pagination that restarts f
 scratch if the catalog changes mid-read. See
 `../../../roadmap/react-flow-v1/tasks/S022-spaghetti-client-operations.md`.
 
-Transports (MQTT/WebSocket/BLE) and event streaming are S023–S024, not yet started —
-`client/transport.ts`'s `ProtocolTransport` interface and `client/fakes/fake-transport.ts`
-are what they'll plug into and what tests use in the meantime.
+Transport adapters (S023) live in `client/transports/`: `MqttProtocolTransport`,
+`WebSocketProtocolTransport` (also covers a BLE gateway tunneled over WebSocket),
+and `WebSerialProtocolTransport` (USB/serial, with a `StreamFrameDecoder` since a
+byte stream has no message boundaries of its own) — all implement the same
+`ProtocolTransport` interface `SpaghettiClient` already uses, verified to produce
+identical decoded domain objects from the same golden envelope regardless of which
+one carries it (`transports/__tests__/cross-transport-parity.test.ts`).
+
+Event streaming (S024) is not yet started.
