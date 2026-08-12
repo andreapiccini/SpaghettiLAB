@@ -21,5 +21,15 @@ implementation note. Two things worth knowing:
   vectors to each operation would mean wiring every handler into the firmware test,
   out of scope for this pass.
 
-`SpaghettiClient`, transports and event streaming are implemented by S022–S024, not
-yet started.
+`SpaghettiClient` (S022) is implemented in `client/` — a transport-independent host
+client covering all 27 operations, with replay-aware retry (same correlation ID on
+every attempt of one logical call), an overall-deadline-vs-per-attempt-timeout split,
+immediate (never auto-retried) surfacing of non-OK protocol statuses, reboot
+detection via `STATUS` events that rejects in-flight calls rather than replaying
+across a boot boundary, and fingerprint-aware catalog pagination that restarts from
+scratch if the catalog changes mid-read. See
+`../../../roadmap/react-flow-v1/tasks/S022-spaghetti-client-operations.md`.
+
+Transports (MQTT/WebSocket/BLE) and event streaming are S023–S024, not yet started —
+`client/transport.ts`'s `ProtocolTransport` interface and `client/fakes/fake-transport.ts`
+are what they'll plug into and what tests use in the meantime.

@@ -26,3 +26,4 @@ export * from "./fields.js";
 export * from "./envelope.js";
 export * from "./events.js";
 export * from "./operations/index.js";
+export * from "./client/index.js";
