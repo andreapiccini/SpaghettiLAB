@@ -188,12 +188,32 @@ if you're using that tier) and run `docker compose up -d` again — no
 rebuild is needed since these are bind-mounted files, but Node-RED must be
 restarted to reload `settings.js`.
 
+## BLE gateway (Protocol V1)
+
+Node-RED can talk to a Core over BLE without MQTT on the ESP32 by running the
+host gateway documented in Firmware. See
+[BLE_GATEWAY.md](BLE_GATEWAY.md) for the full runbook.
+
+Quick path:
+
+1. From `Firmware/core`: `make host-tools`, then start
+   `spaghetti-gateway serve --listen 127.0.0.1:8765` (key via
+   `SPAGHETTI_BLE_KEY_FILE`, never argv).
+2. Import
+   `Firmware/core/examples/node_red/spaghetti_ble_v1_flow.json` into this
+   Node-RED instance.
+3. Point the WebSocket client at `ws://127.0.0.1:8765/?token=…` and set the
+   Core device id.
+
+Binary WebSocket payloads are Protocol V1 CBOR envelopes (same as MQTT).
+
 ## Scope of this version
 
 Included: a persistent, local-only Node-RED editor with basic Spaghetti LAB
-branding (colors, logo, page title).
+branding (colors, logo, page title), plus docs for the Firmware BLE gateway
+example flow.
 
-Not included yet: MQTT broker, firmware communication, custom Spaghetti LAB
-nodes, dashboard UI, Home Assistant integration, Telegram integration,
-Tauri/Flutter clients, cloud services, remote/authenticated access. These
-will be introduced in later, separate phases.
+Not included yet: MQTT broker, custom Spaghetti LAB nodes, dashboard UI, Home
+Assistant integration, Telegram integration, Tauri/Flutter clients, cloud
+services, remote/authenticated access. These will be introduced in later,
+separate phases.
