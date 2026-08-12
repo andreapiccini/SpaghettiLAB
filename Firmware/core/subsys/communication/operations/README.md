@@ -14,9 +14,9 @@ at init, authorizes through Access Control, and schedules by execution class.
 | `config_ops.c` | GET/VALIDATE/APPLY_CONFIG |
 | `discovery_ops.c` | LIST/SCAN/ACCEPT_DISCOVERY |
 | `module_command.c` | MODULE_COMMAND |
-| `update_ops.c` | GET_UPDATE_STATUS, OPEN_WIFI_UPDATE, OPEN/WRITE/FINISH/CANCEL_BLE_UPDATE |
+| `update_ops.c` | GET_UPDATE_STATUS, OPEN/WRITE/FINISH/CANCEL_BLE_UPDATE |
 | `capabilities_ops.c` | GET_CAPABILITIES |
-| `connectivity_ops.c` | connectivity status/lease/maintenance |
+| `connectivity_ops.c` | connectivity status/lease/maintenance/Wi-Fi update handover |
 | `reset_ops.c` | FACTORY_RESET |
 | `audit_ops.c` | GET_AUDIT_LOG |
 | `job_ops.c` | GET_JOB_STATUS |

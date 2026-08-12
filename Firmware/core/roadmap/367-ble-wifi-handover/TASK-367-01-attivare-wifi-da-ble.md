@@ -1,6 +1,6 @@
 # TASK-367-01 — Attivare Wi-Fi da BLE
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 367 — Handover BLE verso Wi-Fi
 
 ## Cosa devo fare
@@ -40,11 +40,11 @@ IP/porta e continua il trasferimento tramite il client Wi-Fi già esistente.
 
 ## Checklist di completamento
 
-- [ ] Le quattro operazioni hanno permessi separati.
-- [ ] Wi-Fi generico non apre OTA o console.
-- [ ] Ack precede l'eventuale disconnect BLE.
-- [ ] Timeout ripristina LOW_ENERGY.
-- [ ] MQTT rilascia il workspace prima di Wi-Fi OTA.
+- [x] Le quattro operazioni hanno permessi separati.
+- [x] Wi-Fi generico non apre OTA o console.
+- [x] Ack precede l'eventuale disconnect BLE.
+- [x] Timeout ripristina LOW_ENERGY.
+- [x] MQTT rilascia il workspace prima di Wi-Fi OTA.
 
 ## Verifica e fine task
 

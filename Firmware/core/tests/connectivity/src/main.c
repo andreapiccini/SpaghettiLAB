@@ -9,10 +9,17 @@
 
 #include <spaghetti/capabilities.h>
 #include <spaghetti/connectivity.h>
+#include <spaghetti/health.h>
 
 #include "connectivity_internal.h"
 
 #define TEST_ACTION_CAPACITY 32U
+
+int spaghetti_health_heartbeat(spaghetti_health_component_id_t id)
+{
+	ARG_UNUSED(id);
+	return 0;
+}
 
 struct backend_action {
 	bool started;

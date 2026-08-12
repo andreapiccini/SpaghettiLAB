@@ -85,3 +85,31 @@ int spaghetti_ble_find_update_principal(spaghetti_principal_id_t *out_principal)
 	ARG_UNUSED(out_principal);
 	return -ENOTSUP;
 }
+
+int spaghetti_ble_principal_is_authenticated(
+	spaghetti_principal_id_t principal_id)
+{
+	if (principal_id == 0U) {
+		return -EINVAL;
+	}
+	return -ENOTSUP;
+}
+
+void spaghetti_ble_wifi_handover_set_test_authenticated(
+	spaghetti_principal_id_t principal_id)
+{
+	ARG_UNUSED(principal_id);
+}
+
+void spaghetti_ble_wifi_handover_request_disconnect(
+	spaghetti_principal_id_t principal_id)
+{
+	ARG_UNUSED(principal_id);
+}
+
+bool spaghetti_ble_wifi_handover_take_pending_disconnect(
+	spaghetti_principal_id_t *out_principal)
+{
+	ARG_UNUSED(out_principal);
+	return false;
+}

@@ -1,0 +1,30 @@
+mainmenu "Spaghetti BLE Wi-Fi handover tests"
+
+rsource "../../Kconfig.resources"
+rsource "../../subsys/connectivity/Kconfig"
+rsource "../../subsys/core/Kconfig.health"
+
+config SPAGHETTI_COMMUNICATION_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 100
+
+config SPAGHETTI_OTA_PORT
+	int
+	default 1337
+
+config SPAGHETTI_REMOTE_CONSOLE_PORT
+	int
+	default 1338
+
+config SPAGHETTI_BLE_WIFI_HANDOVER_ASSOC_WAIT_MS
+	int "Bounded Wi-Fi association wait for BLE handover"
+	range 1 120000
+	default 80
+	help
+	  Maximum time the BLE→Wi-Fi handover ops wait for station association.
+
+source "Kconfig.zephyr"

@@ -60,31 +60,6 @@ static int execute_get_update_status(
 	return 0;
 }
 
-static int execute_open_wifi_update(
-	const struct spaghetti_request_context *context,
-	const struct spaghetti_protocol_payload *request,
-	struct spaghetti_protocol_payload *response)
-{
-	uint32_t timeout_ms = 60000U;
-	int err;
-
-	ARG_UNUSED(context);
-	err = spaghetti_ops_decode_optional_u32(request, 0U, 60000U, &timeout_ms);
-	if (err < 0) {
-		return err;
-	}
-	err = spaghetti_update_arm(timeout_ms);
-	if (err < 0) {
-		return err;
-	}
-	err = spaghetti_update_begin(SPAGHETTI_UPDATE_TRANSPORT_UDP);
-	if (err < 0) {
-		(void)spaghetti_update_cancel();
-		return err;
-	}
-	return spaghetti_ops_encode_empty_map(response);
-}
-
 static int decode_ble_begin(
 	const struct spaghetti_protocol_payload *request,
 	struct spaghetti_ble_update_begin *out)
@@ -248,15 +223,6 @@ SPAGHETTI_OPERATION_HANDLER_DEFINE(op_get_update_status) = {
 	.request_schema = &empty_schema,
 	.response_schema = &empty_schema,
 	.execute = execute_get_update_status,
-};
-
-SPAGHETTI_OPERATION_HANDLER_DEFINE(op_open_wifi_update) = {
-	.operation = SPAGHETTI_PROTOCOL_OPEN_WIFI_UPDATE,
-	.required_permissions = SPAGHETTI_PERMISSION_UPDATE,
-	.execution = SPAGHETTI_OPERATION_ASYNC_JOB,
-	.request_schema = &empty_schema,
-	.response_schema = &empty_schema,
-	.execute = execute_open_wifi_update,
 };
 
 SPAGHETTI_OPERATION_HANDLER_DEFINE(op_open_ble_update) = {

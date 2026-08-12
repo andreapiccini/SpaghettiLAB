@@ -12,6 +12,7 @@
 #include <zcbor_encode.h>
 
 #include <spaghetti/access_control.h>
+#include <spaghetti/ble.h>
 #include <spaghetti/capabilities.h>
 #include <spaghetti/communication.h>
 #include <spaghetti/config.h>
@@ -27,6 +28,7 @@
 #include <spaghetti/image_manifest.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/mqtt.h>
 #include <spaghetti/ota.h>
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
@@ -263,13 +265,25 @@ int spaghetti_capabilities_get(struct spaghetti_capabilities *out)
 	return 0;
 }
 
+bool spaghetti_capabilities_support(uint32_t required)
+{
+	ARG_UNUSED(required);
+	return true;
+}
+
 int spaghetti_connectivity_get_snapshot(
 	struct spaghetti_connectivity_snapshot *out)
 {
 	if (out == NULL) {
 		return -EINVAL;
 	}
-	*out = (struct spaghetti_connectivity_snapshot) {0};
+	*out = (struct spaghetti_connectivity_snapshot) {
+		.policy = SPAGHETTI_CONNECTIVITY_LOW_ENERGY,
+		.active_services = SPAGHETTI_CONNECTIVITY_SERVICE_BLE |
+				   SPAGHETTI_CONNECTIVITY_SERVICE_WIFI,
+		.leased_services = SPAGHETTI_CONNECTIVITY_SERVICE_WIFI,
+		.lease_expires_at_ms = k_uptime_get() + 60000,
+	};
 	return 0;
 }
 
@@ -626,7 +640,61 @@ int spaghetti_wifi_profiles_get_status(
 	if (out == NULL) {
 		return -EINVAL;
 	}
-	*out = (struct spaghetti_wifi_profiles_status) {0};
+	*out = (struct spaghetti_wifi_profiles_status) {
+		.state = SPAGHETTI_WIFI_PROFILES_CONNECTED,
+	};
+	return 0;
+}
+
+int spaghetti_ble_principal_is_authenticated(
+	spaghetti_principal_id_t principal_id)
+{
+	ARG_UNUSED(principal_id);
+	return 0;
+}
+
+void spaghetti_ble_wifi_handover_request_disconnect(
+	spaghetti_principal_id_t principal_id)
+{
+	ARG_UNUSED(principal_id);
+}
+
+int spaghetti_mqtt_stop(k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+	return -EALREADY;
+}
+
+int spaghetti_ota_arm(uint32_t timeout_ms)
+{
+	return (timeout_ms != 0U) ? 0 : -EINVAL;
+}
+
+int spaghetti_ota_cancel(void)
+{
+	return 0;
+}
+
+int spaghetti_ota_get_status(struct spaghetti_ota_status *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+	*out = (struct spaghetti_ota_status) {
+		.state = SPAGHETTI_OTA_ARMED,
+		.port = 1337U,
+	};
+	return 0;
+}
+
+int spaghetti_remote_console_start(void)
+{
+	return 0;
+}
+
+int spaghetti_remote_console_stop(k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
 	return 0;
 }
 

@@ -191,4 +191,54 @@ int spaghetti_ble_set_radio(bool enabled);
  */
 int spaghetti_ble_find_update_principal(spaghetti_principal_id_t *out_principal);
 
+/**
+ * @brief Report whether @p principal_id has an authenticated BLE peer.
+ *
+ * Used by BLE→Wi-Fi handover ops. A non-zero test hook installed by
+ * @ref spaghetti_ble_wifi_handover_set_test_authenticated also counts.
+ *
+ * @param[in] principal_id Principal that must own a live authenticated peer.
+ *
+ * @retval 0 An authenticated peer (or test hook) matches @p principal_id.
+ * @retval -EINVAL @p principal_id is zero.
+ * @retval -ENOENT No matching authenticated peer is connected.
+ * @retval -ENOTSUP BLE is not compiled and no test hook is active.
+ */
+int spaghetti_ble_principal_is_authenticated(
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Install or clear the unit-test BLE authentication hook for handover.
+ *
+ * @param[in] principal_id Non-zero principal treated as BLE-authenticated, or
+ *                         zero to clear the hook.
+ *
+ * @note Production adapters never call this. Handover ops also accept a live
+ *       authenticated peer or a local adapter context.
+ */
+void spaghetti_ble_wifi_handover_set_test_authenticated(
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Request BLE peer disconnect after the handover acknowledgement.
+ *
+ * The BLE adapter consumes the request with
+ * @ref spaghetti_ble_wifi_handover_take_pending_disconnect after the response
+ * envelope is prepared so the Minimal-profile disconnect never races the ack.
+ *
+ * @param[in] principal_id Principal whose peers should disconnect after ack.
+ */
+void spaghetti_ble_wifi_handover_request_disconnect(
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Consume one deferred Minimal-profile BLE disconnect request.
+ *
+ * @param[out] out_principal Optional principal written when a request exists.
+ *
+ * @return True when a disconnect was pending and has been cleared.
+ */
+bool spaghetti_ble_wifi_handover_take_pending_disconnect(
+	spaghetti_principal_id_t *out_principal);
+
 #endif /* SPAGHETTI_BLE_H */

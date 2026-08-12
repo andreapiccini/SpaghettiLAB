@@ -113,7 +113,27 @@ static struct spaghetti_ble_context context = {
 	.next_message_id = 1U,
 };
 
+static spaghetti_principal_id_t handover_test_principal;
+static spaghetti_principal_id_t handover_pending_disconnect;
+static bool handover_disconnect_pending;
+
 K_MUTEX_DEFINE(ble_lock);
+K_MUTEX_DEFINE(ble_handover_lock);
+
+static void ble_handover_disconnect_notify(struct k_work *work);
+
+K_WORK_DEFINE(ble_handover_disconnect_work, ble_handover_disconnect_notify);
+
+static void ble_handover_disconnect_notify(struct k_work *work)
+{
+	spaghetti_principal_id_t principal_id = 0U;
+
+	ARG_UNUSED(work);
+	if (spaghetti_ble_wifi_handover_take_pending_disconnect(&principal_id) &&
+	    (principal_id != 0U)) {
+		spaghetti_ble_close_peers_for_principal(principal_id);
+	}
+}
 
 #if IS_ENABLED(CONFIG_BT)
 static struct bt_uuid_128 spaghetti_ble_svc_uuid = BT_UUID_INIT_128(
@@ -806,6 +826,9 @@ static int dispatch_request_locked(
 	err = encode_framed_message(message_id, encoded, encoded_size,
 				    peer->response, sizeof(peer->response),
 				    &peer->response_size);
+	if ((err == 0) && handover_disconnect_pending) {
+		(void)k_work_submit(&ble_handover_disconnect_work);
+	}
 	return err;
 }
 
@@ -1487,4 +1510,65 @@ int spaghetti_ble_find_update_principal(spaghetti_principal_id_t *out_principal)
 	}
 	k_mutex_unlock(&ble_lock);
 	return -ENOENT;
+}
+
+int spaghetti_ble_principal_is_authenticated(
+	spaghetti_principal_id_t principal_id)
+{
+	int err;
+
+	if (principal_id == 0U) {
+		return -EINVAL;
+	}
+	if (handover_test_principal == principal_id) {
+		return 0;
+	}
+
+	err = k_mutex_lock(&ble_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	for (size_t idx = 0U; idx < ARRAY_SIZE(context.peers); ++idx) {
+		if ((context.peers[idx].phase ==
+		     SPAGHETTI_BLE_PEER_AUTHENTICATED) &&
+		    (context.peers[idx].principal_id == principal_id)) {
+			k_mutex_unlock(&ble_lock);
+			return 0;
+		}
+	}
+	k_mutex_unlock(&ble_lock);
+	return -ENOENT;
+}
+
+void spaghetti_ble_wifi_handover_set_test_authenticated(
+	spaghetti_principal_id_t principal_id)
+{
+	handover_test_principal = principal_id;
+}
+
+void spaghetti_ble_wifi_handover_request_disconnect(
+	spaghetti_principal_id_t principal_id)
+{
+	(void)k_mutex_lock(&ble_handover_lock, K_FOREVER);
+	handover_pending_disconnect = principal_id;
+	handover_disconnect_pending = (principal_id != 0U);
+	k_mutex_unlock(&ble_handover_lock);
+}
+
+bool spaghetti_ble_wifi_handover_take_pending_disconnect(
+	spaghetti_principal_id_t *out_principal)
+{
+	bool pending;
+
+	(void)k_mutex_lock(&ble_handover_lock, K_FOREVER);
+	pending = handover_disconnect_pending;
+	if (pending) {
+		if (out_principal != NULL) {
+			*out_principal = handover_pending_disconnect;
+		}
+		handover_disconnect_pending = false;
+		handover_pending_disconnect = 0U;
+	}
+	k_mutex_unlock(&ble_handover_lock);
+	return pending;
 }

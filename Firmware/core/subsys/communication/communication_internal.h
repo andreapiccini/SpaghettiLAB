@@ -61,4 +61,7 @@ int spaghetti_communication_job_get_status(
 	uint32_t job_id,
 	struct spaghetti_protocol_payload *response);
 
+/** Test hook that bounds Wi-Fi association wait during BLE handover. */
+void spaghetti_connectivity_handover_set_assoc_wait_ms(uint32_t ms);
+
 #endif /* SPAGHETTI_COMMUNICATION_INTERNAL_H */

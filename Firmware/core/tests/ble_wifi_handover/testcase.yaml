@@ -1,0 +1,8 @@
+tests:
+  spaghetti.ble_wifi_handover:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - ble
+      - connectivity

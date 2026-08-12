@@ -134,7 +134,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [360 — Communication Protocol V1](360-communication-protocol-v1/README.md) | Envelope CBOR, Config CAS, errori stabili, replay e job sono comuni a ogni adapter. |
 | ✅ | [365 — Protocollo BLE](365-ble-protocol/README.md) | BLE trasporta envelope V1 autenticati con framing bounded. |
 | ✅ | [366 — OTA BLE](366-ble-ota/README.md) | BLE alimenta Update Coordinator senza duplicare flash o rollback. |
-| ⬜ | [367 — Handover BLE/Wi-Fi](367-ble-wifi-handover/README.md) | Un peer BLE apre lease, manutenzione o OTA Wi-Fi separatamente. |
+| ✅ | [367 — Handover BLE/Wi-Fi](367-ble-wifi-handover/README.md) | Un peer BLE apre lease, manutenzione o OTA Wi-Fi separatamente. |
 | ⬜ | [370 — MQTT per Node-RED V1](370-mqtt-node-red-v1/README.md) | Node-RED riceve record e invia richieste con risposta correlata. |
 | ⬜ | [375 — Gateway BLE Node-RED](375-node-red-ble-gateway/README.md) | Node-RED usa BLE direttamente o tramite gateway senza MQTT sul Core. |
 | ⬜ | [378 — SDK host e Node-RED](378-host-sdk-node-red/README.md) | TypeScript condivide codec/transport e coordina la Config senza lost update. |
