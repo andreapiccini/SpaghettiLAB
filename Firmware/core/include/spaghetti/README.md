@@ -22,6 +22,9 @@ This directory contains contracts shared between firmware components. Headers ex
 |---|---|
 | `core.h` | Boot and Core state contract. |
 | `capabilities.h` | Immutable build profile, bounded limits, and board-backed capability snapshot. |
+| `feature_pack.h` | Capability Pack descriptors, registry, and host catalog. |
+| `image_manifest.h` | Embedded image manifest and candidate Config compatibility checks. |
+| `resources.h` | Build/runtime resource snapshot with high-water marks (no free_ram promise). |
 | `resource_contract.h` | Pure compile-time consistency predicates shared by firmware and negative build tests. |
 | `connectivity.h` | Persistent connectivity policy and temporary service leases. |
 	| `energy.h` | Low-energy BLE availability and connectivity-policy orchestration. |

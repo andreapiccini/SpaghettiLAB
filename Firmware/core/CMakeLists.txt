@@ -52,6 +52,15 @@ target_sources(app PRIVATE
   subsys/core/core.c
   subsys/core/core_boot_backend.c
   subsys/core/health.c
+  subsys/feature_registry/feature_registry.c
+  subsys/feature_registry/image_manifest.c
+  subsys/feature_registry/pack_core_basic.c
+  subsys/feature_registry/pack_processing_basic.c
+  subsys/feature_registry/pack_processing_kalman.c
+  subsys/feature_registry/pack_device_profile.c
+  subsys/feature_registry/pack_transport_modbus.c
+  subsys/resources/resources.c
+  subsys/resources/resources_note_weak.c
   subsys/port/port.c
   subsys/port/port_backend_board.c
   subsys/topology/topology.c
@@ -113,6 +122,7 @@ zephyr_linker_sources(SECTIONS subsys/rule_registry/rule_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/block_registry/block_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/device_profiles/device_profile_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/data/record_delivery_sections.ld)
+zephyr_linker_sources(SECTIONS subsys/feature_registry/feature_pack_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)
 

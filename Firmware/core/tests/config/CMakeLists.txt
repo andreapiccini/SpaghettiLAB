@@ -10,6 +10,7 @@ target_sources(app PRIVATE
   ../../subsys/schema/schema.c
   ../../subsys/module_manager/module_manager.c
   ../../subsys/rule_registry/rule_registry.c
+  ../../subsys/resources/resources_note_weak.c
 )
 
 target_include_directories(app PRIVATE

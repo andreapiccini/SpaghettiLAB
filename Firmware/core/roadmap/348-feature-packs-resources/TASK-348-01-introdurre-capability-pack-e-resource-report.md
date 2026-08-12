@@ -1,6 +1,6 @@
 # TASK-348-01 — Introdurre Capability Pack, manifest e resource report
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 348 — Capability Pack e osservabilità risorse
 
 ## Cosa devo fare
@@ -123,13 +123,13 @@ universale e pack opzionali con dati reali, senza affidarsi a una `free_ram` amb
 
 ## Checklist di completamento
 
-- [ ] Pack e manifest sono versionati, deterministici e firmati con l'immagine.
-- [ ] Update rifiuta rimozione di feature richieste dal Config attivo/persistito.
-- [ ] Resource report separa capacità, uso corrente e high-water.
-- [ ] Build gate copre flash, RAM, stack, pool e workspace.
-- [ ] Catalogo collega ogni tipo compilato al pack proprietario.
-- [ ] Build `all-supported` determina con misure se distribuire tutte le feature.
-- [ ] Nessuna funzionalità React Flow/marketplace UI entra nel firmware.
+- [x] Pack e manifest sono versionati, deterministici e firmati con l'immagine.
+- [x] Update rifiuta rimozione di feature richieste dal Config attivo/persistito.
+- [x] Resource report separa capacità, uso corrente e high-water.
+- [x] Build gate copre flash, RAM, stack, pool e workspace.
+- [x] Catalogo collega ogni tipo compilato al pack proprietario.
+- [x] Build `all-supported` determina con misure se distribuire tutte le feature.
+- [x] Nessuna funzionalità React Flow/marketplace UI entra nel firmware.
 
 ## Verifica e fine task
 

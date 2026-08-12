@@ -11,6 +11,7 @@
 
 #include <spaghetti/block_registry.h>
 #include <spaghetti/module.h>
+#include <spaghetti/resources.h>
 
 LOG_MODULE_REGISTER(spaghetti_processing, CONFIG_SPAGHETTI_PROCESSING_LOG_LEVEL);
 
@@ -550,6 +551,12 @@ int spaghetti_processing_configure(
 	state_arena_used = next_arena_used;
 	module_cache_count = 0U;
 	memset(module_cache, 0, sizeof(module_cache));
+	spaghetti_resources_note_used(
+		SPAGHETTI_RESOURCE_OWNER_BLOCKS,
+		(uint16_t)MIN(live_plan.block_count, UINT16_MAX));
+	spaghetti_resources_note_used(
+		SPAGHETTI_RESOURCE_OWNER_WORKSPACE,
+		(uint16_t)MIN(state_arena_used, UINT16_MAX));
 
 	k_mutex_unlock(&processing_lock);
 	return 0;

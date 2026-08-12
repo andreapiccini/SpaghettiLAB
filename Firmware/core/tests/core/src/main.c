@@ -77,6 +77,21 @@ int spaghetti_secure_workspace_init(void)
 	return record_step(STEP_SECURE_WORKSPACE);
 }
 
+int spaghetti_feature_registry_init(void)
+{
+	return 0;
+}
+
+int spaghetti_image_manifest_init(void)
+{
+	return 0;
+}
+
+int spaghetti_resources_init(void)
+{
+	return 0;
+}
+
 int spaghetti_port_init_all(void)
 {
 	return record_step(STEP_PORT);

@@ -10,6 +10,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#include <spaghetti/resources.h>
+
 LOG_MODULE_REGISTER(spaghetti_record_delivery,
 		    CONFIG_SPAGHETTI_RECORD_DELIVERY_LOG_LEVEL);
 
@@ -228,6 +230,9 @@ int spaghetti_record_delivery_push(const struct spaghetti_record *record)
 		slot->abs_index = context.write_index;
 		context.write_index++;
 		context.count++;
+		spaghetti_resources_note_used(
+			SPAGHETTI_RESOURCE_OWNER_RECORDS,
+			(uint16_t)MIN(context.count, UINT16_MAX));
 	}
 
 	k_mutex_unlock(&record_delivery_lock);

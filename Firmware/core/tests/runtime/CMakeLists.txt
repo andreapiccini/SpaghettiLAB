@@ -10,6 +10,7 @@ target_sources(app PRIVATE
   ../../subsys/schema/schema.c
   ../../subsys/rule_registry/rule_registry.c
   ../../subsys/runtime/runtime.c
+  ../../subsys/resources/resources_note_weak.c
   ../../spaghetti_rules/threshold/threshold.c
 )
 

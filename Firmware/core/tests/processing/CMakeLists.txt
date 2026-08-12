@@ -8,6 +8,7 @@ target_sources(app PRIVATE
   ../../subsys/block_registry/block_registry.c
   ../../subsys/processing/processing.c
   ../../subsys/schema/schema.c
+  ../../subsys/resources/resources_note_weak.c
   ../../spaghetti_blocks/blocks_math.c
   ../../spaghetti_blocks/blocks_bitwise.c
   ../../spaghetti_blocks/blocks_filter.c

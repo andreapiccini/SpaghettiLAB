@@ -9,6 +9,7 @@ target_sources(app PRIVATE
   ../../subsys/data/record_delivery.c
   ../../subsys/services/mqtt/mqtt.c
   ../../subsys/services/service_thread.c
+  ../../subsys/resources/resources_note_weak.c
 )
 
 target_include_directories(app PRIVATE

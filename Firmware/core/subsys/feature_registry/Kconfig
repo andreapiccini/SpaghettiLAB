@@ -1,0 +1,78 @@
+module = SPAGHETTI_FEATURE_REGISTRY
+module-str = spaghetti_feature_registry
+source "subsys/logging/Kconfig.template.log_config"
+
+config SPAGHETTI_PACK_CORE_BASIC
+	bool
+	default y
+	help
+	  Always-linked core Capability Pack (modules and threshold rule).
+
+config SPAGHETTI_PACK_PROCESSING_BASIC
+	bool "Include processing-basic Capability Pack"
+	default y
+	help
+	  Declares the standard processing block types compiled into the image.
+
+config SPAGHETTI_PACK_PROCESSING_KALMAN
+	bool "Include processing-kalman Capability Pack"
+	default y
+	depends on SPAGHETTI_BLOCK_KALMAN
+	depends on SPAGHETTI_PACK_PROCESSING_BASIC
+	help
+	  Declares the optional Kalman block when the block driver is compiled.
+
+config SPAGHETTI_PACK_DEVICE_PROFILE
+	bool "Include device-profile-engine Capability Pack"
+	default y
+	help
+	  Declares the declarative-device Module type and profile engine surface.
+
+config SPAGHETTI_PACK_MODBUS
+	bool "Include stub transport-modbus Capability Pack"
+	default n
+	help
+	  Links an empty Modbus transport pack descriptor for differential builds
+	  and catalog tests. No Modbus runtime is compiled yet.
+
+config SPAGHETTI_FLASH_SLOT_BYTES
+	int "Declared primary image-slot size in bytes"
+	range 65536 4194304
+	default 1048576
+	help
+	  Build-time flash slot budget published by the image manifest.
+
+config SPAGHETTI_FLASH_IMAGE_BUDGET_BYTES
+	int "Declared maximum application image size in bytes"
+	range 32768 4194304
+	default 917504
+	help
+	  Build gate and manifest budget for the signed application image.
+
+config SPAGHETTI_FLASH_HEADROOM_BYTES
+	int "Declared flash headroom reserved for headers/trailers"
+	range 0 1048576
+	default 65536
+
+config SPAGHETTI_STATIC_RAM_BUDGET_BYTES
+	int "Declared static RAM budget in bytes"
+	range 32768 1048576
+	default 327680
+
+config SPAGHETTI_DECLARED_STACK_BYTES
+	int "Declared aggregate stack reservation in bytes"
+	range 4096 262144
+	default 24576
+
+config SPAGHETTI_DECLARED_POOL_BYTES
+	int "Declared aggregate pool reservation in bytes"
+	range 4096 524288
+	default 65536
+
+config SPAGHETTI_DECLARED_WORKSPACE_BYTES
+	int "Declared workspace reservation in bytes"
+	range 4096 262144
+	default 60000
+	help
+	  Declared workspace budget published by the image manifest. Matches the
+	  secure-workspace profile budget when that service is compiled.

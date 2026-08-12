@@ -12,6 +12,7 @@
 #include <spaghetti/module_driver.h>
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
+#include <spaghetti/resources.h>
 #include <spaghetti/schema.h>
 #include <spaghetti/topology.h>
 
@@ -38,6 +39,19 @@ static bool is_initialized;
 K_MUTEX_DEFINE(slots_lock);
 
 BUILD_ASSERT(CONFIG_SPAGHETTI_MAX_MODULES <= (UINT8_MAX + 1U));
+
+static uint16_t count_used_modules_locked(void)
+{
+	uint16_t used = 0U;
+
+	for (size_t idx = 0U; idx < ARRAY_SIZE(slots); ++idx) {
+		if (slots[idx].used) {
+			++used;
+		}
+	}
+
+	return used;
+}
 
 static bool endpoint_is_valid(const struct spaghetti_module_endpoint *endpoint)
 {
@@ -468,6 +482,8 @@ int spaghetti_module_manager_configure(
 	slot->used = true;
 	slot->reserved = false;
 	*out_id = slot->module.id;
+	spaghetti_resources_note_used(SPAGHETTI_RESOURCE_OWNER_MODULES,
+				      count_used_modules_locked());
 	k_mutex_unlock(&slots_lock);
 
 	LOG_INF("configured: key=%u id=%u port=%u endpoint=%u", request->key,
@@ -476,6 +492,9 @@ int spaghetti_module_manager_configure(
 	return 0;
 
 unlock:
+	if (err == -ENOSPC) {
+		spaghetti_resources_note_failure(SPAGHETTI_RESOURCE_OWNER_MODULES);
+	}
 	k_mutex_unlock(&slots_lock);
 	return err;
 }
@@ -545,6 +564,8 @@ int spaghetti_module_manager_remove(spaghetti_module_id_t id,
 
 	(void)k_mutex_lock(&slots_lock, K_FOREVER);
 	memset(slot, 0, sizeof(*slot));
+	spaghetti_resources_note_used(SPAGHETTI_RESOURCE_OWNER_MODULES,
+				      count_used_modules_locked());
 	k_mutex_unlock(&slots_lock);
 
 	LOG_INF("removed: key=%u id=%u err=%d", key, (uint32_t)id, err);

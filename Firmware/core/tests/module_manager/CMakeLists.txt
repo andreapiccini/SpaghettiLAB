@@ -7,6 +7,7 @@ target_sources(app PRIVATE
   src/main.c
   ../../subsys/module_manager/module_manager.c
   ../../subsys/schema/schema.c
+  ../../subsys/resources/resources_note_weak.c
 )
 
 target_include_directories(app PRIVATE

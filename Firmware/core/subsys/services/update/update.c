@@ -9,7 +9,9 @@
 #include <zephyr/sys/util.h>
 
 #include <spaghetti/core.h>
+#include <spaghetti/config.h>
 #include <spaghetti/health.h>
+#include <spaghetti/image_manifest.h>
 
 #include "update_internal.h"
 
@@ -42,6 +44,7 @@ struct spaghetti_update_context {
 	struct k_work_delayable timeout_work;
 	int64_t deadline_ms;
 	spaghetti_health_window_token_t health_window_token;
+	const struct spaghetti_image_manifest *candidate_manifest;
 	bool initialized;
 };
 
@@ -288,6 +291,29 @@ int spaghetti_update_finish(void)
 
 	(void)k_work_cancel_delayable(&context.timeout_work);
 	context.status.state = SPAGHETTI_UPDATE_VERIFYING;
+	if (context.candidate_manifest != NULL) {
+		struct spaghetti_config live_config;
+		struct spaghetti_config_revision revision;
+
+		err = spaghetti_config_get_snapshot(&live_config, &revision);
+		if (err == -EACCES) {
+			/* Config not initialized yet; skip type-retention check. */
+			err = 0;
+		} else if (err < 0) {
+			context.status.state = SPAGHETTI_UPDATE_ERROR;
+			context.status.last_error = err;
+			goto unlock;
+		} else {
+			err = spaghetti_image_manifest_validate_candidate(
+				context.candidate_manifest, &live_config);
+			if (err < 0) {
+				LOG_ERR("candidate manifest rejected: err=%d", err);
+				(void)discard_candidate_locked(err);
+				context.candidate_manifest = NULL;
+				goto unlock;
+			}
+		}
+	}
 	err = spaghetti_update_backend_finalize_test();
 	if (err < 0) {
 		context.status.state = SPAGHETTI_UPDATE_ERROR;
@@ -299,6 +325,7 @@ int spaghetti_update_finish(void)
 	context.status.timeout_remaining_ms = 0U;
 	context.status.last_error = 0;
 	context.deadline_ms = 0;
+	context.candidate_manifest = NULL;
 	if (context.health_window_token != 0U) {
 		(void)spaghetti_health_window_release(context.health_window_token);
 		context.health_window_token = 0U;
@@ -470,4 +497,25 @@ int spaghetti_update_get_status(struct spaghetti_update_status *out)
 	*out = snapshot;
 	k_mutex_unlock(&update_lock);
 	return 0;
+}
+
+int spaghetti_update_bind_candidate_manifest(
+	const struct spaghetti_image_manifest *candidate)
+{
+	int err = k_mutex_lock(&update_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		err = -EACCES;
+		goto unlock;
+	}
+
+	context.candidate_manifest = candidate;
+	err = 0;
+
+unlock:
+	k_mutex_unlock(&update_lock);
+	return err;
 }

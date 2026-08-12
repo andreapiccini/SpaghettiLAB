@@ -7,6 +7,8 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/ztest.h>
 
+#include <spaghetti/config.h>
+#include <spaghetti/health.h>
 #include <spaghetti/update.h>
 
 static int prepare_calls;
@@ -84,6 +86,49 @@ int spaghetti_update_backend_cancel(void)
 int spaghetti_update_backend_confirm(void)
 {
 	++confirm_calls;
+	return 0;
+}
+
+int spaghetti_config_get_snapshot(
+	struct spaghetti_config *out,
+	struct spaghetti_config_revision *out_revision)
+{
+	ARG_UNUSED(out);
+	ARG_UNUSED(out_revision);
+	return -EACCES;
+}
+
+int spaghetti_image_manifest_validate_candidate(
+	const struct spaghetti_image_manifest *candidate,
+	const struct spaghetti_config *config)
+{
+	ARG_UNUSED(candidate);
+	ARG_UNUSED(config);
+	return 0;
+}
+
+int spaghetti_health_heartbeat(spaghetti_health_component_id_t component_id)
+{
+	ARG_UNUSED(component_id);
+	return 0;
+}
+
+int spaghetti_health_window_acquire(
+	spaghetti_health_component_id_t component_id,
+	k_timeout_t duration,
+	spaghetti_health_window_token_t *out_token)
+{
+	ARG_UNUSED(component_id);
+	ARG_UNUSED(duration);
+	if (out_token != NULL) {
+		*out_token = 1U;
+	}
+	return 0;
+}
+
+int spaghetti_health_window_release(spaghetti_health_window_token_t token)
+{
+	ARG_UNUSED(token);
 	return 0;
 }
 

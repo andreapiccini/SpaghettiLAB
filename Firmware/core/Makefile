@@ -32,7 +32,7 @@ WEST_CMAKE_ARGS := -- -DBOARD_ROOT=/opt/zephyrproject/app \
 .PHONY: image shell signing-key validate build pristine flash screen monitor \
 	host-tools ports remote-console-credential remote-console-provision \
 	remote-console-enable remote-console-clear remote-console-list update-qualification-manifest \
-	update-qualification-check clean
+	update-qualification-check resource-report clean
 
 $(HOST_TOOLS_STAMP): tools/requirements.txt
 	@$(HOST_PYTHON) -m venv .venv
@@ -138,6 +138,14 @@ update-qualification-manifest:
 
 update-qualification-check:
 	@$(HOST_PYTHON) tools/update_qualification.py check-report
+
+resource-report:
+	@$(HOST_PYTHON) tools/resource_report.py --profile minimal \
+		--out-dir build/resource-report
+	@$(HOST_PYTHON) tools/resource_report.py --profile standard \
+		--out-dir build/resource-report
+	@$(HOST_PYTHON) tools/resource_report.py --profile all-supported \
+		--out-dir build/resource-report
 
 ports:
 	@$(HOST_PYTHON) tools/device.py ports

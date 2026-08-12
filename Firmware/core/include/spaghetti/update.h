@@ -11,6 +11,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <spaghetti/image_manifest.h>
+
 /** Transport currently authorized to deliver one firmware candidate. */
 enum spaghetti_update_transport {
 	SPAGHETTI_UPDATE_TRANSPORT_NONE, /**< No transport owns the session. */
@@ -191,5 +193,24 @@ int spaghetti_update_get_capacity(size_t *out_size);
  * @note Thread-safe from thread context; no flash is accessed.
  */
 int spaghetti_update_get_status(struct spaghetti_update_status *out);
+
+/**
+ * @brief Bind an optional candidate image manifest for finish-time checks.
+ *
+ * When bound, @ref spaghetti_update_finish validates the candidate against the
+ * live Config before entering PENDING_REBOOT. Pass NULL to clear the binding.
+ * Adapters that cannot extract a candidate manifest leave this unbound.
+ *
+ * @param[in] candidate Borrowed firmware-lifetime or caller-owned manifest, or
+ *                      NULL to clear.
+ *
+ * @retval 0 The binding was updated.
+ * @retval -EACCES The coordinator is not initialized.
+ *
+ * @note Thread context only. The coordinator retains the pointer until clear,
+ *       cancel, or a successful finish that consumes it.
+ */
+int spaghetti_update_bind_candidate_manifest(
+	const struct spaghetti_image_manifest *candidate);
 
 #endif /* SPAGHETTI_UPDATE_H */

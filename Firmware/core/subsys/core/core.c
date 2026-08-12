@@ -16,7 +16,9 @@
 #include <spaghetti/device_profile.h>
 #include <spaghetti/discovery.h>
 #include <spaghetti/driver_registry.h>
+#include <spaghetti/feature_pack.h>
 #include <spaghetti/health.h>
+#include <spaghetti/image_manifest.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
@@ -25,6 +27,7 @@
 #include <spaghetti/power.h>
 #include <spaghetti/block_registry.h>
 #include <spaghetti/processing.h>
+#include <spaghetti/resources.h>
 #include <spaghetti/rule_registry.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/remote_console.h>
@@ -242,6 +245,18 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto secure_workspace_failed;
 	}
+	err = spaghetti_feature_registry_init();
+	if (err < 0) {
+		goto feature_registry_failed;
+	}
+	err = spaghetti_image_manifest_init();
+	if (err < 0) {
+		goto image_manifest_failed;
+	}
+	err = spaghetti_resources_init();
+	if (err < 0) {
+		goto resources_failed;
+	}
 
 	err = spaghetti_storage_init();
 	if (err < 0) {
@@ -433,6 +448,15 @@ maintenance_link_failed:
 	goto unlock;
 storage_failed:
 	(void)fail_initialization("Storage", err);
+	goto unlock;
+resources_failed:
+	(void)fail_initialization("Resources", err);
+	goto unlock;
+image_manifest_failed:
+	(void)fail_initialization("Image Manifest", err);
+	goto unlock;
+feature_registry_failed:
+	(void)fail_initialization("Feature Registry", err);
 	goto unlock;
 mqtt_failed:
 	(void)fail_initialization("MQTT", err);

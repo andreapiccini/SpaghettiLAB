@@ -125,6 +125,8 @@ source "subsys/logging/Kconfig.template.log_config"
 rsource "Kconfig.resources"
 rsource "subsys/connectivity/Kconfig"
 rsource "subsys/services/secure_workspace/Kconfig"
+rsource "subsys/feature_registry/Kconfig"
+rsource "subsys/resources/Kconfig"
 
 config SPAGHETTI_SERVICE_MAX_COUNT
 	int "Maximum registered optional services"

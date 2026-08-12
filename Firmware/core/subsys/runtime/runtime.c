@@ -16,6 +16,7 @@
 #include <spaghetti/core.h>
 #include <spaghetti/processing.h>
 #include <spaghetti/record_delivery.h>
+#include <spaghetti/resources.h>
 #include <spaghetti/rule_driver.h>
 #include <spaghetti/rule_registry.h>
 #include <spaghetti/schema.h>
@@ -574,6 +575,8 @@ int spaghetti_runtime_configure(
 	rule_count = count;
 	memcpy(jobs, pending_jobs, sizeof(jobs));
 	job_count = schedule_count;
+	spaghetti_resources_note_used(SPAGHETTI_RESOURCE_OWNER_RULES,
+				      (uint16_t)MIN(rule_count, UINT16_MAX));
 	err = 0;
 
 unlock:

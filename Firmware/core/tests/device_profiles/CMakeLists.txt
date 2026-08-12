@@ -10,6 +10,7 @@ target_sources(app PRIVATE
   ../../subsys/schema/schema.c
   ../../subsys/driver_registry/driver_registry.c
   ../../subsys/module_manager/module_manager.c
+  ../../subsys/resources/resources_note_weak.c
   ../../spaghetti_modules/declarative_device/declarative_device.c
 )
 
