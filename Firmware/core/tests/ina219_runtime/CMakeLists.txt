@@ -7,9 +7,12 @@ target_sources(app PRIVATE
   src/main.c
   ../../spaghetti_modules/ina219/ina219.c
   ../../subsys/module_manager/module_manager.c
+  ../../subsys/schema/schema.c
 )
 
 target_include_directories(app PRIVATE
   ../../include
   ../../spaghetti_modules/ina219
 )
+
+zephyr_linker_sources(SECTIONS ../../subsys/driver_registry/driver_sections.ld)

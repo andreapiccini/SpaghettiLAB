@@ -52,6 +52,7 @@ target_sources(app PRIVATE
   subsys/discovery/discovery.c
   subsys/config/config.c
   subsys/config/config_cbor.c
+  subsys/config/legacy_driver_config.c
   subsys/services/storage/storage.c
   subsys/services/maintenance_link/maintenance_link.c
   subsys/services/maintenance_link/maintenance_mgmt.c
@@ -89,6 +90,7 @@ target_sources_ifdef(CONFIG_SPAGHETTI_ENERGY app PRIVATE
 )
 
 zephyr_linker_sources(SECTIONS subsys/core/health_sections.ld)
+zephyr_linker_sources(SECTIONS subsys/driver_registry/driver_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)
 

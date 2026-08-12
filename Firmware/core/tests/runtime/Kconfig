@@ -1,6 +1,7 @@
 mainmenu "Spaghetti Runtime tests"
 
 rsource "../../Kconfig.resources"
+rsource "../../subsys/core/Kconfig.health"
 
 config SPAGHETTI_RUNTIME_LOG_LEVEL
 	int
@@ -29,5 +30,9 @@ config SPAGHETTI_DATA_LOG_LEVEL
 config SPAGHETTI_DATA_LOGGER
 	bool
 	default n
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
 
 source "Kconfig.zephyr"

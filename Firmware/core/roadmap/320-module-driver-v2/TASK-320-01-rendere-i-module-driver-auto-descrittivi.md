@@ -1,6 +1,6 @@
 # TASK-320-01 — Rendere i Module Driver auto-descrittivi
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 320 — Module Driver V2
 
 ## Cosa devo fare
@@ -216,13 +216,13 @@ per ogni sensore.
 
 ## Checklist di completamento
 
-- [ ] Descriptor contiene API version e tre schemi coerenti.
-- [ ] Registry non include né elenca driver concreti.
-- [ ] INA219 e Relay usano proprietà/record/comandi generici.
-- [ ] Manager gestisce start/stop e impedisce callback dopo remove.
-- [ ] Manager acquisisce Port e Power prima di init e li rilascia in ordine inverso.
-- [ ] Snapshot espone Flow/Bay/rail e admission senza fingere controlli passivi.
-- [ ] Un driver test-only compare senza modifiche centrali.
+- [x] Descriptor contiene API version e tre schemi coerenti.
+- [x] Registry non include né elenca driver concreti.
+- [x] INA219 e Relay usano proprietà/record/comandi generici.
+- [x] Manager gestisce start/stop e impedisce callback dopo remove.
+- [x] Manager acquisisce Port e Power prima di init e li rilascia in ordine inverso.
+- [x] Snapshot espone Flow/Bay/rail e admission senza fingere controlli passivi.
+- [x] Un driver test-only compare senza modifiche centrali.
 
 ## Verifica e fine task
 

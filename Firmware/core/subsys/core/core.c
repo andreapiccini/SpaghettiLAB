@@ -24,6 +24,7 @@
 #include <spaghetti/power.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/remote_console.h>
+#include <spaghetti/schema.h>
 #include <spaghetti/secure_workspace.h>
 #include <spaghetti/service.h>
 #include <spaghetti/storage.h>
@@ -32,6 +33,7 @@
 #include <spaghetti/wifi_profiles.h>
 
 #include "core_boot_internal.h"
+#include "../config/legacy_driver_config.h"
 #include "../services/service_registry.h"
 
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
@@ -83,14 +85,25 @@ static int discovery_event_sink(const struct spaghetti_discovery_event *event,
 	}
 
 	if (event->type == SPAGHETTI_DISCOVERY_UPSERT) {
-		const struct spaghetti_module_request request = {
-			.key = event->result.key,
-			.port_id = event->result.port_id,
-			.type_id = event->result.type_id,
-			.driver_config = event->result.driver_config,
-			.driver_config_size = event->result.driver_config_size,
-			.revision = event->result.generation,
-		};
+		struct spaghetti_property_set properties;
+		struct spaghetti_module_request request;
+		int convert_err;
+
+		convert_err = spaghetti_legacy_driver_config_bytes_to_properties(
+			event->result.type_id, event->result.driver_config,
+			event->result.driver_config_size, &properties);
+		if (convert_err < 0) {
+			return convert_err;
+		}
+
+		memset(&request, 0, sizeof(request));
+		request.key = event->result.key;
+		request.port_id = event->result.port_id;
+		request.type_id = event->result.type_id;
+		request.config = &properties;
+		request.placement.bay_id = SPAGHETTI_BAY_ID_UNSPECIFIED;
+		request.placement.power_rail_id = SPAGHETTI_POWER_RAIL_UNSPECIFIED;
+		request.revision = event->result.generation;
 
 		return spaghetti_module_manager_configure(&request, &module_id);
 	}

@@ -6,9 +6,12 @@ project(spaghetti_relay_test)
 target_sources(app PRIVATE
   src/main.c
   ../../spaghetti_modules/relay/relay.c
+  ../../subsys/schema/schema.c
 )
 
 target_include_directories(app PRIVATE
   ../../include
   ../../spaghetti_modules/relay
 )
+
+zephyr_linker_sources(SECTIONS ../../subsys/driver_registry/driver_sections.ld)

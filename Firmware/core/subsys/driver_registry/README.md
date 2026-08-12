@@ -2,171 +2,32 @@
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md)
 
-Driver Registry maps a stable module type identifier to an immutable driver descriptor compiled into the firmware. It is a catalog, not a module-instance owner.
+Driver Registry maps a stable module type identifier to an immutable driver
+descriptor collected from Zephyr iterable sections at link time. It is a catalog,
+not a module-instance owner.
 
-One descriptor may serve many simultaneous instances, including several Modules on
-the same Port. Address, calibration and context belong to each instance, never to the
-Registry entry.
+## Ownership
 
-## What this component owns
-
-- The read-only collection of available driver descriptors.
-- Type-ID validation, duplicate detection, and lookup.
-
-## What this component does not own
-
-- Module instances or driver-private context.
-- Dynamic loading, Port assignment, or lifecycle transitions.
+Registry owns validation and lookup of descriptors published by drivers through
+`SPAGHETTI_MODULE_DRIVER_DEFINE()`. It does not include concrete driver headers or
+maintain a central pointer table.
 
 ## Files
 
 | File | Role |
 |---|---|
-| `include/spaghetti/driver_registry.h` | Lookup and enumeration declarations. |
-| `subsys/driver_registry/driver_registry.c` | Descriptor table and validation. |
-| `subsys/driver_registry/driver_registry_internal.h` | Private catalog-validation seam used by host tests. |
-| `tests/driver_registry/` | Invalid-catalog and public lookup tests. |
-| Concrete module headers | Export immutable descriptors referenced by the table. |
-
-## Data model
-
-| Type / object | Owner | Meaning |
-|---|---|---|
-| Descriptor pointer table | Registry | Fixed collection valid for firmware lifetime. |
-| Type ID | Concrete descriptor | Bounded stable string such as `ina219` or `relay`. |
-| Registry count | Registry | Number of validated descriptors. |
+| `include/spaghetti/driver_registry.h` | Lookup and enumeration API. |
+| `subsys/driver_registry/driver_registry.c` | Section iteration and validation. |
+| `subsys/driver_registry/driver_sections.ld` | ROM iterable section. |
+| `include/spaghetti/module_driver.h` | Descriptor contract and DEFINE macro. |
 
 ## API contract
 
-### `int spaghetti_driver_registry_init(void)`
+`init()` walks every linked descriptor, rejects bad API versions, unpaired
+start/stop, and incoherent schemas, then rejects duplicate `type_id` values.
+`find()` / `count()` / `get()` iterate the same section. Order is not significant.
 
-**Purpose:** Validate every descriptor and reject duplicate type IDs.
+## How a driver registers
 
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** `0` when the catalog is coherent.
-
-**Errors:** Null descriptor, empty/duplicate ID, missing operation table, missing pure
-`validate_config`/`describe_endpoint` operations, or invalid capability declaration.
-
-**Execution context:** Main thread during boot.
-
-**Calls:** No hardware APIs.
-
-### `const struct spaghetti_module_driver *spaghetti_driver_registry_find(const char *type_id)`
-
-**Purpose:** Resolve an exact type ID.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `type_id` | NUL-terminated caller-owned ID valid during the call. |
-
-**Returns:** Immutable descriptor or `NULL`.
-
-**Errors:** Null/empty/unknown ID returns `NULL`.
-
-**Execution context:** Any calling thread after initialization.
-
-**Calls:** Bounded string comparison.
-
-### `size_t spaghetti_driver_registry_count(void)`
-
-**Purpose:** Return descriptor count for diagnostics.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| None | No input parameters. |
-
-**Returns:** Fixed validated count.
-
-**Errors:** None after initialization.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-### `const struct spaghetti_module_driver *spaghetti_driver_registry_get(size_t index)`
-
-**Purpose:** Enumerate one descriptor by index.
-
-**Parameters**
-
-| Parameter | Meaning |
-|---|---|
-| `index` | Zero-based index below count. |
-
-**Returns:** Immutable descriptor or `NULL`.
-
-**Errors:** Out-of-range index returns `NULL`.
-
-**Execution context:** Calling thread.
-
-**Calls:** None.
-
-## How it works
-
-```mermaid
-flowchart LR
-    INA["ina219 descriptor"] --> TABLE["Fixed Registry"]
-    RELAY["relay descriptor"] --> TABLE
-    MANAGER["Module Manager"] -->|"find type_id"| TABLE
-    TABLE -->|"immutable descriptor"| MANAGER
-```
-
-## Practical example
-
-Manager receives type ID `ina219`, calls `find()`, and gets one immutable operation
-table. Both address `0x40` and `0x41` use that same descriptor with different Module
-contexts. `does-not-exist` returns `NULL`; Registry does not create an instance or
-touch hardware.
-
-## Zephyr integration
-
-- A plain const pointer array is deterministic and sufficient.
-- Zephyr iterable sections may replace table assembly only if they preserve the same public contract.
-- Kconfig may decide which concrete driver source files are compiled.
-
-## Configuration templates
-
-### Fixed registry table
-
-```c
-static const struct spaghetti_module_driver *const drivers[] = {
-    &spaghetti_ina219_driver,
-    &spaghetti_relay_driver,
-};
-```
-
-The table has one entry per driver type, not one entry per configured instance.
-
-### Conditional source selection in CMake
-
-```cmake
-target_sources_ifdef(CONFIG_SPAGHETTI_MODULE_INA219 app PRIVATE
-  spaghetti_modules/ina219/ina219.c
-)
-```
-
-## Ownership and concurrency
-
-After successful initialization the Registry is immutable, so lookup requires no lock. Returned descriptors remain valid for firmware lifetime.
-
-The private `spaghetti_driver_registry_validate()` helper accepts an arbitrary catalog
-only so native tests can exercise invalid descriptors and duplicate IDs. Production
-code always calls it with the fixed catalog compiled into `driver_registry.c`; it does
-not make driver registration dynamic.
-
-## Contract guarantees
-
-- Type IDs are unique.
-- Lookup never transfers ownership.
-- Registry contains no live or mutable module state.
-- Port sharing never changes Registry lookup or descriptor ownership.
+Compile the driver `.c` that contains `SPAGHETTI_MODULE_DRIVER_DEFINE(...)`.
+No change to `driver_registry.c` is required.

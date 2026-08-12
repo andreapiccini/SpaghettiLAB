@@ -16,6 +16,9 @@
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
+#include <spaghetti/power.h>
+#include <spaghetti/schema.h>
+#include <spaghetti/topology.h>
 
 #define SPAGHETTI_TEST_INA219_ADDRESS_MIN 0x40U
 #define SPAGHETTI_TEST_INA219_ADDRESS_COUNT 16U
@@ -176,6 +179,24 @@ int spaghetti_port_release(
 	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
 }
 
+const struct spaghetti_flow_descriptor *spaghetti_topology_flow_for_port(
+	spaghetti_port_id_t port_id)
+{
+	ARG_UNUSED(port_id);
+	return NULL;
+}
+
+int spaghetti_topology_bay_get(
+	spaghetti_flow_id_t flow_id,
+	spaghetti_bay_id_t bay_id,
+	struct spaghetti_bay_descriptor *out)
+{
+	ARG_UNUSED(flow_id);
+	ARG_UNUSED(bay_id);
+	ARG_UNUSED(out);
+	return -ENOENT;
+}
+
 const struct spaghetti_module_driver *spaghetti_driver_registry_find(
 	const char *type_id)
 {
@@ -195,14 +216,23 @@ static int configure_ina219(spaghetti_module_key_t key, uint8_t address,
 		.shunt_milliohm = 100U,
 		.current_lsb_microamp = 200U,
 	};
-	const struct spaghetti_module_request request = {
-		.key = key,
-		.port_id = 0U,
-		.type_id = "ina219",
-		.driver_config = &config,
-		.driver_config_size = sizeof(config),
-		.revision = 1U,
-	};
+	struct spaghetti_property_set properties;
+	struct spaghetti_module_request request;
+	int err;
+
+	err = spaghetti_ina219_config_to_properties(&config, &properties);
+	if (err < 0) {
+		return err;
+	}
+
+	memset(&request, 0, sizeof(request));
+	request.key = key;
+	request.port_id = 0U;
+	request.type_id = "ina219";
+	request.config = &properties;
+	request.placement.bay_id = SPAGHETTI_BAY_ID_UNSPECIFIED;
+	request.placement.power_rail_id = SPAGHETTI_POWER_RAIL_UNSPECIFIED;
+	request.revision = 1U;
 
 	return spaghetti_module_manager_configure(&request, out_id);
 }
@@ -227,13 +257,17 @@ ZTEST(ina219_runtime, test_validation_and_two_runtime_instances)
 		.shunt_milliohm = 100U,
 		.current_lsb_microamp = 200U,
 	};
+	struct spaghetti_property_set invalid_properties;
 	struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE,
 		.value_size = 0U,
 		.value = {0xFFU},
 	};
 	struct spaghetti_module_snapshot snapshot;
-	struct spaghetti_sample sample;
+	struct spaghetti_record record;
+	const struct spaghetti_value *bus;
+	const struct spaghetti_value *current;
+	const struct spaghetti_value *power;
 	spaghetti_module_id_t id_40;
 	spaghetti_module_id_t id_41;
 	spaghetti_module_id_t id_42;
@@ -241,12 +275,16 @@ ZTEST(ina219_runtime, test_validation_and_two_runtime_instances)
 	spaghetti_module_id_t ignored_id;
 	size_t module_count;
 
+	zassert_ok(spaghetti_ina219_config_to_properties(&invalid_address,
+							 &invalid_properties));
 	zassert_equal(spaghetti_ina219_driver.ops->validate_config(
-		&invalid_address, sizeof(invalid_address)), -EINVAL);
-	zassert_equal(spaghetti_ina219_driver.ops->validate_config(
-		&invalid_address, sizeof(invalid_address) - 1U), -EINVAL);
+			      &invalid_properties),
+		      -ERANGE);
+	endpoint.kind = SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE;
+	endpoint.value[0] = 0xFFU;
 	zassert_equal(spaghetti_ina219_driver.ops->describe_endpoint(
-		&invalid_address, sizeof(invalid_address), &endpoint), -EINVAL);
+			      &invalid_properties, &endpoint),
+		      -ERANGE);
 	zassert_equal(endpoint.kind, SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE);
 	zassert_equal(endpoint.value[0], 0xFFU);
 
@@ -267,31 +305,46 @@ ZTEST(ina219_runtime, test_validation_and_two_runtime_instances)
 	set_measurement(0x40U, 5000000U, 120000, 600000U);
 	set_measurement(0x41U, 12000000U, -40000, 480000U);
 
-	zassert_ok(spaghetti_module_manager_read(id_40, &sample));
-	zassert_equal(sample.bus_voltage_microvolts, 5000000);
-	zassert_equal(sample.current_microamps, 120000);
-	zassert_equal(sample.power_microwatts, 600000U);
-	zassert_ok(spaghetti_module_manager_read(id_41, &sample));
-	zassert_equal(sample.bus_voltage_microvolts, 12000000);
-	zassert_equal(sample.current_microamps, -40000);
-	zassert_equal(sample.power_microwatts, 480000U);
+	zassert_ok(spaghetti_module_manager_read(id_40, &record));
+	bus = spaghetti_property_find(&record.payload.values,
+				      SPAGHETTI_INA219_FIELD_BUS_VOLTAGE_MICROVOLTS);
+	current = spaghetti_property_find(&record.payload.values,
+					  SPAGHETTI_INA219_FIELD_CURRENT_MICROAMPS);
+	power = spaghetti_property_find(&record.payload.values,
+					SPAGHETTI_INA219_FIELD_POWER_MICROWATTS);
+	zassert_not_null(bus);
+	zassert_not_null(current);
+	zassert_not_null(power);
+	zassert_equal(bus->data.signed_integer, 5000000);
+	zassert_equal(current->data.signed_integer, 120000);
+	zassert_equal(power->data.unsigned_integer, 600000U);
+	zassert_ok(spaghetti_module_manager_read(id_41, &record));
+	bus = spaghetti_property_find(&record.payload.values,
+				      SPAGHETTI_INA219_FIELD_BUS_VOLTAGE_MICROVOLTS);
+	current = spaghetti_property_find(&record.payload.values,
+					  SPAGHETTI_INA219_FIELD_CURRENT_MICROAMPS);
+	power = spaghetti_property_find(&record.payload.values,
+					SPAGHETTI_INA219_FIELD_POWER_MICROWATTS);
+	zassert_equal(bus->data.signed_integer, 12000000);
+	zassert_equal(current->data.signed_integer, -40000);
+	zassert_equal(power->data.unsigned_integer, 480000U);
 
-	sample.bus_voltage_microvolts = -1;
+	record.payload.values.fields[0].data.signed_integer = -1;
 	fake_bus.conversion_ready[0U] = false;
-	zassert_equal(spaghetti_module_manager_read(id_40, &sample), -ETIMEDOUT);
-	zassert_equal(sample.bus_voltage_microvolts, -1);
+	zassert_equal(spaghetti_module_manager_read(id_40, &record), -ETIMEDOUT);
+	zassert_equal(record.payload.values.fields[0].data.signed_integer, -1);
 	fake_bus.conversion_ready[0U] = true;
 	fake_bus.overflow[0U] = true;
-	zassert_equal(spaghetti_module_manager_read(id_40, &sample), -ERANGE);
-	zassert_equal(sample.bus_voltage_microvolts, -1);
+	zassert_equal(spaghetti_module_manager_read(id_40, &record), -ERANGE);
+	zassert_equal(record.payload.values.fields[0].data.signed_integer, -1);
 	fake_bus.overflow[0U] = false;
 	fake_bus.transfer_error = -EIO;
-	zassert_equal(spaghetti_module_manager_read(id_40, &sample), -EIO);
-	zassert_equal(sample.bus_voltage_microvolts, -1);
+	zassert_equal(spaghetti_module_manager_read(id_40, &record), -EIO);
+	zassert_equal(record.payload.values.fields[0].data.signed_integer, -1);
 	fake_bus.transfer_error = 0;
 
 	zassert_ok(spaghetti_module_manager_remove(id_41, 1U));
-	zassert_ok(spaghetti_module_manager_read(id_40, &sample));
+	zassert_ok(spaghetti_module_manager_read(id_40, &record));
 	zassert_ok(configure_ina219(12U, 0x41U, &id_41));
 	zassert_ok(configure_ina219(13U, 0x42U, &id_42));
 	zassert_ok(configure_ina219(14U, 0x43U, &id_43));

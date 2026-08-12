@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -11,11 +11,11 @@ modificare tabelle o tipi specifici nel firmware centrale.
 
 ## Task
 
-1. ⬜ [TASK-320-01 — Rendere i Module Driver auto-descrittivi](TASK-320-01-rendere-i-module-driver-auto-descrittivi.md)
+1. ✅ [TASK-320-01 — Rendere i Module Driver auto-descrittivi](TASK-320-01-rendere-i-module-driver-auto-descrittivi.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Driver Registry usa iterable sections Zephyr.
-- [ ] INA219 e Relay implementano il contratto V2.
-- [ ] Letture, eventi e comandi usano valori tipizzati.
-- [ ] Il contratto può ospitare il driver generico dei Device Profile della fase 325.
+- [x] Driver Registry usa iterable sections Zephyr.
+- [x] INA219 e Relay implementano il contratto V2.
+- [x] Letture, eventi e comandi usano valori tipizzati.
+- [x] Il contratto può ospitare il driver generico dei Device Profile della fase 325.

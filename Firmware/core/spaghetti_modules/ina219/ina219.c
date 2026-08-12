@@ -15,6 +15,7 @@
 #include <spaghetti/module.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/port.h>
+#include <spaghetti/schema.h>
 
 LOG_MODULE_REGISTER(spaghetti_ina219, CONFIG_SPAGHETTI_INA219_LOG_LEVEL);
 
@@ -47,6 +48,157 @@ K_MEM_SLAB_DEFINE(ina219_context_slab,
 		  sizeof(struct spaghetti_ina219_context),
 		  CONFIG_SPAGHETTI_INA219_MAX_INSTANCES,
 		  __alignof__(struct spaghetti_ina219_context));
+
+static const struct spaghetti_field_descriptor ina219_config_fields[] = {
+	{
+		.field_id = SPAGHETTI_INA219_CONFIG_ADDRESS,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED | SPAGHETTI_FIELD_WRITABLE,
+		.unsigned_minimum = SPAGHETTI_INA219_ADDRESS_MIN,
+		.unsigned_maximum = SPAGHETTI_INA219_ADDRESS_MAX,
+		.name = "address",
+		.description = "INA219 7-bit I2C address",
+		.unit = "",
+	},
+	{
+		.field_id = SPAGHETTI_INA219_CONFIG_SHUNT_MILLIOHM,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED | SPAGHETTI_FIELD_WRITABLE,
+		.unsigned_minimum = 1U,
+		.unsigned_maximum = UINT64_MAX,
+		.name = "shunt_milliohm",
+		.description = "Shunt resistance",
+		.unit = "mOhm",
+	},
+	{
+		.field_id = SPAGHETTI_INA219_CONFIG_CURRENT_LSB_MICROAMP,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED | SPAGHETTI_FIELD_WRITABLE,
+		.unsigned_minimum = 1U,
+		.unsigned_maximum = UINT64_MAX,
+		.name = "current_lsb_microamp",
+		.description = "Current register LSB weight",
+		.unit = "uA",
+	},
+};
+
+static const struct spaghetti_schema_descriptor ina219_config_schema = {
+	.schema_id = "spaghetti.ina219.config",
+	.version = 1U,
+	.fields = ina219_config_fields,
+	.field_count = ARRAY_SIZE(ina219_config_fields),
+};
+
+static const struct spaghetti_field_descriptor ina219_sample_fields[] = {
+	{
+		.field_id = SPAGHETTI_INA219_FIELD_BUS_VOLTAGE_MICROVOLTS,
+		.type = SPAGHETTI_VALUE_INT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.signed_minimum = INT64_MIN,
+		.signed_maximum = INT64_MAX,
+		.name = "bus_voltage_microvolts",
+		.description = "Bus voltage",
+		.unit = "uV",
+	},
+	{
+		.field_id = SPAGHETTI_INA219_FIELD_CURRENT_MICROAMPS,
+		.type = SPAGHETTI_VALUE_INT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.signed_minimum = INT64_MIN,
+		.signed_maximum = INT64_MAX,
+		.name = "current_microamps",
+		.description = "Signed shunt current",
+		.unit = "uA",
+	},
+	{
+		.field_id = SPAGHETTI_INA219_FIELD_POWER_MICROWATTS,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.unsigned_minimum = 0U,
+		.unsigned_maximum = UINT64_MAX,
+		.name = "power_microwatts",
+		.description = "Instantaneous power",
+		.unit = "uW",
+	},
+};
+
+static const struct spaghetti_schema_descriptor ina219_sample_schema = {
+	.schema_id = "spaghetti.ina219.sample",
+	.version = 1U,
+	.fields = ina219_sample_fields,
+	.field_count = ARRAY_SIZE(ina219_sample_fields),
+};
+
+static const struct spaghetti_schema_descriptor *const ina219_record_schemas[] = {
+	&ina219_sample_schema,
+};
+
+int spaghetti_ina219_config_to_properties(
+	const struct spaghetti_ina219_config *in,
+	struct spaghetti_property_set *out)
+{
+	if ((in == NULL) || (out == NULL)) {
+		return -EINVAL;
+	}
+
+	memset(out, 0, sizeof(*out));
+	out->field_count = 3U;
+	out->fields[0] = (struct spaghetti_value){
+		.field_id = SPAGHETTI_INA219_CONFIG_ADDRESS,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = in->i2c_address,
+	};
+	out->fields[1] = (struct spaghetti_value){
+		.field_id = SPAGHETTI_INA219_CONFIG_SHUNT_MILLIOHM,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = in->shunt_milliohm,
+	};
+	out->fields[2] = (struct spaghetti_value){
+		.field_id = SPAGHETTI_INA219_CONFIG_CURRENT_LSB_MICROAMP,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = in->current_lsb_microamp,
+	};
+	return 0;
+}
+
+int spaghetti_ina219_config_from_properties(
+	const struct spaghetti_property_set *in,
+	struct spaghetti_ina219_config *out)
+{
+	const struct spaghetti_value *address;
+	const struct spaghetti_value *shunt;
+	const struct spaghetti_value *lsb;
+
+	if ((in == NULL) || (out == NULL)) {
+		return -EINVAL;
+	}
+
+	address = spaghetti_property_find(in, SPAGHETTI_INA219_CONFIG_ADDRESS);
+	shunt = spaghetti_property_find(in, SPAGHETTI_INA219_CONFIG_SHUNT_MILLIOHM);
+	lsb = spaghetti_property_find(in,
+				      SPAGHETTI_INA219_CONFIG_CURRENT_LSB_MICROAMP);
+	if ((address == NULL) || (address->type != SPAGHETTI_VALUE_UINT64) ||
+	    (shunt == NULL) || (shunt->type != SPAGHETTI_VALUE_UINT64) ||
+	    (lsb == NULL) || (lsb->type != SPAGHETTI_VALUE_UINT64)) {
+		return -EINVAL;
+	}
+	if ((address->data.unsigned_integer > UINT8_MAX) ||
+	    (shunt->data.unsigned_integer > UINT16_MAX) ||
+	    (lsb->data.unsigned_integer > UINT16_MAX)) {
+		return -ERANGE;
+	}
+
+	out->i2c_address = (uint8_t)address->data.unsigned_integer;
+	out->shunt_milliohm = (uint16_t)shunt->data.unsigned_integer;
+	out->current_lsb_microamp = (uint16_t)lsb->data.unsigned_integer;
+	return 0;
+}
 
 static int ina219_write_register(const struct spaghetti_ina219_context *context,
 				 uint8_t reg, uint16_t value)
@@ -103,27 +255,24 @@ static int ina219_read_register(const struct spaghetti_ina219_context *context,
 	return 0;
 }
 
-static int ina219_validate_config(const void *config, size_t config_size)
+static int ina219_validate_config(const struct spaghetti_property_set *config)
 {
-	struct spaghetti_ina219_config ina219_config;
+	struct spaghetti_ina219_config ignored;
+	int err;
 
-	if ((config == NULL) ||
-	    (config_size != sizeof(struct spaghetti_ina219_config))) {
+	if (config == NULL) {
 		return -EINVAL;
 	}
 
-	memcpy(&ina219_config, config, sizeof(ina219_config));
-	if ((ina219_config.i2c_address < SPAGHETTI_INA219_ADDRESS_MIN) ||
-	    (ina219_config.i2c_address > SPAGHETTI_INA219_ADDRESS_MAX) ||
-	    (ina219_config.shunt_milliohm == 0U) ||
-	    (ina219_config.current_lsb_microamp == 0U)) {
-		return -EINVAL;
+	err = spaghetti_property_validate(config, &ina219_config_schema);
+	if (err < 0) {
+		return err;
 	}
 
-	return 0;
+	return spaghetti_ina219_config_from_properties(config, &ignored);
 }
 
-static int ina219_describe_endpoint(const void *config, size_t config_size,
+static int ina219_describe_endpoint(const struct spaghetti_property_set *config,
 				    struct spaghetti_module_endpoint *out)
 {
 	struct spaghetti_ina219_config ina219_config;
@@ -133,11 +282,15 @@ static int ina219_describe_endpoint(const void *config, size_t config_size,
 		return -EINVAL;
 	}
 
-	err = ina219_validate_config(config, config_size);
+	err = ina219_validate_config(config);
 	if (err < 0) {
 		return err;
 	}
-	memcpy(&ina219_config, config, sizeof(ina219_config));
+
+	err = spaghetti_ina219_config_from_properties(config, &ina219_config);
+	if (err < 0) {
+		return err;
+	}
 
 	const struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
@@ -155,8 +308,8 @@ static void ina219_free_context(struct spaghetti_ina219_context *context)
 	k_mem_slab_free(&ina219_context_slab, context);
 }
 
-static int ina219_init(struct spaghetti_module *module, const void *config,
-		       size_t config_size)
+static int ina219_init(struct spaghetti_module *module,
+		       const struct spaghetti_property_set *config)
 {
 	struct spaghetti_ina219_config ina219_config;
 	struct spaghetti_ina219_context *context;
@@ -169,11 +322,15 @@ static int ina219_init(struct spaghetti_module *module, const void *config,
 		return -EINVAL;
 	}
 
-	err = ina219_validate_config(config, config_size);
+	err = ina219_validate_config(config);
 	if (err < 0) {
 		return err;
 	}
-	memcpy(&ina219_config, config, sizeof(ina219_config));
+
+	err = spaghetti_ina219_config_from_properties(config, &ina219_config);
+	if (err < 0) {
+		return err;
+	}
 
 	err = k_mem_slab_alloc(&ina219_context_slab, &context_block, K_NO_WAIT);
 	if (err < 0) {
@@ -228,10 +385,10 @@ free_context:
 }
 
 static int ina219_read(struct spaghetti_module *module,
-		       struct spaghetti_sample *out)
+		       struct spaghetti_record_payload *out)
 {
 	struct spaghetti_ina219_context *context;
-	struct spaghetti_sample sample;
+	struct spaghetti_record_payload payload;
 	uint16_t bus_raw = 0U;
 	uint16_t current_raw;
 	uint16_t power_raw;
@@ -300,15 +457,33 @@ static int ina219_read(struct spaghetti_module *module,
 		   (uint64_t)context->config.current_lsb_microamp *
 		   SPAGHETTI_INA219_POWER_LSB_MULTIPLIER;
 
-	if ((bus_uv > INT32_MAX) || (current_ua < INT32_MIN) ||
-	    (current_ua > INT32_MAX) || (power_uw > UINT32_MAX)) {
+	if (bus_uv > (uint64_t)INT64_MAX) {
 		return -ERANGE;
 	}
 
-	sample.bus_voltage_microvolts = (int32_t)bus_uv;
-	sample.current_microamps = (int32_t)current_ua;
-	sample.power_microwatts = (uint32_t)power_uw;
-	*out = sample;
+	memset(&payload, 0, sizeof(payload));
+	payload.kind = SPAGHETTI_RECORD_SAMPLE;
+	payload.schema_version = ina219_sample_schema.version;
+	strncpy(payload.schema_id, ina219_sample_schema.schema_id,
+		sizeof(payload.schema_id) - 1U);
+	payload.values.field_count = 3U;
+	payload.values.fields[0] = (struct spaghetti_value){
+		.field_id = SPAGHETTI_INA219_FIELD_BUS_VOLTAGE_MICROVOLTS,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = (int64_t)bus_uv,
+	};
+	payload.values.fields[1] = (struct spaghetti_value){
+		.field_id = SPAGHETTI_INA219_FIELD_CURRENT_MICROAMPS,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = current_ua,
+	};
+	payload.values.fields[2] = (struct spaghetti_value){
+		.field_id = SPAGHETTI_INA219_FIELD_POWER_MICROWATTS,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = power_uw,
+	};
+
+	*out = payload;
 	return 0;
 }
 
@@ -339,11 +514,22 @@ static const struct spaghetti_module_driver_ops ina219_ops = {
 	.describe_endpoint = ina219_describe_endpoint,
 	.init = ina219_init,
 	.read = ina219_read,
+	.command = NULL,
+	.start = NULL,
+	.stop = NULL,
 	.deinit = ina219_deinit,
 };
 
-const struct spaghetti_module_driver spaghetti_ina219_driver = {
+SPAGHETTI_MODULE_DRIVER_DEFINE(spaghetti_ina219_driver) = {
 	.type_id = "ina219",
+	.api_version = SPAGHETTI_MODULE_DRIVER_API_VERSION,
 	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.transport = SPAGHETTI_PORT_TRANSPORT_I2C,
+	.power_requirement = { .declared = false },
+	.config_schema = &ina219_config_schema,
+	.record_schemas = ina219_record_schemas,
+	.record_schema_count = ARRAY_SIZE(ina219_record_schemas),
+	.commands = NULL,
+	.command_count = 0U,
 	.ops = &ina219_ops,
 };

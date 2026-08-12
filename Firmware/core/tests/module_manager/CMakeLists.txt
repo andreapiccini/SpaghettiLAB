@@ -6,6 +6,7 @@ project(spaghetti_module_manager_test)
 target_sources(app PRIVATE
   src/main.c
   ../../subsys/module_manager/module_manager.c
+  ../../subsys/schema/schema.c
 )
 
 target_include_directories(app PRIVATE

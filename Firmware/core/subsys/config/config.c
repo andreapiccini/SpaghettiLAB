@@ -14,8 +14,11 @@
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/runtime.h>
+#include <spaghetti/schema.h>
 #include <spaghetti/service.h>
 #include <spaghetti/storage.h>
+
+#include "legacy_driver_config.h"
 
 LOG_MODULE_REGISTER(spaghetti_config, CONFIG_SPAGHETTI_CONFIG_LOG_LEVEL);
 
@@ -110,6 +113,7 @@ static int describe_module(
 {
 	const struct spaghetti_module_driver *driver;
 	const struct spaghetti_port *port;
+	struct spaghetti_property_set properties;
 	int err;
 
 	if ((module_config->key == 0U) ||
@@ -129,7 +133,8 @@ static int describe_module(
 	    (driver->ops->describe_endpoint == NULL) ||
 	    (driver->ops->init == NULL) ||
 	    ((driver->ops->read == NULL) &&
-	     (driver->ops->command == NULL)) ||
+	     (driver->ops->command == NULL) &&
+	     (driver->ops->start == NULL)) ||
 	    (driver->ops->deinit == NULL)) {
 		return -ENOTSUP;
 	}
@@ -138,15 +143,19 @@ static int describe_module(
 		return -ENOTSUP;
 	}
 
-	err = driver->ops->validate_config(module_config->driver_config,
-					  module_config->driver_config_size);
+	err = spaghetti_legacy_driver_config_bytes_to_properties(
+		module_config->type_id, module_config->driver_config,
+		module_config->driver_config_size, &properties);
 	if (err < 0) {
 		return err;
 	}
 
-	err = driver->ops->describe_endpoint(module_config->driver_config,
-					    module_config->driver_config_size,
-					    out_endpoint);
+	err = driver->ops->validate_config(&properties);
+	if (err < 0) {
+		return err;
+	}
+
+	err = driver->ops->describe_endpoint(&properties, out_endpoint);
 	if (err < 0) {
 		return err;
 	}

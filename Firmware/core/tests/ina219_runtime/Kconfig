@@ -18,4 +18,8 @@ config SPAGHETTI_INA219_LOG_LEVEL
 	int
 	default 0
 
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
 source "Kconfig.zephyr"

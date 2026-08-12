@@ -1,15 +1,19 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/zbus/zbus.h>
 #include <zephyr/ztest.h>
 
 #include <spaghetti/data.h>
+#include <spaghetti/health.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/runtime.h>
+#include <spaghetti/schema.h>
+#include <relay.h>
 
 ZBUS_OBS_DECLARE(electrical_logger_subscriber,
 		 electrical_test_subscriber);
@@ -22,6 +26,12 @@ static bool last_command_on;
 K_SEM_DEFINE(read_entered_sem, 0, 1);
 K_SEM_DEFINE(read_release_sem, 0, 1);
 K_SEM_DEFINE(command_sem, 0, 8);
+
+int spaghetti_health_heartbeat(spaghetti_health_component_id_t component_id)
+{
+	ARG_UNUSED(component_id);
+	return 0;
+}
 
 int spaghetti_module_manager_get_by_id(
 	spaghetti_module_id_t id,
@@ -57,7 +67,7 @@ int spaghetti_module_manager_get_by_id(
 
 int spaghetti_module_manager_read(
 	spaghetti_module_id_t id,
-	struct spaghetti_sample *out)
+	struct spaghetti_record *out)
 {
 	if ((id != 3U) || (out == NULL)) {
 		return -EINVAL;
@@ -67,28 +77,53 @@ int spaghetti_module_manager_read(
 		(void)k_sem_take(&read_release_sem, K_FOREVER);
 	}
 
-	const struct spaghetti_sample sample = {
-		.bus_voltage_microvolts = 5000000,
-		.current_microamps = -120000,
-		.power_microwatts = 600000U,
+	memset(out, 0, sizeof(*out));
+	out->source_id = 3U;
+	out->source_key = 10U;
+	out->timestamp_ms = k_uptime_get();
+	out->sequence = ++read_count;
+	out->payload.kind = SPAGHETTI_RECORD_SAMPLE;
+	out->payload.schema_version = 1U;
+	strncpy(out->payload.schema_id, "spaghetti.ina219.sample",
+		sizeof(out->payload.schema_id) - 1U);
+	out->payload.values.field_count = 3U;
+	out->payload.values.fields[0] = (struct spaghetti_value){
+		.field_id = 1U,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = 5000000,
 	};
-
-	*out = sample;
-	++read_count;
+	out->payload.values.fields[1] = (struct spaghetti_value){
+		.field_id = 2U,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = -120000,
+	};
+	out->payload.values.fields[2] = (struct spaghetti_value){
+		.field_id = 3U,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = 600000U,
+	};
 	return 0;
 }
 
 int spaghetti_module_manager_command(
 	spaghetti_module_id_t id,
-	const struct spaghetti_command *command)
+	const struct spaghetti_module_command *command)
 {
+	const struct spaghetti_value *on_field;
+
 	if ((id != 4U) || (command == NULL) ||
-	    (command->type != SPAGHETTI_COMMAND_RELAY_SET)) {
+	    (command->command_id != SPAGHETTI_RELAY_COMMAND_SET)) {
+		return -EINVAL;
+	}
+
+	on_field = spaghetti_property_find(&command->arguments,
+					   SPAGHETTI_RELAY_COMMAND_FIELD_ON);
+	if ((on_field == NULL) || (on_field->type != SPAGHETTI_VALUE_BOOL)) {
 		return -EINVAL;
 	}
 
 	++command_count;
-	last_command_on = command->relay_on;
+	last_command_on = on_field->data.boolean;
 	k_sem_give(&command_sem);
 	return command_error;
 }

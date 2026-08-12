@@ -11,22 +11,35 @@
 #include <stdint.h>
 
 #include <spaghetti/module.h>
+#include <spaghetti/module_driver.h>
 #include <spaghetti/port.h>
+#include <spaghetti/power.h>
+#include <spaghetti/schema.h>
+#include <spaghetti/topology.h>
 
-struct spaghetti_command;
+/**
+ * @brief Runtime placement of one Module along a Flow and power rail.
+ *
+ * Flow is derived from the selected Port. Either ID may be UNSPECIFIED. A
+ * declared rail also requires a declared Bay.
+ */
+struct spaghetti_module_placement {
+	spaghetti_bay_id_t bay_id; /**< Bay ordinal, or UNSPECIFIED. */
+	spaghetti_power_rail_id_t power_rail_id; /**< Rail ID, or UNSPECIFIED. */
+};
 
 /**
  * @brief Complete borrowed request used to create one Module.
  *
- * The Manager does not retain @ref type_id or @ref driver_config. The concrete
- * driver copies any configuration it needs before configure returns.
+ * The Manager does not retain @ref type_id or @ref config. The concrete driver
+ * copies any configuration it needs before configure returns.
  */
 struct spaghetti_module_request {
 	spaghetti_module_key_t key; /**< Nonzero stable Config identity. */
 	spaghetti_port_id_t port_id; /**< Shared physical Port identifier. */
 	const char *type_id; /**< Borrowed NUL-terminated driver type identifier. */
-	const void *driver_config; /**< Borrowed driver-specific read-only bytes. */
-	size_t driver_config_size; /**< Exact size of @ref driver_config in bytes. */
+	const struct spaghetti_property_set *config; /**< Borrowed typed driver config. */
+	struct spaghetti_module_placement placement; /**< Flow-relative Bay and rail. */
 	uint32_t revision; /**< Nonzero desired-state revision for stale-operation checks. */
 };
 
@@ -37,6 +50,9 @@ struct spaghetti_module_snapshot {
 	spaghetti_module_id_t id; /**< Ephemeral ID of the current live instance. */
 	spaghetti_module_key_t key; /**< Stable Config identity. */
 	spaghetti_port_id_t port_id; /**< Shared Port used by this instance. */
+	spaghetti_flow_id_t flow_id; /**< Flow terminating on @ref port_id, when known. */
+	struct spaghetti_module_placement placement; /**< Committed Bay and rail selection. */
+	enum spaghetti_power_admission_state power_admission; /**< Power admission outcome. */
 	char type_id[SPAGHETTI_TYPE_ID_MAX]; /**< Owned NUL-terminated driver type ID. */
 	struct spaghetti_module_endpoint endpoint; /**< Normalized hardware endpoint. */
 	enum spaghetti_module_state state; /**< Public lifecycle state at copy time. */
@@ -46,42 +62,33 @@ struct spaghetti_module_snapshot {
 /**
  * @brief Initialize an empty Module Manager.
  *
- * Clear the fixed-capacity slot pool. Core calls this once after Port and Driver
- * Registry initialization. Existing live instances must not exist.
- *
  * @retval 0 Initialization completed successfully.
  * @retval -EALREADY The Manager was already initialized.
- *
- * @note Call once from boot thread context. This function does not access a bus.
  */
 int spaghetti_module_manager_init(void);
 
 /**
  * @brief Create one Module from a complete runtime request.
  *
- * Validate the key, Port, driver config, capabilities, and normalized endpoint;
- * reserve one slot; initialize the driver; and publish the ID only after commit.
- * Sharing a Port alone is valid.
+ * Acquires Port then Power before driver init. Publishes placement and admission
+ * in the snapshot only after a successful commit.
  *
- * @param[in] request Caller-owned request borrowed for this call. Its config is
- *                    copied by the driver if retained.
+ * @param[in] request Caller-owned request borrowed for this call.
  * @param[out] out_id Caller-owned destination written only after successful init.
  *
  * @retval 0 The Module is READY and @p out_id contains its runtime ID.
- * @retval -EINVAL A pointer, key, revision, string, config size, or endpoint is invalid.
- * @retval -ENOENT The Port or driver type does not exist.
+ * @retval -EINVAL A pointer, key, revision, placement, or endpoint is invalid.
+ * @retval -ENOENT The Port, Flow, Bay, rail, or driver type does not exist.
  * @retval -EEXIST The stable key already exists.
  * @retval -EADDRINUSE The normalized endpoint conflicts on the selected Port.
- * @retval -ENOTSUP The Port lacks a required capability or operation.
+ * @retval -ENOTSUP The Port lacks a required capability or Power is unavailable.
  * @retval -ENOSPC The Manager slot pool is full.
  * @retval -ENOMEM The concrete driver's bounded context pool is full.
  * @retval -ENODEV A required hardware device is unavailable.
  * @retval -EBUSY The selected key or endpoint is being configured or removed.
- * @retval -ERANGE A derived driver value cannot be represented safely.
+ * @retval -ERANGE A derived driver or Power value cannot be represented safely.
  * @retval -EIO A bounded initialization bus transfer failed.
  * @retval -ETIMEDOUT A bounded initialization bus transfer timed out.
- *
- * @note Call from thread context. Driver initialization may perform bounded bus I/O.
  */
 int spaghetti_module_manager_configure(
 	const struct spaghetti_module_request *request,
@@ -90,10 +97,8 @@ int spaghetti_module_manager_configure(
 /**
  * @brief Remove one exact live Module.
  *
- * Deinitialize the selected driver context and clear only its Manager slot.
- * Sibling Modules that share the Port remain unchanged. If hardware power-down
- * fails, the slot is still removed after the driver releases its context and the
- * original driver error is returned.
+ * Calls stop before deinit when events were started. Releases Power then Port.
+ * If stop fails, the Module is marked ERROR and its context is retained.
  *
  * @param[in] id Ephemeral ID of the live Module to remove.
  * @param[in] expected_revision Nonzero revision that must match the live snapshot.
@@ -103,11 +108,7 @@ int spaghetti_module_manager_configure(
  * @retval -ENOENT @p id does not identify a live Module.
  * @retval -ESTALE The revision does not match.
  * @retval -EBUSY The Module is executing another driver operation.
- * @retval -ENODEV The context was released but its hardware became unavailable.
- * @retval -EIO The context was released but hardware power-down failed.
- * @retval -ETIMEDOUT The context was released but hardware power-down timed out.
- *
- * @note Call from thread context. This function may perform bounded bus I/O.
+ * @retval Negative errno from stop, deinit, or resource release.
  */
 int spaghetti_module_manager_remove(spaghetti_module_id_t id,
 				    uint32_t expected_revision);
@@ -121,8 +122,6 @@ int spaghetti_module_manager_remove(spaghetti_module_id_t id,
  * @retval 0 The snapshot was copied.
  * @retval -EINVAL @p out is NULL.
  * @retval -ENOENT @p id does not identify a live Module.
- *
- * @note Thread-safe and callable from thread context. It does not access hardware.
  */
 int spaghetti_module_manager_get_by_id(
 	spaghetti_module_id_t id,
@@ -137,8 +136,6 @@ int spaghetti_module_manager_get_by_id(
  * @retval 0 The snapshot was copied.
  * @retval -EINVAL @p key is zero or @p out is NULL.
  * @retval -ENOENT No live Module has @p key.
- *
- * @note Thread-safe and callable from thread context. It does not access hardware.
  */
 int spaghetti_module_manager_get_by_key(
 	spaghetti_module_key_t key,
@@ -146,10 +143,6 @@ int spaghetti_module_manager_get_by_key(
 
 /**
  * @brief List every live Module that references one Port.
- *
- * Pass NULL/zero for @p out and @p capacity to query the required count. When
- * capacity is insufficient, no snapshot is written and @p out_count still
- * receives the required count.
  *
  * @param[in] port_id Physical Port whose references are counted.
  * @param[out] out Caller-owned array of @p capacity snapshots, or NULL for count-only.
@@ -160,8 +153,6 @@ int spaghetti_module_manager_get_by_key(
  * @retval -EINVAL Pointer and capacity arguments are inconsistent.
  * @retval -ENOENT @p port_id does not identify an available Port.
  * @retval -ENOSPC @p capacity is too small; @p out_count contains required capacity.
- *
- * @note Thread-safe and callable from thread context. It does not access hardware.
  */
 int spaghetti_module_manager_list_by_port(
 	spaghetti_port_id_t port_id,
@@ -170,25 +161,24 @@ int spaghetti_module_manager_list_by_port(
 	size_t *out_count);
 
 /**
- * @brief Read one sample from a live READY Module.
+ * @brief Read one typed record from a live READY Module.
  *
  * @param[in] id Ephemeral ID of the Module to read.
- * @param[out] out Caller-owned sample written only after a complete successful read.
+ * @param[out] out Caller-owned record written only after a complete successful read.
  *
- * @retval 0 The complete sample was copied to @p out.
+ * @retval 0 The complete record was copied to @p out.
  * @retval -EINVAL @p out is NULL.
  * @retval -ENOENT @p id does not identify a live Module.
  * @retval -EBUSY The Module is executing another driver operation.
  * @retval -ENOTSUP The driver has no read operation.
+ * @retval -EPROTONOSUPPORT The payload schema is not declared by the driver.
  * @retval -EIO A driver or bus operation failed.
  * @retval -ETIMEDOUT The driver's bounded acquisition timed out.
  * @retval -ERANGE The hardware reported overflow or a result cannot be represented.
- *
- * @note Call from thread context. This function may sleep and perform bounded bus I/O.
  */
 int spaghetti_module_manager_read(
 	spaghetti_module_id_t id,
-	struct spaghetti_sample *out);
+	struct spaghetti_record *out);
 
 /**
  * @brief Apply one generic command to a live READY Module.
@@ -200,15 +190,44 @@ int spaghetti_module_manager_read(
  * @retval -EINVAL @p command is NULL.
  * @retval -ENOENT @p id does not identify a live Module.
  * @retval -EBUSY The Module is executing another driver operation.
- * @retval -ENOTSUP The command type or driver operation is unsupported.
+ * @retval -ENOTSUP The command ID or driver operation is unsupported.
  * @retval -ENODEV Required output hardware is unavailable.
  * @retval -EIO The concrete output operation failed.
- *
- * @note Call from thread context. The Manager serializes this operation with
- *       read and remove on the same Module instance.
  */
 int spaghetti_module_manager_command(
 	spaghetti_module_id_t id,
-	const struct spaghetti_command *command);
+	const struct spaghetti_module_command *command);
+
+/**
+ * @brief Arm optional driver event emission for one Module.
+ *
+ * @param[in] id Ephemeral ID of the Module.
+ * @param[in] emit Borrowed callback invoked from thread/workqueue context only.
+ * @param[in] emit_user_data Borrowed user data retained until stop.
+ *
+ * @retval 0 Events are armed.
+ * @retval -EINVAL @p emit is NULL.
+ * @retval -ENOENT @p id does not identify a live Module.
+ * @retval -EBUSY The Module is executing another driver operation.
+ * @retval -ENOTSUP The driver has no start/stop pair.
+ * @retval -EALREADY Events are already armed.
+ */
+int spaghetti_module_manager_start_events(
+	spaghetti_module_id_t id,
+	spaghetti_module_event_cb_t emit,
+	void *emit_user_data);
+
+/**
+ * @brief Disarm optional driver event emission for one Module.
+ *
+ * @param[in] id Ephemeral ID of the Module.
+ *
+ * @retval 0 Future callbacks are prevented.
+ * @retval -ENOENT @p id does not identify a live Module.
+ * @retval -EBUSY The Module is executing another driver operation.
+ * @retval -ENOTSUP The driver has no start/stop pair.
+ * @retval -EALREADY Events were not armed.
+ */
+int spaghetti_module_manager_stop_events(spaghetti_module_id_t id);
 
 #endif /* SPAGHETTI_MODULE_MANAGER_H */

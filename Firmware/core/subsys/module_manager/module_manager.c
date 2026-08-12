@@ -11,6 +11,9 @@
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/port.h>
+#include <spaghetti/power.h>
+#include <spaghetti/schema.h>
+#include <spaghetti/topology.h>
 
 LOG_MODULE_REGISTER(spaghetti_module_manager,
 		    CONFIG_SPAGHETTI_MODULE_MANAGER_LOG_LEVEL);
@@ -19,8 +22,14 @@ struct spaghetti_module_slot {
 	bool used;
 	bool reserved;
 	bool busy;
+	bool power_attached;
+	bool events_started;
 	spaghetti_port_id_t port_id;
+	spaghetti_flow_id_t flow_id;
+	struct spaghetti_module_placement placement;
+	enum spaghetti_power_admission_state power_admission;
 	uint32_t revision;
+	uint32_t read_sequence;
 	struct spaghetti_module module;
 };
 
@@ -69,28 +78,6 @@ static bool endpoints_conflict(
 	       (memcmp(first->value, second->value, first->value_size) == 0);
 }
 
-static enum spaghetti_port_transport transport_from_endpoint(
-	const struct spaghetti_module_endpoint *endpoint)
-{
-	switch (endpoint->kind) {
-	case SPAGHETTI_ENDPOINT_I2C_ADDRESS:
-		return SPAGHETTI_PORT_TRANSPORT_I2C;
-	case SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT:
-		return SPAGHETTI_PORT_TRANSPORT_SPI;
-	case SPAGHETTI_ENDPOINT_UART_EXCLUSIVE:
-		return SPAGHETTI_PORT_TRANSPORT_UART;
-	case SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE:
-	case SPAGHETTI_ENDPOINT_GPIO_LINE:
-		return SPAGHETTI_PORT_TRANSPORT_GPIO;
-	case SPAGHETTI_ENDPOINT_ADC_CHANNEL:
-		return SPAGHETTI_PORT_TRANSPORT_ADC;
-	case SPAGHETTI_ENDPOINT_W1_ROM:
-		return SPAGHETTI_PORT_TRANSPORT_W1;
-	default:
-		return SPAGHETTI_PORT_TRANSPORT_I2C;
-	}
-}
-
 static uint32_t endpoint_log_value(
 	const struct spaghetti_module_endpoint *endpoint)
 {
@@ -122,6 +109,9 @@ static void copy_snapshot(const struct spaghetti_module_slot *slot,
 		.id = slot->module.id,
 		.key = slot->module.key,
 		.port_id = slot->port_id,
+		.flow_id = slot->flow_id,
+		.placement = slot->placement,
+		.power_admission = slot->power_admission,
 		.endpoint = slot->module.endpoint,
 		.state = slot->module.state,
 		.revision = slot->revision,
@@ -136,6 +126,128 @@ static void copy_snapshot(const struct spaghetti_module_slot *slot,
 	memcpy(snapshot.type_id, slot->module.driver->type_id, type_id_len);
 	snapshot.type_id[type_id_len] = '\0';
 	*out = snapshot;
+}
+
+static int validate_placement(
+	spaghetti_port_id_t port_id,
+	const struct spaghetti_module_placement *placement,
+	spaghetti_flow_id_t *out_flow_id)
+{
+	const struct spaghetti_flow_descriptor *flow;
+	struct spaghetti_bay_descriptor bay;
+	int err;
+
+	if ((placement == NULL) || (out_flow_id == NULL)) {
+		return -EINVAL;
+	}
+
+	if ((placement->power_rail_id != SPAGHETTI_POWER_RAIL_UNSPECIFIED) &&
+	    (placement->bay_id == SPAGHETTI_BAY_ID_UNSPECIFIED)) {
+		return -EINVAL;
+	}
+
+	flow = spaghetti_topology_flow_for_port(port_id);
+	*out_flow_id = (flow != NULL) ? flow->id : 0U;
+
+	if (placement->bay_id == SPAGHETTI_BAY_ID_UNSPECIFIED) {
+		return 0;
+	}
+
+	if (flow == NULL) {
+		return -ENOENT;
+	}
+
+	err = spaghetti_topology_bay_get(flow->id, placement->bay_id, &bay);
+	if (err < 0) {
+		return err;
+	}
+
+	*out_flow_id = flow->id;
+	return 0;
+}
+
+static int attach_power_if_needed(
+	const struct spaghetti_module_slot *slot,
+	const struct spaghetti_module_driver *driver,
+	enum spaghetti_power_admission_state *out_admission,
+	bool *out_attached)
+{
+	*out_attached = false;
+	*out_admission = SPAGHETTI_POWER_ADMISSION_NOT_REQUIRED;
+
+	if (slot->placement.power_rail_id == SPAGHETTI_POWER_RAIL_UNSPECIFIED) {
+		return 0;
+	}
+
+#if defined(CONFIG_SPAGHETTI_POWER)
+	{
+		const struct spaghetti_power_binding binding = {
+			.flow_id = slot->flow_id,
+			.bay_id = slot->placement.bay_id,
+			.rail_id = slot->placement.power_rail_id,
+		};
+		int err = spaghetti_power_attach(
+			&binding, slot->module.id, &driver->power_requirement,
+			out_admission);
+
+		if (err < 0) {
+			return err;
+		}
+
+		*out_attached = true;
+		return 0;
+	}
+#else
+	ARG_UNUSED(driver);
+	return -ENOTSUP;
+#endif
+}
+
+static void detach_power_if_needed(struct spaghetti_module_slot *slot)
+{
+#if defined(CONFIG_SPAGHETTI_POWER)
+	if (slot->power_attached) {
+		const struct spaghetti_power_binding binding = {
+			.flow_id = slot->flow_id,
+			.bay_id = slot->placement.bay_id,
+			.rail_id = slot->placement.power_rail_id,
+		};
+
+		(void)spaghetti_power_detach(&binding, slot->module.id);
+		slot->power_attached = false;
+	}
+#else
+	ARG_UNUSED(slot);
+#endif
+}
+
+static int payload_matches_driver_schema(
+	const struct spaghetti_module_driver *driver,
+	const struct spaghetti_record_payload *payload)
+{
+	for (size_t schema_idx = 0U; schema_idx < driver->record_schema_count;
+	     ++schema_idx) {
+		if (spaghetti_record_payload_validate(
+			    payload, driver->record_schemas[schema_idx]) == 0) {
+			return 0;
+		}
+	}
+
+	return -EPROTONOSUPPORT;
+}
+
+static const struct spaghetti_command_descriptor *find_command(
+	const struct spaghetti_module_driver *driver,
+	uint16_t command_id)
+{
+	for (size_t command_idx = 0U; command_idx < driver->command_count;
+	     ++command_idx) {
+		if (driver->commands[command_idx].command_id == command_id) {
+			return &driver->commands[command_idx];
+		}
+	}
+
+	return NULL;
 }
 
 int spaghetti_module_manager_init(void)
@@ -167,11 +279,15 @@ int spaghetti_module_manager_configure(
 	const struct spaghetti_module_driver *driver;
 	const struct spaghetti_port *port;
 	struct spaghetti_module_slot *slot = NULL;
+	spaghetti_flow_id_t flow_id = 0U;
+	enum spaghetti_power_admission_state admission =
+		SPAGHETTI_POWER_ADMISSION_NOT_REQUIRED;
+	bool power_attached = false;
 	int err;
 
 	if ((request == NULL) || (out_id == NULL) || (request->key == 0U) ||
 	    (request->revision == 0U) || (request->type_id == NULL) ||
-	    ((request->driver_config == NULL) != (request->driver_config_size == 0U))) {
+	    (request->config == NULL)) {
 		return -EINVAL;
 	}
 
@@ -190,18 +306,22 @@ int spaghetti_module_manager_configure(
 	}
 
 	if ((driver->ops == NULL) || (driver->ops->validate_config == NULL) ||
-	    (driver->ops->describe_endpoint == NULL) || (driver->ops->init == NULL)) {
+	    (driver->ops->describe_endpoint == NULL) ||
+	    (driver->ops->init == NULL) || (driver->ops->deinit == NULL)) {
 		return -ENOTSUP;
 	}
 
-	err = driver->ops->validate_config(request->driver_config,
-					  request->driver_config_size);
+	err = validate_placement(request->port_id, &request->placement, &flow_id);
 	if (err < 0) {
 		return err;
 	}
 
-	err = driver->ops->describe_endpoint(request->driver_config,
-					    request->driver_config_size, &endpoint);
+	err = driver->ops->validate_config(request->config);
+	if (err < 0) {
+		return err;
+	}
+
+	err = driver->ops->describe_endpoint(request->config, &endpoint);
 	if (err < 0) {
 		return err;
 	}
@@ -248,6 +368,9 @@ int spaghetti_module_manager_configure(
 	memset(slot, 0, sizeof(*slot));
 	slot->reserved = true;
 	slot->port_id = request->port_id;
+	slot->flow_id = flow_id;
+	slot->placement = request->placement;
+	slot->power_admission = SPAGHETTI_POWER_ADMISSION_NOT_REQUIRED;
 	slot->revision = request->revision;
 	slot->module.id = module_id;
 	slot->module.key = request->key;
@@ -257,8 +380,7 @@ int spaghetti_module_manager_configure(
 	slot->module.endpoint = endpoint;
 	k_mutex_unlock(&slots_lock);
 
-	err = spaghetti_port_acquire(
-		port, request->key, transport_from_endpoint(&endpoint));
+	err = spaghetti_port_acquire(port, request->key, driver->transport);
 	if (err < 0) {
 		(void)k_mutex_lock(&slots_lock, K_FOREVER);
 		memset(slot, 0, sizeof(*slot));
@@ -266,9 +388,30 @@ int spaghetti_module_manager_configure(
 		return err;
 	}
 
-	err = driver->ops->init(&slot->module, request->driver_config,
-				request->driver_config_size);
+	err = attach_power_if_needed(slot, driver, &admission, &power_attached);
 	if (err < 0) {
+		(void)spaghetti_port_release(port, request->key);
+		(void)k_mutex_lock(&slots_lock, K_FOREVER);
+		memset(slot, 0, sizeof(*slot));
+		k_mutex_unlock(&slots_lock);
+		return err;
+	}
+
+	err = driver->ops->init(&slot->module, request->config);
+	if (err < 0) {
+#if defined(CONFIG_SPAGHETTI_POWER)
+		if (power_attached) {
+			const struct spaghetti_power_binding binding = {
+				.flow_id = flow_id,
+				.bay_id = request->placement.bay_id,
+				.rail_id = request->placement.power_rail_id,
+			};
+
+			(void)spaghetti_power_detach(&binding, module_id);
+		}
+#else
+		ARG_UNUSED(power_attached);
+#endif
 		(void)spaghetti_port_release(port, request->key);
 		(void)k_mutex_lock(&slots_lock, K_FOREVER);
 		memset(slot, 0, sizeof(*slot));
@@ -278,6 +421,8 @@ int spaghetti_module_manager_configure(
 
 	(void)k_mutex_lock(&slots_lock, K_FOREVER);
 	slot->module.state = SPAGHETTI_MODULE_READY;
+	slot->power_admission = admission;
+	slot->power_attached = power_attached;
 	slot->used = true;
 	slot->reserved = false;
 	*out_id = slot->module.id;
@@ -331,7 +476,29 @@ int spaghetti_module_manager_remove(spaghetti_module_id_t id,
 	port = slot->module.port;
 	k_mutex_unlock(&slots_lock);
 
+	if (slot->events_started) {
+		if ((slot->module.driver->ops->stop == NULL)) {
+			(void)k_mutex_lock(&slots_lock, K_FOREVER);
+			slot->module.state = SPAGHETTI_MODULE_ERROR;
+			slot->busy = false;
+			k_mutex_unlock(&slots_lock);
+			return -ENOTSUP;
+		}
+
+		err = slot->module.driver->ops->stop(&slot->module);
+		if (err < 0) {
+			(void)k_mutex_lock(&slots_lock, K_FOREVER);
+			slot->module.state = SPAGHETTI_MODULE_ERROR;
+			slot->busy = false;
+			k_mutex_unlock(&slots_lock);
+			return err;
+		}
+
+		slot->events_started = false;
+	}
+
 	err = slot->module.driver->ops->deinit(&slot->module);
+	detach_power_if_needed(slot);
 	(void)spaghetti_port_release(port, key);
 
 	(void)k_mutex_lock(&slots_lock, K_FOREVER);
@@ -456,10 +623,11 @@ int spaghetti_module_manager_list_by_port(
 
 int spaghetti_module_manager_read(
 	spaghetti_module_id_t id,
-	struct spaghetti_sample *out)
+	struct spaghetti_record *out)
 {
 	struct spaghetti_module_slot *slot;
-	struct spaghetti_sample sample;
+	struct spaghetti_record_payload payload;
+	struct spaghetti_record record;
 	int err;
 
 	if (out == NULL) {
@@ -491,13 +659,28 @@ int spaghetti_module_manager_read(
 	slot->busy = true;
 	k_mutex_unlock(&slots_lock);
 
-	err = slot->module.driver->ops->read(&slot->module, &sample);
+	err = slot->module.driver->ops->read(&slot->module, &payload);
 
 	(void)k_mutex_lock(&slots_lock, K_FOREVER);
-	slot->busy = false;
 	if (err == 0) {
-		*out = sample;
+		err = payload_matches_driver_schema(slot->module.driver, &payload);
+		if (err == 0) {
+			if (slot->read_sequence == UINT32_MAX) {
+				slot->read_sequence = 0U;
+			}
+			++slot->read_sequence;
+
+			memset(&record, 0, sizeof(record));
+			record.source_id = slot->module.id;
+			record.source_key = slot->module.key;
+			record.boot_id = 0U;
+			record.timestamp_ms = k_uptime_get();
+			record.sequence = slot->read_sequence;
+			record.payload = payload;
+			*out = record;
+		}
 	}
+	slot->busy = false;
 	k_mutex_unlock(&slots_lock);
 	return err;
 
@@ -508,16 +691,14 @@ unlock:
 
 int spaghetti_module_manager_command(
 	spaghetti_module_id_t id,
-	const struct spaghetti_command *command)
+	const struct spaghetti_module_command *command)
 {
 	struct spaghetti_module_slot *slot;
+	const struct spaghetti_command_descriptor *descriptor;
 	int err;
 
 	if (command == NULL) {
 		return -EINVAL;
-	}
-	if (command->type != SPAGHETTI_COMMAND_RELAY_SET) {
-		return -ENOTSUP;
 	}
 
 	err = k_mutex_lock(&slots_lock, K_FOREVER);
@@ -540,11 +721,128 @@ int spaghetti_module_manager_command(
 		goto unlock;
 	}
 
+	descriptor = find_command(slot->module.driver, command->command_id);
+	if (descriptor == NULL) {
+		err = -ENOTSUP;
+		goto unlock;
+	}
+
+	err = spaghetti_property_validate(&command->arguments,
+					  descriptor->argument_schema);
+	if (err < 0) {
+		goto unlock;
+	}
+
 	slot->busy = true;
 	k_mutex_unlock(&slots_lock);
 	err = slot->module.driver->ops->command(&slot->module, command);
 
 	(void)k_mutex_lock(&slots_lock, K_FOREVER);
+	slot->busy = false;
+	k_mutex_unlock(&slots_lock);
+	return err;
+
+unlock:
+	k_mutex_unlock(&slots_lock);
+	return err;
+}
+
+int spaghetti_module_manager_start_events(
+	spaghetti_module_id_t id,
+	spaghetti_module_event_cb_t emit,
+	void *emit_user_data)
+{
+	struct spaghetti_module_slot *slot;
+	int err;
+
+	if (emit == NULL) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&slots_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+
+	slot = find_slot_by_id(id);
+	if (slot == NULL) {
+		err = -ENOENT;
+		goto unlock;
+	}
+	if (slot->busy) {
+		err = -EBUSY;
+		goto unlock;
+	}
+	if ((slot->module.driver->ops->start == NULL) ||
+	    (slot->module.driver->ops->stop == NULL)) {
+		err = -ENOTSUP;
+		goto unlock;
+	}
+	if (slot->events_started) {
+		err = -EALREADY;
+		goto unlock;
+	}
+	if (slot->module.state != SPAGHETTI_MODULE_READY) {
+		err = -ENOTSUP;
+		goto unlock;
+	}
+
+	slot->busy = true;
+	k_mutex_unlock(&slots_lock);
+
+	err = slot->module.driver->ops->start(&slot->module, emit, emit_user_data);
+
+	(void)k_mutex_lock(&slots_lock, K_FOREVER);
+	if (err == 0) {
+		slot->events_started = true;
+	}
+	slot->busy = false;
+	k_mutex_unlock(&slots_lock);
+	return err;
+
+unlock:
+	k_mutex_unlock(&slots_lock);
+	return err;
+}
+
+int spaghetti_module_manager_stop_events(spaghetti_module_id_t id)
+{
+	struct spaghetti_module_slot *slot;
+	int err;
+
+	err = k_mutex_lock(&slots_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+
+	slot = find_slot_by_id(id);
+	if (slot == NULL) {
+		err = -ENOENT;
+		goto unlock;
+	}
+	if (slot->busy) {
+		err = -EBUSY;
+		goto unlock;
+	}
+	if ((slot->module.driver->ops->start == NULL) ||
+	    (slot->module.driver->ops->stop == NULL)) {
+		err = -ENOTSUP;
+		goto unlock;
+	}
+	if (!slot->events_started) {
+		err = -EALREADY;
+		goto unlock;
+	}
+
+	slot->busy = true;
+	k_mutex_unlock(&slots_lock);
+
+	err = slot->module.driver->ops->stop(&slot->module);
+
+	(void)k_mutex_lock(&slots_lock, K_FOREVER);
+	if (err == 0) {
+		slot->events_started = false;
+	}
 	slot->busy = false;
 	k_mutex_unlock(&slots_lock);
 	return err;

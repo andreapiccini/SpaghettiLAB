@@ -13,7 +13,11 @@
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/core.h>
+#include <spaghetti/schema.h>
 #include <spaghetti/timer.h>
+
+#include <ina219.h>
+#include <relay.h>
 
 LOG_MODULE_REGISTER(spaghetti_runtime, CONFIG_SPAGHETTI_RUNTIME_LOG_LEVEL);
 
@@ -57,12 +61,58 @@ static bool has_sampling_task;
 static bool has_threshold_rule;
 static bool has_relay_state;
 static bool last_relay_on;
-static uint32_t sequence;
 static uint8_t active_operations;
 K_MUTEX_DEFINE(runtime_lock);
 K_SEM_DEFINE(runtime_tick_sem, 0, 1);
 K_SEM_DEFINE(runtime_stopped_sem, 0, 1);
 K_SEM_DEFINE(runtime_initialized_sem, 0, 1);
+
+/* Removed by TASK-340-01 */
+static int legacy_publish_ina219_record(const struct spaghetti_record *record)
+{
+	const struct spaghetti_value *bus;
+	const struct spaghetti_value *current;
+	const struct spaghetti_value *power;
+	struct spaghetti_electrical_message message;
+
+	if (record == NULL) {
+		return -EINVAL;
+	}
+	if (strcmp(record->payload.schema_id, "spaghetti.ina219.sample") != 0) {
+		return -EPROTONOSUPPORT;
+	}
+
+	bus = spaghetti_property_find(&record->payload.values,
+				      SPAGHETTI_INA219_FIELD_BUS_VOLTAGE_MICROVOLTS);
+	current = spaghetti_property_find(&record->payload.values,
+					  SPAGHETTI_INA219_FIELD_CURRENT_MICROAMPS);
+	power = spaghetti_property_find(&record->payload.values,
+					SPAGHETTI_INA219_FIELD_POWER_MICROWATTS);
+	if ((bus == NULL) || (bus->type != SPAGHETTI_VALUE_INT64) ||
+	    (current == NULL) || (current->type != SPAGHETTI_VALUE_INT64) ||
+	    (power == NULL) || (power->type != SPAGHETTI_VALUE_UINT64)) {
+		return -EINVAL;
+	}
+	if ((bus->data.signed_integer < INT32_MIN) ||
+	    (bus->data.signed_integer > INT32_MAX) ||
+	    (current->data.signed_integer < INT32_MIN) ||
+	    (current->data.signed_integer > INT32_MAX) ||
+	    (power->data.unsigned_integer > UINT32_MAX)) {
+		return -ERANGE;
+	}
+
+	message = (struct spaghetti_electrical_message){
+		.source_id = record->source_id,
+		.source_key = record->source_key,
+		.bus_voltage_microvolts = (int32_t)bus->data.signed_integer,
+		.current_microamps = (int32_t)current->data.signed_integer,
+		.power_microwatts = (uint32_t)power->data.unsigned_integer,
+		.timestamp_ms = record->timestamp_ms,
+		.sequence = record->sequence,
+	};
+
+	return spaghetti_data_publish_electrical(&message, K_NO_WAIT);
+}
 
 static void finish_stop_if_quiescent(void)
 {
@@ -91,8 +141,7 @@ static void runtime_sampling_thread_entry(void *first, void *second, void *third
 
 	while (true) {
 		struct spaghetti_runtime_sampling_task task;
-		spaghetti_module_key_t source_key;
-		struct spaghetti_sample sample;
+		struct spaghetti_record record;
 		int err;
 
 		(void)k_sem_take(&runtime_tick_sem, K_FOREVER);
@@ -104,30 +153,18 @@ static void runtime_sampling_thread_entry(void *first, void *second, void *third
 		}
 
 		task = sampling_task;
-		source_key = sampling_source_key;
 		++active_operations;
 		k_mutex_unlock(&runtime_lock);
 
-		err = spaghetti_module_manager_read(task.module_id, &sample);
+		err = spaghetti_module_manager_read(task.module_id, &record);
 		if (err < 0) {
 			LOG_WRN("sample read failed: id=%u err=%d",
 				(uint32_t)task.module_id, err);
 		} else {
-			const struct spaghetti_electrical_message message = {
-				.source_id = task.module_id,
-				.source_key = source_key,
-				.bus_voltage_microvolts =
-					sample.bus_voltage_microvolts,
-				.current_microamps = sample.current_microamps,
-				.power_microwatts = sample.power_microwatts,
-				.timestamp_ms = k_uptime_get(),
-				.sequence = sequence++,
-			};
-
-			err = spaghetti_data_publish_electrical(&message, K_NO_WAIT);
+			err = legacy_publish_ina219_record(&record);
 			if (err < 0) {
 				LOG_WRN("sample publish failed: key=%u err=%d",
-					source_key, err);
+					record.source_key, err);
 			}
 		}
 
@@ -193,9 +230,19 @@ static void runtime_rule_thread_entry(void *first, void *second, void *third)
 		++active_operations;
 		k_mutex_unlock(&runtime_lock);
 
-		const struct spaghetti_command command = {
-			.type = SPAGHETTI_COMMAND_RELAY_SET,
-			.relay_on = desired_relay_on,
+		struct spaghetti_module_command command = {
+			.command_id = SPAGHETTI_RELAY_COMMAND_SET,
+			.arguments = {
+				.field_count = 1U,
+				.fields = {
+					{
+						.field_id =
+							SPAGHETTI_RELAY_COMMAND_FIELD_ON,
+						.type = SPAGHETTI_VALUE_BOOL,
+						.data.boolean = desired_relay_on,
+					},
+				},
+			},
 		};
 
 		err = spaghetti_module_manager_command(relay_id, &command);
@@ -258,7 +305,6 @@ int spaghetti_runtime_init(void)
 	has_threshold_rule = false;
 	has_relay_state = false;
 	last_relay_on = false;
-	sequence = 0U;
 	active_operations = 0U;
 	k_sem_reset(&runtime_tick_sem);
 	k_sem_reset(&runtime_stopped_sem);
