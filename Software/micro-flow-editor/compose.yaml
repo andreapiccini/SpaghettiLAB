@@ -6,6 +6,9 @@ services:
       - "127.0.0.1:${MICRO_FLOW_EDITOR_PORT:-5173}:5173"
     volumes:
       - .:/app
+      # npm workspaces hoist every package's dependencies into this single root
+      # node_modules (with symlinks for the local @spaghettilab/* packages) — one
+      # volume covers the whole workspace, not one per package.
       - micro-flow-editor-node-modules:/app/node_modules
 
 volumes:

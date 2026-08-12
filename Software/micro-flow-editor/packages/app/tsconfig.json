@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "references": [
+    { "path": "../domain" },
+    { "path": "../protocol-sdk" },
+    { "path": "../project-store" },
+    { "path": "../react-flow-adapter" }
+  ],
+  "include": ["src"]
+}

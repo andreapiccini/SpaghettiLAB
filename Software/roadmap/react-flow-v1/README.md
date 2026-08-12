@@ -19,7 +19,7 @@ finale end-to-end).
 | Stato | Fase | Risultato |
 |---|---|---|
 | | **S010 — Fondazioni e dominio** | |
-| ⬜ | [S011 — Workspace, tooling e porte infrastrutturali](tasks/S011-workspace-tooling-ports.md) | Workspace multi-pacchetto, quality gate e porte astratte sono pronti. |
+| ✅ | [S011 — Workspace, tooling e porte infrastrutturali](tasks/S011-workspace-tooling-ports.md) | Workspace multi-pacchetto, quality gate e porte astratte sono pronti. |
 | ⬜ | [S012 — Tipi di dominio, ID ed errori strutturati](tasks/S012-domain-types-errors.md) | Ogni entità ha ID stabile; gli errori di dominio sono strutturati, non stringhe. |
 | ⬜ | [S013 — I tre grafi e i confini fra layer](tasks/S013-graph-boundaries.md) | Physical, Device Processing e System Automation Graph hanno ownership separata. |
 | ⬜ | [S014 — ProjectV1, persistenza e comandi con undo/redo](tasks/S014-project-persistence-commands.md) | Project è persistibile, versionato e modificabile con undo/redo deterministico. |

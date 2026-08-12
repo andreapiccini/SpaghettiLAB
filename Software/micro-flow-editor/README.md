@@ -1,16 +1,17 @@
 # Micro Flow Editor
 
-A minimal Docker Compose environment running a [React](https://react.dev/) +
+A Docker Compose environment running a [React](https://react.dev/) +
 [Vite](https://vite.dev/) app with [React Flow](https://reactflow.dev/)
-(`@xyflow/react`) wired up, on a placeholder three-node canvas.
+(`@xyflow/react`) wired up, on a placeholder three-node canvas — plus, since
+S011, the npm workspace and quality tooling the rest of the React Flow V1
+roadmap builds on.
 
-This is a first, self-contained step: proof that the stack (Node 24, Vite,
-React 19, React Flow) builds and runs in Docker with hot reload. It is
-**not yet** the SpaghettiLAB "microcontroller rules" editor — no custom
-block types (Read Sensor, Wait, Publish MQTT, ...), no compiler that turns
-the graph into a device config, no AppBlocks-inspired visual design, no
-connection to the firmware. Those are separate, later tasks, planned once
-this base is confirmed working.
+The canvas itself is still a proof that the stack (Node 24, Vite, React 19,
+React Flow) builds and runs in Docker with hot reload. It is **not yet** the
+SpaghettiLAB "microcontroller rules" editor — no custom block types (Read
+Sensor, Wait, Publish MQTT, ...), no compiler that turns the graph into a
+device config, no AppBlocks-inspired visual design, no connection to the
+firmware. Those arrive with S012 onward.
 
 ## Why this exists
 
@@ -31,6 +32,29 @@ The complete functional architecture and implementation backlog now live in:
 
 They deliberately specify no visual design. The current source remains only the
 running technical prototype until those tasks are implemented.
+
+## Workspace layout
+
+npm workspace with one package per architectural boundary from
+`REACT_FLOW_ARCHITECTURE.md`:
+
+```text
+packages/
+  domain/               pure TypeScript domain kernel — no React, no React Flow,
+                         no browser API (enforced by having no such dependency).
+                         Currently: abstract infrastructure ports (clock, UUID,
+                         storage, credentials, logger, audit) + an in-memory/
+                         deterministic fake for each, used by every package's tests.
+  protocol-sdk/          placeholder — Protocol V1 codec/client/transports (S021-S024)
+  project-store/         placeholder — ProjectV1 schema/persistence/commands (S014)
+  react-flow-adapter/     placeholder — Domain <-> React Flow bridge (S043)
+  app/                    the React Flow canvas prototype (this is what you see
+                           at http://127.0.0.1:5173)
+```
+
+Each package has its own `package.json`, `tsconfig.json` (extending the shared
+`tsconfig.base.json`, TypeScript strict), and — except `app`, which is the Vite
+entry point — its own `vitest.config.ts`.
 
 ## Requirements
 
@@ -59,18 +83,41 @@ LAN.
 
 ## Development workflow
 
-Source code (`src/`, `index.html`, config files) is bind-mounted into the
-container, and the Vite dev server watches it — edit files on the host with
-your normal editor, save, and the browser hot-reloads. `node_modules` lives
-in its own named Docker volume (`micro-flow-editor-node-modules`), kept
-separate from the host filesystem so host/container platform differences
-(e.g. native dependencies) don't collide.
+Source code (`packages/*/src`, `packages/app/index.html`, config files) is
+bind-mounted into the container, and the Vite dev server watches
+`packages/app` — edit files on the host with your normal editor, save, and
+the browser hot-reloads. `node_modules` lives in its own named Docker volume
+(`micro-flow-editor-node-modules`) — npm workspaces hoist every package's
+dependencies into this single root `node_modules` (with symlinks for the
+local `@spaghettilab/*` packages), kept separate from the host filesystem so
+host/container platform differences (e.g. native dependencies) don't
+collide.
 
-Adding or updating a dependency (`package.json` change) requires rebuilding
-the image so `npm install` re-runs:
+Adding or updating a dependency (any `package.json` change) requires
+rebuilding the image so `npm install` re-runs:
 
 ```sh
 docker compose up -d --build
+```
+
+## Quality checks
+
+Every command below runs across the whole workspace (all packages), inside
+the container, without needing Node installed on the host:
+
+```sh
+docker compose run --rm micro-flow-editor npm run lint
+docker compose run --rm micro-flow-editor npm run typecheck
+docker compose run --rm micro-flow-editor npm run test
+docker compose run --rm micro-flow-editor npm run test:coverage
+docker compose run --rm micro-flow-editor npm run build
+```
+
+Or all four in sequence (the CI entry point — reproducible from a clean
+checkout, no manual steps beyond `docker compose build`):
+
+```sh
+docker compose run --rm micro-flow-editor npm run ci
 ```
 
 ## Check status and logs
@@ -116,9 +163,12 @@ Then `docker compose up -d`.
 
 ## Scope of this version
 
-Included: a working React + React Flow canvas in Docker, with placeholder
-nodes, proving the stack runs end to end.
+Included: a working React + React Flow canvas in Docker, with placeholder nodes,
+proving the stack runs end to end (task S011: npm workspace, TypeScript strict,
+ESLint, Prettier, Vitest + coverage, abstract infrastructure ports with fakes,
+reproducible containerized CI).
 
-Not included yet in code: the functions specified by the React Flow V1 roadmap. This
-README describes the existing executable prototype; architecture and task documents
+Not included yet in code: domain types (S012), the three graphs (S013), Project
+persistence and undo/redo (S014), and everything from S021 onward. This README
+describes the existing executable prototype; architecture and task documents
 describe the complete target without claiming it is implemented.
