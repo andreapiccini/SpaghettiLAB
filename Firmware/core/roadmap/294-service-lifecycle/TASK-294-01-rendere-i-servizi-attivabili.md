@@ -1,6 +1,6 @@
 # TASK-294-01 — Rendere i servizi attivabili
 
-**Stato:** 🟨 IMPLEMENTED — build and Twister verification pending
+**Stato:** ✅ DONE
 **Fase:** 294 — Lifecycle e memoria dei servizi
 
 ## Cosa devo fare
