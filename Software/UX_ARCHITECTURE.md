@@ -101,7 +101,7 @@ Layout fisso su tutte le schermate, tre regioni:
 |---|---|---|---|---|
 | Project/Workspace Shell | `S010-workspace-shell` | S011–S014 | [UX-S010](roadmap/ux-v1/tasks/UX-S010-workspace-shell.md) | ✅ |
 | Core Connections | `S030-core-connections` | S030 | [UX-S030](roadmap/ux-v1/tasks/UX-S030-core-connections.md) | ✅ |
-| Catalog & Topology Explorer | `S040-catalog-topology` | S041–S043 | [UX-S040](roadmap/ux-v1/tasks/UX-S040-catalog-topology.md) | ⬜ da scrivere |
+| Catalog & Topology Explorer | `S040-catalog-topology` | S041–S043 | [UX-S040](roadmap/ux-v1/tasks/UX-S040-catalog-topology.md) | ✅ |
 | Physical Composition Editor | `S050-physical-composition` | S050 | [UX-S050](roadmap/ux-v1/tasks/UX-S050-physical-composition.md) | ⬜ da scrivere |
 | Device Profile Studio | `S060-device-profile-studio` | S061–S063 | [UX-S060](roadmap/ux-v1/tasks/UX-S060-device-profile-studio.md) | ⬜ da scrivere |
 | Processing Graph Editor | `S070-processing-graph-editor` | S071–S073 | — | ✅ as-built confermata (prototipo React validato) |

@@ -1,6 +1,6 @@
 # UX-S040 — Catalog & Topology Explorer
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S041–S043
 
@@ -39,5 +39,15 @@ diagnostico/informativo, nessuna modifica qui — con lo stesso dettaglio di
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Catalog & Topology Explorer" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Catalog & Topology Explorer" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S040-catalog-topology/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Vista sola lettura su due tab (Catalogo/Topologia), placeholder diagnostico per tipi
+sconosciuti che preserva i dati invece di cancellarli, banner esplicito per letture
+parziali distinto dallo stato vuoto reale, nessun GPIO/numero di pin hardcoded.
+`backend-behavior.md` collega esplicitamente questa vista allo stesso `EditorModel`
+(S042) usato dalla Palette del Processing Graph Editor (S070) — stessa fonte dati,
+presentazione sola lettura qui.
