@@ -1,0 +1,34 @@
+description: Physical Spaghetti LAB Flow path of five signals
+
+compatible: "spaghettilab,flow"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+    description: Stable logical Flow identifier used by topology and host UI
+
+  port:
+    type: phandle
+    required: true
+    description: Port node that terminates this Flow for firmware control
+
+  direction:
+    type: string
+    required: true
+    description: Electrical path orientation relative to the field connector
+    enum:
+      - "field-to-core"
+      - "core-to-field"
+      - "bidirectional"
+
+  signal-count:
+    type: int
+    required: true
+    description: Number of signals on the Flow; must be five for V1 connectors
+
+  function-bay-count:
+    type: int
+    required: true
+    description: Ordered Function Bay positions along the Flow toward the Core

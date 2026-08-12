@@ -118,7 +118,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [294 — Lifecycle servizi](294-service-lifecycle/README.md) | Servizi opzionali rilasciano stack, socket e code quando vengono arrestati. |
 | ✅ | [295 — Low-energy power](295-low-energy-power/README.md) | Radio e PM seguono una policy verificabile senza fermare Runtime. |
 | ✅ | [296 — Health supervisor](296-health-supervisor/README.md) | Heartbeat e watchdog rilevano worker bloccati e rendono visibile la causa del reset. |
-| ⬜ | [297 — Topologia Flow](297-flow-topology/README.md) | Il Core descrive Flow, Function Bay ordinate e connettori uniformi da cinque segnali. |
+| ✅ | [297 — Topologia Flow](297-flow-topology/README.md) | Il Core descrive Flow, Function Bay ordinate e connettori uniformi da cinque segnali. |
 | ⬜ | [300 — Port e trasporti V1](300-port-transport-v1/README.md) | Port espone bus differenti e serializza controller condivisi senza hardware inventato. |
 | ⬜ | [305 — Power topology](305-power-topology/README.md) | Rail passive o controllate applicano admission coerente senza fingere limiti non noti. |
 | ⬜ | [310 — Schemi e valori V1](310-schema-values-v1/README.md) | Config, record e comandi usano proprietà tipizzate e descrittori enumerabili. |

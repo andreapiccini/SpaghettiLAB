@@ -63,7 +63,7 @@ Core is the firmware startup coordinator. It initializes required components in 
 
 **Execution context:** Zephyr main thread; bounded blocking is allowed.
 
-**Calls:** Port, optional Power, Registry, Manager, Data, Runtime, MQTT, Storage,
+**Calls:** Port, Topology, optional Power, Registry, Manager, Data, Runtime, MQTT, Storage,
 Update, Discovery, Config, Wi-Fi Profiles and Communication in dependency order.
 
 ### `int spaghetti_core_start(void)`

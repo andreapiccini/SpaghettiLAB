@@ -48,6 +48,32 @@
 		};
 	};
 
+	spaghetti_flows {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		flow0: flow@0 {
+			compatible = "spaghettilab,flow";
+			reg = <0>;
+			port = <&port0>;
+			direction = "field-to-core";
+			signal-count = <5>;
+			function-bay-count = <0>;
+			status = "okay";
+		};
+
+		flow1: flow@1 {
+			compatible = "spaghettilab,flow";
+			reg = <1>;
+			port = <&port1>;
+			direction = "core-to-field";
+			signal-count = <5>;
+			function-bay-count = <0>;
+			status = "okay";
+		};
+	};
+
 	maintenance_link0: maintenance-link {
 		compatible = "spaghettilab,maintenance-link";
 		normal-bus = <&i2c0>;

@@ -2,13 +2,15 @@
 
 [← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md)
 
-A Devicetree binding is a YAML schema for static hardware. The Spaghetti Port binding validates that every board describes a physical connector in the same machine-readable form.
+A Devicetree binding is a YAML schema for static hardware. Spaghetti Port and Flow
+bindings validate that every board describes connectors and five-signal paths in the
+same machine-readable form.
 
 ## What this component owns
 
-- The meaning and type of each `spaghettilab,port` property.
+- The meaning and type of each `spaghettilab,port` and `spaghettilab,flow` property.
 - Required/optional property rules.
-- Build-time validation of Port nodes.
+- Build-time validation of Port and Flow nodes.
 
 ## What this component does not own
 
@@ -21,6 +23,7 @@ A Devicetree binding is a YAML schema for static hardware. The Spaghetti Port bi
 | File | Role |
 |---|---|
 | `spaghettilab,port.yaml` | Schema for one physical Port node. |
+| `spaghettilab,flow.yaml` | Schema for one five-signal Flow path. |
 | Board `.dts` files | Concrete instances validated against the schema. |
 | `build/zephyr/zephyr.dts` | Generated result used to verify the final topology; never edit it. |
 
@@ -28,9 +31,14 @@ A Devicetree binding is a YAML schema for static hardware. The Spaghetti Port bi
 
 | Type / object | Owner | Meaning |
 |---|---|---|
-| `reg` | Board DTS | Stable logical Port index. |
-| I2C capability | Binding and Port | The current compatible requires an I2C controller. |
-| `i2c` phandle | Board DTS | Reference to a real static Zephyr controller. |
+| Port `reg` | Board DTS | Stable logical Port index. |
+| Flow `reg` | Board DTS | Stable logical Flow index. |
+| Flow `port` phandle | Board DTS | Terminating Port for that Flow. |
+| Flow `direction` | Board DTS | `field-to-core`, `core-to-field`, or `bidirectional`. |
+| Flow `signal-count` | Board DTS | Always five for V1 connectors. |
+| Flow `function-bay-count` | Board DTS | Ordered Bay positions from the field. |
+| I2C capability | Binding and Port | The current Port compatible requires an I2C controller. |
+| Port `i2c` phandle | Board DTS | Reference to a real static Zephyr controller. |
 
 ## API contract
 
@@ -44,26 +52,27 @@ flowchart LR
     DTS["Board DTS <br/> supplies real values"]
     VALIDATE["Devicetree validation"]
     MACROS["Generated C macros"]
-    PORT["Port initialization"]
+    RUNTIME["Port / Topology initialization"]
     YAML --> VALIDATE
     DTS --> VALIDATE
-    VALIDATE --> MACROS --> PORT
+    VALIDATE --> MACROS --> RUNTIME
 ```
 
 ## Practical example
 
-A board declares Port 0 with an `i2c` phandle. The binding rejects the build if
-the Port has no `reg` or references a nonexistent controller.
+A board declares Port 0 and Flow 0 with `signal-count = <5>` and
+`function-bay-count = <0>` when the prototype has no backbone yet. The binding
+rejects missing `reg`, invalid direction strings, or a nonexistent Port phandle.
 
 ## Zephyr integration
 
 - Bindings validate at configure time, before C compilation.
 - A phandle references another Devicetree node; Port converts the generated reference into a Zephyr device.
-- `status = "okay"` enables an instance; disabled nodes are not exposed as usable Ports.
+- `status = "okay"` enables an instance; disabled nodes are not exposed as usable Ports or Flows.
 
 ## Configuration templates
 
-### Binding template
+### Port binding template
 
 ```yaml
 description: Spaghetti LAB external module port
@@ -83,6 +92,31 @@ properties:
     description: I2C controller wired to the Port
 ```
 
+### Flow binding template
+
+```yaml
+compatible: "spaghettilab,flow"
+properties:
+  reg:
+    required: true
+  port:
+    type: phandle
+    required: true
+  direction:
+    type: string
+    required: true
+    enum:
+      - "field-to-core"
+      - "core-to-field"
+      - "bidirectional"
+  signal-count:
+    type: int
+    required: true
+  function-bay-count:
+    type: int
+    required: true
+```
+
 ### Matching DTS instance
 
 ```dts
@@ -92,11 +126,21 @@ port0: port@0 {
     i2c = <&i2c0>;
     status = "okay";
 };
+
+flow0: flow@0 {
+    compatible = "spaghettilab,flow";
+    reg = <0>;
+    port = <&port0>;
+    direction = "field-to-core";
+    signal-count = <5>;
+    function-bay-count = <0>;
+    status = "okay";
+};
 ```
 
 Every Port in the current binding is I2C-capable and therefore requires `i2c`.
 Future capability kinds must extend the schema explicitly instead of relying on
-a runtime failure.
+a runtime failure. Flow nodes never duplicate GPIO numbers.
 
 ## Ownership and concurrency
 
@@ -104,6 +148,6 @@ Bindings have no runtime state. Validation and macro generation happen in the si
 
 ## Contract guarantees
 
-- Invalid static Port descriptions fail the build.
-- Bindings contain no board-specific numeric values.
+- Invalid static Port or Flow descriptions fail the build.
+- Bindings contain no board-specific numeric pin values.
 - Bindings describe connector hardware, never the removable module attached to it.

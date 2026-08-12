@@ -27,6 +27,7 @@
 #include <spaghetti/secure_workspace.h>
 #include <spaghetti/service.h>
 #include <spaghetti/storage.h>
+#include <spaghetti/topology.h>
 #include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
 
@@ -247,6 +248,10 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto port_failed;
 	}
+	err = spaghetti_topology_init();
+	if (err < 0) {
+		goto topology_failed;
+	}
 #if defined(CONFIG_SPAGHETTI_POWER)
 	err = spaghetti_power_init();
 	if (err < 0) {
@@ -418,6 +423,9 @@ power_failed:
 	(void)fail_initialization("Power", err);
 	goto unlock;
 #endif
+topology_failed:
+	(void)fail_initialization("Topology", err);
+	goto unlock;
 port_failed:
 	(void)fail_initialization("Port", err);
 	goto unlock;

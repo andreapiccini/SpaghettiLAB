@@ -29,6 +29,7 @@ This directory contains contracts shared between firmware components. Headers ex
 | `secure_workspace.h` | Admission and high-water metrics for heavy secure sessions. |
 | `service.h` | Generic lifecycle owner for optional services. |
 | `port.h` | Physical Port access contract. |
+| `topology.h` | Flow, Function Bay, and Port termination topology. |
 | `module.h` | Runtime module instance and identifiers. |
 | `module_driver.h` | Immutable driver descriptor and operation table. |
 | `module_manager.h` | Module lifecycle and operation routing. |

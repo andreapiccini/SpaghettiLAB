@@ -1,6 +1,6 @@
 # TASK-297-01 — Descrivere Flow, Bay e connettori
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 297 — Topologia fisica dei Flow
 
 ## Cosa devo fare
