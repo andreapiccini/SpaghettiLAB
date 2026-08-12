@@ -2,15 +2,16 @@
 
 [← Project README](../../../README.md) · [Architecture](../../../ARCHITECTURE.md)
 
-A Devicetree binding is a YAML schema for static hardware. Spaghetti Port and Flow
-bindings validate that every board describes connectors and five-signal paths in the
-same machine-readable form.
+A Devicetree binding is a YAML schema for static hardware. Spaghetti Port, Flow,
+and power bindings validate that every board describes connectors, five-signal
+paths, and Bay rail reachability in the same machine-readable form.
 
 ## What this component owns
 
-- The meaning and type of each `spaghettilab,port` and `spaghettilab,flow` property.
+- The meaning and type of each `spaghettilab,port`, `spaghettilab,flow`,
+  `spaghettilab,power-rail`, and `spaghettilab,bay-power` property.
 - Required/optional property rules.
-- Build-time validation of Port and Flow nodes.
+- Build-time validation of those nodes.
 
 ## What this component does not own
 
@@ -24,6 +25,8 @@ same machine-readable form.
 |---|---|
 | `spaghettilab,port.yaml` | Schema for one physical Port node. |
 | `spaghettilab,flow.yaml` | Schema for one five-signal Flow path. |
+| `spaghettilab,power-rail.yaml` | Schema for one power rail and its assurance. |
+| `spaghettilab,bay-power.yaml` | Schema for rails routed to one Function Bay. |
 | Board `.dts` files | Concrete instances validated against the schema. |
 | `build/zephyr/zephyr.dts` | Generated result used to verify the final topology; never edit it. |
 

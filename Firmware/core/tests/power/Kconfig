@@ -14,4 +14,8 @@ config SPAGHETTI_POWER_LOG_LEVEL
 	int
 	default 0
 
+config SPAGHETTI_TOPOLOGY_LOG_LEVEL
+	int
+	default 0
+
 source "Kconfig.zephyr"

@@ -120,7 +120,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [296 — Health supervisor](296-health-supervisor/README.md) | Heartbeat e watchdog rilevano worker bloccati e rendono visibile la causa del reset. |
 | ✅ | [297 — Topologia Flow](297-flow-topology/README.md) | Il Core descrive Flow, Function Bay ordinate e connettori uniformi da cinque segnali. |
 | ✅ | [300 — Port e trasporti V1](300-port-transport-v1/README.md) | Port espone bus differenti e serializza controller condivisi senza hardware inventato. |
-| ⬜ | [305 — Power topology](305-power-topology/README.md) | Rail passive o controllate applicano admission coerente senza fingere limiti non noti. |
+| ✅ | [305 — Power topology](305-power-topology/README.md) | Rail passive o controllate applicano admission coerente senza fingere limiti non noti. |
 | ⬜ | [310 — Schemi e valori V1](310-schema-values-v1/README.md) | Config, record e comandi usano proprietà tipizzate e descrittori enumerabili. |
 | ⬜ | [320 — Module Driver V2](320-module-driver-v2/README.md) | Un driver porta schema e operazioni e si registra senza tabelle centrali. |
 | ⬜ | [325 — Profili dispositivo](325-declarative-device-profiles/README.md) | Registri e transazioni diventano profili dichiarativi installabili senza ricompilare un driver per sensore. |

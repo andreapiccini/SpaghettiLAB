@@ -1,0 +1,21 @@
+description: Spaghetti LAB Function Bay power reachability
+
+compatible: "spaghettilab,bay-power"
+
+include: base.yaml
+
+properties:
+  flow:
+    type: phandle
+    required: true
+    description: Flow that owns the Function Bay
+
+  bay-id:
+    type: int
+    required: true
+    description: Bay ordinal from the field connector
+
+  available-rails:
+    type: array
+    required: true
+    description: Rail identifiers physically routed to this Bay

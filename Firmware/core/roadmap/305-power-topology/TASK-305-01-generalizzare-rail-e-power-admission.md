@@ -1,6 +1,6 @@
 # TASK-305-01 — Generalizzare rail e Power admission
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 305 — Power topology e admission
 
 ## Cosa devo fare
@@ -138,13 +138,13 @@ rifiuta prima dell'attivazione una combinazione incompatibile e pubblica lo stat
 
 ## Checklist di completamento
 
-- [ ] Rail passive, switched e measured usano lo stesso contratto.
-- [ ] Ogni Bay espone una mask bounded delle rail realmente raggiungibili.
-- [ ] Zero significa limite sconosciuto e non produce falsa sicurezza.
-- [ ] Base passiva accetta Module non dichiarati e segnala `UNVERIFIED`.
-- [ ] Backend controllato applica tensione/corrente solo con dati completi.
-- [ ] Attach/detach e rollback backend hanno ordine verificato con owner fake.
-- [ ] Test coprono jumper passivo, Pro rigido, overcurrent e backend assente.
+- [x] Rail passive, switched e measured usano lo stesso contratto.
+- [x] Ogni Bay espone una mask bounded delle rail realmente raggiungibili.
+- [x] Zero significa limite sconosciuto e non produce falsa sicurezza.
+- [x] Base passiva accetta Module non dichiarati e segnala `UNVERIFIED`.
+- [x] Backend controllato applica tensione/corrente solo con dati completi.
+- [x] Attach/detach e rollback backend hanno ordine verificato con owner fake.
+- [x] Test coprono jumper passivo, Pro rigido, overcurrent e backend assente.
 
 ## Verifica e fine task
 

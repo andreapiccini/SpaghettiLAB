@@ -1,0 +1,37 @@
+description: Spaghetti LAB power rail reaching Function Bays
+
+compatible: "spaghettilab,power-rail"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+    description: Stable logical rail identifier used by Config and admission
+
+  assurance:
+    type: string
+    required: true
+    description: How firmly firmware can select and verify this rail
+    enum:
+      - "unmanaged"
+      - "switched"
+      - "switched-and-measured"
+
+  min-microvolts:
+    type: int
+    required: false
+    default: 0
+    description: Minimum supported voltage; zero means unknown
+
+  max-microvolts:
+    type: int
+    required: false
+    default: 0
+    description: Maximum supported voltage; zero means unknown
+
+  max-total-microamps:
+    type: int
+    required: false
+    default: 0
+    description: Maximum aggregate current; zero means unknown
