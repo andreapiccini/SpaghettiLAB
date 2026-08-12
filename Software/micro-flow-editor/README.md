@@ -53,6 +53,9 @@ packages/
   core-session/          Device Session Manager — per-Core session state machine,
                          sync classification, catalog cache, discovery binding
                          (S030).
+  catalog-model/         Catalog/topology normalization — immutable, order-
+                         independent indices for Module Drivers, Profiles,
+                         Capability Packs and Flow/Bay/Port/rail (S041).
   project-store/         ProjectV1 persistence: repository + transactional
                          autosave/history/concurrency (S014, S122).
   react-flow-adapter/     placeholder — Domain <-> React Flow bridge (S043)

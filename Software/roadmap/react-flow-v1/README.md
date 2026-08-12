@@ -30,7 +30,7 @@ finale end-to-end).
 | ✅ | [S024 — Streaming eventi e fixture fake](tasks/S024-event-streaming-fixtures.md) | Streaming con backpressure/gap espliciti; l'app si sviluppa senza hardware fisico. |
 | ✅ | [S030 — Sessioni Core e sincronizzazione](tasks/S030-core-sessions-sync.md) | Più Core vengono connessi, identificati e sincronizzati senza sovrascritture implicite. |
 | | **S040 — Catalogo, topologia e adapter React Flow** | |
-| ⬜ | [S041 — Normalizzazione catalogo e topologia](tasks/S041-catalog-topology-normalization.md) | Catalog e topologia diventano indici immutabili indipendenti dall'ordine di lettura. |
+| ✅ | [S041 — Normalizzazione catalogo e topologia](tasks/S041-catalog-topology-normalization.md) | Catalog e topologia diventano indici immutabili indipendenti dall'ordine di lettura. |
 | ⬜ | [S042 — EditorModel, form e compatibility engine](tasks/S042-editor-model-compatibility.md) | Nodi, handle, form e vincoli di collegamento derivano dal catalogo, mai hardcoded. |
 | ⬜ | [S043 — Adapter React Flow](tasks/S043-react-flow-adapter.md) | React Flow è pura rappresentazione; il dominio resta l'unica fonte autorevole. |
 | ⬜ | [S050 — Composizione fisica e configurazione Module](tasks/S050-physical-composition-modules.md) | Backbone, Bay, Connector, sensori esterni e Module diventano Config validabile. |

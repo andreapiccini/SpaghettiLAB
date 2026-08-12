@@ -5,6 +5,7 @@
     { "path": "packages/protocol-sdk" },
     { "path": "packages/project-store" },
     { "path": "packages/core-session" },
+    { "path": "packages/catalog-model" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]
