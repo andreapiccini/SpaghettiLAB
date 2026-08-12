@@ -112,12 +112,12 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [270 — OTA Wi-Fi](270-wifi-ota/README.md) | Un peer autenticato carica una signed image durante una finestra esplicita. |
 | ✅ | [280 — Console remota](280-remote-console/README.md) | `make monitor` usa USB o un canale di rete autenticato. |
 | 🟨 | [290 — Qualificazione update](290-update-qualification/README.md) | Tool e matrice sono pronti; le prove fisiche devono ancora produrre evidenze. |
-| ⬜ | [291 — Profili risorse](291-resource-profiles/README.md) | Ogni Core compila limiti e capability coerenti con il proprio budget. |
-| ⬜ | [292 — Connectivity Manager](292-connectivity-manager/README.md) | LOW_ENERGY, ONLINE e lease temporanee hanno un solo owner. |
+| ✅ | [291 — Profili risorse](291-resource-profiles/README.md) | Ogni Core compila limiti e capability coerenti con il proprio budget. |
+| ✅ | [292 — Connectivity Manager](292-connectivity-manager/README.md) | LOW_ENERGY, ONLINE e lease temporanee hanno un solo owner. |
 | ✅ | [293 — Workspace TLS](293-secure-workspace/README.md) | TLS/DTLS usa memoria condivisa bounded invece dell'arena privata da 60 KiB. |
-| 🟨 | [294 — Lifecycle servizi](294-service-lifecycle/README.md) | Implementazione pronta; build e Twister devono confermare 100 cicli senza leak. |
+| ✅ | [294 — Lifecycle servizi](294-service-lifecycle/README.md) | Servizi opzionali rilasciano stack, socket e code quando vengono arrestati. |
 | ✅ | [295 — Low-energy power](295-low-energy-power/README.md) | Radio e PM seguono una policy verificabile senza fermare Runtime. |
-| ⬜ | [296 — Health supervisor](296-health-supervisor/README.md) | Heartbeat e watchdog rilevano worker bloccati e rendono visibile la causa del reset. |
+| ✅ | [296 — Health supervisor](296-health-supervisor/README.md) | Heartbeat e watchdog rilevano worker bloccati e rendono visibile la causa del reset. |
 | ⬜ | [297 — Topologia Flow](297-flow-topology/README.md) | Il Core descrive Flow, Function Bay ordinate e connettori uniformi da cinque segnali. |
 | ⬜ | [300 — Port e trasporti V1](300-port-transport-v1/README.md) | Port espone bus differenti e serializza controller condivisi senza hardware inventato. |
 | ⬜ | [305 — Power topology](305-power-topology/README.md) | Rail passive o controllate applicano admission coerente senza fingere limiti non noti. |

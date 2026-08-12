@@ -15,6 +15,7 @@
 #include <spaghetti/data.h>
 #include <spaghetti/discovery.h>
 #include <spaghetti/driver_registry.h>
+#include <spaghetti/health.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
@@ -276,6 +277,10 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto boot_mode_failed;
 	}
+	err = spaghetti_health_init();
+	if (err < 0) {
+		goto health_failed;
+	}
 
 	if (core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) {
 		err = spaghetti_runtime_init();
@@ -371,6 +376,9 @@ startup_config_failed:
 	goto unlock;
 boot_mode_failed:
 	(void)fail_initialization("boot mode", err);
+	goto unlock;
+health_failed:
+	(void)fail_initialization("Health", err);
 	goto unlock;
 config_failed:
 	(void)fail_initialization("Config", err);
@@ -487,6 +495,13 @@ int spaghetti_core_start(void)
 		if ((err < 0) && (err != -ENOENT) && (err != -ENOTSUP)) {
 			LOG_WRN("Wi-Fi auto-connect was not started: err=%d", err);
 		}
+	}
+
+	err = spaghetti_health_start();
+	if (err < 0) {
+		atomic_set(&core_state, SPAGHETTI_CORE_FAILED);
+		LOG_ERR("Health supervisor start failed: err=%d", err);
+		return err;
 	}
 
 	return 0;

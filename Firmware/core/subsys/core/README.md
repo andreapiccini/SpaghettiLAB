@@ -23,7 +23,9 @@ Core is the firmware startup coordinator. It initializes required components in 
 |---|---|
 | `include/spaghetti/core.h` | Public Core state, info, and function declarations. |
 | `include/spaghetti/capabilities.h` | Immutable resource profile and compiled capability contract. |
+| `include/spaghetti/health.h` | Health supervisor, heartbeats, and silence windows. |
 | `subsys/core/core.c` | Private state and startup sequence. |
+| `subsys/core/health.c` | Supervisor thread, optional WDT feed, and metrics. |
 | `subsys/core/capabilities.c` | Builds and validates the caller-copied capability snapshot. |
 | `subsys/connectivity/` | Owns connectivity policy and bounded temporary leases. |
 | `subsys/services/secure_workspace/` | Serializes heavy secure sessions over the common libc heap. |

@@ -10,11 +10,33 @@
 #include <zephyr/sys/util.h>
 
 #include <spaghetti/capabilities.h>
+#include <spaghetti/health.h>
+#include <spaghetti/core.h>
 
 #include "connectivity_internal.h"
 
 LOG_MODULE_REGISTER(spaghetti_connectivity,
 		    CONFIG_SPAGHETTI_CONNECTIVITY_LOG_LEVEL);
+
+SPAGHETTI_HEALTH_COMPONENT_DEFINE(connectivity_health) = {
+	.id = SPAGHETTI_HEALTH_ID_CONNECTIVITY,
+	.name = "connectivity",
+	.maximum_silence_ms = 3000U,
+	.required_core_modes = BIT(SPAGHETTI_CORE_MODE_NORMAL),
+};
+
+static void connectivity_health_keepalive_handler(struct k_work *work);
+
+K_WORK_DELAYABLE_DEFINE(connectivity_health_keepalive,
+			connectivity_health_keepalive_handler);
+
+static void connectivity_health_keepalive_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_CONNECTIVITY);
+	(void)k_work_reschedule(&connectivity_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
+}
 
 #define SPAGHETTI_CONNECTIVITY_SERVICE_MASK \
 	(SPAGHETTI_CONNECTIVITY_SERVICE_BLE | \
@@ -226,6 +248,9 @@ int spaghetti_connectivity_init(
 	context.last_error = 0;
 	context.initialized = true;
 	k_mutex_unlock(&connectivity_lock);
+	(void)k_work_reschedule(&connectivity_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_CONNECTIVITY);
 	LOG_INF("ready: policy=%u active=0x%x", (uint32_t)boot_policy,
 		context.active_services);
 	return 0;

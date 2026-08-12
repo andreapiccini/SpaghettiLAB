@@ -6,6 +6,8 @@ module = SPAGHETTI_CORE
 module-str = spaghetti_core
 source "subsys/logging/Kconfig.template.log_config"
 
+rsource "subsys/core/Kconfig.health"
+
 module = SPAGHETTI_PORT
 module-str = spaghetti_port
 source "subsys/logging/Kconfig.template.log_config"

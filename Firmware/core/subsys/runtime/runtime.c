@@ -9,11 +9,33 @@
 #include <zephyr/zbus/zbus.h>
 
 #include <spaghetti/data.h>
+#include <spaghetti/health.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/core.h>
 #include <spaghetti/timer.h>
 
 LOG_MODULE_REGISTER(spaghetti_runtime, CONFIG_SPAGHETTI_RUNTIME_LOG_LEVEL);
+
+SPAGHETTI_HEALTH_COMPONENT_DEFINE(runtime_health) = {
+	.id = SPAGHETTI_HEALTH_ID_RUNTIME,
+	.name = "runtime",
+	.maximum_silence_ms = 3000U,
+	.required_core_modes = BIT(SPAGHETTI_CORE_MODE_NORMAL),
+};
+
+static void runtime_health_keepalive_handler(struct k_work *work);
+
+K_WORK_DELAYABLE_DEFINE(runtime_health_keepalive,
+			runtime_health_keepalive_handler);
+
+static void runtime_health_keepalive_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_RUNTIME);
+	(void)k_work_reschedule(&runtime_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
+}
 
 ZBUS_CHAN_DECLARE(spaghetti_electrical_chan);
 ZBUS_OBS_DECLARE(electrical_runtime_subscriber);
@@ -110,6 +132,7 @@ static void runtime_sampling_thread_entry(void *first, void *second, void *third
 		}
 
 		complete_operation();
+		(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_RUNTIME);
 	}
 }
 
@@ -189,6 +212,7 @@ static void runtime_rule_thread_entry(void *first, void *second, void *third)
 		}
 		finish_stop_if_quiescent();
 		k_mutex_unlock(&runtime_lock);
+		(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_RUNTIME);
 	}
 }
 
@@ -242,6 +266,8 @@ int spaghetti_runtime_init(void)
 	k_sem_give(&runtime_initialized_sem);
 	k_mutex_unlock(&runtime_lock);
 
+	(void)k_work_reschedule(&runtime_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
 	LOG_INF("ready");
 	return 0;
 }

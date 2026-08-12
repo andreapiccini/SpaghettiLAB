@@ -8,14 +8,40 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#include <spaghetti/core.h>
+#include <spaghetti/health.h>
+
 #include "update_internal.h"
 
 LOG_MODULE_REGISTER(spaghetti_update, CONFIG_SPAGHETTI_UPDATE_LOG_LEVEL);
+
+SPAGHETTI_HEALTH_COMPONENT_DEFINE(update_health) = {
+	.id = SPAGHETTI_HEALTH_ID_UPDATE,
+	.name = "update",
+	.maximum_silence_ms = 3000U,
+	.required_core_modes = BIT(SPAGHETTI_CORE_MODE_UNPROVISIONED) |
+		BIT(SPAGHETTI_CORE_MODE_NORMAL) |
+		BIT(SPAGHETTI_CORE_MODE_MAINTENANCE),
+};
+
+static void update_health_keepalive_handler(struct k_work *work);
+
+K_WORK_DELAYABLE_DEFINE(update_health_keepalive,
+			update_health_keepalive_handler);
+
+static void update_health_keepalive_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_UPDATE);
+	(void)k_work_reschedule(&update_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
+}
 
 struct spaghetti_update_context {
 	struct spaghetti_update_status status;
 	struct k_work_delayable timeout_work;
 	int64_t deadline_ms;
+	spaghetti_health_window_token_t health_window_token;
 	bool initialized;
 };
 
@@ -39,6 +65,11 @@ static bool session_has_expired(void)
 static int discard_candidate_locked(int reason)
 {
 	int err = spaghetti_update_backend_cancel();
+
+	if (context.health_window_token != 0U) {
+		(void)spaghetti_health_window_release(context.health_window_token);
+		context.health_window_token = 0U;
+	}
 
 	if (err < 0) {
 		context.status.state = SPAGHETTI_UPDATE_ERROR;
@@ -108,6 +139,9 @@ int spaghetti_update_init(void)
 	};
 	context.deadline_ms = 0;
 	context.initialized = true;
+	(void)k_work_reschedule(&update_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_UPDATE);
 	LOG_INF("ready: state=%s", trial ? "trial" : "idle");
 
 unlock:
@@ -158,7 +192,19 @@ int spaghetti_update_arm(uint32_t timeout_ms)
 	(void)k_work_reschedule_for_queue(&update_work_queue,
 					  &context.timeout_work,
 					  K_MSEC(timeout_ms));
+	{
+		const uint32_t window_ms =
+			MIN(timeout_ms, CONFIG_SPAGHETTI_HEALTH_MAX_WINDOW_MS);
+		spaghetti_health_window_token_t token = 0U;
+		const int window_err = spaghetti_health_window_acquire(
+			SPAGHETTI_HEALTH_ID_UPDATE, K_MSEC(window_ms), &token);
+
+		if (window_err == 0) {
+			context.health_window_token = token;
+		}
+	}
 	err = 0;
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_UPDATE);
 	LOG_INF("armed: timeout_ms=%u", timeout_ms);
 
 unlock:
@@ -253,6 +299,11 @@ int spaghetti_update_finish(void)
 	context.status.timeout_remaining_ms = 0U;
 	context.status.last_error = 0;
 	context.deadline_ms = 0;
+	if (context.health_window_token != 0U) {
+		(void)spaghetti_health_window_release(context.health_window_token);
+		context.health_window_token = 0U;
+	}
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_UPDATE);
 	LOG_INF("candidate ready: MCUboot test requested");
 	err = 0;
 

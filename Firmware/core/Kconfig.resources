@@ -221,3 +221,21 @@ config SPAGHETTI_PROTOCOL_REPLAY_WINDOW_MS
 	default 30000 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
 	default 60000 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
 	default 120000
+
+config SPAGHETTI_MAX_HEALTH_COMPONENTS
+	int "Maximum registered health components"
+	range 1 32
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 12 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 16
+	help
+	  Fixed capacity for health descriptors collected from iterable sections.
+
+config SPAGHETTI_MAX_HEALTH_WINDOWS
+	int "Maximum simultaneous health silence windows"
+	range 1 16
+	default 2 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 8
+	help
+	  Bounded pool for temporary OTA/flash silence extensions.

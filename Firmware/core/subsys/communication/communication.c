@@ -14,6 +14,7 @@
 #include <spaghetti/core.h>
 #include <spaghetti/config.h>
 #include <spaghetti/config_codec.h>
+#include <spaghetti/health.h>
 #include <spaghetti/module.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
@@ -22,6 +23,28 @@
 
 LOG_MODULE_REGISTER(spaghetti_communication,
 		    CONFIG_SPAGHETTI_COMMUNICATION_LOG_LEVEL);
+
+SPAGHETTI_HEALTH_COMPONENT_DEFINE(communication_health) = {
+	.id = SPAGHETTI_HEALTH_ID_COMMUNICATION,
+	.name = "communication",
+	.maximum_silence_ms = 3000U,
+	.required_core_modes = BIT(SPAGHETTI_CORE_MODE_UNPROVISIONED) |
+		BIT(SPAGHETTI_CORE_MODE_NORMAL) |
+		BIT(SPAGHETTI_CORE_MODE_MAINTENANCE),
+};
+
+static void communication_health_keepalive_handler(struct k_work *work);
+
+K_WORK_DELAYABLE_DEFINE(communication_health_keepalive,
+			communication_health_keepalive_handler);
+
+static void communication_health_keepalive_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_COMMUNICATION);
+	(void)k_work_reschedule(&communication_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
+}
 
 static atomic_t is_initialized;
 K_MUTEX_DEFINE(communication_lock);
@@ -148,6 +171,8 @@ int spaghetti_communication_init(void)
 		return err;
 	}
 
+	(void)k_work_reschedule(&communication_health_keepalive,
+		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
 	LOG_INF("ready");
 	return 0;
 }
@@ -204,5 +229,6 @@ int spaghetti_communication_handle_request(
 	}
 
 	*response = result;
+	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_COMMUNICATION);
 	return 0;
 }

@@ -1,6 +1,6 @@
 # TASK-296-01 — Implementare health supervisor e watchdog
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 296 — Health supervisor e watchdog
 
 ## Cosa devo fare
@@ -132,12 +132,12 @@ SPAGHETTI_HEALTH_COMPONENT_DEFINE(runtime_health) = {
 
 ## Checklist di completamento
 
-- [ ] Descriptor e stato sono statici, bounded e derivati dal profilo.
-- [ ] Solo il supervisor chiama `wdt_feed()`.
-- [ ] Worker inattivi per policy non vengono considerati stale.
-- [ ] Window OTA/flash è limitata, tracciata e scade automaticamente.
-- [ ] Board senza chosen watchdog compila e dichiara la capability corretta.
-- [ ] Reset cause e componente stale sono leggibili senza indirizzi o segreti.
+- [x] Descriptor e stato sono statici, bounded e derivati dal profilo.
+- [x] Solo il supervisor chiama `wdt_feed()`.
+- [x] Worker inattivi per policy non vengono considerati stale.
+- [x] Window OTA/flash è limitata, tracciata e scade automaticamente.
+- [x] Board senza chosen watchdog compila e dichiara la capability corretta.
+- [x] Reset cause e componente stale sono leggibili senza indirizzi o segreti.
 
 ## Verifica e fine task
 

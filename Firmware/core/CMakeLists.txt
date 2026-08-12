@@ -42,6 +42,7 @@ target_sources(app PRIVATE
   subsys/core/capabilities.c
   subsys/core/core.c
   subsys/core/core_boot_backend.c
+  subsys/core/health.c
   subsys/port/port.c
   subsys/driver_registry/driver_registry.c
   subsys/module_manager/module_manager.c
@@ -83,6 +84,8 @@ target_sources_ifdef(CONFIG_SPAGHETTI_POWER app PRIVATE
 target_sources_ifdef(CONFIG_SPAGHETTI_ENERGY app PRIVATE
   subsys/power/energy.c
 )
+
+zephyr_linker_sources(SECTIONS subsys/core/health_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)
 
