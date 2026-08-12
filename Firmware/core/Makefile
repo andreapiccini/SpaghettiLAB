@@ -32,7 +32,8 @@ WEST_CMAKE_ARGS := -- -DBOARD_ROOT=/opt/zephyrproject/app \
 .PHONY: image shell signing-key validate build pristine flash screen monitor \
 	host-tools ports remote-console-credential remote-console-provision \
 	remote-console-enable remote-console-clear remote-console-list update-qualification-manifest \
-	update-qualification-check resource-report node-red-ble-smoke node-red-mqtt-smoke clean
+	update-qualification-check resource-report node-red-ble-smoke node-red-mqtt-smoke \
+	spaghetti config-validate config-apply clean
 
 $(HOST_TOOLS_STAMP): tools/requirements.txt
 	@$(HOST_PYTHON) -m venv .venv
@@ -55,6 +56,17 @@ else
 endif
 
 host-tools: $(HOST_TOOLS_STAMP)
+
+# Spaghetti CLI V1 (catalog-driven JSON Config / Protocol). Pass ARGS='…'.
+spaghetti: host-tools
+	@$(HOST_VENV_PYTHON) tools/spaghetti.py $(ARGS)
+
+# CONFIG is a local JSON path (not a Kconfig symbol).
+config-validate: host-tools
+	@$(HOST_VENV_PYTHON) tools/spaghetti.py config validate "$(CONFIG)"
+
+config-apply: host-tools
+	@$(HOST_VENV_PYTHON) tools/spaghetti.py config apply "$(CONFIG)"
 
 # Fake MQTT → TypeScript SpaghettiClient smoke (no broker, no Node-RED process).
 # Shared CBOR vectors: tests/protocol/vectors/v1/ (TS + Python now; C in phase 380).

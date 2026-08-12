@@ -3,3 +3,4 @@ rich>=13.7,<15
 bleak>=1.0,<4
 websockets>=12,<16
 cbor2>=5.4,<6
+paho-mqtt>=2.0,<3

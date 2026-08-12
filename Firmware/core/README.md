@@ -237,6 +237,9 @@ sudo usermod -aG dialout "$USER"
 | `make screen [PORT=...]` | Open the raw serial console at 115200 baud |
 | `make monitor [PORT=...]` | Open the styled, reconnecting Rich monitor |
 | `make host-tools` | Create `.venv/` and install monitor dependencies |
+| `make spaghetti ARGS='…'` | Run the Spaghetti CLI V1 (catalog / config / update) |
+| `make config-validate CONFIG=path.json` | Validate a local Config JSON against the Core catalog |
+| `make config-apply CONFIG=path.json` | Validate then apply Config (generation/hash CAS) |
 | `make remote-console-credential CREDENTIALS=...` | Create a protected TLS-PSK file |
 | `make remote-console-provision CREDENTIALS=...` | Install it through local USB Maintenance |
 | `make remote-console-enable` | Complete safe onboarding and enter Normal mode |
@@ -279,6 +282,7 @@ docker compose run --rm dev west build -d build -t pristine
 ├── templates/firmware/                     copyable implementation skeletons
 ├── validator                               pre-build firmware convention checker
 ├── tools/device.py                         host port detection, flash, and console helper
+├── tools/spaghetti.py                      Spaghetti CLI V1 (JSON Config / Protocol)
 ├── FILE_MAP.md                             what to read before each kind of change
 ├── prj.conf                                Zephyr/Kconfig settings
 ├── CMakeLists.txt                          build configuration

@@ -1,6 +1,6 @@
 # TASK-380-01 — Creare il CLI Spaghetti V1
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 380 — Tool sviluppatore V1
 
 ## Cosa devo fare
@@ -158,16 +158,16 @@ Dopo questa fase lo stesso JSON può essere generato o inviato dal flow Node-RED
 
 ## Checklist di completamento
 
-- [ ] CLI usa catalogo, non tabelle driver locali.
-- [ ] JSON viene validato sul Core prima dell'apply e conserva gli interi a 64 bit.
-- [ ] Config get/apply usa generation/hash e non forza i conflict.
-- [ ] Serial, TLS, MQTT e BLE trasportano lo stesso envelope.
-- [ ] UART/DTLS/BLE update mostrano progress e verificano trial.
-- [ ] CLI espone capability, lease e reset con conferma esplicita.
-- [ ] CLI topology espone Flow/Bay/rail e distingue power advisory da enforced.
-- [ ] Nessun segreto entra in argv/log/repository.
-- [ ] Fake coprono errori, reconnect e resume.
-- [ ] Python supera gli stessi golden vector CBOR dell'SDK JavaScript.
+- [x] CLI usa catalogo, non tabelle driver locali.
+- [x] JSON viene validato sul Core prima dell'apply e conserva gli interi a 64 bit.
+- [x] Config get/apply usa generation/hash e non forza i conflict.
+- [x] Serial, TLS, MQTT e BLE trasportano lo stesso envelope.
+- [x] UART/DTLS/BLE update mostrano progress e verificano trial.
+- [x] CLI espone capability, lease e reset con conferma esplicita.
+- [x] CLI topology espone Flow/Bay/rail e distingue power advisory da enforced.
+- [x] Nessun segreto entra in argv/log/repository.
+- [x] Fake coprono errori, reconnect e resume.
+- [x] Python supera gli stessi golden vector CBOR dell'SDK JavaScript.
 
 ## Verifica e fine task
 

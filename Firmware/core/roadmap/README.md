@@ -138,7 +138,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [370 — MQTT per Node-RED V1](370-mqtt-node-red-v1/README.md) | Node-RED riceve record e invia richieste con risposta correlata. |
 | ✅ | [375 — Gateway BLE Node-RED](375-node-red-ble-gateway/README.md) | Node-RED usa BLE direttamente o tramite gateway senza MQTT sul Core. |
 | ✅ | [378 — SDK host e Node-RED](378-host-sdk-node-red/README.md) | TypeScript condivide codec/transport e coordina la Config senza lost update. |
-| ⬜ | [380 — Tool sviluppatore V1](380-developer-tools-v1/README.md) | Un CLI JSON nasconde CBOR, trasporti e aggiornamenti. |
+| ✅ | [380 — Tool sviluppatore V1](380-developer-tools-v1/README.md) | Un CLI JSON nasconde CBOR, trasporti e aggiornamenti. |
 | ⬜ | [385 — Manuale developer](385-developer-handbook/README.md) | Guide e template V1 coprono Module, Core, rule, provider e transport. |
 | ⬜ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti, SDK, watchdog, fuzz ed estensioni fake superano il gate Node-RED. |
 
