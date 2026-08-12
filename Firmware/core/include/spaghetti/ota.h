@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Authenticated bounded Wi-Fi OTA window.
+ * @brief Authenticated bounded Wi-Fi and BLE OTA adapters.
  * @ingroup spaghetti_ota
  */
 
@@ -13,8 +13,19 @@
 #include <zephyr/kernel.h>
 
 #include <spaghetti/access_control.h>
+#include <spaghetti/core.h>
 
 struct smp_transport;
+
+/** Maximum BLE OTA write chunk accepted by the adapter. */
+#define SPAGHETTI_OTA_BLE_CHUNK_MAX 512U
+
+/** Borrowed BLE begin request; copied by open() for the session lifetime. */
+struct spaghetti_ble_update_begin {
+	uint32_t image_size; /**< Exact candidate byte count. */
+	uint8_t image_sha256[32]; /**< Expected SHA-256 of candidate bytes. */
+	char version[SPAGHETTI_CORE_VERSION_SIZE]; /**< Candidate version label. */
+};
 
 /** Fixed per-device DTLS pre-shared key size. */
 #define SPAGHETTI_OTA_PSK_SIZE 32U
@@ -224,5 +235,95 @@ void spaghetti_ota_cancel_after_response(void);
 
 /** Close only the transport before reboot, preserving a pending candidate. */
 void spaghetti_ota_prepare_reboot(void);
+
+/**
+ * @brief Open one BLE-owned Update session after authorization.
+ *
+ * Quiesces Runtime before the first secondary-slot erase. Requires an
+ * authenticated BLE peer with UPDATE permission, or a non-zero acting
+ * principal installed for tests.
+ *
+ * @param[in] request Borrowed begin metadata copied only for this call.
+ * @param[out] session_id Caller-owned session identifier written on success.
+ *
+ * @retval 0 BLE owns Update and @p session_id is valid.
+ * @retval -EINVAL A pointer or @p request field is invalid.
+ * @retval -EACCES Authorization failed or Update is uninitialized.
+ * @retval -EBUSY Another transport owns Update.
+ * @retval -EFBIG @p request->image_size exceeds secondary-slot capacity.
+ * @retval -errno Update, Runtime, or backend preparation failed.
+ *
+ * @note Thread context only. No caller pointer is retained after return.
+ */
+int spaghetti_ota_ble_open(
+	const struct spaghetti_ble_update_begin *request,
+	uint32_t *session_id);
+
+/**
+ * @brief Append one ordered BLE chunk at the exact expected offset.
+ *
+ * @param[in] session_id Session returned by @ref spaghetti_ota_ble_open.
+ * @param[in] offset Exact next byte offset; must match adapter progress.
+ * @param[in] bytes Borrowed chunk bytes retained only for this call.
+ * @param[in] size Chunk length from one to @ref SPAGHETTI_OTA_BLE_CHUNK_MAX.
+ *
+ * @retval 0 The chunk was accepted and written through Update.
+ * @retval -EINVAL Session, offset, pointer, or size is invalid.
+ * @retval -ENOENT @p session_id is unknown.
+ * @retval -EPERM No BLE session is receiving.
+ * @retval -errno Update rejected the write.
+ *
+ * @note Thread context only. Clears a pending disconnect-resume window.
+ */
+int spaghetti_ota_ble_write(uint32_t session_id, uint32_t offset,
+			    const uint8_t *bytes, size_t size);
+
+/**
+ * @brief Verify size/hash and finalize the BLE candidate through Update.
+ *
+ * @param[in] session_id Session returned by @ref spaghetti_ota_ble_open.
+ *
+ * @retval 0 Update entered PENDING_REBOOT after hash and finish checks.
+ * @retval -EINVAL @p session_id is zero.
+ * @retval -ENOENT @p session_id is unknown.
+ * @retval -EBADMSG Received size or SHA-256 does not match the begin request.
+ * @retval -errno Update finalization failed.
+ *
+ * @note Thread context only. Trial reboot remains owned by Update/Core.
+ */
+int spaghetti_ota_ble_finish(uint32_t session_id);
+
+/**
+ * @brief Cancel the BLE session and discard the secondary candidate.
+ *
+ * @param[in] session_id Session returned by @ref spaghetti_ota_ble_open.
+ *
+ * @retval 0 BLE released ownership; confirmed image is untouched.
+ * @retval -EINVAL @p session_id is zero.
+ * @retval -ENOENT @p session_id is unknown.
+ * @retval -EALREADY No BLE session is active.
+ * @retval -errno Update cancellation failed.
+ *
+ * @note Thread context only.
+ */
+int spaghetti_ota_ble_cancel(uint32_t session_id);
+
+/**
+ * @brief Select the acting principal used when no live BLE peer authorizes.
+ *
+ * @param[in] id Enabled principal with UPDATE permission, or zero to clear.
+ *
+ * @note Intended for unit tests and Protocol handlers that already authorized.
+ */
+void spaghetti_ota_ble_set_acting_principal(spaghetti_principal_id_t id);
+
+/**
+ * @brief Start the bounded disconnect-resume window for an active BLE session.
+ *
+ * Called from the BLE adapter when a peer disconnects. If the same session is
+ * not continued with write/finish before the resume timeout, the candidate is
+ * cancelled and the confirmed image remains untouched.
+ */
+void spaghetti_ota_ble_on_disconnect(void);
 
 #endif /* SPAGHETTI_OTA_H */

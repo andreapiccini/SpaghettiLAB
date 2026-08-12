@@ -27,6 +27,7 @@
 #include <spaghetti/image_manifest.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/ota.h>
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
 #include <spaghetti/protocol.h>
@@ -323,6 +324,44 @@ int spaghetti_update_begin(enum spaghetti_update_transport transport)
 int spaghetti_update_cancel(void)
 {
 	return 0;
+}
+
+int spaghetti_ota_ble_open(
+	const struct spaghetti_ble_update_begin *request,
+	uint32_t *session_id)
+{
+	if ((request == NULL) || (session_id == NULL)) {
+		return -EINVAL;
+	}
+	*session_id = 1U;
+	return 0;
+}
+
+int spaghetti_ota_ble_write(uint32_t session_id, uint32_t offset,
+			    const uint8_t *bytes, size_t size)
+{
+	ARG_UNUSED(session_id);
+	ARG_UNUSED(offset);
+	ARG_UNUSED(bytes);
+	ARG_UNUSED(size);
+	return 0;
+}
+
+int spaghetti_ota_ble_finish(uint32_t session_id)
+{
+	ARG_UNUSED(session_id);
+	return 0;
+}
+
+int spaghetti_ota_ble_cancel(uint32_t session_id)
+{
+	ARG_UNUSED(session_id);
+	return 0;
+}
+
+void spaghetti_ota_ble_set_acting_principal(spaghetti_principal_id_t id)
+{
+	ARG_UNUSED(id);
 }
 
 int spaghetti_discovery_list(
@@ -669,6 +708,51 @@ ZTEST(protocol, test_envelope_roundtrip_and_rejects)
 		&request, buffer, sizeof(buffer), &written), -EINVAL);
 	zassert_equal(spaghetti_protocol_decode_request(
 		malformed, sizeof(malformed), &decoded), -EBADMSG);
+}
+
+/**
+ * Fixed reference byte vectors for the envelope wire format, published so any
+ * out-of-tree codec (e.g. the TypeScript Protocol SDK, see
+ * Software/roadmap/react-flow-v1/tasks/S021-codec-protocol-types.md) can
+ * verify its encoding against a byte sequence this test suite pins down,
+ * instead of only checking internal round-trip/determinism as the rest of
+ * this file does. Any change to these bytes is a wire-format break.
+ *
+ * Collections here are indefinite-length (0xBF/0x9F ... 0xFF) — this zcbor
+ * build does not use canonical/definite-length encoding for maps or lists,
+ * confirmed by running this exact test in native_sim before pinning the
+ * vectors below.
+ */
+ZTEST(protocol, test_envelope_golden_vectors)
+{
+	struct spaghetti_protocol_request request = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
+		.correlation_id = 1U,
+		.operation = SPAGHETTI_PROTOCOL_GET_STATUS,
+	};
+	struct spaghetti_protocol_response response = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
+		.correlation_id = 1U,
+		.status = SPAGHETTI_PROTOCOL_STATUS_OK,
+	};
+	/* {0:1, 1:1, 2:2, 3:h''} — version=1, correlation_id=1, operation=GET_STATUS(2), empty payload. */
+	uint8_t expected_request[] = {0xBF, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x03, 0x40, 0xFF};
+	/* {0:1, 1:1, 2:0, 3:h'A0'} — version=1, correlation_id=1, status=OK(0), payload={0xA0} (one CBOR empty map byte). */
+	uint8_t expected_response[] = {0xBF, 0x00, 0x01, 0x01, 0x01, 0x02, 0x00, 0x03, 0x41, 0xA0, 0xFF};
+	uint8_t buffer[128];
+	size_t written = 0U;
+
+	zassert_ok(spaghetti_protocol_encode_request(
+		&request, buffer, sizeof(buffer), &written));
+	zassert_equal(written, sizeof(expected_request));
+	zassert_mem_equal(buffer, expected_request, written);
+
+	response.payload.size = 1U;
+	response.payload.bytes[0] = 0xA0U;
+	zassert_ok(spaghetti_protocol_encode_response(
+		&response, buffer, sizeof(buffer), &written));
+	zassert_equal(written, sizeof(expected_response));
+	zassert_mem_equal(buffer, expected_response, written);
 }
 
 ZTEST(protocol, test_permission_denied_unknown_op_replay)

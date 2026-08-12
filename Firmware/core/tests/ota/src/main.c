@@ -11,6 +11,7 @@
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/ota.h>
 #include <spaghetti/secure_workspace.h>
+#include <spaghetti/update.h>
 
 #include "ota_internal.h"
 
@@ -143,6 +144,18 @@ int spaghetti_update_arm(uint32_t timeout_ms)
 {
 	zassert_true(timeout_ms > 0U);
 	++update_arm_calls;
+	return 0;
+}
+
+int spaghetti_update_get_status(struct spaghetti_update_status *out)
+{
+	if (out == NULL) {
+		return -EINVAL;
+	}
+	*out = (struct spaghetti_update_status) {
+		.state = SPAGHETTI_UPDATE_IDLE,
+		.transport = SPAGHETTI_UPDATE_TRANSPORT_NONE,
+	};
 	return 0;
 }
 

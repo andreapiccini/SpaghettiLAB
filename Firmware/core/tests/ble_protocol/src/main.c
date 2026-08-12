@@ -17,6 +17,7 @@
 #include <spaghetti/core.h>
 #include <spaghetti/identity.h>
 #include <spaghetti/maintenance_link.h>
+#include <spaghetti/ota.h>
 #include <spaghetti/protocol.h>
 #include <spaghetti/record_delivery.h>
 
@@ -118,6 +119,10 @@ int spaghetti_communication_handle_request(
 	*response = canned_response;
 	response->correlation_id = request->correlation_id;
 	return 0;
+}
+
+void spaghetti_ota_ble_on_disconnect(void)
+{
 }
 
 static void make_frame(

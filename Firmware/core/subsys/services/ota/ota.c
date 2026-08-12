@@ -91,11 +91,19 @@ static void deferred_cancel_handler(struct k_work *work)
 
 static int arm_locked(uint32_t timeout_ms)
 {
+	struct spaghetti_update_status update_status;
 	bool credentials_present;
 	int err;
 
 	if (context.state == SPAGHETTI_OTA_ARMED) {
 		return -EALREADY;
+	}
+	err = spaghetti_update_get_status(&update_status);
+	if (err < 0) {
+		return err;
+	}
+	if (update_status.transport == SPAGHETTI_UPDATE_TRANSPORT_BLE) {
+		return -EBUSY;
 	}
 	err = spaghetti_ota_backend_has_credentials(&credentials_present);
 	if (err < 0) {

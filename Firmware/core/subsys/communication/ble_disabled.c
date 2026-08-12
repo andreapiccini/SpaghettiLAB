@@ -79,3 +79,9 @@ int spaghetti_ble_set_radio(bool enabled)
 	ARG_UNUSED(enabled);
 	return -ENOTSUP;
 }
+
+int spaghetti_ble_find_update_principal(spaghetti_principal_id_t *out_principal)
+{
+	ARG_UNUSED(out_principal);
+	return -ENOTSUP;
+}

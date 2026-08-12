@@ -18,6 +18,7 @@ enum spaghetti_update_transport {
 	SPAGHETTI_UPDATE_TRANSPORT_NONE, /**< No transport owns the session. */
 	SPAGHETTI_UPDATE_TRANSPORT_UART, /**< Local maintenance UART adapter. */
 	SPAGHETTI_UPDATE_TRANSPORT_UDP, /**< Authenticated Wi-Fi UDP adapter. */
+	SPAGHETTI_UPDATE_TRANSPORT_BLE, /**< Authenticated BLE adapter. */
 };
 
 /** Observable firmware-update lifecycle. */
@@ -80,7 +81,7 @@ int spaghetti_update_arm(uint32_t timeout_ms);
  * RECEIVING state. The deadline established by @ref spaghetti_update_arm is
  * not extended.
  *
- * @param[in] transport UART or authenticated UDP adapter requesting ownership.
+ * @param[in] transport UART, authenticated UDP, or BLE adapter requesting ownership.
  *
  * @retval 0 @p transport owns the session and may receive image bytes.
  * @retval -EINVAL @p transport is NONE or outside the public enum.

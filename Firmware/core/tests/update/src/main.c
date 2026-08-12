@@ -222,6 +222,16 @@ ZTEST(update, test_update_lifecycle_and_failures)
 		4U, true));
 	zassert_equal(write_calls, 1);
 	zassert_ok(spaghetti_update_cancel());
+
+	zassert_ok(spaghetti_update_arm(1000U));
+	zassert_ok(spaghetti_update_begin(SPAGHETTI_UPDATE_TRANSPORT_BLE));
+	expect_status(SPAGHETTI_UPDATE_RECEIVING,
+		      SPAGHETTI_UPDATE_TRANSPORT_BLE, 0);
+	zassert_equal(spaghetti_update_begin(
+		SPAGHETTI_UPDATE_TRANSPORT_UART), -EBUSY);
+	zassert_equal(spaghetti_update_begin(
+		SPAGHETTI_UPDATE_TRANSPORT_UDP), -EBUSY);
+	zassert_ok(spaghetti_update_cancel());
 	expect_status(SPAGHETTI_UPDATE_IDLE,
 		      SPAGHETTI_UPDATE_TRANSPORT_NONE, 0);
 

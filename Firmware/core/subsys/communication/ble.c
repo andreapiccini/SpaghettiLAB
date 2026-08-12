@@ -23,6 +23,7 @@
 #include <spaghetti/core.h>
 #include <spaghetti/identity.h>
 #include <spaghetti/maintenance_link.h>
+#include <spaghetti/ota.h>
 #include <spaghetti/protocol.h>
 #include <spaghetti/record_delivery.h>
 
@@ -32,6 +33,16 @@
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/uuid.h>
 #endif
+
+static void ble_ota_disconnect_notify(struct k_work *work);
+
+K_WORK_DEFINE(ble_ota_disconnect_work, ble_ota_disconnect_notify);
+
+static void ble_ota_disconnect_notify(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	spaghetti_ota_ble_on_disconnect();
+}
 
 LOG_MODULE_REGISTER(spaghetti_ble, CONFIG_SPAGHETTI_BLE_LOG_LEVEL);
 
@@ -550,9 +561,13 @@ static void deactivate_record_consumer_locked(void)
 
 static void release_peer_locked(struct spaghetti_ble_peer *peer)
 {
+	bool was_authenticated;
+
 	if (peer == NULL) {
 		return;
 	}
+	was_authenticated =
+		(peer->phase == SPAGHETTI_BLE_PEER_AUTHENTICATED);
 #if IS_ENABLED(CONFIG_BT)
 	if (peer->conn != NULL) {
 		bt_conn_unref(peer->conn);
@@ -564,6 +579,9 @@ static void release_peer_locked(struct spaghetti_ble_peer *peer)
 	memset(peer, 0, sizeof(*peer));
 	deactivate_record_consumer_locked();
 	refresh_state_locked();
+	if (was_authenticated) {
+		(void)k_work_submit(&ble_ota_disconnect_work);
+	}
 }
 
 static struct spaghetti_ble_peer *allocate_peer_locked(void)
@@ -1433,4 +1451,40 @@ int spaghetti_ble_test_set_device_id(const uint8_t device_id[32])
 	context.device_id_override = true;
 	k_mutex_unlock(&ble_lock);
 	return 0;
+}
+
+int spaghetti_ble_find_update_principal(spaghetti_principal_id_t *out_principal)
+{
+	int err;
+
+	if (out_principal == NULL) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&ble_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	for (size_t idx = 0U; idx < ARRAY_SIZE(context.peers); ++idx) {
+		struct spaghetti_principal principal;
+
+		if (context.peers[idx].phase !=
+		    SPAGHETTI_BLE_PEER_AUTHENTICATED) {
+			continue;
+		}
+		err = spaghetti_principal_get(context.peers[idx].principal_id,
+					      &principal);
+		if (err < 0) {
+			k_mutex_unlock(&ble_lock);
+			return err;
+		}
+		if ((principal.permissions & SPAGHETTI_PERMISSION_UPDATE) !=
+		    0U) {
+			*out_principal = principal.id;
+			k_mutex_unlock(&ble_lock);
+			return 0;
+		}
+	}
+	k_mutex_unlock(&ble_lock);
+	return -ENOENT;
 }

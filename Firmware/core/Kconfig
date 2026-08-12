@@ -356,6 +356,23 @@ config SPAGHETTI_OTA_MTU
 	help
 	  Maximum complete SMP request or response carried by one DTLS datagram.
 
+config SPAGHETTI_OTA_BLE_RESUME_MS
+	int "BLE OTA disconnect resume window in milliseconds"
+	range 100 60000
+	default 10000
+	help
+	  After a BLE peer disconnect during an active BLE Update session, the
+	  adapter waits this long for the same session to continue. On expiry
+	  the secondary candidate is cancelled without touching the confirmed
+	  image.
+
+config SPAGHETTI_OTA_BLE_WINDOW_MS
+	int "BLE OTA whole-session timeout in milliseconds"
+	range 10000 900000
+	default 300000
+	help
+	  Absolute Update arm timeout used when a BLE adapter opens a session.
+
 config SPAGHETTI_OTA_LISTENER_STACK_SIZE
 	int "OTA DTLS listener stack bytes"
 	range 2048 8192

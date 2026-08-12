@@ -56,7 +56,8 @@ K_MUTEX_DEFINE(update_lock);
 static bool transport_is_valid(enum spaghetti_update_transport transport)
 {
 	return (transport == SPAGHETTI_UPDATE_TRANSPORT_UART) ||
-	       (transport == SPAGHETTI_UPDATE_TRANSPORT_UDP);
+	       (transport == SPAGHETTI_UPDATE_TRANSPORT_UDP) ||
+	       (transport == SPAGHETTI_UPDATE_TRANSPORT_BLE);
 }
 
 static bool session_has_expired(void)

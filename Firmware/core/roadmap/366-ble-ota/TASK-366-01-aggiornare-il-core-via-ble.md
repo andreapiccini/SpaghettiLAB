@@ -1,6 +1,6 @@
 # TASK-366-01 — Aggiornare il Core via BLE
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 366 — OTA tramite BLE
 
 ## Cosa devo fare
@@ -47,11 +47,11 @@ precedente.
 
 ## Checklist di completamento
 
-- [ ] BLE usa Update Coordinator senza secondo writer flash.
-- [ ] Un solo trasporto possiede la sessione.
-- [ ] Resume/cancel/timeout sono bounded.
-- [ ] Firma e compatibilità profilo sono verificate.
-- [ ] Perdita BLE non tocca l'immagine confermata.
+- [x] BLE usa Update Coordinator senza secondo writer flash.
+- [x] Un solo trasporto possiede la sessione.
+- [x] Resume/cancel/timeout sono bounded.
+- [x] Firma e compatibilità profilo sono verificate.
+- [x] Perdita BLE non tocca l'immagine confermata.
 
 ## Verifica e fine task
 

@@ -178,4 +178,17 @@ int spaghetti_ble_clear_bonds(void);
  */
 int spaghetti_ble_set_radio(bool enabled);
 
+/**
+ * @brief Find one authenticated BLE peer authorized for UPDATE.
+ *
+ * @param[out] out_principal Caller-owned principal id written only on success.
+ *
+ * @retval 0 An authenticated peer holds UPDATE permission.
+ * @retval -EINVAL @p out_principal is NULL.
+ * @retval -ENOENT No authenticated UPDATE-capable peer is connected.
+ * @retval -EACCES Access control rejected the peer principal.
+ * @retval -ENOTSUP BLE is not compiled.
+ */
+int spaghetti_ble_find_update_principal(spaghetti_principal_id_t *out_principal);
+
 #endif /* SPAGHETTI_BLE_H */

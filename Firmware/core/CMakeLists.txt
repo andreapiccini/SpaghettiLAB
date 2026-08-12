@@ -86,6 +86,7 @@ target_sources(app PRIVATE
   subsys/services/maintenance_link/maintenance_mgmt.c
   subsys/services/ota/ota.c
   subsys/services/ota/ota_dtls.c
+  subsys/services/ota/ota_ble.c
   subsys/services/update/update.c
   subsys/services/update/update_mcuboot.c
   subsys/data/data.c

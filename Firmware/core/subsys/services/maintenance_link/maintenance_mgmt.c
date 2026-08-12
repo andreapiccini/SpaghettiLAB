@@ -338,7 +338,17 @@ static int image_write(struct smp_streamer *ctxt)
 	(void)k_mutex_lock(&mgmt_lock, K_FOREVER);
 	synchronize_image_transfer();
 	if (offset == 0U) {
+		struct spaghetti_update_status update_status;
+
 		if (image_transfer_active) {
+			err = -EBUSY;
+			goto respond;
+		}
+		err = spaghetti_update_get_status(&update_status);
+		if (err < 0) {
+			goto respond;
+		}
+		if (update_status.transport == SPAGHETTI_UPDATE_TRANSPORT_BLE) {
 			err = -EBUSY;
 			goto respond;
 		}

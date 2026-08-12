@@ -58,6 +58,10 @@ enum spaghetti_protocol_operation {
 	SPAGHETTI_PROTOCOL_INSTALL_DEVICE_PROFILE = 25, /**< Install profile CBOR. */
 	SPAGHETTI_PROTOCOL_REMOVE_DEVICE_PROFILE = 26, /**< Remove an installed profile. */
 	SPAGHETTI_PROTOCOL_GET_FEATURES = 27, /**< Feature packs and set hash. */
+	SPAGHETTI_PROTOCOL_OPEN_BLE_UPDATE = 28, /**< Open BLE Update session. */
+	SPAGHETTI_PROTOCOL_WRITE_BLE_UPDATE = 29, /**< Write one BLE Update chunk. */
+	SPAGHETTI_PROTOCOL_FINISH_BLE_UPDATE = 30, /**< Finish BLE Update session. */
+	SPAGHETTI_PROTOCOL_CANCEL_BLE_UPDATE = 31, /**< Cancel BLE Update session. */
 };
 
 /** Public status codes exposed to hosts; never raw Zephyr errno. */

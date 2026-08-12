@@ -27,6 +27,7 @@
 #include <spaghetti/image_manifest.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/ota.h>
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
 #include <spaghetti/protocol.h>
@@ -323,6 +324,44 @@ int spaghetti_update_begin(enum spaghetti_update_transport transport)
 int spaghetti_update_cancel(void)
 {
 	return 0;
+}
+
+int spaghetti_ota_ble_open(
+	const struct spaghetti_ble_update_begin *request,
+	uint32_t *session_id)
+{
+	if ((request == NULL) || (session_id == NULL)) {
+		return -EINVAL;
+	}
+	*session_id = 1U;
+	return 0;
+}
+
+int spaghetti_ota_ble_write(uint32_t session_id, uint32_t offset,
+			    const uint8_t *bytes, size_t size)
+{
+	ARG_UNUSED(session_id);
+	ARG_UNUSED(offset);
+	ARG_UNUSED(bytes);
+	ARG_UNUSED(size);
+	return 0;
+}
+
+int spaghetti_ota_ble_finish(uint32_t session_id)
+{
+	ARG_UNUSED(session_id);
+	return 0;
+}
+
+int spaghetti_ota_ble_cancel(uint32_t session_id)
+{
+	ARG_UNUSED(session_id);
+	return 0;
+}
+
+void spaghetti_ota_ble_set_acting_principal(spaghetti_principal_id_t id)
+{
+	ARG_UNUSED(id);
 }
 
 int spaghetti_discovery_list(
