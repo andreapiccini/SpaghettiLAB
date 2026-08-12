@@ -1,6 +1,6 @@
 # TASK-325-01 — Implementare profili dispositivo e acquisition plan
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 325 — Profili dispositivo dichiarativi
 
 ## Cosa devo fare
@@ -114,13 +114,13 @@ sequenze grandi nel Config e permette di aggiungere sensori compatibili senza OT
 
 ## Checklist di completamento
 
-- [ ] Profili built-in e persistiti usano la stessa API e lo stesso catalogo.
-- [ ] Il validatore dimostra limiti di operazioni, byte e tempo prima dell'I/O.
-- [ ] Il driver generico non accede a controller fuori da Port.
-- [ ] Config riferisce profilo con revisione/hash stabile.
-- [ ] Installazione dati non introduce codice o opcode nuovi.
-- [ ] Un profilo in uso non può essere rimosso o sostituito incompatibilmente.
-- [ ] Cinque profili fake funzionano senza nuovi sorgenti driver.
+- [x] Profili built-in e persistiti usano la stessa API e lo stesso catalogo.
+- [x] Il validatore dimostra limiti di operazioni, byte e tempo prima dell'I/O.
+- [x] Il driver generico non accede a controller fuori da Port.
+- [x] Config riferisce profilo con revisione/hash stabile.
+- [x] Installazione dati non introduce codice o opcode nuovi.
+- [x] Un profilo in uso non può essere rimosso o sostituito incompatibilmente.
+- [x] Cinque profili fake funzionano senza nuovi sorgenti driver.
 
 ## Verifica e fine task
 

@@ -105,7 +105,7 @@ struct spaghetti_module_driver_ops {
 struct spaghetti_module_driver {
 	const char *type_id; /**< Firmware-lifetime, NUL-terminated stable type ID. */
 	uint16_t api_version; /**< Must equal SPAGHETTI_MODULE_DRIVER_API_VERSION. */
-	uint32_t required_capabilities; /**< Port capability bits required by the driver. */
+	uint32_t required_capabilities; /**< Port bits, or 0 when a Device Profile decides. */
 	enum spaghetti_port_transport transport; /**< Port mode acquired before init. */
 	struct spaghetti_module_power_requirement power_requirement; /**< Copied admission needs. */
 	const struct spaghetti_schema_descriptor *config_schema; /**< Required config schema. */

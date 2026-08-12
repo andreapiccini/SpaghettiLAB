@@ -1,0 +1,30 @@
+mainmenu "Spaghetti Device Profile tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_DEVICE_PROFILE_LOG_LEVEL
+	int
+	default 3
+
+config SPAGHETTI_DECLARATIVE_DEVICE_LOG_LEVEL
+	int
+	default 3
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 3
+
+config SPAGHETTI_DRIVER_REGISTRY_LOG_LEVEL
+	int
+	default 3
+
+config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
+	int
+	default 3
+
+config SPAGHETTI_DECLARATIVE_DEVICE_MAX_INSTANCES
+	int "Maximum simultaneous declarative-device instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 4
+
+source "Kconfig.zephyr"

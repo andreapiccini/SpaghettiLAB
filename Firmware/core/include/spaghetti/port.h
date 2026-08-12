@@ -240,6 +240,52 @@ int spaghetti_port_spi_transceive(
 const struct device *spaghetti_port_uart_device(const struct spaghetti_port *port);
 
 /**
+ * @brief Write bytes on the Port UART with a bounded wall-clock timeout.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] buf Borrowed TX bytes valid for this call.
+ * @param[in] len Number of bytes in @p buf.
+ * @param[in] timeout Bounded wait; must not be @c K_FOREVER.
+ *
+ * @retval 0 Every byte was accepted by the controller.
+ * @retval -EINVAL Invalid argument or forever timeout.
+ * @retval -ENOTSUP Port has no UART capability.
+ * @retval -ENODEV Controller is not ready.
+ * @retval -ETIMEDOUT The timeout expired before the write finished.
+ * @retval -EIO Or other original Zephyr UART errno.
+ */
+int spaghetti_port_uart_write(
+	const struct spaghetti_port *port,
+	const uint8_t *buf,
+	size_t len,
+	k_timeout_t timeout);
+
+/**
+ * @brief Read UART bytes until @p stop_byte or capacity/timeout.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[out] buf Caller-owned RX buffer written only on success.
+ * @param[in] capacity Maximum bytes that may be stored in @p buf.
+ * @param[in] stop_byte Terminating byte included in the returned length.
+ * @param[out] out_len Written byte count on success.
+ * @param[in] timeout Bounded wait; must not be @c K_FOREVER.
+ *
+ * @retval 0 Stop byte observed or buffer filled without overrun.
+ * @retval -EINVAL Invalid argument or forever timeout.
+ * @retval -ENOTSUP Port has no UART capability.
+ * @retval -ENODEV Controller is not ready.
+ * @retval -ETIMEDOUT The timeout expired before @p stop_byte.
+ * @retval -EMSGSIZE @p capacity was exhausted before @p stop_byte.
+ */
+int spaghetti_port_uart_read_until(
+	const struct spaghetti_port *port,
+	uint8_t *buf,
+	size_t capacity,
+	uint8_t stop_byte,
+	size_t *out_len,
+	k_timeout_t timeout);
+
+/**
  * @brief Drive the raw electrical level of a Port digital output.
  *
  * @param[in] port Port borrowed for this call and never retained.

@@ -49,8 +49,7 @@ static int validate_one_driver(const struct spaghetti_module_driver *driver)
 
 	if ((driver == NULL) || !type_id_is_valid(driver->type_id) ||
 	    (driver->api_version != SPAGHETTI_MODULE_DRIVER_API_VERSION) ||
-	    (driver->required_capabilities == 0U) || (driver->ops == NULL) ||
-	    (driver->config_schema == NULL) ||
+	    (driver->ops == NULL) || (driver->config_schema == NULL) ||
 	    (driver->ops->validate_config == NULL) ||
 	    (driver->ops->describe_endpoint == NULL) ||
 	    (driver->ops->init == NULL) || (driver->ops->deinit == NULL)) {

@@ -6,6 +6,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
@@ -601,6 +602,96 @@ const struct device *spaghetti_port_uart_device(const struct spaghetti_port *por
 	}
 
 	return port->uart;
+}
+
+int spaghetti_port_uart_write(
+	const struct spaghetti_port *port,
+	const uint8_t *buf,
+	size_t len,
+	k_timeout_t timeout)
+{
+	const struct device *uart;
+	k_timepoint_t deadline;
+	size_t offset = 0U;
+
+	if ((port == NULL) || ((len > 0U) && (buf == NULL))) {
+		return -EINVAL;
+	}
+	if (timeout_is_forever(timeout)) {
+		return -EINVAL;
+	}
+
+	uart = spaghetti_port_uart_device(port);
+	if (uart == NULL) {
+		return -ENOTSUP;
+	}
+	if (!device_is_ready(uart)) {
+		return -ENODEV;
+	}
+
+	deadline = sys_timepoint_calc(timeout);
+	while (offset < len) {
+		uart_poll_out(uart, buf[offset]);
+		offset += 1U;
+		if ((offset < len) && sys_timepoint_expired(deadline)) {
+			return -ETIMEDOUT;
+		}
+	}
+
+	return 0;
+}
+
+int spaghetti_port_uart_read_until(
+	const struct spaghetti_port *port,
+	uint8_t *buf,
+	size_t capacity,
+	uint8_t stop_byte,
+	size_t *out_len,
+	k_timeout_t timeout)
+{
+	const struct device *uart;
+	k_timepoint_t deadline;
+	size_t offset = 0U;
+
+	if ((port == NULL) || (buf == NULL) || (out_len == NULL) ||
+	    (capacity == 0U)) {
+		return -EINVAL;
+	}
+	if (timeout_is_forever(timeout)) {
+		return -EINVAL;
+	}
+
+	uart = spaghetti_port_uart_device(port);
+	if (uart == NULL) {
+		return -ENOTSUP;
+	}
+	if (!device_is_ready(uart)) {
+		return -ENODEV;
+	}
+
+	deadline = sys_timepoint_calc(timeout);
+	while (offset < capacity) {
+		unsigned char byte = 0U;
+		int err = uart_poll_in(uart, &byte);
+
+		if (err == 0) {
+			buf[offset++] = (uint8_t)byte;
+			if ((uint8_t)byte == stop_byte) {
+				*out_len = offset;
+				return 0;
+			}
+			continue;
+		}
+		if (err != -1) {
+			return err;
+		}
+		if (sys_timepoint_expired(deadline)) {
+			return -ETIMEDOUT;
+		}
+		k_sleep(K_MSEC(1));
+	}
+
+	return -EMSGSIZE;
 }
 
 int spaghetti_port_set_output(const struct spaghetti_port *port, bool high)

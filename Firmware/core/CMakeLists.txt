@@ -39,6 +39,7 @@ target_sources(app PRIVATE
   src/main.c
   spaghetti_modules/ina219/ina219.c
   spaghetti_modules/relay/relay.c
+  spaghetti_modules/declarative_device/declarative_device.c
   subsys/core/capabilities.c
   subsys/core/core.c
   subsys/core/core_boot_backend.c
@@ -47,6 +48,8 @@ target_sources(app PRIVATE
   subsys/port/port_backend_board.c
   subsys/topology/topology.c
   subsys/schema/schema.c
+  subsys/device_profiles/device_profile.c
+  subsys/device_profiles/device_profile_exec.c
   subsys/driver_registry/driver_registry.c
   subsys/module_manager/module_manager.c
   subsys/discovery/discovery.c
@@ -91,6 +94,7 @@ target_sources_ifdef(CONFIG_SPAGHETTI_ENERGY app PRIVATE
 
 zephyr_linker_sources(SECTIONS subsys/core/health_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/driver_registry/driver_sections.ld)
+zephyr_linker_sources(SECTIONS subsys/device_profiles/device_profile_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)
 
@@ -103,6 +107,7 @@ target_include_directories(app PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/ina219
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/relay
+  ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/declarative_device
 )
 
 get_target_property(APP_INCLUDES app INCLUDE_DIRECTORIES)

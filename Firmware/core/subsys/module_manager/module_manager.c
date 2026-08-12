@@ -221,10 +221,42 @@ static void detach_power_if_needed(struct spaghetti_module_slot *slot)
 #endif
 }
 
+static enum spaghetti_port_transport transport_for_endpoint(
+	enum spaghetti_module_endpoint_kind kind,
+	enum spaghetti_port_transport fallback)
+{
+	switch (kind) {
+	case SPAGHETTI_ENDPOINT_I2C_ADDRESS:
+		return SPAGHETTI_PORT_TRANSPORT_I2C;
+	case SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT:
+		return SPAGHETTI_PORT_TRANSPORT_SPI;
+	case SPAGHETTI_ENDPOINT_UART_EXCLUSIVE:
+		return SPAGHETTI_PORT_TRANSPORT_UART;
+	case SPAGHETTI_ENDPOINT_GPIO_LINE:
+	case SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE:
+		return SPAGHETTI_PORT_TRANSPORT_GPIO;
+	case SPAGHETTI_ENDPOINT_ADC_CHANNEL:
+		return SPAGHETTI_PORT_TRANSPORT_ADC;
+	case SPAGHETTI_ENDPOINT_W1_ROM:
+		return SPAGHETTI_PORT_TRANSPORT_W1;
+	default:
+		return fallback;
+	}
+}
+
 static int payload_matches_driver_schema(
 	const struct spaghetti_module_driver *driver,
 	const struct spaghetti_record_payload *payload)
 {
+	if (driver->required_capabilities == 0U) {
+		/*
+		 * Declarative drivers publish profile-owned schemas and validate
+		 * payloads themselves before returning from read().
+		 */
+		ARG_UNUSED(payload);
+		return 0;
+	}
+
 	for (size_t schema_idx = 0U; schema_idx < driver->record_schema_count;
 	     ++schema_idx) {
 		if (spaghetti_record_payload_validate(
@@ -301,7 +333,13 @@ int spaghetti_module_manager_configure(
 		return -ENOENT;
 	}
 
-	if (!spaghetti_port_has_capability(port, driver->required_capabilities)) {
+	/*
+	 * required_capabilities == 0 means the concrete Device Profile selected
+	 * at configure time decides Port capability needs. The driver validates
+	 * them during validate_config/init.
+	 */
+	if ((driver->required_capabilities != 0U) &&
+	    !spaghetti_port_has_capability(port, driver->required_capabilities)) {
 		return -ENOTSUP;
 	}
 
@@ -380,7 +418,11 @@ int spaghetti_module_manager_configure(
 	slot->module.endpoint = endpoint;
 	k_mutex_unlock(&slots_lock);
 
-	err = spaghetti_port_acquire(port, request->key, driver->transport);
+	err = spaghetti_port_acquire(
+		port, request->key,
+		(driver->required_capabilities == 0U) ?
+			transport_for_endpoint(endpoint.kind, driver->transport) :
+			driver->transport);
 	if (err < 0) {
 		(void)k_mutex_lock(&slots_lock, K_FOREVER);
 		memset(slot, 0, sizeof(*slot));

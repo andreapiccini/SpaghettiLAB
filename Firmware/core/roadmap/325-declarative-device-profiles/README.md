@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -12,11 +12,11 @@ ogni modello di sensore.
 
 ## Task
 
-1. ⬜ [TASK-325-01 — Implementare profili dispositivo e acquisition plan](TASK-325-01-implementare-profili-dispositivo-dichiarativi.md)
+1. ✅ [TASK-325-01 — Implementare profili dispositivo e acquisition plan](TASK-325-01-implementare-profili-dispositivo-dichiarativi.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Un solo Module Driver generico esegue profili per più dispositivi e trasporti.
-- [ ] Profili e Config di installazione hanno identità, versione e ownership separate.
-- [ ] Ogni piano è validato e bounded prima di qualsiasi I/O.
-- [ ] Un nuovo profilo compatibile non richiede aggiornamento firmware.
+- [x] Un solo Module Driver generico esegue profili per più dispositivi e trasporti.
+- [x] Profili e Config di installazione hanno identità, versione e ownership separate.
+- [x] Ogni piano è validato e bounded prima di qualsiasi I/O.
+- [x] Un nuovo profilo compatibile non richiede aggiornamento firmware.

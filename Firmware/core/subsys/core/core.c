@@ -13,6 +13,7 @@
 #include <spaghetti/config.h>
 #include <spaghetti/connectivity.h>
 #include <spaghetti/data.h>
+#include <spaghetti/device_profile.h>
 #include <spaghetti/discovery.h>
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/health.h>
@@ -271,6 +272,10 @@ int spaghetti_core_init(void)
 		goto power_failed;
 	}
 #endif
+	err = spaghetti_device_profile_init();
+	if (err < 0) {
+		goto profiles_failed;
+	}
 	err = spaghetti_driver_registry_init();
 	if (err < 0) {
 		goto registry_failed;
@@ -430,6 +435,9 @@ manager_failed:
 	goto unlock;
 registry_failed:
 	(void)fail_initialization("Driver Registry", err);
+	goto unlock;
+profiles_failed:
+	(void)fail_initialization("Device Profiles", err);
 	goto unlock;
 #if defined(CONFIG_SPAGHETTI_POWER)
 power_failed:

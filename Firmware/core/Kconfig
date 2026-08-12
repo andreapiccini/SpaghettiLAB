@@ -24,6 +24,14 @@ module = SPAGHETTI_DRIVER_REGISTRY
 module-str = spaghetti_driver_registry
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_DEVICE_PROFILE
+module-str = spaghetti_device_profile
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DECLARATIVE_DEVICE
+module-str = spaghetti_declarative_device
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_MODULE_MANAGER
 module-str = spaghetti_module_manager
 source "subsys/logging/Kconfig.template.log_config"
@@ -181,6 +189,14 @@ config SPAGHETTI_RELAY_MAX_INSTANCES
 	help
 	  Number of typed Relay contexts reserved in the driver-owned memory slab.
 	  Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_DECLARATIVE_DEVICE_MAX_INSTANCES
+	int "Maximum simultaneous declarative-device instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 4
+	help
+	  Number of typed declarative-device contexts reserved in the driver-owned
+	  memory slab. Allocation is non-blocking and does not use the heap.
 
 config SPAGHETTI_DATA_LOGGER
 	bool "Enable the electrical Data logger consumer"
