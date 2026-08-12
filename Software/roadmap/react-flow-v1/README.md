@@ -27,7 +27,7 @@ finale end-to-end).
 | ✅ | [S021 — Codec e tipi Protocol V1](tasks/S021-codec-protocol-types.md) | Ogni tipo Protocol V1 ha codec CBOR lossless testato su golden vector. |
 | ✅ | [S022 — SpaghettiClient e operazioni firmware](tasks/S022-spaghetti-client-operations.md) | Ogni operazione firmware è raggiungibile da un client con retry/correlation/paginazione corretti. |
 | ✅ | [S023 — Adapter di trasporto](tasks/S023-transport-adapters.md) | MQTT e WebSocket/BLE producono gli stessi oggetti di dominio. |
-| ⬜ | [S024 — Streaming eventi e fixture fake](tasks/S024-event-streaming-fixtures.md) | Streaming con backpressure/gap espliciti; l'app si sviluppa senza hardware fisico. |
+| ✅ | [S024 — Streaming eventi e fixture fake](tasks/S024-event-streaming-fixtures.md) | Streaming con backpressure/gap espliciti; l'app si sviluppa senza hardware fisico. |
 | ⬜ | [S030 — Sessioni Core e sincronizzazione](tasks/S030-core-sessions-sync.md) | Più Core vengono connessi, identificati e sincronizzati senza sovrascritture implicite. |
 | | **S040 — Catalogo, topologia e adapter React Flow** | |
 | ⬜ | [S041 — Normalizzazione catalogo e topologia](tasks/S041-catalog-topology-normalization.md) | Catalog e topologia diventano indici immutabili indipendenti dall'ordine di lettura. |

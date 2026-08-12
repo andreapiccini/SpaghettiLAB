@@ -38,4 +38,13 @@ byte stream has no message boundaries of its own) — all implement the same
 identical decoded domain objects from the same golden envelope regardless of which
 one carries it (`transports/__tests__/cross-transport-parity.test.ts`).
 
-Event streaming (S024) is not yet started.
+Event streaming (S024) is `client/event-stream.ts`'s `EventStream`: an async-iterable
+stream of record/status/discovery/connectivity events over a `ProtocolTransport`,
+with a bounded buffer (backpressure — the oldest event is dropped, never grown
+without limit, and the drop count stays queryable) and explicit `gap` events for
+both a reconnect (`boot_id_changed`) and a missed record sequence
+(`sequence_discontinuity`) — never silently absorbed. `client/fakes/fake-event-fixtures.ts`
+has deterministic builders (including a canned reboot scenario) for developing and
+testing the rest of the app without a physical Core.
+
+This closes the whole "Protocol SDK e trasporti" group (S021→S024).
