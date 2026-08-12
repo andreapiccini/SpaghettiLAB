@@ -1,154 +1,117 @@
 # Spaghetti LAB board support
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) ·
-[Guide for adding a Core](../../EXTENDING_SPAGHETTI_LAB.md#route-b-add-a-new-core-variant)
+[Guide for adding a Core](../../EXTENDING_SPAGHETTI_LAB.md#4-core--board-variant)
 
-A board definition describes one physical Core variant to Zephyr. It contains facts that are fixed by the schematic: MCU, memory, controllers, pins, Ports, console, flash layout, and real hardware capabilities.
+A board definition describes one physical Core variant to Zephyr. It contains
+facts fixed by the schematic: MCU, memory, controllers, pins, Ports, Flows,
+rails, console, flash layout, and real hardware capabilities.
 
 ## What this component owns
 
 - Board identity and supported SoC.
 - Static pin routing and peripheral controllers.
-- Physical Port nodes and board-required defaults.
-- Flash/debug runner selection when the board requires it.
+- Physical Port, Flow, Bay, and power-rail nodes.
+- Board-required defaults and flash/debug runners when needed.
 
 ## What this component does not own
 
-- The removable module assigned to a Port.
+- The removable Module assigned to a Port.
 - User rules, measurements, network endpoints, or runtime configuration.
 - Generic Module Manager, Data, or Runtime behavior.
+- Protocol opcodes or host editor schemas (topology is published as data).
 
 ## Files
 
 | File | Role |
 |---|---|
 | `board.yml` | Board name, vendor, SoC, and variants discovered by Zephyr. |
-| `<board>.dts` | Concrete hardware instances and wiring. |
+| `<board>.dts` | Concrete hardware, Ports, Flows, rails, Maintenance Link. |
 | `Kconfig.<board>` | Board/SoC selection contract. |
 | `Kconfig.defconfig` | Hardware-justified default values. |
-| `<board>_defconfig` | Minimal `CONFIG_...` options required to boot the board. |
+| `<board>_defconfig` | Minimal `CONFIG_...` options required to boot. |
 | `board.cmake` | Flash/debug runners, only when needed. |
-
-## Data model
-
-| Type / object | Owner | Meaning |
-|---|---|---|
-| Board metadata | Build system | Identifies the selectable board target. |
-| Generated Devicetree | Zephyr build | Compile-time constants consumed by Port and drivers. |
-| Generated `.config` | Kconfig | Software features and defaults selected for this build. |
-
-## API contract
-
-This component has no runtime C API. Its contract is processed at build time.
-
-## How it works
-
-```mermaid
-flowchart LR
-    META["board.yml"] --> BUILD["Zephyr configure"]
-    DTS["Board DTS"] --> BUILD
-    KCONF["Kconfig + defconfig"] --> BUILD
-    BUILD --> GENERATED["Generated DTS + .config"]
-    GENERATED --> PORT["Port descriptors"]
-    PORT --> COMMON["Common firmware"]
-```
 
 ## Implemented variants
 
-- `spaghettilab_core_v1/esp32c3` is the physical ESP32-C3 Core: USB console,
-  I2C0 on verified GPIO3/GPIO4, and Port 0.
-- `spaghettilab_core_v2_build_only/esp32c3` is a simulated portability target:
-  I2C0 on simulated GPIO5/GPIO6 and Port 0 plus Port 1. It has no default flash
-  runner; never flash this target.
+- `spaghettilab_core_v1/esp32c3` — physical ESP32-C3 Core: USB console, I2C0 on
+  verified GPIO3/GPIO4, Port 0, Flow 0.
+- `spaghettilab_core_v2_build_only/esp32c3` — simulated portability target with
+  two Ports / two Flows. No default flash runner; never flash this target.
 
-Both variants generate the same `spaghettilab,port` contract, so Port, Module
-Manager, Runtime and Module drivers contain no board-name branches.
+Both variants generate the same `spaghettilab,port` / `spaghettilab,flow`
+contracts, so common firmware contains no board-name branches.
 
-## Zephyr integration
+## Multi-Flow / Bay / rail layout
 
-- Board selection happens with the existing `BOARD` value used by the Docker build.
-- Devicetree contains hardware topology and pin references.
-- Kconfig selects software; it must not carry pin numbers or runtime module assignments.
-- With the current sysbuild layout, inspect `build/app/zephyr/zephyr.dts` and
-  `build/app/zephyr/.config` after a board change.
-
-## Configuration templates
-
-Copy the documentation templates from `templates/firmware/`:
-
-- `board.yml.template` for Zephyr metadata;
-- `board.dts.template` for hardware, chosen nodes and Port topology;
-- `board_defconfig.template` for hardware-required Kconfig defaults.
-
-A Core normally has no board-specific application `.c`. If new hardware needs runtime
-code, first define a generic Port capability or service backend so common code never
-branches on `CONFIG_BOARD_*`.
-
-### Directory layout
-
-```text
-boards/spaghettilab/spaghetti_core_<variant>/
-├── board.yml
-├── Kconfig.spaghetti_core_<variant>
-├── Kconfig.defconfig
-├── spaghetti_core_<variant>_defconfig
-├── spaghetti_core_<variant>_<qualifier>.dts
-└── board.cmake                    # only if a runner is required
-```
-
-### `board.yml`
-
-```yaml
-board:
-  name: spaghetti_core_<variant>
-  full_name: Spaghetti LAB Core <Variant>
-  vendor: spaghettilab
-  socs:
-    - name: <zephyr_soc_name>
-```
-
-Replace every angle-bracket token with a value supported by the active
-Zephyr version.
-
-### Board DTS fragment
+Add topology in DTS only — no Protocol or editor changes:
 
 ```dts
-/ {
-spaghetti_ports {
-        compatible = "simple-bus";
-        #address-cells = <1>;
-        #size-cells = <0>;
+spaghetti_flows {
+    compatible = "simple-bus";
+    #address-cells = <1>;
+    #size-cells = <0>;
 
-        port0: port@0 {
-            compatible = "spaghettilab,port";
-            reg = <0>;
-            i2c = <&i2c0>; /* Use the controller wired by the schematic. */
-            status = "okay";
-        };
+    flow0: flow@0 {
+        compatible = "spaghettilab,flow";
+        reg = <0>;
+        port = <&port0>;
+        direction = "field-to-core";
+        signal-count = <5>;
+        function-bay-count = <0>;
+        status = "okay";
     };
+};
+
+spaghetti_power_rails {
+    /* assurance = unmanaged | switched | switched-and-measured */
+    /* zero voltage/current properties mean unknown — never invent limits */
+};
+
+spaghetti_bay_power {
+    /* available-rails lists rail IDs, e.g. <0 1> */
 };
 ```
 
-### Board defconfig
+Logical connector indices are 0–4. Board pinctrl maps them to MCU pins. See
+[EXTENDING path 8](../../EXTENDING_SPAGHETTI_LAB.md#8-core-layout-multi-flow--bay--rails)
+and bindings under `dts/bindings/spaghetti/`.
 
-```ini
-# Enable only features required for this board to boot and expose hardware.
-CONFIG_SERIAL=y
-CONFIG_CONSOLE=y
+## Templates
+
+Copy from `templates/firmware/`:
+
+- `board.yml.template`
+- `board.dts.template` (Ports, two Flows, rails, Bay power example)
+- `board_defconfig.template`
+
+Directory layout:
+
+```text
+boards/spaghettilab/spaghettilab_core_<variant>/
+├── board.yml
+├── Kconfig.spaghettilab_core_<variant>
+├── Kconfig.defconfig
+├── spaghettilab_core_<variant>_defconfig
+├── spaghettilab_core_<variant>_<qualifier>.dts
+└── board.cmake
 ```
 
-Application features belong in `prj.conf`, not in the board defconfig.
+After phase 291 each production board also selects one compile-time resource
+profile. That profile controls software capacities; it does not replace
+SRAM/flash/radio facts in Devicetree and must not advertise unverified SoC
+features.
 
-After phase 291 each production board also selects one compile-time resource profile.
-That profile controls software capacities; it does not replace SRAM/flash/radio facts
-in Devicetree and must not advertise unverified SoC features.
+## Zephyr integration
 
-## Ownership and concurrency
-
-Board files have no runtime concurrency. They are consumed once by host build tools. Concurrency rules belong to the runtime objects created from the generated description.
+- Board selection uses the existing `BOARD` value in the Docker build.
+- Inspect `build/app/zephyr/zephyr.dts` and `build/app/zephyr/.config` after a
+  board change; never edit or commit them.
+- Application features belong in `prj.conf`, not in the board defconfig.
 
 ## Contract guarantees
 
 - Every production pin and controller reference comes from a real schematic.
-- A removable module never appears as a permanent board child node.
-- Higher layers select behavior through Port capabilities, not board-name conditionals.
+- A removable Module never appears as a permanent board child node.
+- Higher layers select behavior through Port capabilities and topology
+  descriptors, not board-name conditionals.

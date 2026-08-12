@@ -1,0 +1,68 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Built-in Device Profile example (no Module C required for install path).
+ *
+ * Prefer host CBOR install via Protocol V1 for field devices. Use this template
+ * only for ROM built-ins that must ship with the image. Instance Port/Bay/
+ * address live in Module config, not in the profile.
+ */
+
+#include <spaghetti/device_profile.h>
+#include <spaghetti/port.h>
+#include <spaghetti/schema.h>
+
+enum {
+	EXAMPLE_PROFILE_FIELD_VALUE = 1U,
+	EXAMPLE_PROFILE_REG = 0x10U,
+};
+
+SPAGHETTI_DEVICE_PROFILE_DEFINE(spaghetti_example_device_profile) = {
+	.profile_id = "example-sensor",
+	.version = 1U,
+	.transport = SPAGHETTI_PORT_TRANSPORT_I2C,
+	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.max_total_time_ms = 1000U,
+	.max_transactions = 8U,
+	.max_bytes = 32U,
+	.sample_ops = {
+		{
+			.opcode = SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST,
+			.dst = 0U,
+			.imm0 = 1U,
+			.imm2 = EXAMPLE_PROFILE_REG,
+		},
+		{
+			.opcode = SPAGHETTI_DEVICE_PROFILE_OP_I2C_WRITE_READ,
+			.dst = 1U,
+			.src_a = 0U,
+			.imm0 = 2U,
+			.imm1 = 1U,
+			.imm2 = 100U,
+		},
+		{
+			.opcode = SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD,
+			.dst = EXAMPLE_PROFILE_FIELD_VALUE,
+			.src_a = 1U,
+			.imm0 = 2U,
+			.imm1 = 1U,
+			.imm3 = 1U,
+		},
+		{
+			.opcode = SPAGHETTI_DEVICE_PROFILE_OP_EMIT_RECORD,
+		},
+	},
+	.sample_count = 4U,
+	.sample_schema_id = "spaghetti.example-sensor.sample",
+	.sample_schema_version = 1U,
+	.sample_fields = {
+		{
+			.field_id = EXAMPLE_PROFILE_FIELD_VALUE,
+			.type = SPAGHETTI_VALUE_INT64,
+			.name = "value",
+			.unit = "raw",
+		},
+	},
+	.sample_field_count = 1U,
+};

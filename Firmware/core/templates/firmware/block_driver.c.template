@@ -1,0 +1,180 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Example Block Driver registered via iterable section.
+ *
+ * Copy into spaghetti_blocks/ and rename symbols. process() must not perform
+ * hardware I/O or call Module Manager.
+ */
+
+#include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <zephyr/sys/util.h>
+
+#include <spaghetti/block_driver.h>
+#include <spaghetti/schema.h>
+
+enum {
+	EXAMPLE_BLOCK_PROP_OFFSET = 1U,
+};
+
+struct example_block_state {
+	int64_t offset;
+};
+
+static const struct spaghetti_field_descriptor example_block_fields[] = {
+	{
+		.field_id = EXAMPLE_BLOCK_PROP_OFFSET,
+		.type = SPAGHETTI_VALUE_INT64,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.signed_minimum = INT64_MIN,
+		.signed_maximum = INT64_MAX,
+		.name = "offset",
+		.description = "Addend applied to the input",
+		.unit = "",
+	},
+};
+
+static const struct spaghetti_schema_descriptor example_block_schema = {
+	.schema_id = "spaghetti.block.example_offset",
+	.version = 1U,
+	.fields = example_block_fields,
+	.field_count = ARRAY_SIZE(example_block_fields),
+};
+
+static const struct spaghetti_block_port_descriptor example_block_inputs[] = {
+	{
+		.port_id = 0U,
+		.name = "in",
+		.accepted_types = SPAGHETTI_BLOCK_TYPE_NUMERIC,
+		.required = true,
+	},
+};
+
+static const struct spaghetti_block_port_descriptor example_block_outputs[] = {
+	{
+		.port_id = 0U,
+		.name = "out",
+		.accepted_types = SPAGHETTI_BLOCK_TYPE_INT64,
+		.required = false,
+	},
+};
+
+static int example_block_validate(const struct spaghetti_property_set *config)
+{
+	return spaghetti_property_validate(config, &example_block_schema);
+}
+
+static int example_block_init(const struct spaghetti_property_set *config,
+			      void *state)
+{
+	struct example_block_state *typed = state;
+	const struct spaghetti_value *offset;
+	int err;
+
+	if ((config == NULL) || (state == NULL)) {
+		return -EINVAL;
+	}
+
+	err = example_block_validate(config);
+	if (err < 0) {
+		return err;
+	}
+
+	offset = spaghetti_property_find(config, EXAMPLE_BLOCK_PROP_OFFSET);
+	typed->offset = offset->data.signed_integer;
+	return 0;
+}
+
+static int example_block_process(void *state, void *workspace,
+				 const struct spaghetti_value *inputs,
+				 const bool *input_valid, size_t input_count,
+				 struct spaghetti_value *outputs,
+				 bool *output_valid, size_t output_count,
+				 const struct spaghetti_record *source_record,
+				 spaghetti_block_publish_cb_t publish,
+				 void *publish_user_data)
+{
+	struct example_block_state *typed = state;
+	int64_t input_value;
+	int64_t result;
+
+	ARG_UNUSED(workspace);
+	ARG_UNUSED(source_record);
+	ARG_UNUSED(publish);
+	ARG_UNUSED(publish_user_data);
+
+	if ((typed == NULL) || (inputs == NULL) || (input_valid == NULL) ||
+	    (outputs == NULL) || (output_valid == NULL) || (input_count != 1U) ||
+	    (output_count != 1U) || !input_valid[0]) {
+		return -EINVAL;
+	}
+
+	if (inputs[0].type == SPAGHETTI_VALUE_INT64) {
+		input_value = inputs[0].data.signed_integer;
+	} else if (inputs[0].type == SPAGHETTI_VALUE_UINT64) {
+		if (inputs[0].data.unsigned_integer > (uint64_t)INT64_MAX) {
+			return -ERANGE;
+		}
+		input_value = (int64_t)inputs[0].data.unsigned_integer;
+	} else {
+		return -EINVAL;
+	}
+
+	if (((typed->offset > 0) &&
+	     (input_value > (INT64_MAX - typed->offset))) ||
+	    ((typed->offset < 0) &&
+	     (input_value < (INT64_MIN - typed->offset)))) {
+		return -ERANGE;
+	}
+
+	result = input_value + typed->offset;
+	outputs[0] = (struct spaghetti_value){
+		.field_id = 0U,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = result,
+	};
+	output_valid[0] = true;
+	return 0;
+}
+
+static void example_block_reset(void *state)
+{
+	ARG_UNUSED(state);
+}
+
+static void example_block_deinit(void *state)
+{
+	if (state != NULL) {
+		memset(state, 0, sizeof(struct example_block_state));
+	}
+}
+
+static const struct spaghetti_block_driver_ops example_block_ops = {
+	.validate = example_block_validate,
+	.init = example_block_init,
+	.process = example_block_process,
+	.reset = example_block_reset,
+	.deinit = example_block_deinit,
+};
+
+SPAGHETTI_BLOCK_DRIVER_DEFINE(spaghetti_example_block_driver) = {
+	.type_id = "example_offset",
+	.api_version = SPAGHETTI_BLOCK_DRIVER_API_VERSION,
+	.algorithm_version = 1U,
+	.config_schema = &example_block_schema,
+	.inputs = example_block_inputs,
+	.input_count = ARRAY_SIZE(example_block_inputs),
+	.outputs = example_block_outputs,
+	.output_count = ARRAY_SIZE(example_block_outputs),
+	.state_size = sizeof(struct example_block_state),
+	.state_align = __alignof__(struct example_block_state),
+	.workspace_size = 0U,
+	.max_cost_per_record = 1U,
+	.required_capabilities = 0U,
+	.ops = &example_block_ops,
+};

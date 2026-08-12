@@ -31,10 +31,11 @@ Read these in order:
 6. [`templates/firmware/change_contract.md.template`](templates/firmware/change_contract.md.template)
    for a non-trivial new API, state transition, thread, queue, or shared object.
 
-If the work adds a new removable Module or a new Core/board variant, begin with
-[`EXTENDING_SPAGHETTI_LAB.md`](EXTENDING_SPAGHETTI_LAB.md). It provides the complete
-Module/Core/Config integration order, current-V0 limitations and firmware-specific
-caveats; return here only to select the detailed component references.
+If the work adds a new removable Module, Rule, Discovery provider, Device
+Profile, Block, pack, transport, Protocol operation, or Core/board variant,
+begin with [`EXTENDING_SPAGHETTI_LAB.md`](EXTENDING_SPAGHETTI_LAB.md). It provides
+the post-V2/V1 executable paths, templates, and caveats; return here only to
+select the detailed component references.
 
 ```mermaid
 flowchart TD
@@ -53,7 +54,13 @@ flowchart TD
 | Add/change a public function | Implementation guide, `include/spaghetti/README.md`, component README, header template | Choose signature, ownership, Doxygen, and errors |
 | Implement a `.c` function | Current public header, component README, implementation guide | Make the body satisfy the declared contract |
 | Add a component | Architecture, component/service/module overview, all firmware templates | Create the standard file/build/documentation set |
-| Add a module driver | `spaghetti_modules/README.md`, Module/Driver/Port headers, concrete module README | Preserve generic driver/Port boundaries |
+| Add a module driver | `spaghetti_modules/README.md`, Module/Driver/Port/schema headers, concrete module README, `EXTENDING` path 1 | Preserve iterable registration and Port boundaries |
+| Add a rule / block / pack | Rule/Block/feature_pack headers, `spaghetti_rules/` / `spaghetti_blocks/` / `subsys/feature_registry/`, `EXTENDING` paths 2/10 | Keep DEFINE macros; no central tables |
+| Add Discovery provider | `discovery.h`, `subsys/discovery/providers/`, `EXTENDING` path 3 | Providers emit candidates only |
+| Add Device Profile | `device_profile.h`, declarative Module, `EXTENDING` path 9 | Data vs compiled opcodes |
+| Add Protocol operation / transport | `protocol.h`, `subsys/communication/operations/`, Communication/service README, `EXTENDING` paths 5–6 | Status domain and permissions |
+| Add Node-RED / host SDK node | `tools/sdk/typescript/`, `examples/node_red/`, `EXTENDING` path 7 | Host orchestration vs Zephyr real-time |
+| Add Flow/Bay/rail layout | Board README, topology/power bindings, `EXTENDING` path 8 | DTS-only; no protocol change |
 | Add or change a thread | Runtime/service README, thread section of implementation guide, thread template | Justify ownership, stack, priority, queue, stop policy |
 | Share data across files | Implementation guide “Sharing data”, Data README, private-header template | Select snapshot, copied message, callback, ID, or private header |
 | Add logs | Implementation guide “Logging”, component Kconfig/source files | Register exactly one module and choose correct level |
@@ -73,7 +80,7 @@ flowchart TD
 |---|---|---|
 | `README.md` | Supported hosts, Docker workflow, build/flash commands, navigation, licensing summary | First checkout; environment, build, flash, or documentation navigation changes |
 | `DOCUMENTATION_INDEX.md` | Global reading order and paths for architecture, tasks, extensions, Node-RED and diagnosis | First orientation or whenever it is unclear which documentation path to follow |
-| `EXTENDING_SPAGHETTI_LAB.md` | End-to-end Italian guide for Module, Core, Config, Zephyr integration and caveats | First file to open when extending hardware or runtime configuration |
+| `EXTENDING_SPAGHETTI_LAB.md` | End-to-end English guide for eleven extension paths after Module Driver V2 / Protocol V1 freeze | First file to open when extending hardware, plug-ins, protocol, topology, or host Node-RED |
 | `roadmap/V1-PLATFORM-CLOSURE.md` | Ordered plan for resources, generic Port/schema/Config/Runtime, BLE, protocol and Node-RED | Before implementing phases 291–390 or freezing Protocol V1 |
 | `tools/device.py` | Cross-platform port discovery, flashing, and shared Rich monitor over serial or authenticated TLS-PSK | Changing flash, screen, monitor transport, or host credential handling |
 | `ARCHITECTURE.md` | Generic ownership, boundaries, static/runtime split, data/control flow | Any new component, dependency, shared state, protocol adapter, or lifecycle change |
@@ -105,8 +112,15 @@ flowchart TD
 | `include/spaghetti/core.h` | Overall startup/state contract | Calling or changing Core initialization/state |
 | `include/spaghetti/port.h` | Stable physical Port IDs, capabilities, and accessors | Drivers need board-independent bus/GPIO access |
 | `include/spaghetti/module.h` | Runtime module identity, state, and common value types | Creating or referencing a live module instance |
-| `include/spaghetti/module_driver.h` | Immutable driver operations and descriptor contract | Implementing/registering a module type |
-| `include/spaghetti/driver_registry.h` | Lookup contract from type ID to driver descriptor | Adding lookup or registration behavior |
+| `include/spaghetti/module_driver.h` | Module Driver API v2 descriptor, schemas, sync/async ops, `SPAGHETTI_MODULE_DRIVER_DEFINE` | Implementing/registering a module type |
+| `include/spaghetti/driver_registry.h` | Lookup over iterable Module driver section | Adding lookup behavior (not concrete drivers) |
+| `include/spaghetti/rule_driver.h` | Rule driver contract and DEFINE macro | Implementing a Rule type |
+| `include/spaghetti/block_driver.h` | Block driver contract and DEFINE macro | Implementing a processing Block |
+| `include/spaghetti/feature_pack.h` | Capability Pack descriptors and catalog | Declaring packs in an image |
+| `include/spaghetti/device_profile.h` | Declarative Device Profile catalog/exec | Built-in or installed profiles |
+| `include/spaghetti/protocol.h` | Protocol V1 envelopes, status, operation DEFINE | New machine operations |
+| `include/spaghetti/schema.h` | Property sets, field semantics, records | Any schema-backed config/record/command |
+| `include/spaghetti/topology.h` | Flow/Bay descriptors | Multi-Flow board layouts |
 | `include/spaghetti/module_manager.h` | Module lifecycle, assignment, read, command, and snapshots | Configuring/removing/using module instances |
 | `include/spaghetti/config.h` | Desired-state validation, application, generation, and snapshots | Changing runtime/user/product configuration |
 | `include/spaghetti/data.h` | Generic messages, publish/subscribe, and statistics | Producing or consuming values/events |
@@ -132,7 +146,13 @@ Each subsystem follows the same three-file reading pattern:
 |---|---|---|---|
 | Core | `subsys/core/README.md` | `subsys/core/core.c` | Boot order, overall state, dependency startup |
 | Port | `subsys/port/README.md` | `subsys/port/port.c` | Mapping static board hardware to stable runtime Ports |
-| Driver Registry | `subsys/driver_registry/README.md` | `subsys/driver_registry/driver_registry.c` | Driver descriptor lookup and validation |
+| Driver Registry | `subsys/driver_registry/README.md` | `subsys/driver_registry/driver_registry.c` | Iterable Module driver lookup (no central table) |
+| Rule Registry | `subsys/rule_registry/` | `rule_registry.c` | Iterable Rule driver lookup |
+| Block Registry | `subsys/block_registry/` | `block_registry.c` | Iterable Block driver lookup |
+| Feature Registry | `subsys/feature_registry/` | `feature_registry.c`, `pack_*.c` | Capability Packs and image manifest |
+| Device Profiles | `subsys/device_profiles/README.md` | `device_profile.c` | Profile catalog and interpreter |
+| Topology | `subsys/topology/` | `topology.c` | Flow/Bay enumeration from DTS |
+| Schema | `subsys/schema/` | `schema.c` | Property/record validation |
 | Module Manager | `subsys/module_manager/README.md` | `subsys/module_manager/module_manager.c` | Instance ownership, assignment, rollback, read/command |
 | Config | `subsys/config/README.md` | `subsys/config/config.c` | Validate/apply desired state and generation control |
 | Data | `subsys/data/README.md` | `subsys/data/data.c` | Generic messages, queues/zbus, delivery and backpressure |
@@ -161,9 +181,12 @@ Services support owners; they do not own product rules or module instances.
 
 | Path | Contains | Read when |
 |---|---|---|
-| `spaghetti_modules/README.md` | Common module-driver lifecycle, operation table, config/build template | Before every new sensor/actuator driver |
-| `roadmap/080-runtime-removable-ina219/README.md` | Practical I2C bus-voltage/current/power driver contract | Implementing or testing INA219 behavior |
-| `spaghetti_modules/relay/README.md` | Practical logical-output/safe-state driver contract | Implementing or testing a relay/output behavior |
+| `spaghetti_modules/README.md` | Module Driver v2 lifecycle, iterable registration, templates | Before every new sensor/actuator driver |
+| `spaghetti_modules/ina219/` | I2C electrical meter reference | Implementing or testing INA219 behavior |
+| `spaghetti_modules/relay/` | GPIO actuator reference | Implementing or testing relay/output behavior |
+| `spaghetti_modules/declarative_device/` | Device Profile execution Module | Profile-backed peripherals |
+| `spaghetti_rules/threshold/` | Threshold Rule Driver reference | New Rule Drivers |
+| `spaghetti_blocks/` | Built-in Block Drivers | New processing blocks |
 
 A new module directory owns only its protocol, per-instance private state, and
 translation to generic values/commands. It does not own Port wiring, Manager
@@ -199,14 +222,21 @@ you which templates to copy and in which order.
 | `CMakeLists.txt.template` | Add component-owned sources |
 | `Kconfig.template` | Add bounded build/resource/log choices |
 | `test_component.c.template` | Start success/invalid/output-preservation ztests |
-| `module_driver.h.template` | Declare current per-instance Module config and descriptor |
-| `module_driver.c.template` | Implement current driver lifecycle with typed slab |
+| `module_driver.h.template` | Module field IDs and config helpers (API v2) |
+| `module_driver.c.template` | Property-set Module driver + iterable DEFINE |
+| `rule_driver.c.template` | Rule Driver + DEFINE |
+| `discovery_provider.c.template` | Discovery provider + DEFINE |
+| `block_driver.c.template` | Block Driver + DEFINE |
+| `feature_pack.c.template` | Capability Pack + DEFINE |
+| `device_profile.c.template` | Built-in Device Profile + DEFINE |
+| `operation_handler.c.template` | Protocol V1 operation handler + DEFINE |
 | `board.yml.template` | Register a Core variant with Zephyr |
-| `board.dts.template` | Describe Core hardware, controller and Port topology |
+| `board.dts.template` | Describe Core hardware, Ports, Flows, rails, Bays |
 | `board_defconfig.template` | Select only board-required hardware features |
 
-Templates are starting points, not build inputs. Copy only the template required
-by the current task, replace every placeholder, and delete unused behavior.
+Templates are starting points checked by `tests/templates/`. Copy only the
+template required by the current task, replace every placeholder, and delete
+unused behavior.
 
 ## Task documents
 

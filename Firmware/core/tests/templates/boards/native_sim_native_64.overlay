@@ -1,0 +1,51 @@
+/ {
+	fake_i2c: fake-i2c {
+		status = "okay";
+	};
+
+	spaghetti_ports {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0: port@0 {
+			compatible = "spaghettilab,port";
+			reg = <0>;
+			i2c = <&fake_i2c>;
+			status = "okay";
+		};
+
+		port1: port@1 {
+			compatible = "spaghettilab,port";
+			reg = <1>;
+			i2c = <&fake_i2c>;
+			status = "okay";
+		};
+	};
+
+	spaghetti_flows {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		flow0: flow@0 {
+			compatible = "spaghettilab,flow";
+			reg = <0>;
+			port = <&port0>;
+			direction = "field-to-core";
+			signal-count = <5>;
+			function-bay-count = <0>;
+			status = "okay";
+		};
+
+		flow1: flow@1 {
+			compatible = "spaghettilab,flow";
+			reg = <1>;
+			port = <&port1>;
+			direction = "core-to-field";
+			signal-count = <5>;
+			function-bay-count = <2>;
+			status = "okay";
+		};
+	};
+};

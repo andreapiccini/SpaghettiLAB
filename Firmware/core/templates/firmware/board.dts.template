@@ -24,6 +24,13 @@
 			i2c = <&i2c0>;
 			status = "okay";
 		};
+
+		port1: port@1 {
+			compatible = "spaghettilab,port";
+			reg = <1>;
+			i2c = <&i2c1>;
+			status = "okay";
+		};
 	};
 
 	spaghetti_flows {
@@ -40,6 +47,57 @@
 			function-bay-count = <0>;
 			status = "okay";
 		};
+
+		flow1: flow@1 {
+			compatible = "spaghettilab,flow";
+			reg = <1>;
+			port = <&port1>;
+			direction = "core-to-field";
+			signal-count = <5>;
+			function-bay-count = <2>;
+			status = "okay";
+		};
+	};
+
+	spaghetti_power_rails {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		rail0: rail@0 {
+			compatible = "spaghettilab,power-rail";
+			reg = <0>;
+			assurance = "unmanaged";
+			min-microvolts = <0>;
+			max-microvolts = <0>;
+			max-total-microamps = <0>;
+			status = "okay";
+		};
+
+		rail1: rail@1 {
+			compatible = "spaghettilab,power-rail";
+			reg = <1>;
+			assurance = "switched-and-measured";
+			min-microvolts = <3300000>;
+			max-microvolts = <3300000>;
+			max-total-microamps = <500000>;
+			status = "okay";
+		};
+	};
+
+	spaghetti_bay_power {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		bay1_0: bay-power@0 {
+			compatible = "spaghettilab,bay-power";
+			reg = <0>;
+			flow = <&flow1>;
+			bay-id = <0>;
+			available-rails = <0 1>;
+			status = "okay";
+		};
 	};
 };
 
@@ -51,4 +109,9 @@
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	/* Add pinctrl states taken from the real schematic and SoC binding. */
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
 };

@@ -1,5 +1,18 @@
 /* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
 
+/**
+ * @file
+ * @brief Synchronous Example Module driver (Module Driver API v2).
+ *
+ * Copy to spaghetti_modules/<name>/, rename symbols, replace schema IDs and
+ * hardware access. Registration is automatic via SPAGHETTI_MODULE_DRIVER_DEFINE;
+ * do not edit driver_registry.c.
+ *
+ * Async drivers implement both start() and stop() and emit only from thread
+ * context through the borrowed emit callback. Production drivers may leave both
+ * NULL for a purely synchronous read/command Module.
+ */
+
 #include <example_module.h>
 
 #include <errno.h>
@@ -8,23 +21,23 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
 
 #include <spaghetti/module.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/port.h>
+#include <spaghetti/schema.h>
 
 LOG_MODULE_REGISTER(spaghetti_example_module,
-			    CONFIG_SPAGHETTI_EXAMPLE_MODULE_LOG_LEVEL);
+		    CONFIG_SPAGHETTI_EXAMPLE_MODULE_LOG_LEVEL);
 
 #define EXAMPLE_I2C_ADDRESS_MIN 0x08U
 #define EXAMPLE_I2C_ADDRESS_MAX 0x77U
 
 struct example_context {
-	const struct device *i2c; /* Borrowed from Port; firmware lifetime. */
+	const struct spaghetti_port *port; /* Borrowed; firmware lifetime. */
 	struct spaghetti_example_module_config config; /* Owned copy. */
 	bool initialized;
 };
@@ -33,26 +46,93 @@ K_MEM_SLAB_DEFINE(example_context_slab, sizeof(struct example_context),
 		  CONFIG_SPAGHETTI_EXAMPLE_MODULE_MAX_INSTANCES,
 		  __alignof__(struct example_context));
 
-static int example_validate_config(const void *config, size_t config_size)
+static const struct spaghetti_field_descriptor example_config_fields[] = {
+	{
+		.field_id = SPAGHETTI_EXAMPLE_MODULE_CONFIG_ADDRESS,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED | SPAGHETTI_FIELD_WRITABLE,
+		.unsigned_minimum = EXAMPLE_I2C_ADDRESS_MIN,
+		.unsigned_maximum = EXAMPLE_I2C_ADDRESS_MAX,
+		.name = "address",
+		.description = "Example 7-bit I2C address",
+		.unit = "",
+	},
+};
+
+static const struct spaghetti_schema_descriptor example_config_schema = {
+	.schema_id = "spaghetti.example.config",
+	.version = 1U,
+	.fields = example_config_fields,
+	.field_count = ARRAY_SIZE(example_config_fields),
+};
+
+static const struct spaghetti_field_descriptor example_sample_fields[] = {
+	{
+		.field_id = SPAGHETTI_EXAMPLE_MODULE_FIELD_VALUE,
+		.type = SPAGHETTI_VALUE_INT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.signed_minimum = INT64_MIN,
+		.signed_maximum = INT64_MAX,
+		.name = "value",
+		.description = "Example sample value",
+		.unit = "",
+	},
+};
+
+static const struct spaghetti_schema_descriptor example_sample_schema = {
+	.schema_id = "spaghetti.example.sample",
+	.version = 1U,
+	.fields = example_sample_fields,
+	.field_count = ARRAY_SIZE(example_sample_fields),
+};
+
+static const struct spaghetti_schema_descriptor *const example_record_schemas[] = {
+	&example_sample_schema,
+};
+
+int spaghetti_example_module_config_from_properties(
+	const struct spaghetti_property_set *properties,
+	struct spaghetti_example_module_config *out)
 {
-	struct spaghetti_example_module_config candidate;
+	const struct spaghetti_value *address;
 
-	if ((config == NULL) || (config_size != sizeof(candidate))) {
+	if ((properties == NULL) || (out == NULL)) {
 		return -EINVAL;
 	}
 
-	memcpy(&candidate, config, sizeof(candidate));
-	if ((candidate.i2c_address < EXAMPLE_I2C_ADDRESS_MIN) ||
-	    (candidate.i2c_address > EXAMPLE_I2C_ADDRESS_MAX)) {
+	address = spaghetti_property_find(properties,
+					  SPAGHETTI_EXAMPLE_MODULE_CONFIG_ADDRESS);
+	if ((address == NULL) || (address->type != SPAGHETTI_VALUE_UINT64) ||
+	    (address->data.unsigned_integer < EXAMPLE_I2C_ADDRESS_MIN) ||
+	    (address->data.unsigned_integer > EXAMPLE_I2C_ADDRESS_MAX)) {
 		return -EINVAL;
 	}
 
+	out->i2c_address = (uint8_t)address->data.unsigned_integer;
 	return 0;
 }
 
-static int example_describe_endpoint(
-	const void *config, size_t config_size,
-	struct spaghetti_module_endpoint *out)
+static int example_validate_config(const struct spaghetti_property_set *config)
+{
+	struct spaghetti_example_module_config ignored;
+	int err;
+
+	if (config == NULL) {
+		return -EINVAL;
+	}
+
+	err = spaghetti_property_validate(config, &example_config_schema);
+	if (err < 0) {
+		return err;
+	}
+
+	return spaghetti_example_module_config_from_properties(config, &ignored);
+}
+
+static int example_describe_endpoint(const struct spaghetti_property_set *config,
+				     struct spaghetti_module_endpoint *out)
 {
 	struct spaghetti_example_module_config candidate;
 	int err;
@@ -61,18 +141,21 @@ static int example_describe_endpoint(
 		return -EINVAL;
 	}
 
-	err = example_validate_config(config, config_size);
+	err = example_validate_config(config);
 	if (err < 0) {
 		return err;
 	}
-	memcpy(&candidate, config, sizeof(candidate));
 
-	const struct spaghetti_module_endpoint endpoint = {
+	err = spaghetti_example_module_config_from_properties(config, &candidate);
+	if (err < 0) {
+		return err;
+	}
+
+	*out = (struct spaghetti_module_endpoint){
 		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-		.value = candidate.i2c_address,
+		.value_size = 1U,
+		.value = {candidate.i2c_address},
 	};
-
-	*out = endpoint;
 	return 0;
 }
 
@@ -82,8 +165,8 @@ static void example_free_context(struct example_context *context)
 	k_mem_slab_free(&example_context_slab, context);
 }
 
-static int example_init(struct spaghetti_module *module, const void *config,
-			size_t config_size)
+static int example_init(struct spaghetti_module *module,
+			const struct spaghetti_property_set *config)
 {
 	struct spaghetti_example_module_config candidate;
 	struct example_context *context;
@@ -95,11 +178,15 @@ static int example_init(struct spaghetti_module *module, const void *config,
 		return -EINVAL;
 	}
 
-	err = example_validate_config(config, config_size);
+	err = example_validate_config(config);
 	if (err < 0) {
 		return err;
 	}
-	memcpy(&candidate, config, sizeof(candidate));
+
+	err = spaghetti_example_module_config_from_properties(config, &candidate);
+	if (err < 0) {
+		return err;
+	}
 
 	err = k_mem_slab_alloc(&example_context_slab, &context_block, K_NO_WAIT);
 	if (err < 0) {
@@ -108,18 +195,17 @@ static int example_init(struct spaghetti_module *module, const void *config,
 
 	context = context_block;
 	memset(context, 0, sizeof(*context));
-	context->i2c = spaghetti_port_i2c_device(module->port);
-	if (context->i2c == NULL) {
+	if (!spaghetti_port_has_capability(module->port, SPAGHETTI_PORT_CAP_I2C)) {
 		err = -ENOTSUP;
 		goto free_context;
 	}
-	if (!device_is_ready(context->i2c)) {
-		err = -ENODEV;
-		goto free_context;
-	}
 
+	context->port = module->port;
 	context->config = candidate;
-	/* Perform bounded device initialization here. */
+	/*
+	 * Manager already acquired the Port transport. Perform only bounded
+	 * Port I/O here, for example spaghetti_port_i2c_transfer().
+	 */
 	context->initialized = true;
 	module->context = context;
 	return 0;
@@ -130,10 +216,10 @@ free_context:
 }
 
 static int example_read(struct spaghetti_module *module,
-			struct spaghetti_sample *out)
+			struct spaghetti_record_payload *out)
 {
 	struct example_context *context;
-	struct spaghetti_sample candidate = {0};
+	struct spaghetti_record_payload payload;
 
 	if ((module == NULL) || (out == NULL) ||
 	    (module->state != SPAGHETTI_MODULE_READY) ||
@@ -146,13 +232,19 @@ static int example_read(struct spaghetti_module *module,
 		return -EACCES;
 	}
 
-	/*
-	 * Perform bounded I2C here, convert to the current electrical sample,
-	 * and write only candidate until every operation succeeds.
-	 * Task 300 moves shared-controller transactions behind Port; task 310
-	 * replaces this concrete sample with a schema-described payload.
-	 */
-	*out = candidate;
+	memset(&payload, 0, sizeof(payload));
+	payload.kind = SPAGHETTI_RECORD_SAMPLE;
+	payload.schema_version = example_sample_schema.version;
+	strncpy(payload.schema_id, example_sample_schema.schema_id,
+		sizeof(payload.schema_id) - 1U);
+	payload.values.field_count = 1U;
+	payload.values.fields[0] = (struct spaghetti_value){
+		.field_id = SPAGHETTI_EXAMPLE_MODULE_FIELD_VALUE,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = 0,
+	};
+
+	*out = payload;
 	return 0;
 }
 
@@ -165,7 +257,7 @@ static int example_deinit(struct spaghetti_module *module)
 	}
 
 	context = module->context;
-	/* Put only this endpoint in its documented safe state here. */
+	/* Put only this endpoint into its documented safe state here. */
 	module->context = NULL;
 	example_free_context(context);
 	return 0;
@@ -177,11 +269,21 @@ static const struct spaghetti_module_driver_ops example_ops = {
 	.init = example_init,
 	.read = example_read,
 	.command = NULL,
+	.start = NULL, /* Pair with stop for async event emission. */
+	.stop = NULL,
 	.deinit = example_deinit,
 };
 
-const struct spaghetti_module_driver spaghetti_example_module_driver = {
+SPAGHETTI_MODULE_DRIVER_DEFINE(spaghetti_example_module_driver) = {
 	.type_id = "example",
+	.api_version = SPAGHETTI_MODULE_DRIVER_API_VERSION,
 	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.transport = SPAGHETTI_PORT_TRANSPORT_I2C,
+	.power_requirement = { .declared = false },
+	.config_schema = &example_config_schema,
+	.record_schemas = example_record_schemas,
+	.record_schema_count = ARRAY_SIZE(example_record_schemas),
+	.commands = NULL,
+	.command_count = 0U,
 	.ops = &example_ops,
 };

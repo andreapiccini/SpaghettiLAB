@@ -1,6 +1,6 @@
 # TASK-385-01 — Completare la guida developer
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 385 — Manuale per sviluppatori
 
 ## Cosa devo fare
@@ -80,11 +80,11 @@ Communication o MQTT per far comparire il nuovo tipo nel catalogo.
 
 ## Checklist di completamento
 
-- [ ] Undici percorsi hanno file, template e comandi completi.
-- [ ] Template compilano nei test.
-- [ ] Guida non contiene API V0 o Registry centrali.
-- [ ] Caveat collega diario problemi e guida implementativa.
-- [ ] Nuovo Module/Core può essere aggiunto senza decisioni implicite.
+- [x] Undici percorsi hanno file, template e comandi completi.
+- [x] Template compilano nei test.
+- [x] Guida non contiene API V0 o Registry centrali.
+- [x] Caveat collega diario problemi e guida implementativa.
+- [x] Nuovo Module/Core può essere aggiunto senza decisioni implicite.
 
 ## Verifica e fine task
 

@@ -1,0 +1,212 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Example Rule Driver registered via iterable section.
+ *
+ * Copy to spaghetti_rules/<name>/ and rename symbols. Do not edit
+ * rule_registry.c.
+ */
+
+#include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util.h>
+
+#include <spaghetti/rule_driver.h>
+#include <spaghetti/schema.h>
+
+LOG_MODULE_REGISTER(spaghetti_example_rule,
+		    CONFIG_SPAGHETTI_EXAMPLE_RULE_LOG_LEVEL);
+
+enum {
+	EXAMPLE_RULE_SOURCE_KEY = 1U,
+	EXAMPLE_RULE_SOURCE_FIELD = 2U,
+	EXAMPLE_RULE_THRESHOLD = 3U,
+	EXAMPLE_RULE_TARGET_KEY = 4U,
+	EXAMPLE_RULE_COMMAND_ID = 5U,
+};
+
+struct example_rule_context {
+	spaghetti_module_key_t source_key;
+	uint16_t source_field_id;
+	int64_t threshold;
+	spaghetti_module_key_t target_key;
+	uint16_t command_id;
+};
+
+K_MEM_SLAB_DEFINE(example_rule_slab, sizeof(struct example_rule_context),
+		  CONFIG_SPAGHETTI_EXAMPLE_RULE_MAX_INSTANCES,
+		  __alignof__(struct example_rule_context));
+
+static const struct spaghetti_field_descriptor example_rule_fields[] = {
+	{
+		.field_id = EXAMPLE_RULE_SOURCE_KEY,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_MODULE_KEY_REF,
+		.reference_group = 1U,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.unsigned_minimum = 1U,
+		.unsigned_maximum = UINT32_MAX,
+		.name = "source_key",
+		.description = "Module key that produces observed records",
+		.unit = "",
+	},
+	{
+		.field_id = EXAMPLE_RULE_SOURCE_FIELD,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_RECORD_FIELD_REF,
+		.reference_group = 1U,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.unsigned_minimum = 1U,
+		.unsigned_maximum = UINT16_MAX,
+		.name = "source_field_id",
+		.description = "Numeric record field observed by the rule",
+		.unit = "",
+	},
+	{
+		.field_id = EXAMPLE_RULE_THRESHOLD,
+		.type = SPAGHETTI_VALUE_INT64,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.signed_minimum = INT64_MIN,
+		.signed_maximum = INT64_MAX,
+		.name = "threshold",
+		.description = "Strict comparison threshold",
+		.unit = "",
+	},
+	{
+		.field_id = EXAMPLE_RULE_TARGET_KEY,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_MODULE_KEY_REF,
+		.reference_group = 2U,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.unsigned_minimum = 1U,
+		.unsigned_maximum = UINT32_MAX,
+		.name = "target_key",
+		.description = "Module key that receives emitted commands",
+		.unit = "",
+	},
+	{
+		.field_id = EXAMPLE_RULE_COMMAND_ID,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_COMMAND_REF,
+		.reference_group = 2U,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.unsigned_minimum = 1U,
+		.unsigned_maximum = UINT16_MAX,
+		.name = "command_id",
+		.description = "Command ID applied on the target Module",
+		.unit = "",
+	},
+};
+
+static const struct spaghetti_schema_descriptor example_rule_schema = {
+	.schema_id = "spaghetti.example_rule.config",
+	.version = 1U,
+	.fields = example_rule_fields,
+	.field_count = ARRAY_SIZE(example_rule_fields),
+};
+
+static int example_rule_validate(const struct spaghetti_property_set *config)
+{
+	return spaghetti_property_validate(config, &example_rule_schema);
+}
+
+static int example_rule_init(const struct spaghetti_property_set *config,
+			     void **out_context)
+{
+	struct example_rule_context *context;
+	void *block;
+	const struct spaghetti_value *value;
+	int err;
+
+	if ((config == NULL) || (out_context == NULL)) {
+		return -EINVAL;
+	}
+
+	err = example_rule_validate(config);
+	if (err < 0) {
+		return err;
+	}
+
+	err = k_mem_slab_alloc(&example_rule_slab, &block, K_NO_WAIT);
+	if (err < 0) {
+		return -ENOMEM;
+	}
+
+	context = block;
+	memset(context, 0, sizeof(*context));
+
+	value = spaghetti_property_find(config, EXAMPLE_RULE_SOURCE_KEY);
+	context->source_key = (spaghetti_module_key_t)value->data.unsigned_integer;
+	value = spaghetti_property_find(config, EXAMPLE_RULE_SOURCE_FIELD);
+	context->source_field_id = (uint16_t)value->data.unsigned_integer;
+	value = spaghetti_property_find(config, EXAMPLE_RULE_THRESHOLD);
+	context->threshold = value->data.signed_integer;
+	value = spaghetti_property_find(config, EXAMPLE_RULE_TARGET_KEY);
+	context->target_key = (spaghetti_module_key_t)value->data.unsigned_integer;
+	value = spaghetti_property_find(config, EXAMPLE_RULE_COMMAND_ID);
+	context->command_id = (uint16_t)value->data.unsigned_integer;
+
+	*out_context = context;
+	return 0;
+}
+
+static int example_rule_on_record(void *context,
+				  const struct spaghetti_record *record,
+				  spaghetti_rule_emit_action_cb_t emit,
+				  void *emit_user_data)
+{
+	struct example_rule_context *rule = context;
+	const struct spaghetti_value *field;
+	struct spaghetti_rule_action action;
+
+	if ((rule == NULL) || (record == NULL) || (emit == NULL)) {
+		return -EINVAL;
+	}
+
+	if (record->source_key != rule->source_key) {
+		return 0;
+	}
+
+	field = spaghetti_property_find(&record->payload.values,
+					rule->source_field_id);
+	if ((field == NULL) || (field->type != SPAGHETTI_VALUE_INT64) ||
+	    (field->data.signed_integer <= rule->threshold)) {
+		return 0;
+	}
+
+	memset(&action, 0, sizeof(action));
+	action.target_key = rule->target_key;
+	action.command.command_id = rule->command_id;
+	return emit(&action, emit_user_data);
+}
+
+static int example_rule_deinit(void *context)
+{
+	if (context == NULL) {
+		return -EINVAL;
+	}
+
+	memset(context, 0, sizeof(struct example_rule_context));
+	k_mem_slab_free(&example_rule_slab, context);
+	return 0;
+}
+
+static const struct spaghetti_rule_driver_ops example_rule_ops = {
+	.validate_config = example_rule_validate,
+	.init = example_rule_init,
+	.on_record = example_rule_on_record,
+	.deinit = example_rule_deinit,
+};
+
+SPAGHETTI_RULE_DRIVER_DEFINE(spaghetti_example_rule_driver) = {
+	.type_id = "example_rule",
+	.api_version = SPAGHETTI_RULE_DRIVER_API_VERSION,
+	.config_schema = &example_rule_schema,
+	.ops = &example_rule_ops,
+};

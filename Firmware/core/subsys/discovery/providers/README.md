@@ -1,10 +1,14 @@
 # Discovery providers
 
-[← Discovery](../README.md)
+[← Discovery](../README.md) ·
+[EXTENDING path 3](../../../EXTENDING_SPAGHETTI_LAB.md#3-discovery-provider)
 
-Providers are optional and auto-registered. The production board V1 image links
-**zero** hardware providers. Register fake providers only in
-`tests/discovery_providers/`.
+Providers are optional and auto-registered via
+`SPAGHETTI_DISCOVERY_PROVIDER_DEFINE`. Do not edit `discovery.c` to register a
+provider. The production board V1 image links **zero** hardware providers.
+Start from
+[`templates/firmware/discovery_provider.c.template`](../../../templates/firmware/discovery_provider.c.template)
+or the fakes in `tests/discovery_providers/`.
 
 ## Declaring a provider
 

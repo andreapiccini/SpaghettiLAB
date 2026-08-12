@@ -1,0 +1,82 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Example Protocol V1 operation handler.
+ *
+ * Copy to subsys/communication/operations/<name>_ops.c. Assign a new operation
+ * ID only after freezing it in the protocol catalog; never reuse retired IDs.
+ * Prefer extending an existing op family before inventing a private opcode.
+ */
+
+#include <errno.h>
+#include <stdint.h>
+
+#include <zephyr/sys/util.h>
+
+#include <spaghetti/access_control.h>
+#include <spaghetti/protocol.h>
+#include <spaghetti/schema.h>
+
+/* Replace with a real frozen enum value from spaghetti_protocol_operation. */
+#ifndef SPAGHETTI_PROTOCOL_EXAMPLE_PING
+#define SPAGHETTI_PROTOCOL_EXAMPLE_PING ((enum spaghetti_protocol_operation)0x7FFEU)
+#endif
+
+enum {
+	EXAMPLE_OP_FIELD_TOKEN = 1U,
+};
+
+static const struct spaghetti_field_descriptor example_request_fields[] = {
+	{
+		.field_id = EXAMPLE_OP_FIELD_TOKEN,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.unsigned_minimum = 0U,
+		.unsigned_maximum = UINT64_MAX,
+		.name = "token",
+		.description = "Caller-owned echo token",
+		.unit = "",
+	},
+};
+
+static const struct spaghetti_schema_descriptor example_request_schema = {
+	.schema_id = "spaghetti.op.example_ping.request",
+	.version = 1U,
+	.fields = example_request_fields,
+	.field_count = ARRAY_SIZE(example_request_fields),
+};
+
+static const struct spaghetti_schema_descriptor example_response_schema = {
+	.schema_id = "spaghetti.op.example_ping.response",
+	.version = 1U,
+	.fields = example_request_fields,
+	.field_count = ARRAY_SIZE(example_request_fields),
+};
+
+static int execute_example_ping(
+	const struct spaghetti_request_context *context,
+	const struct spaghetti_protocol_payload *request,
+	struct spaghetti_protocol_payload *response)
+{
+	ARG_UNUSED(context);
+	ARG_UNUSED(request);
+	ARG_UNUSED(response);
+
+	/*
+	 * Decode/validate @p request against request_schema, perform the work,
+	 * and encode @p response. Return a negative errno to the dispatcher;
+	 * Communication maps it with spaghetti_protocol_status_from_errno()
+	 * and centralizes replay. Do not invent a parallel status domain.
+	 */
+	return 0;
+}
+
+SPAGHETTI_OPERATION_HANDLER_DEFINE(op_example_ping) = {
+	.operation = SPAGHETTI_PROTOCOL_EXAMPLE_PING,
+	.required_permissions = SPAGHETTI_PERMISSION_READ,
+	.execution = SPAGHETTI_OPERATION_IMMEDIATE_READ,
+	.request_schema = &example_request_schema,
+	.response_schema = &example_response_schema,
+	.execute = execute_example_ping,
+};
