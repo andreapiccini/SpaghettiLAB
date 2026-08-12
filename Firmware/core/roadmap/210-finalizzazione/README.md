@@ -1,6 +1,6 @@
 # Fase 210 — Finalizzazione
 
-**Stato:** ⬜ TODO
+**Stato:** 🟨 IN PROGRESS
 
 [← Indice roadmap](../README.md)
 
@@ -21,12 +21,13 @@ Manager senza modificare Core, Config, Runtime o Data.
 
 ## Task
 
-1. ⬜ [TASK-210-01 — Ripulire e qualificare il firmware completo](TASK-210-01-ripulire-e-qualificare-il-firmware.md)
+1. 🟨 [TASK-210-01 — Ripulire e qualificare il firmware completo](TASK-210-01-ripulire-e-qualificare-il-firmware.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Non rimangono wrapper, nodi, loop o valori temporanei di sviluppo.
-- [ ] Tutti i percorsi di boot, apply, rollback, remove e reboot sono verificati.
-- [ ] L’estensione con un nuovo driver non modifica i sottosistemi centrali.
+- [x] Non rimangono wrapper, nodi, loop o valori temporanei di sviluppo.
+- [x] Tutti i percorsi di boot, apply, rollback, remove e reboot sono verificati *(fake/native)*.
+- [x] L’estensione con un nuovo driver non modifica i sottosistemi centrali.
+- [ ] Matrice hardware INA219/Relay/fault/PCB — **OPEN** (fase 290 / PLATFORM_REPORT).
 - [ ] La matrice include almeno due endpoint simultanei sulla stessa Port.
 - [ ] Il repository è validato e costruisce da una directory build pulita.

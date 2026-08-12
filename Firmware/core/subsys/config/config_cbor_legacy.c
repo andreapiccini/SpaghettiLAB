@@ -1,3 +1,8 @@
+/* Legacy V0 Config CBOR decoder kept for migration only.
+ * REMOVE AFTER: 2026-12-31 (or after field migration of all V0 Config blobs).
+ * Do not extend; new wire features belong in config_cbor.c (wire version >= 2).
+ */
+
 #include "config_cbor_internal.h"
 
 #include <errno.h>

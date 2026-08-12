@@ -1,6 +1,6 @@
 # TASK-365-01 — Aggiungere il trasporto BLE
 
-**Stato:** ✅ DONE
+**Stato:** 🟨 IN PROGRESS
 **Fase:** 365 — Protocollo Spaghetti su BLE
 
 ## Cosa devo fare

@@ -1,0 +1,9 @@
+tests:
+  spaghetti.fuzz:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - fuzz
+      - protocol
+      - v1

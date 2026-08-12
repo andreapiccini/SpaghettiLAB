@@ -1,3 +1,8 @@
+/* Legacy V3 Storage blob converter kept for migration only.
+ * REMOVE AFTER: 2026-12-31 (or after every device has rewritten Config as V5+).
+ * Do not extend; new persistence uses the typed Config CBOR path.
+ */
+
 #include "storage_legacy_v3.h"
 
 #include <errno.h>

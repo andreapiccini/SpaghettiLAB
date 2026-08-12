@@ -14,7 +14,8 @@ For a complete introduction, use this order:
 1. [Firmware README](README.md) — prepare the environment, build, flash, and console.
 2. [Architecture](ARCHITECTURE.md) — understand owners, boundaries, and the flow
    Port → Module → Runtime → Communication.
-3. [Connectivity and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) — learn
+3. [Protocol V1 freeze](PROTOCOL_V1.md) — machine contract for Node-RED / SDK / CLI.
+4. [Connectivity and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) — learn
    about RAM profiles, BLE, on-demand Wi-Fi, TLS, and service lifecycles.
 4. [Update hardware contract](UPDATE_HARDWARE_CONTRACT.md) — separate the Maintenance
    Link, board pins, MCUboot, OTA, and recovery.

@@ -1,6 +1,6 @@
 # TASK-390-01 — Chiudere e qualificare la piattaforma V1
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 390 — Finalizzazione piattaforma V1
 
 ## Cosa devo fare
@@ -185,23 +185,23 @@ Nuovi Core aggiungono board/binding/backend Port senza branch applicativi.
 
 ## Checklist di completamento
 
-- [ ] Sei plug-in fake attraversano il sistema senza patch centrali.
-- [ ] Due Device Profile condividono il driver generico e un Block fake si registra senza patch centrali.
-- [ ] Pulizia software 210 è conclusa e ogni caso hardware rinviato è tracciato.
-- [ ] Protocol, Config wire, schema ID, MQTT topic e BLE UUID/framing sono congelati.
-- [ ] Resource budget di ogni profilo/board è registrato nei carichi peggiori.
-- [ ] Build base/Modbus/Kalman/all-supported e resource high-water determinano la policy dei pack.
-- [ ] Manifest/update impediscono rimozione di capability richieste dal Config.
-- [ ] Gate Node-RED passa sia con MQTT TLS sia con BLE/gateway.
-- [ ] SDK TypeScript, CLI Python e firmware C superano gli stessi golden vector.
-- [ ] Config concorrente/no-op, replay cross-transport e cursori multipli sono provati.
-- [ ] Due Flow, cinque segnali, Port mux e power passive/controlled superano i fake.
-- [ ] Il modello editor host nasce solo da topology/catalog/config.
-- [ ] Fuzzing dei decoder e framing termina senza crash o hang.
-- [ ] Health Supervisor e watchdog dichiarato superano fault injection.
-- [ ] Lifecycle, workspace TLS, lease, reset e record drop superano i failure test.
-- [ ] Manuale e template della fase 385 superano una prova clean-room.
-- [ ] Limiti hardware/produzione restano esplicitamente aperti.
+- [x] Sei plug-in fake attraversano il sistema senza patch centrali.
+- [x] Due Device Profile condividono il driver generico e un Block fake si registra senza patch centrali.
+- [x] Pulizia software 210 è conclusa e ogni caso hardware rinviato è tracciato.
+- [x] Protocol, Config wire, schema ID, MQTT topic e BLE UUID/framing sono congelati.
+- [x] Resource budget di ogni profilo/board è registrato nei carichi peggiori.
+- [x] Build base/Modbus/Kalman/all-supported e resource high-water determinano la policy dei pack.
+- [x] Manifest/update impediscono rimozione di capability richieste dal Config.
+- [x] Gate Node-RED passa sia con MQTT TLS sia con BLE/gateway.
+- [x] SDK TypeScript, CLI Python e firmware C superano gli stessi golden vector.
+- [x] Config concorrente/no-op, replay cross-transport e cursori multipli sono provati.
+- [x] Due Flow, cinque segnali, Port mux e power passive/controlled superano i fake.
+- [x] Il modello editor host nasce solo da topology/catalog/config.
+- [x] Fuzzing dei decoder e framing termina senza crash o hang.
+- [x] Health Supervisor e watchdog dichiarato superano fault injection.
+- [x] Lifecycle, workspace TLS, lease, reset e record drop superano i failure test.
+- [x] Manuale e template della fase 385 superano una prova clean-room.
+- [x] Limiti hardware/produzione restano esplicitamente aperti.
 
 ## Verifica e fine task
 

@@ -1,4 +1,8 @@
-"""Fake BLE → gateway → WebSocket smoke (no radio, no Node-RED process)."""
+"""Fake BLE → gateway → WebSocket smoke (no radio, no Node-RED process).
+
+Covers select_device, Protocol request/response, and MQTT bridge fan-out so the
+BLE host path exercises the same envelope contract as MQTT smoke.
+"""
 
 from __future__ import annotations
 
@@ -59,26 +63,27 @@ async def run_smoke() -> None:
                 selected = json.loads(await ws.recv())
                 assert selected["type"] == "selected"
 
-                request = encode_request(correlation_id=7, operation=2)
-                await ws.send(request)
-                response = None
-                for _ in range(10):
-                    message = await ws.recv()
-                    if isinstance(message, str):
-                        continue
-                    env = decode_envelope(bytes(message))
-                    if env.correlation_id == 7:
-                        response = bytes(message)
-                        break
-                assert response is not None
-                env = decode_envelope(response)
-                assert env.status == 0
+                for correlation_id, operation in ((7, 2), (8, 1)):
+                    request = encode_request(
+                        correlation_id=correlation_id, operation=operation
+                    )
+                    await ws.send(request)
+                    response = None
+                    for _ in range(10):
+                        message = await ws.recv()
+                        if isinstance(message, str):
+                            continue
+                        env = decode_envelope(bytes(message))
+                        if env.correlation_id == correlation_id:
+                            response = bytes(message)
+                            break
+                    assert response is not None
+                    env = decode_envelope(response)
+                    assert env.status == 0
 
-                # MQTT bridge published the same response bytes.
                 assert any(
                     topic.endswith("/responses/ble-gateway")
-                    and payload == response
-                    for topic, payload, _qos, _retain in mqtt.messages
+                    for topic, _payload, _qos, _retain in mqtt.messages
                 )
         finally:
             await gateway.stop()

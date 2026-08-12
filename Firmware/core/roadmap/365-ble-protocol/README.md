@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ✅ DONE
+**Stato:** 🟨 IN PROGRESS
 
 ## Obiettivo
 

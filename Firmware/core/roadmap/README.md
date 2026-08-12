@@ -103,7 +103,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [180 — Varianti Core multiple](180-multi-core/README.md) | Gli stessi livelli applicativi funzionano su due varianti Core. |
 | ✅ | [190 — Power](190-power/README.md) | Reference counting e rollback sono verificati; Core V1 lascia Power disabilitato perché non espone una rail controllabile. |
 | ✅ | [200 — Engine completo](200-engine/README.md) | Il Core carica Config, avvia i componenti e accetta riconfigurazioni senza reboot. |
-| ⬜ | [210 — Finalizzazione](210-finalizzazione/README.md) | Nessuna scorciatoia temporanea rimane e il sistema completo supera la matrice end-to-end. |
+| 🟨 | [210 — Finalizzazione](210-finalizzazione/README.md) | Nessuna scorciatoia temporanea rimane e il sistema completo supera la matrice end-to-end. |
 | ✅ | [220 — Contratto Maintenance Link](220-update-hardware-contract/README.md) | Board/overlay scelgono pin e controller; il firmware comune usa un'API astratta. |
 | ✅ | [230 — MCUboot e A/B](230-mcuboot-ab/README.md) | Bootloader e applicazione firmata usano gli slot primario e secondario. |
 | ✅ | [240 — Coordinatore update](240-update-coordinator/README.md) | Timeout e cancel scartano il candidato senza toccare il firmware attivo. |
@@ -132,7 +132,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [350 — Discovery multi-provider V1](350-discovery-providers-v1/README.md) | Manuale, EEPROM, probe, analogico e 1-Wire convivono come strategie opzionali. |
 | ✅ | [355 — Identità e reset](355-identity-security-lifecycle/README.md) | Identità, principal, permessi, credenziali, revoca e reset hanno ownership definita. |
 | ✅ | [360 — Communication Protocol V1](360-communication-protocol-v1/README.md) | Envelope CBOR, Config CAS, errori stabili, replay e job sono comuni a ogni adapter. |
-| ✅ | [365 — Protocollo BLE](365-ble-protocol/README.md) | BLE trasporta envelope V1 autenticati con framing bounded. |
+| 🟨 | [365 — Protocollo BLE](365-ble-protocol/README.md) | BLE trasporta envelope V1 autenticati con framing bounded. |
 | ✅ | [366 — OTA BLE](366-ble-ota/README.md) | BLE alimenta Update Coordinator senza duplicare flash o rollback. |
 | ✅ | [367 — Handover BLE/Wi-Fi](367-ble-wifi-handover/README.md) | Un peer BLE apre lease, manutenzione o OTA Wi-Fi separatamente. |
 | ✅ | [370 — MQTT per Node-RED V1](370-mqtt-node-red-v1/README.md) | Node-RED riceve record e invia richieste con risposta correlata. |
@@ -140,7 +140,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [378 — SDK host e Node-RED](378-host-sdk-node-red/README.md) | TypeScript condivide codec/transport e coordina la Config senza lost update. |
 | ✅ | [380 — Tool sviluppatore V1](380-developer-tools-v1/README.md) | Un CLI JSON nasconde CBOR, trasporti e aggiornamenti. |
 | ✅ | [385 — Manuale developer](385-developer-handbook/README.md) | Guide e template V1 coprono Module, Core, rule, provider e transport. |
-| ⬜ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti, SDK, watchdog, fuzz ed estensioni fake superano il gate Node-RED. |
+| ✅ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti, SDK, watchdog, fuzz ed estensioni fake superano il gate Node-RED. |
 
 ## Da dove iniziare
 

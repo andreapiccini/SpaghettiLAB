@@ -1,6 +1,6 @@
 # TASK-210-01 — Ripulire e qualificare il firmware completo
 
-**Stato:** ⬜ TODO
+**Stato:** 🟨 IN PROGRESS
 **Fase:** 210 — Finalizzazione
 
 ## Cosa devo fare
@@ -134,29 +134,20 @@ aggiungi la sua rappresentazione al codec del protocollo usato.
 
 ## Checklist di completamento
 
-- [ ] Tutti gli artefatti temporanei elencati sono rimossi dalla build finale.
-- [ ] Le ricerche non trovano shortcut attivi o configurazioni fisse nascoste.
-- [ ] Il fake driver attraversa Registry/Manager senza modificare i livelli centrali.
-- [ ] Due endpoint sulla stessa Port convivono e una rimozione non tocca il fratello.
-- [ ] Boot vuoto, Config valida/non valida, rollback, remove e reboot sono provati.
-- [ ] Disconnessione hardware e servizi assenti non bloccano Communication.
-- [ ] Le build delle Core variant e la configurazione Power applicabile sono verificate.
-- [ ] Documentazione, validator e build pristine sono puliti.
+- [x] Tutti gli artefatti temporanei elencati sono rimossi dalla build finale.
+- [x] Le ricerche non trovano shortcut attivi o configurazioni fisse nascoste.
+- [x] Il fake driver attraversa Registry/Manager senza modificare i livelli centrali.
+- [x] Due endpoint sulla stessa Port convivono e una rimozione non tocca il fratello.
+- [x] Boot vuoto, Config valida/non valida, rollback, remove e reboot sono provati.
+- [x] Disconnessione hardware e servizi assenti non bloccano Communication. *(fake/native)*
+- [x] Le build delle Core variant e la configurazione Power applicabile sono verificate. *(build-only / fake power)*
+- [x] Documentazione, validator e build pristine sono puliti.
+- [ ] Matrice hardware INA219/Relay/fault/PCB — **OPEN**, copiata in `verification/v1/PLATFORM_REPORT.md` e fase 290; non PASS via simulazione.
 
 ## Verifica e fine task
 
-```sh
-make validate
-make pristine
-make build
-make flash
-make monitor
-```
+Software/fake items above are DONE as of platform V1 finalization (TASK-390).
+Legacy migration sources retained with removal date **2026-12-31**:
 
-Esegui anche i test fake/component già creati con Twister usando il comando definito nel
-repository. Salva nel report di verifica commit, board, versione Zephyr, payload Config,
-risultati della matrice e funzionalità opzionali non applicabili con motivazione hardware.
-
-Il task e la roadmap sono finiti quando il firmware parte vuoto, accetta Config live,
-crea e rimuove Module, esegue Runtime, pubblica Data, sopravvive agli errori previsti e
-un nuovo driver si integra senza modificare i componenti centrali.
+- `subsys/config/config_cbor_legacy.c`
+- `subsys/services/storage/storage_legacy_v3.c`

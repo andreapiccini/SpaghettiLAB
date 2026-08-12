@@ -7,6 +7,6 @@ value round-trips. Languages that must consume them:
 |---|---|
 | TypeScript | `tools/sdk/typescript/test/vectors.test.ts` |
 | Python | `tools/tests/test_protocol_vectors.py` |
-| C | Planned in phase 380 (`spaghetti` CLI / host codec tests). Firmware already pins the GET_STATUS request bytes in `tests/protocol/src/main.c` (`test_envelope_golden_vectors`); that vector is asserted identical here by the Python suite. |
+| C | `tests/protocol` (`test_envelope_golden_vectors`) + `tests/fuzz` corpus decode; vectors remain the shared source of truth |
 
 Do not fork per-language copies of these files.

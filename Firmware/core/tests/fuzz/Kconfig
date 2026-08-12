@@ -1,0 +1,33 @@
+mainmenu "Spaghetti Protocol V1 fuzz tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_PROTOCOL_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_CONFIG_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_DECLARATIVE_DEVICE_MAX_INSTANCES
+	int
+	default 1
+
+config SPAGHETTI_INA219_MAX_INSTANCES
+	int
+	default 1
+
+config SPAGHETTI_INA219_LOG_LEVEL
+	int
+	default 0
+
+config ZCBOR
+	bool
+	default y
+
+source "Kconfig.zephyr"
