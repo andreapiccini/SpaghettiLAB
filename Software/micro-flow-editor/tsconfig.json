@@ -6,6 +6,7 @@
     { "path": "packages/project-store" },
     { "path": "packages/core-session" },
     { "path": "packages/catalog-model" },
+    { "path": "packages/editor-model" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

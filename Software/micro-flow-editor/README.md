@@ -56,6 +56,9 @@ packages/
   catalog-model/         Catalog/topology normalization — immutable, order-
                          independent indices for Module Drivers, Profiles,
                          Capability Packs and Flow/Bay/Port/rail (S041).
+  editor-model/          EditorModel, form model and compatibility engine —
+                         node types, typed form fields, handle/edge
+                         compatibility checks, unknown-type placeholders (S042).
   project-store/         ProjectV1 persistence: repository + transactional
                          autosave/history/concurrency (S014, S122).
   react-flow-adapter/     placeholder — Domain <-> React Flow bridge (S043)
