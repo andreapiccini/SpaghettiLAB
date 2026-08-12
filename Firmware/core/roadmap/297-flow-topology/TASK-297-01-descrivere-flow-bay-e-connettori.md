@@ -114,12 +114,12 @@ descrittori; React Flow li userà per creare corsie e Bay, senza hardcode per ES
 
 ## Checklist di completamento
 
-- [ ] Flow, Bay, direzione e terminazione Port hanno API bounded.
-- [ ] Ogni Flow dichiara esattamente cinque segnali.
-- [ ] Devicetree contiene topologia ma non decisioni runtime o GPIO duplicati.
-- [ ] Port resta condivisibile da più Module.
-- [ ] Board attuale non dichiara Bay inesistenti.
-- [ ] Fake con più Flow supera lookup e validazione negativa.
+- [x] Flow, Bay, direzione e terminazione Port hanno API bounded.
+- [x] Ogni Flow dichiara esattamente cinque segnali.
+- [x] Devicetree contiene topologia ma non decisioni runtime o GPIO duplicati.
+- [x] Port resta condivisibile da più Module.
+- [x] Board attuale non dichiara Bay inesistenti.
+- [x] Fake con più Flow supera lookup e validazione negativa.
 
 ## Verifica e fine task
 
