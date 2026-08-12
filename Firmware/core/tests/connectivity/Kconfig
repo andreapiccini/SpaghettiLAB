@@ -1,0 +1,5 @@
+mainmenu "Spaghetti Connectivity Manager tests"
+
+rsource "../../subsys/connectivity/Kconfig"
+
+source "Kconfig.zephyr"

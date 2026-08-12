@@ -9,6 +9,7 @@ Core is the firmware startup coordinator. It initializes required components in 
 - Overall boot state and immutable firmware/Core information.
 - Operational mode selection and the independent MCUboot image state.
 - Initialization and start ordering.
+- Build-default initialization of the Connectivity Manager policy owner.
 - Propagation of mandatory dependency failures.
 
 ## What this component does not own
@@ -21,7 +22,10 @@ Core is the firmware startup coordinator. It initializes required components in 
 | File | Role |
 |---|---|
 | `include/spaghetti/core.h` | Public Core state, info, and function declarations. |
+| `include/spaghetti/capabilities.h` | Immutable resource profile and compiled capability contract. |
 | `subsys/core/core.c` | Private state and startup sequence. |
+| `subsys/core/capabilities.c` | Builds and validates the caller-copied capability snapshot. |
+| `subsys/connectivity/` | Owns connectivity policy and bounded temporary leases. |
 | `subsys/core/core_boot_backend.c` | Board-independent reboot backend boundary. |
 | `subsys/services/maintenance_link/` | Shared-pin probe, pinctrl transition, and restricted SMP UART adapter. |
 | `src/main.c` | Calls Core and handles its final boot result. |
@@ -36,6 +40,7 @@ Core is the firmware startup coordinator. It initializes required components in 
 | `spaghetti_core_info` | Core | Bounded caller-copied state, mode, slot, confirmation and signed version. |
 | Startup Config copy | Core | Valid persisted candidate retained between init and start. |
 | Initialization flags | Core | Private state preventing invalid repeated transitions. |
+| `spaghetti_capabilities` snapshot | Build configuration, copied by Core | Selected resource profile, bounded limits, Core variant, and features with real compiled backends. |
 
 ## API contract
 
@@ -76,6 +81,31 @@ absent is logged while the empty state and Communication remain available.
 **Execution context:** Zephyr main thread.
 
 **Calls:** Only selected components that have a distinct start operation.
+
+### `int spaghetti_capabilities_get(struct spaghetti_capabilities *out)`
+
+**Purpose:** Copy the immutable resource and capability contract of this firmware
+image into caller-owned storage.
+
+**Parameters**
+
+| Parameter | Meaning |
+|---|---|
+| `out` | Caller-owned destination, written only on success. |
+
+**Returns:** `0` on success or `-EINVAL` when `out` is null.
+
+**Execution context:** Any calling thread; the source snapshot is immutable.
+
+### `bool spaghetti_capabilities_support(uint32_t required)`
+
+**Purpose:** Check that every bit in `required` has a compiled and board-backed
+implementation.
+
+**Returns:** `true` for an empty requirement or when all requested bits are present;
+`false` otherwise.
+
+**Execution context:** Any calling thread; no state is changed.
 
 ### `enum spaghetti_core_state spaghetti_core_get_state(void)`
 
@@ -157,6 +187,8 @@ If Port initialization returns `-ENODEV`, Core stops the sequence, enters FAILED
 - `main()` already runs in a Zephyr thread.
 - Use one Zephyr logging module for structured boot diagnostics.
 - Kconfig controls which optional components are compiled; Core coordinates only those present.
+- `Kconfig.resources` selects one immutable Minimal, Standard, or Extended budget.
+- Devicetree describes hardware, while the resource profile describes bounded software capacity.
 
 ## Configuration templates
 

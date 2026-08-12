@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Discovery tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_MAX_MODULES
 	int
 	default 3

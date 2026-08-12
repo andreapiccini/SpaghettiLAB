@@ -1,7 +1,7 @@
 # S050 — Composizione fisica e configurazione Module
 
 **Stato:** ⬜ TODO
-**Dipende da:** S040
+**Dipende da:** S043
 
 ## Obiettivo
 

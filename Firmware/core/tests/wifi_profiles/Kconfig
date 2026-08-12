@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Wi-Fi Profiles tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_WIFI_PROFILES_LOG_LEVEL
 	int
 	default 0

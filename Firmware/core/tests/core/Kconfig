@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Core tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_CORE_LOG_LEVEL
 	int
 	default 0

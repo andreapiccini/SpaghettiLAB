@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Runtime tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_RUNTIME_LOG_LEVEL
 	int
 	default 0

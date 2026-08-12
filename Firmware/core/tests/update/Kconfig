@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Update tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_UPDATE_LOG_LEVEL
 	int
 	default 0

@@ -21,6 +21,9 @@ This directory contains contracts shared between firmware components. Headers ex
 | File | Role |
 |---|---|
 | `core.h` | Boot and Core state contract. |
+| `capabilities.h` | Immutable build profile, bounded limits, and board-backed capability snapshot. |
+| `resource_contract.h` | Pure compile-time consistency predicates shared by firmware and negative build tests. |
+| `connectivity.h` | Persistent connectivity policy and temporary service leases. |
 | `port.h` | Physical Port access contract. |
 | `module.h` | Runtime module instance and identifiers. |
 | `module_driver.h` | Immutable driver descriptor and operation table. |
@@ -69,6 +72,22 @@ flowchart TB
 Config uses a stable Module key and Manager maps it to that ID. Neither component
 assumes that a Port identifies one Module; a bounded Port query may return several
 snapshots.
+
+The resource snapshot is copied into caller-owned storage and can be used before
+accepting an operation that needs an optional service:
+
+```c
+struct spaghetti_capabilities caps;
+
+if (spaghetti_capabilities_get(&caps) == 0 &&
+    spaghetti_capabilities_support(SPAGHETTI_BUILD_CAP_MQTT)) {
+	/* MQTT is present in this exact firmware image. */
+}
+```
+
+`resource_profile`, `core_variant`, and `build_capabilities` together form the
+compatibility input for future update metadata. They describe the compiled image;
+they are never inferred from momentary free heap.
 
 ## Zephyr integration
 

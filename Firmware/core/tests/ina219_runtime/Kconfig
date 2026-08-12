@@ -1,5 +1,7 @@
 mainmenu "Spaghetti INA219 runtime tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_MAX_MODULES
 	int
 	default 6

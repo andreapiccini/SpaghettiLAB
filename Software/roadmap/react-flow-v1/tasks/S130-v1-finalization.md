@@ -1,7 +1,9 @@
 # S130 — Chiusura React Flow V1 end-to-end
 
 **Stato:** ⬜ TODO
-**Dipende da:** S010–S120
+**Dipende da:** S011, S012, S013, S014, S021, S022, S023, S024, S030, S041, S042, S043,
+S050, S061, S062, S063, S071, S072, S073, S080, S091, S092, S093, S094, S101, S102,
+S103, S111, S112, S113, S121, S122, S123, S124
 
 ## Obiettivo
 
@@ -57,7 +59,7 @@ work” può riguardare i criteri V1 dell'architettura.
 
 ## Fine task
 
-- [ ] Tutte le checklist S010–S120 sono complete.
+- [ ] Tutte le checklist S011–S124, S030, S050 e S080 sono complete.
 - [ ] I venti passi obbligatori passano e hanno evidenza riproducibile.
 - [ ] Nuovi tipi catalogati non richiedono patch UI centrali.
 - [ ] Nessuna funzione dell'architettura è lasciata da implementare.

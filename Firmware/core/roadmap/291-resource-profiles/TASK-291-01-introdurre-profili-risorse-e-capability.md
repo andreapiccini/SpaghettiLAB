@@ -1,6 +1,6 @@
 # TASK-291-01 — Introdurre profili di risorse e capability
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 291 — Profili di risorse e capability
 
 ## Cosa devo fare
@@ -119,16 +119,16 @@ if (spaghetti_capabilities_get(&caps) == 0 &&
 
 ## Checklist di completamento
 
-- [ ] Ogni board seleziona esattamente un profilo.
-- [ ] Capability e limiti derivano dalla build, non dalla RAM libera.
-- [ ] Config, Manager, codec, queue, slab e cataloghi usano le stesse macro del profilo.
-- [ ] Minimal non compila la console remota di produzione.
-- [ ] Update può confrontare variante, profilo e capability richieste.
-- [ ] Consumer, principal, richieste in volo e sessioni sicure sono bounded.
-- [ ] Flow, Bay e rail hanno limiti unici condivisi da firmware e protocollo.
-- [ ] Device Profile, acquisition plan, Block, edge e context hanno limiti unici.
-- [ ] Pin mux e controllo/misura power compaiono solo se la board ha backend reali.
-- [ ] Build assert, test negativo e baseline coprono ogni variante disponibile.
+- [x] Ogni board seleziona esattamente un profilo.
+- [x] Capability e limiti derivano dalla build, non dalla RAM libera.
+- [x] Config, Manager, codec, queue, slab e cataloghi usano le stesse macro del profilo.
+- [x] Minimal non compila la console remota di produzione.
+- [x] Update può confrontare variante, profilo e capability richieste.
+- [x] Consumer, principal, richieste in volo e sessioni sicure sono bounded.
+- [x] Flow, Bay e rail hanno limiti unici condivisi da firmware e protocollo.
+- [x] Device Profile, acquisition plan, Block, edge e context hanno limiti unici.
+- [x] Pin mux e controllo/misura power compaiono solo se la board ha backend reali.
+- [x] Build assert, test negativo e baseline coprono ogni variante disponibile.
 
 ## Verifica e fine task
 

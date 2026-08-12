@@ -1,7 +1,7 @@
 # S030 — Sessioni Core e sincronizzazione
 
 **Stato:** ⬜ TODO
-**Dipende da:** S020
+**Dipende da:** S024
 
 ## Obiettivo
 

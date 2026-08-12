@@ -9,7 +9,9 @@
 #include <zephyr/sys/atomic.h>
 
 #include <spaghetti/communication.h>
+#include <spaghetti/capabilities.h>
 #include <spaghetti/config.h>
+#include <spaghetti/connectivity.h>
 #include <spaghetti/data.h>
 #include <spaghetti/discovery.h>
 #include <spaghetti/driver_registry.h>
@@ -47,6 +49,14 @@ K_MUTEX_DEFINE(core_lock);
 
 BUILD_ASSERT(sizeof(CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION) <=
 	     SPAGHETTI_CORE_VERSION_SIZE);
+
+#if defined(CONFIG_SPAGHETTI_CONNECTIVITY_BOOT_LOW_ENERGY)
+#define SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE \
+	SPAGHETTI_CONNECTIVITY_LOW_ENERGY
+#else
+#define SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE \
+	SPAGHETTI_CONNECTIVITY_ONLINE
+#endif
 
 static int fail_initialization(const char *component, int err)
 {
@@ -184,6 +194,7 @@ static const char *core_mode_name(enum spaghetti_core_mode mode)
 
 int spaghetti_core_init(void)
 {
+	struct spaghetti_capabilities capabilities;
 	const struct spaghetti_mqtt_config mqtt_disabled = {0};
 	struct spaghetti_update_status update_status;
 	int err = k_mutex_lock(&core_lock, K_FOREVER);
@@ -197,6 +208,21 @@ int spaghetti_core_init(void)
 	}
 	atomic_set(&core_state, SPAGHETTI_CORE_INITIALIZING);
 	core_info_available = false;
+	err = spaghetti_capabilities_get(&capabilities);
+	if (err < 0) {
+		goto capabilities_failed;
+	}
+	LOG_INF("resources: profile=%u variant=%s modules=%u payload=%u caps=0x%x",
+		(uint32_t)capabilities.resource_profile,
+		capabilities.core_variant,
+		(uint32_t)capabilities.max_modules,
+		(uint32_t)capabilities.max_protocol_payload,
+		capabilities.build_capabilities);
+	err = spaghetti_connectivity_init(
+		SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE);
+	if (err < 0) {
+		goto connectivity_failed;
+	}
 
 	err = spaghetti_storage_init();
 	if (err < 0) {
@@ -365,6 +391,12 @@ power_failed:
 #endif
 port_failed:
 	(void)fail_initialization("Port", err);
+	goto unlock;
+connectivity_failed:
+	(void)fail_initialization("Connectivity", err);
+	goto unlock;
+capabilities_failed:
+	(void)fail_initialization("Capabilities", err);
 
 unlock:
 	k_mutex_unlock(&core_lock);

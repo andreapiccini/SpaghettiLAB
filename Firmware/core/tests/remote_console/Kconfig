@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Remote Console tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_REMOTE_CONSOLE_LOG_LEVEL
 	int
 	default 0

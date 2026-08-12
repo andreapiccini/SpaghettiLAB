@@ -275,7 +275,9 @@ ZTEST(module_manager, test_shared_port_lifecycle)
 	spaghetti_module_id_t id_11;
 	spaghetti_module_id_t id_12;
 	spaghetti_module_id_t id_13;
+	spaghetti_module_id_t filler_ids[CONFIG_SPAGHETTI_MAX_MODULES];
 	spaghetti_module_id_t ignored_id = UINT8_MAX;
+	size_t filler_count = 0U;
 	size_t module_count;
 	int err;
 
@@ -309,7 +311,15 @@ ZTEST(module_manager, test_shared_port_lifecycle)
 	zassert_equal(spaghetti_module_manager_get_by_key(13U, &snapshot), -ENOENT);
 
 	zassert_ok(configure_fake(13U, 0x42U, 0, &id_13));
-	zassert_equal(configure_fake(14U, 0x43U, 0, &ignored_id), -ENOSPC);
+	for (size_t slot_idx = 4U; slot_idx < CONFIG_SPAGHETTI_MAX_MODULES; slot_idx++) {
+		zassert_ok(configure_fake((uint16_t)(10U + slot_idx),
+			(uint8_t)(0x50U + slot_idx), 0, &filler_ids[filler_count]));
+		filler_count++;
+	}
+	zassert_equal(configure_fake(100U, 0x70U, 0, &ignored_id), -ENOSPC);
+	for (size_t filler_idx = 0U; filler_idx < filler_count; filler_idx++) {
+		zassert_ok(spaghetti_module_manager_remove(filler_ids[filler_idx], 1U));
+	}
 
 	zassert_ok(spaghetti_module_manager_read(id_10, &sample));
 	zassert_equal(sample.bus_voltage_microvolts, 0x40 * 1000);

@@ -1,5 +1,7 @@
 mainmenu "Spaghetti OTA tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_OTA_LOG_LEVEL
 	int
 	default 0

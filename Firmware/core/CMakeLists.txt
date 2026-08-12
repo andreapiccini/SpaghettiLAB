@@ -7,6 +7,8 @@ project(esp32c3_app)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+add_subdirectory(subsys/connectivity)
+
 add_custom_target(spaghetti_validator
   COMMAND
     ${Python3_EXECUTABLE}
@@ -30,6 +32,7 @@ target_sources(app PRIVATE
   src/main.c
   spaghetti_modules/ina219/ina219.c
   spaghetti_modules/relay/relay.c
+  subsys/core/capabilities.c
   subsys/core/core.c
   subsys/core/core_boot_backend.c
   subsys/port/port.c
@@ -51,11 +54,20 @@ target_sources(app PRIVATE
   subsys/communication/communication.c
   subsys/communication/communication_shell.c
   subsys/communication/remote_console.c
-  subsys/communication/remote_console_tls.c
   subsys/services/mqtt/mqtt.c
   subsys/services/wifi_profiles/wifi_profiles.c
   subsys/services/wifi_profiles/wifi_profiles_storage.c
 )
+
+if(CONFIG_SPAGHETTI_REMOTE_CONSOLE)
+  target_sources(app PRIVATE
+    subsys/communication/remote_console_tls.c
+  )
+else()
+  target_sources(app PRIVATE
+    subsys/communication/remote_console_disabled.c
+  )
+endif()
 
 target_sources_ifdef(CONFIG_SPAGHETTI_POWER app PRIVATE
   subsys/power/power.c

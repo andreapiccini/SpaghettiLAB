@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Driver Registry tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_DRIVER_REGISTRY_LOG_LEVEL
 	int
 	default 0

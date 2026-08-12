@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Communication tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_MAX_MODULES
 	int
 	default 8

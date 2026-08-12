@@ -1,8 +1,6 @@
 mainmenu "Spaghetti Module Manager tests"
 
-config SPAGHETTI_MAX_MODULES
-	int
-	default 4
+rsource "../../Kconfig.resources"
 
 config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
 	int

@@ -78,13 +78,8 @@ module = SPAGHETTI_RELAY
 module-str = spaghetti_relay
 source "subsys/logging/Kconfig.template.log_config"
 
-config SPAGHETTI_MAX_MODULES
-	int "Maximum number of simultaneous runtime Modules"
-	range 1 255
-	default 8
-	help
-	  Fixed capacity of the Module Manager slot pool. Multiple slots may
-	  reference the same physical Port when their endpoints differ.
+rsource "Kconfig.resources"
+rsource "subsys/connectivity/Kconfig"
 
 config SPAGHETTI_DISCOVERY_MAX_RESULTS
 	int "Maximum number of accepted Discovery results"

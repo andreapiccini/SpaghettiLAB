@@ -14,7 +14,7 @@
 #include <spaghetti/core.h>
 
 /** Maximum request or response payload bytes retained in one envelope. */
-#define SPAGHETTI_COMM_PAYLOAD_MAX 256U
+#define SPAGHETTI_COMM_PAYLOAD_MAX CONFIG_SPAGHETTI_MAX_PROTOCOL_PAYLOAD
 
 /** Maximum type ID bytes returned by the compact status representation. */
 #define SPAGHETTI_COMM_STATUS_TYPE_ID_SIZE 16U

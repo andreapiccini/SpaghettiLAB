@@ -1,6 +1,6 @@
 # TASK-292-01 — Implementare il Connectivity Manager
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 292 — Connectivity Manager
 
 ## Cosa devo fare
@@ -78,11 +78,11 @@ int rc = spaghetti_connectivity_acquire_lease(&lease);
 
 ## Checklist di completamento
 
-- [ ] LOW_ENERGY e ONLINE hanno transizioni deterministiche.
-- [ ] Lease ha limite, deadline assoluta e rollback.
-- [ ] Wi-Fi non abilita implicitamente OTA o console.
-- [ ] Capability assente restituisce `-ENOTSUP`.
-- [ ] Backend fake prova errori, timeout, release e reboot logico.
+- [x] LOW_ENERGY e ONLINE hanno transizioni deterministiche.
+- [x] Lease ha limite, deadline assoluta e rollback.
+- [x] Wi-Fi non abilita implicitamente OTA o console.
+- [x] Capability assente restituisce `-ENOTSUP`.
+- [x] Backend fake prova errori, timeout, release e reboot logico.
 
 ## Verifica e fine task
 

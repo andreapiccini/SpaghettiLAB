@@ -19,7 +19,7 @@
 #define SPAGHETTI_CONFIG_VERSION 3U
 
 /** Maximum number of desired Modules in one Config snapshot. */
-#define SPAGHETTI_CONFIG_MAX_MODULES 8U
+#define SPAGHETTI_CONFIG_MAX_MODULES CONFIG_SPAGHETTI_MAX_MODULES
 
 /** Maximum Module type ID bytes, including the terminating NUL. */
 #define SPAGHETTI_CONFIG_TYPE_ID_SIZE 24U

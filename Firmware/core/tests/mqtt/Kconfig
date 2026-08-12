@@ -1,5 +1,7 @@
 mainmenu "Spaghetti MQTT tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_DATA_LOGGER
 	bool
 	default n

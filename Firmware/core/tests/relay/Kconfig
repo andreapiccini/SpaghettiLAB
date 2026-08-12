@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Relay tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_RELAY_LOG_LEVEL
 	int
 	default 0

@@ -1,3 +1,5 @@
 mainmenu "Spaghetti Config codec tests"
 
+rsource "../../Kconfig.resources"
+
 source "Kconfig.zephyr"

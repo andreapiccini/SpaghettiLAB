@@ -1,0 +1,223 @@
+choice SPAGHETTI_RESOURCE_PROFILE
+	prompt "Spaghetti LAB resource profile"
+	default SPAGHETTI_RESOURCE_PROFILE_MINIMAL if BOARD_SPAGHETTILAB_CORE_V1
+	default SPAGHETTI_RESOURCE_PROFILE_MINIMAL if BOARD_SPAGHETTILAB_CORE_V2_BUILD_ONLY
+	default SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	help
+	  Select one build-time resource budget. Runtime free memory never changes
+	  this choice or the fixed capacities derived from it.
+
+config SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	bool "Minimal"
+	help
+	  ESP32-C3-class profile with one heavy secure session and no production
+	  remote console.
+
+config SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	bool "Standard"
+	help
+	  Mid-range profile with larger bounded pools and optional remote console.
+
+config SPAGHETTI_RESOURCE_PROFILE_EXTENDED
+	bool "Extended"
+	help
+	  Profile for a Core with verified additional RAM and larger bounded pools.
+
+endchoice
+
+config SPAGHETTI_CORE_VARIANT
+	string
+	default "core-v1-esp32c3" if BOARD_SPAGHETTILAB_CORE_V1
+	default "core-v2-build-only" if BOARD_SPAGHETTILAB_CORE_V2_BUILD_ONLY
+	default "native-sim"
+	help
+	  Stable Core variant identifier published by the firmware artifact.
+
+config SPAGHETTI_HAS_EXTERNAL_RAM
+	bool
+	default n
+	help
+	  Board-owned declaration that usable external RAM is physically present.
+
+config SPAGHETTI_RUNTIME_PORT_MUX
+	bool
+	default n
+	help
+	  Board-owned declaration that Port signals have a real runtime pinmux
+	  backend. Dynamic pinctrl support alone is not sufficient.
+
+config SPAGHETTI_POWER_MEASUREMENT
+	bool
+	depends on SPAGHETTI_POWER
+	default n
+	help
+	  Board-owned declaration that shared power resources can be measured.
+
+config SPAGHETTI_REMOTE_CONSOLE
+	bool "Compile the authenticated production remote console"
+	default n if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default y
+	help
+	  Compile the TLS remote-console backend. Minimal images retain local Shell
+	  and maintenance APIs but use a small unsupported backend instead.
+
+config SPAGHETTI_MAX_MODULES
+	int "Maximum number of simultaneous runtime Modules"
+	range 1 255
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32
+
+config SPAGHETTI_MAX_SCHEDULES
+	int
+	range 1 255
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32
+
+config SPAGHETTI_MAX_RULES
+	int
+	range 1 255
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 16
+
+config SPAGHETTI_MAX_DEVICE_PROFILES
+	int
+	range 1 255
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32
+
+config SPAGHETTI_MAX_DEVICE_PROFILE_BYTES
+	int
+	range 128 4096
+	default 512 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 1024 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 2048
+
+config SPAGHETTI_MAX_PROFILE_OPERATIONS
+	int
+	range 1 255
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 32 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 64
+
+config SPAGHETTI_MAX_ACQUISITION_OPERATIONS
+	int
+	range 1 255
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 32 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 64
+
+config SPAGHETTI_MAX_PROCESSING_BLOCKS
+	int
+	range 1 255
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 32 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 64
+
+config SPAGHETTI_MAX_PROCESSING_EDGES
+	int
+	range 1 255
+	default 24 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 64 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 128
+
+config SPAGHETTI_MAX_PROCESSING_CONTEXTS
+	int
+	range 1 255
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32
+
+config SPAGHETTI_MAX_PROPERTIES_PER_SET
+	int
+	range 1 64
+	default 12 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 24
+
+config SPAGHETTI_MAX_PROTOCOL_PAYLOAD
+	int
+	range 128 2048
+	default 512 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 1024 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 2048
+
+config SPAGHETTI_MAX_RECORD_QUEUE
+	int
+	range 2 255
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32
+
+config SPAGHETTI_MAX_RECORD_CONSUMERS
+	int
+	range 1 16
+	default 3 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 6
+
+config SPAGHETTI_MAX_BLE_PEERS
+	int
+	range 1 8
+	default 1 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 2 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 4
+
+config SPAGHETTI_MAX_PRINCIPALS
+	int
+	range 1 32
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 16
+
+config SPAGHETTI_MAX_INFLIGHT_REQUESTS
+	int
+	range 1 32
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 16
+
+config SPAGHETTI_MAX_SECURE_SESSIONS
+	int
+	range 1 4
+	default 1 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 2 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 4
+
+config SPAGHETTI_SECURE_WORKSPACE_SIZE
+	int
+	range 16384 131072
+	default 32768 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 49152 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 65536
+
+config SPAGHETTI_MAX_FLOWS
+	int
+	range 1 32
+	default 2 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 8
+
+config SPAGHETTI_MAX_FUNCTION_BAYS_PER_FLOW
+	int
+	range 1 32
+	default 3 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 5 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 8
+
+config SPAGHETTI_MAX_POWER_RAILS
+	int
+	range 1 32
+	default 3 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 8
+
+config SPAGHETTI_PROTOCOL_REPLAY_WINDOW_MS
+	int
+	range 1000 600000
+	default 30000 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 60000 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 120000

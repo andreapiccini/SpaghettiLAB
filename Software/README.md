@@ -17,3 +17,13 @@ La specifica non impone design grafico. Congela funzioni, modelli, protocolli, f
 errori, sicurezza e criteri di verifica necessari a ottenere la prima versione
 completa; la UI viene derivata da tali necessità.
 
+## Architettura UI/UX
+
+- [Architettura UI/UX](UX_ARCHITECTURE.md) — shell applicativa, elenco schermate,
+  design token e convenzioni condivise.
+- [`ux/screens/`](ux/screens/) — una cartella per schermata, ciascuna divisa in
+  `visual.md` (aspetto), `ui-behavior.md` (comportamento d'interfaccia prima del
+  backend) e `backend-behavior.md` (quale comando/operazione SDK parte davvero). La
+  separazione permette di modificare una feature senza toccare le altre, e un layer
+  senza rischiare gli altri due.
+

@@ -1,7 +1,7 @@
 # S080 — Deploy Config transazionale
 
 **Stato:** ⬜ TODO
-**Dipende da:** S070
+**Dipende da:** S073
 
 ## Obiettivo
 

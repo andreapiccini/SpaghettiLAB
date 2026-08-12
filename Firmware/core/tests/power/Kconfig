@@ -1,5 +1,7 @@
 mainmenu "Spaghetti Power tests"
 
+rsource "../../Kconfig.resources"
+
 config SPAGHETTI_POWER
 	bool
 	default y

@@ -13,7 +13,7 @@
 #include <spaghetti/config.h>
 
 /** Maximum accepted encoded Config payload size in bytes. */
-#define SPAGHETTI_CONFIG_CBOR_MAX_SIZE 256U
+#define SPAGHETTI_CONFIG_CBOR_MAX_SIZE CONFIG_SPAGHETTI_MAX_PROTOCOL_PAYLOAD
 
 /**
  * @brief Decode and validate one complete Config V0 CBOR payload.

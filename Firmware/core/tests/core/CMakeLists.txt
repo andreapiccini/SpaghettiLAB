@@ -5,6 +5,7 @@ project(spaghetti_core_test)
 
 target_sources(app PRIVATE
   src/main.c
+  ../../subsys/core/capabilities.c
   ../../subsys/core/core.c
 )
 
