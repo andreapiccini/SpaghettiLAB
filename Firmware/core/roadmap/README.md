@@ -125,7 +125,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [320 — Module Driver V2](320-module-driver-v2/README.md) | Un driver porta schema e operazioni e si registra senza tabelle centrali. |
 | ✅ | [325 — Profili dispositivo](325-declarative-device-profiles/README.md) | Registri e transazioni diventano profili dichiarativi installabili senza ricompilare un driver per sensore. |
 | ✅ | [330 — Config e wire V2](330-config-wire-v2/README.md) | Config e Storage usano CBOR canonico generico e versionato. |
-| ⬜ | [340 — Data, Runtime e regole V2](340-data-runtime-rules-v2/README.md) | Record, schedule e rule plug-in non dipendono da INA219 o Relay. |
+| ✅ | [340 — Data, Runtime e regole V2](340-data-runtime-rules-v2/README.md) | Record, schedule e rule plug-in non dipendono da INA219 o Relay. |
 | ⬜ | [342 — Blocchi elaborazione](342-processing-blocks/README.md) | Pipeline bounded collegano blocchi firmware catalogati usando soltanto Config. |
 | ⬜ | [345 — Consegna record](345-record-delivery/README.md) | Ogni adapter ha un cursore indipendente e perdite/reboot restano espliciti. |
 | ⬜ | [348 — Capability Pack e risorse](348-feature-packs-resources/README.md) | Immagini componibili dichiarano feature installate e misurano flash, RAM, pool e stack. |

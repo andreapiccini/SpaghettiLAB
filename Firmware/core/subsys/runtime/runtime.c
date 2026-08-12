@@ -1,23 +1,22 @@
 #include <spaghetti/runtime.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/zbus/zbus.h>
+#include <zephyr/sys/util.h>
 
 #include <spaghetti/data.h>
 #include <spaghetti/health.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/core.h>
+#include <spaghetti/rule_driver.h>
+#include <spaghetti/rule_registry.h>
 #include <spaghetti/schema.h>
-#include <spaghetti/timer.h>
-
-#include <ina219.h>
-#include <relay.h>
 
 LOG_MODULE_REGISTER(spaghetti_runtime, CONFIG_SPAGHETTI_RUNTIME_LOG_LEVEL);
 
@@ -41,9 +40,6 @@ static void runtime_health_keepalive_handler(struct k_work *work)
 		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
 }
 
-ZBUS_CHAN_DECLARE(spaghetti_electrical_chan);
-ZBUS_OBS_DECLARE(electrical_runtime_subscriber);
-
 enum spaghetti_runtime_state {
 	SPAGHETTI_RUNTIME_UNINITIALIZED,
 	SPAGHETTI_RUNTIME_STOPPED,
@@ -51,68 +47,46 @@ enum spaghetti_runtime_state {
 	SPAGHETTI_RUNTIME_STOPPING,
 };
 
+struct spaghetti_runtime_job {
+	bool enabled;
+	spaghetti_module_key_t source_key;
+	spaghetti_module_id_t source_id;
+	uint32_t period_ms;
+	int64_t next_deadline_ms;
+	uint32_t sequence;
+	bool events_armed;
+};
+
+struct spaghetti_runtime_rule_slot {
+	bool active;
+	spaghetti_module_key_t key;
+	const struct spaghetti_rule_driver *driver;
+	void *context;
+};
+
+struct spaghetti_runtime_event {
+	spaghetti_module_id_t source_id;
+	spaghetti_module_key_t source_key;
+	struct spaghetti_record_payload payload;
+};
+
 static enum spaghetti_runtime_state runtime_state =
 	SPAGHETTI_RUNTIME_UNINITIALIZED;
-static struct spaghetti_runtime_sampling_task sampling_task;
-static struct spaghetti_runtime_threshold_rule threshold_rule;
-static spaghetti_module_key_t sampling_source_key;
-static spaghetti_module_key_t threshold_source_key;
-static bool has_sampling_task;
-static bool has_threshold_rule;
-static bool has_relay_state;
-static bool last_relay_on;
+static struct spaghetti_runtime_job jobs[SPAGHETTI_CONFIG_MAX_SCHEDULES];
+static size_t job_count;
+static struct spaghetti_runtime_rule_slot rule_slots[SPAGHETTI_CONFIG_MAX_RULES];
+static size_t rule_count;
+static uint64_t runtime_boot_id;
 static uint8_t active_operations;
+static uint32_t action_errors;
 K_MUTEX_DEFINE(runtime_lock);
-K_SEM_DEFINE(runtime_tick_sem, 0, 1);
+K_SEM_DEFINE(runtime_wake_sem, 0, 1);
 K_SEM_DEFINE(runtime_stopped_sem, 0, 1);
-K_SEM_DEFINE(runtime_initialized_sem, 0, 1);
 
-/* Removed by TASK-340-01 */
-static int legacy_publish_ina219_record(const struct spaghetti_record *record)
-{
-	const struct spaghetti_value *bus;
-	const struct spaghetti_value *current;
-	const struct spaghetti_value *power;
-	struct spaghetti_electrical_message message;
-
-	if (record == NULL) {
-		return -EINVAL;
-	}
-	if (strcmp(record->payload.schema_id, "spaghetti.ina219.sample") != 0) {
-		return -EPROTONOSUPPORT;
-	}
-
-	bus = spaghetti_property_find(&record->payload.values,
-				      SPAGHETTI_INA219_FIELD_BUS_VOLTAGE_MICROVOLTS);
-	current = spaghetti_property_find(&record->payload.values,
-					  SPAGHETTI_INA219_FIELD_CURRENT_MICROAMPS);
-	power = spaghetti_property_find(&record->payload.values,
-					SPAGHETTI_INA219_FIELD_POWER_MICROWATTS);
-	if ((bus == NULL) || (bus->type != SPAGHETTI_VALUE_INT64) ||
-	    (current == NULL) || (current->type != SPAGHETTI_VALUE_INT64) ||
-	    (power == NULL) || (power->type != SPAGHETTI_VALUE_UINT64)) {
-		return -EINVAL;
-	}
-	if ((bus->data.signed_integer < INT32_MIN) ||
-	    (bus->data.signed_integer > INT32_MAX) ||
-	    (current->data.signed_integer < INT32_MIN) ||
-	    (current->data.signed_integer > INT32_MAX) ||
-	    (power->data.unsigned_integer > UINT32_MAX)) {
-		return -ERANGE;
-	}
-
-	message = (struct spaghetti_electrical_message){
-		.source_id = record->source_id,
-		.source_key = record->source_key,
-		.bus_voltage_microvolts = (int32_t)bus->data.signed_integer,
-		.current_microamps = (int32_t)current->data.signed_integer,
-		.power_microwatts = (uint32_t)power->data.unsigned_integer,
-		.timestamp_ms = record->timestamp_ms,
-		.sequence = record->sequence,
-	};
-
-	return spaghetti_data_publish_electrical(&message, K_NO_WAIT);
-}
+K_MSGQ_DEFINE(runtime_event_queue,
+	      sizeof(struct spaghetti_runtime_event),
+	      CONFIG_SPAGHETTI_MAX_RECORD_QUEUE,
+	      __alignof__(struct spaghetti_runtime_event));
 
 static void finish_stop_if_quiescent(void)
 {
@@ -133,39 +107,214 @@ static void complete_operation(void)
 	k_mutex_unlock(&runtime_lock);
 }
 
-static void runtime_sampling_thread_entry(void *first, void *second, void *third)
+static void deinit_rules(struct spaghetti_runtime_rule_slot *slots, size_t count)
 {
-	ARG_UNUSED(first);
-	ARG_UNUSED(second);
-	ARG_UNUSED(third);
+	for (size_t idx = count; idx > 0U; --idx) {
+		struct spaghetti_runtime_rule_slot *slot = &slots[idx - 1U];
 
-	while (true) {
-		struct spaghetti_runtime_sampling_task task;
+		if (!slot->active || (slot->driver == NULL) ||
+		    (slot->driver->ops == NULL) ||
+		    (slot->driver->ops->deinit == NULL)) {
+			memset(slot, 0, sizeof(*slot));
+			continue;
+		}
+		(void)slot->driver->ops->deinit(slot->context);
+		memset(slot, 0, sizeof(*slot));
+	}
+}
+
+static int emit_rule_action(const struct spaghetti_rule_action *action,
+			    void *user_data)
+{
+	struct spaghetti_module_snapshot target;
+	int err;
+
+	ARG_UNUSED(user_data);
+
+	if ((action == NULL) || (action->target_key == 0U)) {
+		return -EINVAL;
+	}
+
+	err = spaghetti_module_manager_get_by_key(action->target_key, &target);
+	if ((err < 0) || (target.state != SPAGHETTI_MODULE_READY)) {
+		LOG_WRN("rule target missing: key=%u err=%d", action->target_key,
+			err);
+		++action_errors;
+		return (err < 0) ? err : -ENOENT;
+	}
+
+	err = spaghetti_module_manager_command(target.id, &action->command);
+	if (err < 0) {
+		LOG_WRN("rule action failed: key=%u err=%d", action->target_key,
+			err);
+		++action_errors;
+	}
+
+	return err;
+}
+
+static void dispatch_rules(const struct spaghetti_record *record)
+{
+	struct spaghetti_runtime_rule_slot local_slots[SPAGHETTI_CONFIG_MAX_RULES];
+	size_t local_count;
+
+	(void)k_mutex_lock(&runtime_lock, K_FOREVER);
+	if (runtime_state != SPAGHETTI_RUNTIME_RUNNING) {
+		k_mutex_unlock(&runtime_lock);
+		return;
+	}
+	local_count = rule_count;
+	memcpy(local_slots, rule_slots, sizeof(local_slots));
+	++active_operations;
+	k_mutex_unlock(&runtime_lock);
+
+	for (size_t idx = 0U; idx < local_count; ++idx) {
+		const struct spaghetti_runtime_rule_slot *slot = &local_slots[idx];
+		int err;
+
+		if (!slot->active || (slot->driver == NULL) ||
+		    (slot->driver->ops == NULL) ||
+		    (slot->driver->ops->on_record == NULL)) {
+			continue;
+		}
+
+		err = slot->driver->ops->on_record(slot->context, record,
+						   emit_rule_action, NULL);
+		if (err < 0) {
+			LOG_WRN("rule on_record failed: key=%u err=%d",
+				slot->key, err);
+		}
+	}
+
+	complete_operation();
+}
+
+static int publish_record(struct spaghetti_record *record)
+{
+	int err;
+
+	record->boot_id = runtime_boot_id;
+	err = spaghetti_data_publish(record, K_NO_WAIT);
+	if (err < 0) {
+		LOG_WRN("record publish failed: key=%u err=%d",
+			record->source_key, err);
+		return err;
+	}
+
+	dispatch_rules(record);
+	return 0;
+}
+
+static int runtime_event_emit(const struct spaghetti_record_payload *payload,
+			      void *user_data)
+{
+	struct spaghetti_runtime_event event;
+	const struct spaghetti_runtime_job *job = user_data;
+
+	if ((payload == NULL) || (job == NULL)) {
+		return -EINVAL;
+	}
+
+	memset(&event, 0, sizeof(event));
+	event.source_id = job->source_id;
+	event.source_key = job->source_key;
+	event.payload = *payload;
+
+	if (k_msgq_put(&runtime_event_queue, &event, K_NO_WAIT) < 0) {
+		return -ENOSPC;
+	}
+
+	k_sem_give(&runtime_wake_sem);
+	return 0;
+}
+
+static void process_event(struct spaghetti_runtime_event *event)
+{
+	struct spaghetti_record record;
+	size_t job_idx = SIZE_MAX;
+
+	(void)k_mutex_lock(&runtime_lock, K_FOREVER);
+	if (runtime_state != SPAGHETTI_RUNTIME_RUNNING) {
+		k_mutex_unlock(&runtime_lock);
+		return;
+	}
+
+	for (size_t idx = 0U; idx < job_count; ++idx) {
+		if (jobs[idx].source_key == event->source_key) {
+			job_idx = idx;
+			break;
+		}
+	}
+	if (job_idx == SIZE_MAX) {
+		k_mutex_unlock(&runtime_lock);
+		return;
+	}
+
+	memset(&record, 0, sizeof(record));
+	record.source_id = event->source_id;
+	record.source_key = event->source_key;
+	record.timestamp_ms = k_uptime_get();
+	if (jobs[job_idx].sequence == UINT32_MAX) {
+		jobs[job_idx].sequence = 0U;
+	}
+	++jobs[job_idx].sequence;
+	record.sequence = jobs[job_idx].sequence;
+	record.payload = event->payload;
+	++active_operations;
+	k_mutex_unlock(&runtime_lock);
+
+	(void)publish_record(&record);
+	complete_operation();
+}
+
+static void process_due_jobs(int64_t now_ms)
+{
+	for (size_t idx = 0U; idx < SPAGHETTI_CONFIG_MAX_SCHEDULES; ++idx) {
+		struct spaghetti_runtime_job job;
 		struct spaghetti_record record;
 		int err;
 
-		(void)k_sem_take(&runtime_tick_sem, K_FOREVER);
 		(void)k_mutex_lock(&runtime_lock, K_FOREVER);
 		if ((runtime_state != SPAGHETTI_RUNTIME_RUNNING) ||
-		    !has_sampling_task || !sampling_task.enabled) {
+		    (idx >= job_count) || !jobs[idx].enabled ||
+		    (jobs[idx].next_deadline_ms > now_ms)) {
 			k_mutex_unlock(&runtime_lock);
 			continue;
 		}
 
-		task = sampling_task;
+		job = jobs[idx];
 		++active_operations;
 		k_mutex_unlock(&runtime_lock);
 
-		err = spaghetti_module_manager_read(task.module_id, &record);
-		if (err < 0) {
-			LOG_WRN("sample read failed: id=%u err=%d",
-				(uint32_t)task.module_id, err);
-		} else {
-			err = legacy_publish_ina219_record(&record);
-			if (err < 0) {
-				LOG_WRN("sample publish failed: key=%u err=%d",
-					record.source_key, err);
+		err = spaghetti_module_manager_read(job.source_id, &record);
+		(void)k_mutex_lock(&runtime_lock, K_FOREVER);
+		if ((runtime_state == SPAGHETTI_RUNTIME_RUNNING) &&
+		    (idx < job_count) &&
+		    (jobs[idx].source_key == job.source_key)) {
+			/* Advance from the previous deadline to avoid drift. */
+			do {
+				jobs[idx].next_deadline_ms +=
+					(int64_t)jobs[idx].period_ms;
+			} while (jobs[idx].next_deadline_ms <= now_ms);
+
+			if (err == 0) {
+				if (jobs[idx].sequence == UINT32_MAX) {
+					jobs[idx].sequence = 0U;
+				}
+				++jobs[idx].sequence;
+				record.sequence = jobs[idx].sequence;
+				record.source_id = jobs[idx].source_id;
+				record.source_key = jobs[idx].source_key;
+				record.timestamp_ms = k_uptime_get();
 			}
+		}
+		k_mutex_unlock(&runtime_lock);
+
+		if (err < 0) {
+			LOG_WRN("sample read failed: key=%u err=%d",
+				job.source_key, err);
+		} else {
+			(void)publish_record(&record);
 		}
 
 		complete_operation();
@@ -173,105 +322,154 @@ static void runtime_sampling_thread_entry(void *first, void *second, void *third
 	}
 }
 
-static void runtime_rule_thread_entry(void *first, void *second, void *third)
+static int64_t nearest_deadline_ms(void)
 {
-	const struct zbus_channel *channel;
-	struct spaghetti_electrical_message message;
+	int64_t nearest = INT64_MAX;
 
+	for (size_t idx = 0U; idx < job_count; ++idx) {
+		if (jobs[idx].enabled &&
+		    (jobs[idx].next_deadline_ms < nearest)) {
+			nearest = jobs[idx].next_deadline_ms;
+		}
+	}
+
+	return nearest;
+}
+
+static void runtime_worker_entry(void *first, void *second, void *third)
+{
 	ARG_UNUSED(first);
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
-	(void)k_sem_take(&runtime_initialized_sem, K_FOREVER);
 
 	while (true) {
-		spaghetti_module_id_t relay_id;
-		bool desired_relay_on;
-		bool must_command;
-		int err = zbus_sub_wait_msg(&electrical_runtime_subscriber,
-					    &channel, &message, K_FOREVER);
-
-		if (err < 0) {
-			LOG_ERR("rule receive failed: err=%d", err);
-			continue;
-		}
-		if (channel != &spaghetti_electrical_chan) {
-			LOG_ERR("rule received an unexpected channel");
-			continue;
-		}
+		struct spaghetti_runtime_event event;
+		int64_t now_ms;
+		int64_t nearest;
+		k_timeout_t wait;
+		bool running;
 
 		(void)k_mutex_lock(&runtime_lock, K_FOREVER);
-		if ((runtime_state != SPAGHETTI_RUNTIME_RUNNING) ||
-		    !has_threshold_rule ||
-		    (message.source_id != threshold_rule.source_id) ||
-		    (message.source_key != threshold_source_key)) {
+		running = (runtime_state == SPAGHETTI_RUNTIME_RUNNING);
+		if (runtime_state == SPAGHETTI_RUNTIME_STOPPING) {
+			finish_stop_if_quiescent();
 			k_mutex_unlock(&runtime_lock);
+			(void)k_sem_take(&runtime_wake_sem, K_FOREVER);
+			continue;
+		}
+		if (!running) {
+			k_mutex_unlock(&runtime_lock);
+			(void)k_sem_take(&runtime_wake_sem, K_FOREVER);
 			continue;
 		}
 
-		must_command = true;
-		if (message.current_microamps >
-		    threshold_rule.upper_current_microamps) {
-			desired_relay_on = threshold_rule.relay_on_above;
-		} else if (message.current_microamps <
-			   threshold_rule.lower_current_microamps) {
-			desired_relay_on = !threshold_rule.relay_on_above;
+		now_ms = k_uptime_get();
+		nearest = nearest_deadline_ms();
+		if (nearest == INT64_MAX) {
+			wait = K_FOREVER;
+		} else if (nearest <= now_ms) {
+			wait = K_NO_WAIT;
 		} else {
-			must_command = false;
-			desired_relay_on = false;
-		}
+			const int64_t delta_ms = nearest - now_ms;
 
-		if (!must_command ||
-		    (has_relay_state && (last_relay_on == desired_relay_on))) {
-			k_mutex_unlock(&runtime_lock);
+			wait = K_MSEC((delta_ms > (int64_t)UINT32_MAX) ?
+				      UINT32_MAX : (uint32_t)delta_ms);
+		}
+		k_mutex_unlock(&runtime_lock);
+
+		if (k_msgq_get(&runtime_event_queue, &event, K_NO_WAIT) == 0) {
+			process_event(&event);
 			continue;
 		}
 
-		relay_id = threshold_rule.relay_id;
-		++active_operations;
-		k_mutex_unlock(&runtime_lock);
+		(void)k_sem_take(&runtime_wake_sem, wait);
 
-		struct spaghetti_module_command command = {
-			.command_id = SPAGHETTI_RELAY_COMMAND_SET,
-			.arguments = {
-				.field_count = 1U,
-				.fields = {
-					{
-						.field_id =
-							SPAGHETTI_RELAY_COMMAND_FIELD_ON,
-						.type = SPAGHETTI_VALUE_BOOL,
-						.data.boolean = desired_relay_on,
-					},
-				},
-			},
-		};
+		while (k_msgq_get(&runtime_event_queue, &event, K_NO_WAIT) ==
+		       0) {
+			process_event(&event);
+		}
 
-		err = spaghetti_module_manager_command(relay_id, &command);
-		(void)k_mutex_lock(&runtime_lock, K_FOREVER);
-		if (err == 0) {
-			has_relay_state = true;
-			last_relay_on = desired_relay_on;
-		} else {
-			LOG_WRN("Relay command failed: id=%u err=%d",
-				(uint32_t)relay_id, err);
-		}
-		if (active_operations > 0U) {
-			--active_operations;
-		}
-		finish_stop_if_quiescent();
-		k_mutex_unlock(&runtime_lock);
-		(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_RUNTIME);
+		now_ms = k_uptime_get();
+		process_due_jobs(now_ms);
 	}
 }
 
-K_THREAD_DEFINE(runtime_sampling_thread_id,
+K_THREAD_DEFINE(runtime_worker_thread_id,
 		CONFIG_SPAGHETTI_RUNTIME_STACK_SIZE,
-		runtime_sampling_thread_entry, NULL, NULL, NULL,
+		runtime_worker_entry, NULL, NULL, NULL,
 		CONFIG_SPAGHETTI_RUNTIME_PRIORITY, 0, 0);
 
-K_THREAD_DEFINE(runtime_rule_thread_id,
-		CONFIG_SPAGHETTI_RUNTIME_RULE_STACK_SIZE,
-		runtime_rule_thread_entry, NULL, NULL, NULL,
-		CONFIG_SPAGHETTI_RUNTIME_RULE_PRIORITY, 0, 0);
+static int validate_schedules(
+	const struct spaghetti_runtime_schedule_config *schedules,
+	size_t schedule_count)
+{
+	if ((schedule_count > SPAGHETTI_CONFIG_MAX_SCHEDULES) ||
+	    ((schedules == NULL) && (schedule_count > 0U))) {
+		return -EINVAL;
+	}
+
+	for (size_t idx = 0U; idx < schedule_count; ++idx) {
+		if ((schedules[idx].source_key == 0U) ||
+		    (schedules[idx].period_ms == 0U)) {
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+static int init_rules_copy(
+	const struct spaghetti_rule_config *rules,
+	size_t count,
+	struct spaghetti_runtime_rule_slot *out_slots)
+{
+	if ((count > SPAGHETTI_CONFIG_MAX_RULES) ||
+	    ((rules == NULL) && (count > 0U))) {
+		return -EINVAL;
+	}
+
+	memset(out_slots, 0, sizeof(*out_slots) * SPAGHETTI_CONFIG_MAX_RULES);
+
+	for (size_t idx = 0U; idx < count; ++idx) {
+		const struct spaghetti_rule_driver *driver;
+		void *context = NULL;
+		int err;
+
+		if ((rules[idx].key == 0U) || (rules[idx].type_id[0] == '\0')) {
+			deinit_rules(out_slots, idx);
+			return -EINVAL;
+		}
+
+		driver = spaghetti_rule_registry_find(rules[idx].type_id);
+		if ((driver == NULL) || (driver->ops == NULL) ||
+		    (driver->ops->validate_config == NULL) ||
+		    (driver->ops->init == NULL) ||
+		    (driver->ops->on_record == NULL) ||
+		    (driver->ops->deinit == NULL)) {
+			deinit_rules(out_slots, idx);
+			return -ENOTSUP;
+		}
+
+		err = driver->ops->validate_config(&rules[idx].properties);
+		if (err < 0) {
+			deinit_rules(out_slots, idx);
+			return err;
+		}
+
+		err = driver->ops->init(&rules[idx].properties, &context);
+		if (err < 0) {
+			deinit_rules(out_slots, idx);
+			return err;
+		}
+
+		out_slots[idx].active = true;
+		out_slots[idx].key = rules[idx].key;
+		out_slots[idx].driver = driver;
+		out_slots[idx].context = context;
+	}
+
+	return 0;
+}
 
 int spaghetti_runtime_init(void)
 {
@@ -285,46 +483,41 @@ int spaghetti_runtime_init(void)
 		return -EALREADY;
 	}
 
-	err = zbus_obs_set_enable(&electrical_runtime_subscriber, true);
-	if (err < 0) {
-		k_mutex_unlock(&runtime_lock);
-		return err;
-	}
-	err = spaghetti_timer_init(&runtime_tick_sem);
-	if (err < 0) {
-		(void)zbus_obs_set_enable(&electrical_runtime_subscriber, false);
-		k_mutex_unlock(&runtime_lock);
-		return err;
-	}
-
-	memset(&sampling_task, 0, sizeof(sampling_task));
-	memset(&threshold_rule, 0, sizeof(threshold_rule));
-	sampling_source_key = 0U;
-	threshold_source_key = 0U;
-	has_sampling_task = false;
-	has_threshold_rule = false;
-	has_relay_state = false;
-	last_relay_on = false;
+	memset(jobs, 0, sizeof(jobs));
+	memset(rule_slots, 0, sizeof(rule_slots));
+	job_count = 0U;
+	rule_count = 0U;
 	active_operations = 0U;
-	k_sem_reset(&runtime_tick_sem);
+	action_errors = 0U;
+	runtime_boot_id = (uint64_t)k_cycle_get_32();
+	if (runtime_boot_id == 0U) {
+		runtime_boot_id = 1U;
+	}
+	k_sem_reset(&runtime_wake_sem);
 	k_sem_reset(&runtime_stopped_sem);
+	k_msgq_purge(&runtime_event_queue);
 	runtime_state = SPAGHETTI_RUNTIME_STOPPED;
-	k_sem_give(&runtime_initialized_sem);
 	k_mutex_unlock(&runtime_lock);
 
 	(void)k_work_reschedule(&runtime_health_keepalive,
 		K_MSEC(CONFIG_SPAGHETTI_HEALTH_KEEPALIVE_MS));
-	LOG_INF("ready");
+	LOG_INF("ready: boot_id=%llu", (unsigned long long)runtime_boot_id);
 	return 0;
 }
 
-int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)
+int spaghetti_runtime_configure(
+	const struct spaghetti_runtime_schedule_config *schedules,
+	size_t schedule_count,
+	const struct spaghetti_rule_config *rules,
+	size_t count)
 {
-	struct spaghetti_module_snapshot source;
+	struct spaghetti_runtime_rule_slot pending_rules[SPAGHETTI_CONFIG_MAX_RULES];
+	struct spaghetti_runtime_job pending_jobs[SPAGHETTI_CONFIG_MAX_SCHEDULES];
 	int err;
 
-	if (task == NULL) {
-		return -EINVAL;
+	err = validate_schedules(schedules, schedule_count);
+	if (err < 0) {
+		return err;
 	}
 
 	err = k_mutex_lock(&runtime_lock, K_FOREVER);
@@ -340,27 +533,24 @@ int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)
 		goto unlock;
 	}
 
-	if (!task->enabled) {
-		memset(&sampling_task, 0, sizeof(sampling_task));
-		sampling_source_key = 0U;
-		has_sampling_task = false;
-		err = 0;
-		goto unlock;
-	}
-	if (task->period_ms == 0U) {
-		err = -EINVAL;
+	err = init_rules_copy(rules, count, pending_rules);
+	if (err < 0) {
 		goto unlock;
 	}
 
-	err = spaghetti_module_manager_get_by_id(task->module_id, &source);
-	if ((err < 0) || (source.state != SPAGHETTI_MODULE_READY)) {
-		err = -ENOENT;
-		goto unlock;
+	memset(pending_jobs, 0, sizeof(pending_jobs));
+	for (size_t idx = 0U; idx < schedule_count; ++idx) {
+		pending_jobs[idx].enabled = schedules[idx].enabled;
+		pending_jobs[idx].source_key = schedules[idx].source_key;
+		pending_jobs[idx].period_ms = schedules[idx].period_ms;
+		pending_jobs[idx].sequence = 0U;
 	}
 
-	sampling_task = *task;
-	sampling_source_key = source.key;
-	has_sampling_task = true;
+	deinit_rules(rule_slots, rule_count);
+	memcpy(rule_slots, pending_rules, sizeof(rule_slots));
+	rule_count = count;
+	memcpy(jobs, pending_jobs, sizeof(jobs));
+	job_count = schedule_count;
 	err = 0;
 
 unlock:
@@ -368,78 +558,30 @@ unlock:
 	return err;
 }
 
-int spaghetti_runtime_load_threshold_rule(
-	const struct spaghetti_runtime_threshold_rule *rule)
+static int stop_armed_events_locked(void)
 {
-	struct spaghetti_module_snapshot source;
-	struct spaghetti_module_snapshot relay;
-	int err;
+	int first_error = 0;
 
-	if ((rule == NULL) || (rule->lower_current_microamps < 0) ||
-	    (rule->lower_current_microamps >= rule->upper_current_microamps)) {
-		return -EINVAL;
+	for (size_t idx = 0U; idx < job_count; ++idx) {
+		int err;
+
+		if (!jobs[idx].events_armed) {
+			continue;
+		}
+
+		err = spaghetti_module_manager_stop_events(jobs[idx].source_id);
+		jobs[idx].events_armed = false;
+		if ((err < 0) && (err != -EALREADY) && (first_error == 0)) {
+			first_error = err;
+		}
 	}
 
-	err = k_mutex_lock(&runtime_lock, K_FOREVER);
-	if (err < 0) {
-		return err;
-	}
-	if (runtime_state == SPAGHETTI_RUNTIME_UNINITIALIZED) {
-		err = -EACCES;
-		goto unlock;
-	}
-	if (runtime_state != SPAGHETTI_RUNTIME_STOPPED) {
-		err = -EBUSY;
-		goto unlock;
-	}
-
-	err = spaghetti_module_manager_get_by_id(rule->source_id, &source);
-	if ((err < 0) || (source.state != SPAGHETTI_MODULE_READY)) {
-		err = -ENOENT;
-		goto unlock;
-	}
-	err = spaghetti_module_manager_get_by_id(rule->relay_id, &relay);
-	if ((err < 0) || (relay.state != SPAGHETTI_MODULE_READY)) {
-		err = -ENOENT;
-		goto unlock;
-	}
-
-	threshold_rule = *rule;
-	threshold_source_key = source.key;
-	has_threshold_rule = true;
-	has_relay_state = false;
-	err = 0;
-
-unlock:
-	k_mutex_unlock(&runtime_lock);
-	return err;
-}
-
-int spaghetti_runtime_clear_threshold_rule(void)
-{
-	int err = k_mutex_lock(&runtime_lock, K_FOREVER);
-
-	if (err < 0) {
-		return err;
-	}
-	if (runtime_state == SPAGHETTI_RUNTIME_UNINITIALIZED) {
-		err = -EACCES;
-	} else if (runtime_state != SPAGHETTI_RUNTIME_STOPPED) {
-		err = -EBUSY;
-	} else {
-		memset(&threshold_rule, 0, sizeof(threshold_rule));
-		threshold_source_key = 0U;
-		has_threshold_rule = false;
-		has_relay_state = false;
-		err = 0;
-	}
-
-	k_mutex_unlock(&runtime_lock);
-	return err;
+	return first_error;
 }
 
 int spaghetti_runtime_start(void)
 {
+	const int64_t now_ms = k_uptime_get();
 	int err = k_mutex_lock(&runtime_lock, K_FOREVER);
 
 	if (err < 0) {
@@ -457,21 +599,48 @@ int spaghetti_runtime_start(void)
 		err = -EBUSY;
 		goto unlock;
 	}
-	if (!has_sampling_task && !has_threshold_rule) {
+	if ((job_count == 0U) && (rule_count == 0U)) {
 		err = -ENOENT;
 		goto unlock;
 	}
 
-	k_sem_reset(&runtime_tick_sem);
-	k_sem_reset(&runtime_stopped_sem);
-	has_relay_state = false;
-	if (has_sampling_task && sampling_task.enabled) {
-		err = spaghetti_timer_start(sampling_task.period_ms);
-		if (err < 0) {
+	for (size_t idx = 0U; idx < job_count; ++idx) {
+		struct spaghetti_module_snapshot source;
+
+		err = spaghetti_module_manager_get_by_key(jobs[idx].source_key,
+							  &source);
+		if ((err < 0) || (source.state != SPAGHETTI_MODULE_READY)) {
+			err = -ENOENT;
 			goto unlock;
 		}
+
+		jobs[idx].source_id = source.id;
+		jobs[idx].next_deadline_ms = now_ms;
+		jobs[idx].sequence = 0U;
+		jobs[idx].events_armed = false;
 	}
+
+	k_msgq_purge(&runtime_event_queue);
+	k_sem_reset(&runtime_wake_sem);
+	k_sem_reset(&runtime_stopped_sem);
+	action_errors = 0U;
+
+	for (size_t idx = 0U; idx < job_count; ++idx) {
+		err = spaghetti_module_manager_start_events(
+			jobs[idx].source_id, runtime_event_emit, &jobs[idx]);
+		if (err == -ENOTSUP) {
+			err = 0;
+			continue;
+		}
+		if (err < 0) {
+			(void)stop_armed_events_locked();
+			goto unlock;
+		}
+		jobs[idx].events_armed = true;
+	}
+
 	runtime_state = SPAGHETTI_RUNTIME_RUNNING;
+	k_sem_give(&runtime_wake_sem);
 	err = 0;
 
 unlock:
@@ -499,15 +668,12 @@ int spaghetti_runtime_stop(k_timeout_t timeout)
 		goto unlock;
 	}
 
-	if (has_sampling_task && sampling_task.enabled) {
-		err = spaghetti_timer_stop();
-		if (err < 0) {
-			goto unlock;
-		}
-	}
 	runtime_state = SPAGHETTI_RUNTIME_STOPPING;
+	(void)stop_armed_events_locked();
+	k_msgq_purge(&runtime_event_queue);
 	k_sem_reset(&runtime_stopped_sem);
 	finish_stop_if_quiescent();
+	k_sem_give(&runtime_wake_sem);
 	k_mutex_unlock(&runtime_lock);
 
 	err = k_sem_take(&runtime_stopped_sem, timeout);

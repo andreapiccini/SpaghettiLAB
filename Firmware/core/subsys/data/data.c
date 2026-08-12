@@ -9,19 +9,17 @@
 
 LOG_MODULE_REGISTER(spaghetti_data, CONFIG_SPAGHETTI_DATA_LOG_LEVEL);
 
-ZBUS_MSG_SUBSCRIBER_DEFINE(electrical_logger_subscriber);
-ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(electrical_test_subscriber, false);
-ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(electrical_runtime_subscriber, false);
-ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(electrical_mqtt_subscriber, false);
+ZBUS_MSG_SUBSCRIBER_DEFINE(record_logger_subscriber);
+ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(record_test_subscriber, false);
+ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(record_mqtt_subscriber, false);
 
-ZBUS_CHAN_DEFINE(spaghetti_electrical_chan,
-		 struct spaghetti_electrical_message,
+ZBUS_CHAN_DEFINE(spaghetti_record_chan,
+		 struct spaghetti_record,
 		 NULL,
 		 NULL,
-		 ZBUS_OBSERVERS(electrical_logger_subscriber,
-				electrical_test_subscriber,
-				electrical_runtime_subscriber,
-				electrical_mqtt_subscriber),
+		 ZBUS_OBSERVERS(record_logger_subscriber,
+				record_test_subscriber,
+				record_mqtt_subscriber),
 		 ZBUS_MSG_INIT(0));
 
 static atomic_t is_initialized;
@@ -30,40 +28,60 @@ static atomic_t rejected_count;
 static atomic_t delivery_error_count;
 K_MUTEX_DEFINE(data_lock);
 
+/* Phase-345 Record Delivery boundary; empty until that task lands.
+ * Marked weak so a later object file can replace this stub.
+ */
+__attribute__((weak)) int spaghetti_record_delivery_push(
+	const struct spaghetti_record *record)
+{
+	ARG_UNUSED(record);
+	return 0;
+}
+
 #if CONFIG_SPAGHETTI_DATA_LOGGER
-static void electrical_logger_thread(void *first, void *second, void *third)
+static void record_logger_thread(void *first, void *second, void *third)
 {
 	const struct zbus_channel *channel;
-	struct spaghetti_electrical_message message;
+	struct spaghetti_record record;
 
 	ARG_UNUSED(first);
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
 
 	while (true) {
-		int err = zbus_sub_wait_msg(&electrical_logger_subscriber,
-					    &channel, &message, K_FOREVER);
+		int err = zbus_sub_wait_msg(&record_logger_subscriber,
+					    &channel, &record, K_FOREVER);
 
 		if (err < 0) {
 			LOG_ERR("logger receive failed: err=%d", err);
 			continue;
 		}
-		if (channel != &spaghetti_electrical_chan) {
+		if (channel != &spaghetti_record_chan) {
 			LOG_ERR("logger received an unexpected channel");
 			continue;
 		}
 
-		LOG_INF("electrical key=%u id=%u seq=%u bus=%d uV current=%d uA "
-			"power=%u uW",
-			message.source_key, (uint32_t)message.source_id,
-			message.sequence, message.bus_voltage_microvolts,
-			message.current_microamps, message.power_microwatts);
+		LOG_INF("record key=%u id=%u schema=%s v=%u boot=%llu ts=%lld "
+			"seq=%u fields=%u",
+			record.source_key, (uint32_t)record.source_id,
+			record.payload.schema_id, record.payload.schema_version,
+			(unsigned long long)record.boot_id,
+			(long long)record.timestamp_ms, record.sequence,
+			(uint32_t)record.payload.values.field_count);
+		for (size_t idx = 0U; idx < record.payload.values.field_count;
+		     ++idx) {
+			const struct spaghetti_value *field =
+				&record.payload.values.fields[idx];
+
+			LOG_INF("  field id=%u type=%d", field->field_id,
+				(int)field->type);
+		}
 	}
 }
 
-K_THREAD_DEFINE(electrical_logger_thread_id,
+K_THREAD_DEFINE(record_logger_thread_id,
 		CONFIG_SPAGHETTI_DATA_LOGGER_STACK_SIZE,
-		electrical_logger_thread, NULL, NULL, NULL,
+		record_logger_thread, NULL, NULL, NULL,
 		CONFIG_SPAGHETTI_DATA_LOGGER_PRIORITY, 0, 0);
 #endif
 
@@ -89,13 +107,13 @@ int spaghetti_data_init(void)
 	return 0;
 }
 
-int spaghetti_data_publish_electrical(
-	const struct spaghetti_electrical_message *message,
+int spaghetti_data_publish(
+	const struct spaghetti_record *record,
 	k_timeout_t timeout)
 {
 	int err;
 
-	if (message == NULL) {
+	if (record == NULL) {
 		if (atomic_get(&is_initialized) != 0) {
 			atomic_inc(&rejected_count);
 		}
@@ -105,12 +123,13 @@ int spaghetti_data_publish_electrical(
 		return -EACCES;
 	}
 
-	err = zbus_chan_pub(&spaghetti_electrical_chan, message, timeout);
+	err = zbus_chan_pub(&spaghetti_record_chan, record, timeout);
 	if (err < 0) {
 		atomic_inc(&delivery_error_count);
 		return err;
 	}
 
+	(void)spaghetti_record_delivery_push(record);
 	atomic_inc(&published_count);
 	return 0;
 }

@@ -78,6 +78,10 @@ module = SPAGHETTI_RUNTIME
 module-str = spaghetti_runtime
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_THRESHOLD
+module-str = spaghetti_threshold
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_COMMUNICATION
 module-str = spaghetti_communication
 source "subsys/logging/Kconfig.template.log_config"
@@ -203,22 +207,23 @@ config SPAGHETTI_DECLARATIVE_DEVICE_MAX_INSTANCES
 	  memory slab. Allocation is non-blocking and does not use the heap.
 
 config SPAGHETTI_DATA_LOGGER
-	bool "Enable the electrical Data logger consumer"
+	bool "Enable the Data record logger consumer"
 	default y
 	help
-	  Start one bounded thread that drains the electrical logger subscriber
-	  and writes normalized samples through Zephyr logging.
+	  Start one bounded thread that drains the record logger subscriber
+	  and writes schema-agnostic records through Zephyr logging.
 
 config SPAGHETTI_DATA_LOGGER_STACK_SIZE
-	int "Electrical Data logger stack size"
+	int "Data record logger stack size"
 	depends on SPAGHETTI_DATA_LOGGER
-	range 768 4096
-	default 1024
+	range 1024 8192
+	default 2048
 	help
-	  Static stack bytes reserved for the electrical logger consumer.
+	  Static stack bytes reserved for the record logger consumer. Must fit
+	  one spaghetti_record plus logging locals.
 
 config SPAGHETTI_DATA_LOGGER_PRIORITY
-	int "Electrical Data logger thread priority"
+	int "Data record logger thread priority"
 	depends on SPAGHETTI_DATA_LOGGER
 	range 0 15
 	default 5
@@ -226,34 +231,20 @@ config SPAGHETTI_DATA_LOGGER_PRIORITY
 	  Cooperative-independent preemptive priority used by the logger thread.
 
 config SPAGHETTI_RUNTIME_STACK_SIZE
-	int "Runtime sampling thread stack size"
-	range 1024 4096
-	default 1536
+	int "Runtime worker thread stack size"
+	range 2048 8192
+	default 3072
 	help
-	  Static stack bytes reserved for the Runtime sampling worker.
+	  Static stack bytes reserved for the Runtime worker. Must fit one
+	  spaghetti_record plus schedule and rule locals.
 
 config SPAGHETTI_RUNTIME_PRIORITY
-	int "Runtime sampling thread priority"
+	int "Runtime worker thread priority"
 	range 0 14
 	default 4
 	help
-	  Preemptive priority used by the Runtime sampling worker. The default is
-	  one level above the Data logger so acquisition is not delayed by logging.
-
-config SPAGHETTI_RUNTIME_RULE_STACK_SIZE
-	int "Runtime threshold-rule thread stack size"
-	range 1024 4096
-	default 1536
-	help
-	  Static stack bytes reserved for consuming electrical Data and applying
-	  the single Runtime V1 threshold rule.
-
-config SPAGHETTI_RUNTIME_RULE_PRIORITY
-	int "Runtime threshold-rule thread priority"
-	range 0 14
-	default 4
-	help
-	  Preemptive priority used by the Runtime threshold-rule worker.
+	  Preemptive priority used by the Runtime worker. The default is one
+	  level above the Data logger so acquisition is not delayed by logging.
 
 config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
 	int "Runtime stop timeout in milliseconds"
@@ -262,6 +253,14 @@ config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
 	help
 	  Maximum time Config waits for an active sampling operation to finish
 	  before it refuses to replace live Modules.
+
+config SPAGHETTI_THRESHOLD_MAX_INSTANCES
+	int "Maximum simultaneous Threshold rule instances"
+	range 1 SPAGHETTI_MAX_RULES
+	default SPAGHETTI_MAX_RULES
+	help
+	  Number of typed Threshold contexts reserved in the rule-owned memory
+	  slab. Allocation is non-blocking and does not use the heap.
 
 config SPAGHETTI_UPDATE_WORK_STACK_SIZE
 	int "Update cleanup workqueue stack size"

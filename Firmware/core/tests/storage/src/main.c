@@ -306,7 +306,9 @@ ZTEST(storage, test_v2_round_trip_crc_and_legacy)
 	zassert_ok(spaghetti_storage_read_config(&output));
 	zassert_equal(output.module_count, 1U);
 	zassert_equal(output.schedule_count, 1U);
-	zassert_equal(output.rule_count, 0U);
+	zassert_equal(output.rule_count, 1U);
+	zassert_equal(strcmp(output.rules[0].type_id, "threshold"), 0);
+	zassert_equal(output.rules[0].properties.field_count, 8U);
 	zassert_equal(strcmp(output.mqtt.host, "legacy"), 0);
 }
 

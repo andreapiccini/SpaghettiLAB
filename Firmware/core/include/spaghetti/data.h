@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Public electrical Data distribution contract.
+ * @brief Public generic Data distribution contract.
  * @ingroup spaghetti_data
  */
 
@@ -11,26 +11,13 @@
 
 #include <zephyr/kernel.h>
 
-#include <spaghetti/module.h>
-
-/**
- * @brief Immutable electrical sample copied to every enabled zbus subscriber.
- */
-struct spaghetti_electrical_message {
-	spaghetti_module_id_t source_id; /**< Ephemeral live Module ID. */
-	spaghetti_module_key_t source_key; /**< Stable Config-owned Module key. */
-	int32_t bus_voltage_microvolts; /**< Bus voltage in microvolts. */
-	int32_t current_microamps; /**< Signed bidirectional current in microamps. */
-	uint32_t power_microwatts; /**< Non-negative power in microwatts. */
-	int64_t timestamp_ms; /**< Zephyr uptime at acquisition, in milliseconds. */
-	uint32_t sequence; /**< Publisher sequence; unsigned wrap is intentional. */
-};
+#include <spaghetti/schema.h>
 
 /**
  * @brief Caller-owned snapshot of bounded Data diagnostics.
  */
 struct spaghetti_data_stats {
-	uint32_t published; /**< Messages delivered to every enabled observer. */
+	uint32_t published; /**< Records delivered to every enabled observer. */
 	uint32_t rejected; /**< Calls rejected before reaching zbus. */
 	uint32_t delivery_errors; /**< zbus publish attempts that returned an error. */
 };
@@ -49,20 +36,22 @@ struct spaghetti_data_stats {
 int spaghetti_data_init(void);
 
 /**
- * @brief Publish one electrical message to every enabled subscriber.
+ * @brief Publish one typed record to every enabled subscriber.
  *
- * zbus copies @p message before returning. With multiple observers, a pool
+ * zbus copies @p record before returning. With multiple observers, a pool
  * exhaustion error can occur after an earlier observer received its copy;
  * callers therefore treat errors as a dropped/incomplete fan-out attempt.
+ * After a successful zbus publish, Data forwards a copy to the Record Delivery
+ * boundary completed in phase 345.
  *
- * @param[in] message Caller-owned, suitably aligned message borrowed only for
- *                    this call. It must not be NULL and is never retained.
+ * @param[in] record Caller-owned, suitably aligned record borrowed only for
+ *                   this call. It must not be NULL and is never retained.
  * @param[in] timeout Maximum time allowed for channel and buffer acquisition.
  *                    `K_NO_WAIT`, a finite timeout, and `K_FOREVER` are accepted
  *                    in thread context; ISR callers must use `K_NO_WAIT`.
  *
- * @retval 0 Every enabled subscriber accepted a copied message.
- * @retval -EINVAL @p message is NULL.
+ * @retval 0 Every enabled subscriber accepted a copied record.
+ * @retval -EINVAL @p record is NULL.
  * @retval -EACCES Data has not been initialized.
  * @retval -EBUSY The channel is busy and @p timeout is `K_NO_WAIT`.
  * @retval -EAGAIN The finite timeout expired.
@@ -70,8 +59,8 @@ int spaghetti_data_init(void);
  *
  * @note Callable from thread context and from ISR only with `K_NO_WAIT`.
  */
-int spaghetti_data_publish_electrical(
-	const struct spaghetti_electrical_message *message,
+int spaghetti_data_publish(
+	const struct spaghetti_record *record,
 	k_timeout_t timeout);
 
 /**

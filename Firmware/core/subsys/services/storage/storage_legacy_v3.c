@@ -12,10 +12,75 @@
 
 LOG_MODULE_DECLARE(spaghetti_storage, CONFIG_SPAGHETTI_STORAGE_LOG_LEVEL);
 
+/* Legacy V3 field IDs kept numeric so migration needs no driver headers. */
+enum {
+	LEGACY_INA219_CURRENT_FIELD_ID = 2U,
+	LEGACY_RELAY_COMMAND_SET = 1U,
+	LEGACY_RELAY_COMMAND_FIELD_ON = 1U,
+};
+
 static bool type_id_is_terminated(const char *type_id)
 {
 	return memchr(type_id, '\0', SPAGHETTI_STORAGE_LEGACY_TYPE_ID_SIZE) !=
 	       NULL;
+}
+
+static int convert_legacy_threshold(
+	const struct spaghetti_storage_legacy_threshold_config *legacy,
+	struct spaghetti_rule_config *out)
+{
+	if ((legacy->source_key == 0U) || (legacy->relay_key == 0U) ||
+	    (legacy->lower_current_microamps >=
+	     legacy->upper_current_microamps)) {
+		return -EPROTONOSUPPORT;
+	}
+
+	memset(out, 0, sizeof(*out));
+	out->key = 1U;
+	memcpy(out->type_id, "threshold", sizeof("threshold"));
+	out->properties.field_count = 8U;
+	out->properties.fields[0] = (struct spaghetti_value){
+		.field_id = 1U,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = legacy->source_key,
+	};
+	out->properties.fields[1] = (struct spaghetti_value){
+		.field_id = 2U,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = LEGACY_INA219_CURRENT_FIELD_ID,
+	};
+	out->properties.fields[2] = (struct spaghetti_value){
+		.field_id = 3U,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = legacy->lower_current_microamps,
+	};
+	out->properties.fields[3] = (struct spaghetti_value){
+		.field_id = 4U,
+		.type = SPAGHETTI_VALUE_INT64,
+		.data.signed_integer = legacy->upper_current_microamps,
+	};
+	out->properties.fields[4] = (struct spaghetti_value){
+		.field_id = 5U,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = legacy->relay_key,
+	};
+	out->properties.fields[5] = (struct spaghetti_value){
+		.field_id = 6U,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = LEGACY_RELAY_COMMAND_SET,
+	};
+	out->properties.fields[6] = (struct spaghetti_value){
+		.field_id = 7U,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.data.unsigned_integer = LEGACY_RELAY_COMMAND_FIELD_ON,
+	};
+	out->properties.fields[7] = (struct spaghetti_value){
+		.field_id = 8U,
+		.type = SPAGHETTI_VALUE_BOOL,
+		.data.boolean = legacy->relay_on_above,
+	};
+
+	return 0;
 }
 
 int spaghetti_storage_legacy_v3_convert(
@@ -87,11 +152,12 @@ int spaghetti_storage_legacy_v3_convert(
 	converted.mqtt = legacy.config.mqtt;
 
 	if (legacy.config.threshold_rule.enabled) {
-		/*
-		 * Threshold execution moves to a rule driver in TASK-340-01.
-		 * Keep sampling/schedules usable; drop the concrete threshold.
-		 */
-		LOG_WRN("legacy threshold dropped pending TASK-340-01");
+		err = convert_legacy_threshold(&legacy.config.threshold_rule,
+					       &converted.rules[0]);
+		if (err < 0) {
+			return err;
+		}
+		converted.rule_count = 1U;
 	}
 
 	err = spaghetti_config_validate(&converted, NULL);

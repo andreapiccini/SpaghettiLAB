@@ -512,53 +512,24 @@ static int remove_module(const struct spaghetti_module_snapshot *module)
 	return err;
 }
 
-static bool config_has_enabled_schedule(const struct spaghetti_config *config)
+static bool config_needs_runtime(const struct spaghetti_config *config)
 {
-	for (size_t idx = 0U; idx < config->schedule_count; ++idx) {
-		if (config->schedules[idx].enabled) {
-			return true;
-		}
-	}
-
-	return false;
+	return (config->schedule_count > 0U) || (config->rule_count > 0U);
 }
 
 static int load_runtime(const struct spaghetti_config *config)
 {
-	struct spaghetti_runtime_sampling_task task = {0};
-	struct spaghetti_module_snapshot source;
-	int err;
-
-	(void)spaghetti_runtime_clear_threshold_rule();
-
-	for (size_t idx = 0U; idx < config->schedule_count; ++idx) {
-		const struct spaghetti_runtime_schedule_config *schedule =
-			&config->schedules[idx];
-
-		if (!schedule->enabled) {
-			continue;
-		}
-
-		err = spaghetti_module_manager_get_by_key(schedule->source_key,
-							  &source);
-		if (err < 0) {
-			return err;
-		}
-
-		task.module_id = source.id;
-		task.period_ms = schedule->period_ms;
-		task.enabled = true;
-		break;
-	}
-
-	return spaghetti_runtime_load(&task);
+	return spaghetti_runtime_configure(config->schedules,
+					   config->schedule_count,
+					   config->rules,
+					   config->rule_count);
 }
 
 static int start_runtime(const struct spaghetti_config *config)
 {
 	int err;
 
-	if (!config_has_enabled_schedule(config)) {
+	if (!config_needs_runtime(config)) {
 		return 0;
 	}
 
@@ -901,9 +872,6 @@ int spaghetti_config_apply(
 	if (err < 0) {
 		return err;
 	}
-	if (candidate->rule_count > 0U) {
-		return -ENOTSUP;
-	}
 	if (expected_generation == 0U) {
 		return -EINVAL;
 	}
@@ -957,7 +925,7 @@ int spaghetti_config_apply(
 	connectivity_changed =
 		old_config.connectivity_policy != candidate->connectivity_policy;
 
-	if (config_has_enabled_schedule(&old_config)) {
+	if (config_needs_runtime(&old_config)) {
 		err = spaghetti_runtime_stop(
 			K_MSEC(CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS));
 		if ((err < 0) && (err != -EALREADY)) {

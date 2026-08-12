@@ -1,6 +1,6 @@
 # TASK-340-01 — Generalizzare Data, Runtime e regole
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 340 — Data, Runtime e regole V2
 
 ## Cosa devo fare
@@ -131,14 +131,14 @@ BOOL compatibile. Senza rule, i record raggiungono comunque Node-RED.
 
 ## Checklist di completamento
 
-- [ ] Data e zbus non contengono campi elettrici concreti.
-- [ ] Più job usano un solo scheduler con deadline indipendenti.
-- [ ] Eventi asincroni sono copiati e fermabili.
-- [ ] Rule Registry crea context bounded e rollbackabile.
-- [ ] Threshold non include INA219/Relay.
-- [ ] I collegamenti rule sono risolvibili dal catalogo senza metadati React-specifici.
-- [ ] Errori di una sorgente/regola non fermano le altre.
-- [ ] Ogni record porta boot ID e attraversa un solo confine di consegna.
+- [x] Data e zbus non contengono campi elettrici concreti.
+- [x] Più job usano un solo scheduler con deadline indipendenti.
+- [x] Eventi asincroni sono copiati e fermabili.
+- [x] Rule Registry crea context bounded e rollbackabile.
+- [x] Threshold non include INA219/Relay.
+- [x] I collegamenti rule sono risolvibili dal catalogo senza metadati React-specifici.
+- [x] Errori di una sorgente/regola non fermano le altre.
+- [x] Ogni record porta boot ID e attraversa un solo confine di consegna.
 
 ## Verifica e fine task
 

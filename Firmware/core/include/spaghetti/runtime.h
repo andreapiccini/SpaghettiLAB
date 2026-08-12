@@ -1,120 +1,76 @@
 /**
  * @file
- * @brief Public Runtime V1 sampling and threshold-rule contract.
+ * @brief Public Runtime multi-schedule, event, and rule contract.
  * @ingroup spaghetti_runtime
  */
 
 #ifndef SPAGHETTI_RUNTIME_H
 #define SPAGHETTI_RUNTIME_H
 
-#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include <zephyr/kernel.h>
 
-#include <spaghetti/module.h>
+#include <spaghetti/config.h>
 
 /**
- * @brief Complete active periodic sampling task copied by Runtime.
- */
-struct spaghetti_runtime_sampling_task {
-	spaghetti_module_id_t module_id; /**< Current live Module handle. */
-	uint32_t period_ms; /**< Positive sampling period in milliseconds. */
-	bool enabled; /**< True to define an active task; false clears it. */
-};
-
-/**
- * @brief Complete active current-threshold rule copied by Runtime.
- */
-struct spaghetti_runtime_threshold_rule {
-	spaghetti_module_id_t source_id; /**< Current live electrical source handle. */
-	int32_t lower_current_microamps; /**< Strict lower hysteresis boundary. */
-	int32_t upper_current_microamps; /**< Strict upper hysteresis boundary. */
-	spaghetti_module_id_t relay_id; /**< Current live Relay target handle. */
-	bool relay_on_above; /**< Logical Relay state above the upper boundary. */
-};
-
-/**
- * @brief Initialize the stopped Runtime worker and Timer service.
+ * @brief Initialize the stopped Runtime worker.
  *
- * @retval 0 Runtime is initialized, stopped, and has no loaded task.
+ * @retval 0 Runtime is initialized, stopped, and has no loaded work.
  * @retval -EALREADY Runtime was initialized previously.
- * @retval -EINVAL The retained Timer synchronization object is invalid.
  *
  * @note Call once from the Core boot thread after Data initialization.
  */
 int spaghetti_runtime_init(void);
 
 /**
- * @brief Validate and copy a sampling task while Runtime is stopped.
+ * @brief Validate, copy schedules, and (re)create rule instances while stopped.
  *
- * For an enabled task, resolve @ref spaghetti_runtime_sampling_task.module_id
- * through Module Manager and privately retain its stable key. A disabled task
- * clears the loaded program; its ID and period are ignored. The input pointer
- * is borrowed only for this call and never retained.
+ * Input pointers are borrowed only for this call. Runtime copies every accepted
+ * schedule and rule property set before returning. When rule init fails,
+ * Runtime deinitializes partially created rules in reverse order and keeps the
+ * previous configuration unchanged.
  *
- * @param[in] task Caller-owned, suitably aligned task valid for this call.
+ * @param[in] schedules Caller-owned schedule array, or NULL when @p schedule_count
+ *                      is zero.
+ * @param[in] schedule_count Number of elements at @p schedules.
+ * @param[in] rules Caller-owned rule array, or NULL when @p rule_count is zero.
+ * @param[in] rule_count Number of elements at @p rules.
  *
- * @retval 0 The task was copied, or a disabled task cleared the program.
- * @retval -EINVAL @p task is NULL or an enabled task has a zero period.
- * @retval -EACCES Runtime has not been initialized.
- * @retval -ENOENT The enabled task's Module ID is not live and READY.
- * @retval -EBUSY Runtime is running or stopping.
- *
- * @note Call from thread context. This function performs no bus I/O.
- */
-int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task);
-
-/**
- * @brief Validate and copy the single threshold rule while Runtime is stopped.
- *
- * Runtime resolves both IDs through Module Manager and privately retains the
- * source key to reject stale queued samples. The input is borrowed only for
- * this call and never retained.
- *
- * @param[in] rule Caller-owned, suitably aligned rule valid for this call.
- *
- * @retval 0 The rule was validated and copied.
- * @retval -EINVAL @p rule is NULL, a threshold is negative, or lower is not
- *                 strictly less than upper.
- * @retval -EACCES Runtime has not been initialized.
- * @retval -ENOENT A source or Relay ID is not live and READY.
- * @retval -EBUSY Runtime is running or stopping.
- *
- * @note Call from thread context. This function performs no hardware I/O.
- */
-int spaghetti_runtime_load_threshold_rule(
-	const struct spaghetti_runtime_threshold_rule *rule);
-
-/**
- * @brief Remove the threshold rule while Runtime is stopped.
- *
- * @retval 0 No threshold rule is loaded.
+ * @retval 0 The configuration was copied and rules were initialized.
+ * @retval -EINVAL A pointer/count pair is inconsistent or a schedule is invalid.
  * @retval -EACCES Runtime has not been initialized.
  * @retval -EBUSY Runtime is running or stopping.
+ * @retval -ENOTSUP A rule type is unknown or incomplete.
+ * @retval -errno Propagated from rule validate/init.
  *
- * @note Call from thread context. This operation performs no hardware I/O.
+ * @note Call from thread context. This function performs no Module bus I/O.
  */
-int spaghetti_runtime_clear_threshold_rule(void);
+int spaghetti_runtime_configure(
+	const struct spaghetti_runtime_schedule_config *schedules,
+	size_t schedule_count,
+	const struct spaghetti_rule_config *rules,
+	size_t rule_count);
 
 /**
- * @brief Start periodic execution of the loaded task.
+ * @brief Resolve schedule keys, arm events, and start the worker.
  *
- * @retval 0 Timer and Runtime worker are active.
+ * @retval 0 The Runtime worker is active.
  * @retval -EACCES Runtime has not been initialized.
- * @retval -ENOENT No enabled sampling task or threshold rule is loaded.
+ * @retval -ENOENT No schedule or rule is configured.
  * @retval -EALREADY Runtime is already running.
  * @retval -EBUSY Runtime is still stopping.
- * @retval -EINVAL The loaded period is invalid for Timer.
+ * @retval -ENOENT A schedule source key is not live and READY.
  *
  * @note Call from thread context.
  */
 int spaghetti_runtime_start(void);
 
 /**
- * @brief Stop new ticks and wait for current worker activity to quiesce.
+ * @brief Stop events, drain the event queue, and wait for the worker.
  *
- * @param[in] timeout Maximum wait for a current Manager read and Data publish.
+ * @param[in] timeout Maximum wait for in-flight Manager and publish work.
  *                    `K_NO_WAIT`, finite timeouts, and `K_FOREVER` are accepted.
  *
  * @retval 0 Runtime reached the stopped state.

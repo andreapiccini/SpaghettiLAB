@@ -180,8 +180,7 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate,
  * @retval -EINVAL The candidate or one of its fields is invalid.
  * @retval -EACCES Config has not been initialized.
  * @retval -ENOENT A Port, previous live Module, or schedule source is missing.
- * @retval -ENOTSUP A driver is unknown, incomplete, incompatible, or rules are
- *                 present before Runtime rule lifecycle lands.
+ * @retval -ENOTSUP A driver or rule type is unknown, incomplete, or incompatible.
  * @retval -EEXIST Stable Module keys are duplicated or conflict with live state.
  * @retval -EADDRINUSE Two Module endpoints or Bays conflict.
  * @retval -ENOSPC A bounded Manager or driver pool is full.

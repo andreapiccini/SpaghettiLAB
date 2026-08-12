@@ -40,6 +40,7 @@ target_sources(app PRIVATE
   spaghetti_modules/ina219/ina219.c
   spaghetti_modules/relay/relay.c
   spaghetti_modules/declarative_device/declarative_device.c
+  spaghetti_rules/threshold/threshold.c
   subsys/core/capabilities.c
   subsys/core/core.c
   subsys/core/core_boot_backend.c
@@ -112,6 +113,7 @@ target_include_directories(app PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/ina219
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/relay
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/declarative_device
+  ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_rules/threshold
 )
 
 get_target_property(APP_INCLUDES app INCLUDE_DIRECTORIES)

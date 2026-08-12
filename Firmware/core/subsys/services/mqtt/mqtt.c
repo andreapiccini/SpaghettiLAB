@@ -71,8 +71,8 @@ K_MSGQ_DEFINE(publication_queue, sizeof(struct spaghetti_mqtt_publication),
 	      CONFIG_SPAGHETTI_MQTT_QUEUE_DEPTH,
 	      __alignof__(struct spaghetti_mqtt_publication));
 
-ZBUS_CHAN_DECLARE(spaghetti_electrical_chan);
-ZBUS_OBS_DECLARE(electrical_mqtt_subscriber);
+ZBUS_CHAN_DECLARE(spaghetti_record_chan);
+ZBUS_OBS_DECLARE(record_mqtt_subscriber);
 
 static bool bounded_string_is_valid(const char *value, size_t capacity,
 				    bool may_be_empty)
@@ -469,21 +469,21 @@ static void mqtt_worker_thread_entry(void *first, void *second, void *third)
 	k_mutex_unlock(&mqtt_lock);
 }
 
-int spaghetti_mqtt_format_electrical(
-	const struct spaghetti_electrical_message *message,
+int spaghetti_mqtt_format_record(
+	const struct spaghetti_record *record,
 	struct spaghetti_mqtt_publication *out)
 {
 	struct spaghetti_mqtt_publication publication = {0};
 	int text_size;
 
-	if ((message == NULL) || (out == NULL)) {
+	if ((record == NULL) || (out == NULL)) {
 		return -EINVAL;
 	}
 
 	text_size = snprintf(publication.topic_suffix,
 			     sizeof(publication.topic_suffix),
-			     "modules/%" PRIu32 "/electrical",
-			     (uint32_t)message->source_key);
+			     "modules/%" PRIu32 "/records",
+			     (uint32_t)record->source_key);
 	if ((text_size <= 0) ||
 	    ((size_t)text_size >= sizeof(publication.topic_suffix))) {
 		return -EMSGSIZE;
@@ -491,10 +491,11 @@ int spaghetti_mqtt_format_electrical(
 
 	text_size = snprintf(
 		(char *)publication.payload, sizeof(publication.payload),
-		"{\"module_key\":%" PRIu32 ",\"bus_uv\":%" PRId32
-		",\"current_ua\":%" PRId32 ",\"power_uw\":%" PRIu32 "}",
-		(uint32_t)message->source_key, message->bus_voltage_microvolts,
-		message->current_microamps, message->power_microwatts);
+		"{\"module_key\":%" PRIu32 ",\"schema\":\"%s\",\"version\":%"
+		PRIu16 ",\"boot_id\":%" PRIu64 ",\"sequence\":%" PRIu32 "}",
+		(uint32_t)record->source_key, record->payload.schema_id,
+		record->payload.schema_version, record->boot_id,
+		record->sequence);
 	if ((text_size <= 0) ||
 	    ((size_t)text_size >= sizeof(publication.payload))) {
 		return -EMSGSIZE;
@@ -508,15 +509,15 @@ int spaghetti_mqtt_format_electrical(
 static void mqtt_adapter_thread_entry(void *first, void *second, void *third)
 {
 	const struct zbus_channel *channel;
-	struct spaghetti_electrical_message message;
+	struct spaghetti_record record;
 
 	ARG_UNUSED(first);
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
 
 	while (atomic_get(&stop_requested) == 0) {
-		int err = zbus_sub_wait_msg(&electrical_mqtt_subscriber,
-					    &channel, &message,
+		int err = zbus_sub_wait_msg(&record_mqtt_subscriber,
+					    &channel, &record,
 					    K_MSEC(SPAGHETTI_MQTT_POLL_MS));
 
 		if (err < 0) {
@@ -526,20 +527,20 @@ static void mqtt_adapter_thread_entry(void *first, void *second, void *third)
 			LOG_ERR("Data receive failed: err=%d", err);
 			continue;
 		}
-		if (channel != &spaghetti_electrical_chan) {
+		if (channel != &spaghetti_record_chan) {
 			LOG_ERR("unexpected Data channel");
 			continue;
 		}
 
 		struct spaghetti_mqtt_publication publication;
 
-		err = spaghetti_mqtt_format_electrical(&message, &publication);
+		err = spaghetti_mqtt_format_record(&record, &publication);
 		if (err == 0) {
 			err = spaghetti_mqtt_publish(&publication);
 		}
 		if ((err < 0) && (err != -EACCES) && (err != -ENOMSG)) {
-			LOG_WRN("electrical sample rejected: key=%u err=%d",
-				message.source_key, err);
+			LOG_WRN("record rejected: key=%u err=%d",
+				record.source_key, err);
 		}
 	}
 }
@@ -564,7 +565,7 @@ int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
 		return -EBUSY;
 	}
 
-	err = zbus_obs_set_enable(&electrical_mqtt_subscriber, false);
+	err = zbus_obs_set_enable(&record_mqtt_subscriber, false);
 	if (err < 0) {
 		k_mutex_unlock(&mqtt_lock);
 		return -EIO;
@@ -604,7 +605,7 @@ int spaghetti_mqtt_start(void)
 		return -EALREADY;
 	}
 
-	err = zbus_obs_set_enable(&electrical_mqtt_subscriber, true);
+	err = zbus_obs_set_enable(&record_mqtt_subscriber, true);
 	if (err < 0) {
 		k_mutex_unlock(&mqtt_lock);
 		return -EIO;
@@ -646,7 +647,7 @@ int spaghetti_mqtt_start(void)
 				&mqtt_worker_thread, K_SECONDS(1));
 		}
 		k_msgq_purge(&command_queue);
-		(void)zbus_obs_set_enable(&electrical_mqtt_subscriber, false);
+		(void)zbus_obs_set_enable(&record_mqtt_subscriber, false);
 		(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
 		context.started = false;
 		context.status.state = SPAGHETTI_MQTT_STOPPED;
@@ -715,7 +716,7 @@ int spaghetti_mqtt_stop(k_timeout_t timeout)
 			return err;
 		}
 	}
-	(void)zbus_obs_set_enable(&electrical_mqtt_subscriber, false);
+	(void)zbus_obs_set_enable(&record_mqtt_subscriber, false);
 	(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
 	if (context.network_callback_registered) {
 		net_mgmt_del_event_callback(&network_callback);

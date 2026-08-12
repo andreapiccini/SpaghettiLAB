@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -11,12 +11,12 @@ di soglia in un plug-in anziché in logica INA219/Relay centrale.
 
 ## Task
 
-1. ⬜ [TASK-340-01 — Generalizzare Data, Runtime e regole](TASK-340-01-generalizzare-data-runtime-e-regole.md)
+1. ✅ [TASK-340-01 — Generalizzare Data, Runtime e regole](TASK-340-01-generalizzare-data-runtime-e-regole.md)
 
 ## Criteri di completamento della fase
 
-- [ ] zbus trasporta record generici.
-- [ ] Runtime pianifica più schedule indipendenti.
-- [ ] La soglia è una rule auto-registrata e non conosce driver concreti.
-- [ ] Record generici raggiungono il confine di consegna senza dipendere dall'adapter.
-- [ ] Runtime espone il confine record necessario ai Block Driver della fase 342.
+- [x] zbus trasporta record generici.
+- [x] Runtime pianifica più schedule indipendenti.
+- [x] La soglia è una rule auto-registrata e non conosce driver concreti.
+- [x] Record generici raggiungono il confine di consegna senza dipendere dall'adapter.
+- [x] Runtime espone il confine record necessario ai Block Driver della fase 342.

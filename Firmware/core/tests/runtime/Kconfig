@@ -9,17 +9,9 @@ config SPAGHETTI_RUNTIME_LOG_LEVEL
 
 config SPAGHETTI_RUNTIME_STACK_SIZE
 	int
-	default 1536
+	default 4096
 
 config SPAGHETTI_RUNTIME_PRIORITY
-	int
-	default 4
-
-config SPAGHETTI_RUNTIME_RULE_STACK_SIZE
-	int
-	default 1536
-
-config SPAGHETTI_RUNTIME_RULE_PRIORITY
 	int
 	default 4
 
@@ -34,5 +26,17 @@ config SPAGHETTI_DATA_LOGGER
 config SPAGHETTI_SCHEMA_LOG_LEVEL
 	int
 	default 0
+
+config SPAGHETTI_RULE_REGISTRY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_THRESHOLD_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_THRESHOLD_MAX_INSTANCES
+	int
+	default SPAGHETTI_MAX_RULES
 
 source "Kconfig.zephyr"

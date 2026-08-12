@@ -84,7 +84,9 @@ struct fake_driver_context {
 };
 
 static struct fake_driver_context fake_contexts[CONFIG_SPAGHETTI_MAX_MODULES];
-static struct spaghetti_runtime_sampling_task fake_runtime_task;
+static struct spaghetti_runtime_schedule_config fake_runtime_schedules[SPAGHETTI_CONFIG_MAX_SCHEDULES];
+static size_t fake_runtime_schedule_count;
+static size_t fake_runtime_rule_count;
 static bool fake_runtime_running;
 static uint32_t fake_storage_write_count;
 static struct spaghetti_config fake_stored_config;
@@ -170,21 +172,28 @@ int spaghetti_storage_write_config(const struct spaghetti_config *config)
 	return 0;
 }
 
-int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)
+int spaghetti_runtime_configure(
+	const struct spaghetti_runtime_schedule_config *schedules,
+	size_t schedule_count,
+	const struct spaghetti_rule_config *rules,
+	size_t rule_count)
 {
-	if (task == NULL) {
+	if (((schedules == NULL) && (schedule_count > 0U)) ||
+	    ((rules == NULL) && (rule_count > 0U)) ||
+	    (schedule_count > SPAGHETTI_CONFIG_MAX_SCHEDULES) ||
+	    (rule_count > SPAGHETTI_CONFIG_MAX_RULES)) {
 		return -EINVAL;
 	}
 	if (fake_runtime_running) {
 		return -EBUSY;
 	}
-	fake_runtime_task = *task;
+	fake_runtime_schedule_count = schedule_count;
+	fake_runtime_rule_count = rule_count;
+	if (schedule_count > 0U) {
+		memcpy(fake_runtime_schedules, schedules,
+		       schedule_count * sizeof(schedules[0]));
+	}
 	return 0;
-}
-
-int spaghetti_runtime_clear_threshold_rule(void)
-{
-	return fake_runtime_running ? -EBUSY : 0;
 }
 
 int spaghetti_runtime_start(void)
@@ -192,7 +201,8 @@ int spaghetti_runtime_start(void)
 	if (fake_runtime_running) {
 		return -EALREADY;
 	}
-	if (!fake_runtime_task.enabled) {
+	if ((fake_runtime_schedule_count == 0U) &&
+	    (fake_runtime_rule_count == 0U)) {
 		return -ENOENT;
 	}
 	fake_runtime_running = true;
@@ -503,10 +513,13 @@ ZTEST(config, test_transaction_snapshot_cas_and_rules)
 	candidate.rules[0].properties.fields[0].type = SPAGHETTI_VALUE_BOOL;
 	candidate.rules[0].properties.fields[0].data.boolean = true;
 	zassert_ok(spaghetti_config_validate(&candidate, NULL));
-	zassert_equal(spaghetti_config_apply(&candidate, revision.generation,
-					     NULL),
-		      -ENOTSUP);
+	zassert_ok(spaghetti_config_apply(&candidate, revision.generation,
+					  &result));
+	zassert_true(result.changed);
+	zassert_equal(fake_runtime_rule_count, 1U);
 
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &revision));
+	revision_b = revision;
 	zassert_ok(spaghetti_config_apply(&second, revision_b.generation, NULL));
 	zassert_equal(spaghetti_config_apply(&baseline, revision_b.generation,
 					     NULL),
