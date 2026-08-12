@@ -1,6 +1,6 @@
 # UX-S060 — Device Profile Studio
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S061–S063
 
@@ -40,5 +40,17 @@ gli opcode già installati, senza aggiornamento firmware — con lo stesso detta
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Device Profile Studio" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Device Profile Studio" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S060-device-profile-studio/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Editor a sequenza di step ordinati (non canvas — spiegato esplicitamente il perché:
+nessuna semantica di branching/concorrenza in un profilo), sei sezioni fisse
+(Identity probe/Init/Sample/Event/Command/Safe-stop), pannello Compatibilità con le
+sei card esito del resolver sempre mutuamente esclusive, vincolo elettrico mostrato
+come sola lettura derivato dalla Bay (mai dal testo del profilo), stato opcode
+assente che propone solo un Capability Pack senza mai installare da sé, import/export
+con anteprima obbligatoria (mai silenziosa). `backend-behavior.md` cita S061/S062/S063
+punto per punto (tutte e tre ancora ⬜ TODO).

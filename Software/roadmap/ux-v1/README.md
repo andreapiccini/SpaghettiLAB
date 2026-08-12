@@ -24,7 +24,7 @@ esiste, non richiede che esista già.
 | ✅ | [UX-S030](tasks/UX-S030-core-connections.md) | Core Connections | S030 |
 | ✅ | [UX-S040](tasks/UX-S040-catalog-topology.md) | Catalog & Topology Explorer | S041–S043 |
 | ✅ | [UX-S050](tasks/UX-S050-physical-composition.md) | Physical Composition Editor | S050 |
-| ⬜ | [UX-S060](tasks/UX-S060-device-profile-studio.md) | Device Profile Studio | S061–S063 |
+| ✅ | [UX-S060](tasks/UX-S060-device-profile-studio.md) | Device Profile Studio | S061–S063 |
 | ⬜ | [UX-S080](tasks/UX-S080-deploy-diff.md) | Deploy & Diff | S080 |
 | ⬜ | [UX-S090](tasks/UX-S090-runtime-diagnostics.md) | Runtime & Diagnostics | S091–S094 |
 | ⬜ | [UX-S100](tasks/UX-S100-capability-marketplace.md) | Capability Marketplace & OTA | S101–S103 |

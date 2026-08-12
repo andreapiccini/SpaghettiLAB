@@ -103,7 +103,7 @@ Layout fisso su tutte le schermate, tre regioni:
 | Core Connections | `S030-core-connections` | S030 | [UX-S030](roadmap/ux-v1/tasks/UX-S030-core-connections.md) | ✅ |
 | Catalog & Topology Explorer | `S040-catalog-topology` | S041–S043 | [UX-S040](roadmap/ux-v1/tasks/UX-S040-catalog-topology.md) | ✅ |
 | Physical Composition Editor | `S050-physical-composition` | S050 | [UX-S050](roadmap/ux-v1/tasks/UX-S050-physical-composition.md) | ✅ |
-| Device Profile Studio | `S060-device-profile-studio` | S061–S063 | [UX-S060](roadmap/ux-v1/tasks/UX-S060-device-profile-studio.md) | ⬜ da scrivere |
+| Device Profile Studio | `S060-device-profile-studio` | S061–S063 | [UX-S060](roadmap/ux-v1/tasks/UX-S060-device-profile-studio.md) | ✅ |
 | Processing Graph Editor | `S070-processing-graph-editor` | S071–S073 | — | ✅ as-built confermata (prototipo React validato) |
 | Deploy & Diff | `S080-deploy-diff` | S080 | [UX-S080](roadmap/ux-v1/tasks/UX-S080-deploy-diff.md) | ⬜ da scrivere |
 | Runtime & Diagnostics | `S090-runtime-diagnostics` | S091–S094 | [UX-S090](roadmap/ux-v1/tasks/UX-S090-runtime-diagnostics.md) | ⬜ da scrivere |
