@@ -1,0 +1,27 @@
+mainmenu "Spaghetti Service Manager tests"
+
+module = SPAGHETTI_SERVICE_MANAGER
+module-str = spaghetti_service_manager
+source "subsys/logging/Kconfig.template.log_config"
+
+config SPAGHETTI_SERVICE_MAX_COUNT
+	int
+	default 4
+
+config SPAGHETTI_SERVICE_ID_MAX_SIZE
+	int
+	default 24
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 100
+
+config SPAGHETTI_SERVICE_THREAD_MAX_COUNT
+	int
+	default 2
+
+config SPAGHETTI_SERVICE_THREAD_MAX_STACK_BYTES
+	int
+	default 4096
+
+source "Kconfig.zephyr"
