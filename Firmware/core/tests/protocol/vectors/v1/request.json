@@ -1,0 +1,10 @@
+{
+  "name": "request",
+  "cbor_hex": "bf0001010102020340ff",
+  "normalized": {
+    "version": 1,
+    "correlation_id": 1,
+    "operation": 2,
+    "payload": {}
+  }
+}

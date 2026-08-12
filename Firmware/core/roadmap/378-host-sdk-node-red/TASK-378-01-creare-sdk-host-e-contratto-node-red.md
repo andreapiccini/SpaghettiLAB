@@ -1,6 +1,6 @@
 # TASK-378-01 — Creare SDK host e contratto Node-RED
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 378 — SDK host e contratto Node-RED
 
 ## Cosa devo fare
@@ -223,15 +223,15 @@ const result = await coordinator.synchronize();
 
 ## Checklist di completamento
 
-- [ ] Codec, transport e client hanno responsabilità separate.
-- [ ] Retry conserva correlation ID e byte originali.
-- [ ] Status V1 non dipende da errno Zephyr.
-- [ ] INT64/UINT64 attraversano CBOR e JSON senza perdita.
-- [ ] Catalog cache usa il fingerprint e viene invalidata dopo OTA.
-- [ ] Topology e modello editor descrivono più Flow da cinque segnali senza hardcode di board.
-- [ ] Config Coordinator impedisce lost update e apply durante deploy parziale.
-- [ ] MQTT e WebSocket superano gli stessi test di contratto.
-- [ ] C, Python e TypeScript leggono gli stessi golden vector.
+- [x] Codec, transport e client hanno responsabilità separate.
+- [x] Retry conserva correlation ID e byte originali.
+- [x] Status V1 non dipende da errno Zephyr.
+- [x] INT64/UINT64 attraversano CBOR e JSON senza perdita.
+- [x] Catalog cache usa il fingerprint e viene invalidata dopo OTA.
+- [x] Topology e modello editor descrivono più Flow da cinque segnali senza hardcode di board.
+- [x] Config Coordinator impedisce lost update e apply durante deploy parziale.
+- [x] MQTT e WebSocket superano gli stessi test di contratto.
+- [x] C, Python e TypeScript leggono gli stessi golden vector.
 
 ## Verifica e fine task
 

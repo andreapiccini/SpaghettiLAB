@@ -1,0 +1,34 @@
+{
+  "name": "@spaghettilab/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Host Protocol V1 SDK for Spaghetti LAB (local compile; not published)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "generate-vectors": "npm run build && node scripts/generate-vectors.mjs",
+    "test": "npm run generate-vectors && vitest run",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

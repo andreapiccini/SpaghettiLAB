@@ -1,5 +1,25 @@
 # Node-RED Spaghetti Protocol V1 examples
 
+## Future node package layout
+
+Host nodes import `@spaghettilab/protocol` from `Firmware/core/tools/sdk/typescript`
+(local compile; not published to npm). They must not reimplement CBOR, retry, or
+Config merge:
+
+```text
+spaghetti-core          connessione, credenziale, client e catalogo
+spaghetti-config        unico Config Coordinator
+spaghetti-module        produce un fragment, non scrive il Core
+spaghetti-record        sottoscrive record tipizzati
+spaghetti-command       invia un comando dichiarato dal catalogo
+spaghetti-discovery     scan/list/accept
+spaghetti-connectivity  policy e lease
+spaghetti-update        job update e progresso
+```
+
+`spaghetti-module` never calls `applyConfig()` directly. Only `spaghetti-config`
+owns `ConfigCoordinator.synchronize()`. Credentials stay outside exported flows.
+
 ## MQTT path
 
 Import `spaghetti_v1_flow.json` into Node-RED. Configure only the MQTT broker host
@@ -69,3 +89,14 @@ retained catalog event changes.
 Set `client_id` to a stable Node-RED instance name (max 32 characters,
 `[A-Za-z0-9._-]`). On MQTT, responses are published to `responses/<client_id>`.
 On BLE gateway, correlation is carried inside the V1 envelope over the WebSocket.
+
+## Host verification
+
+```sh
+make host-tools
+npm --prefix tools/sdk/typescript ci
+npm --prefix tools/sdk/typescript test
+.venv/bin/python -m unittest discover -s tools/tests -v
+make node-red-mqtt-smoke
+make node-red-ble-smoke
+```

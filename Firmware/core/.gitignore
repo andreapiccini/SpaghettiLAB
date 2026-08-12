@@ -42,6 +42,10 @@ __pycache__/
 /.venv/
 /venv/
 
+# Host TypeScript SDK build artifacts
+/tools/sdk/typescript/node_modules/
+/tools/sdk/typescript/dist/
+
 # Editor and IDE files
 /.vscode/
 /.idea/

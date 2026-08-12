@@ -32,7 +32,7 @@ WEST_CMAKE_ARGS := -- -DBOARD_ROOT=/opt/zephyrproject/app \
 .PHONY: image shell signing-key validate build pristine flash screen monitor \
 	host-tools ports remote-console-credential remote-console-provision \
 	remote-console-enable remote-console-clear remote-console-list update-qualification-manifest \
-	update-qualification-check resource-report node-red-ble-smoke clean
+	update-qualification-check resource-report node-red-ble-smoke node-red-mqtt-smoke clean
 
 $(HOST_TOOLS_STAMP): tools/requirements.txt
 	@$(HOST_PYTHON) -m venv .venv
@@ -55,6 +55,13 @@ else
 endif
 
 host-tools: $(HOST_TOOLS_STAMP)
+
+# Fake MQTT → TypeScript SpaghettiClient smoke (no broker, no Node-RED process).
+# Shared CBOR vectors: tests/protocol/vectors/v1/ (TS + Python now; C in phase 380).
+node-red-mqtt-smoke: host-tools
+	@npm --prefix tools/sdk/typescript ci --silent
+	@npm --prefix tools/sdk/typescript run build --silent
+	@node tools/sdk/typescript/scripts/mqtt-smoke.mjs
 
 # Fake BLE → gateway → WebSocket CBOR smoke (no radio, no Node-RED process).
 node-red-ble-smoke: host-tools
