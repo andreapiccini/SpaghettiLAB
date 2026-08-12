@@ -116,7 +116,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ⬜ | [292 — Connectivity Manager](292-connectivity-manager/README.md) | LOW_ENERGY, ONLINE e lease temporanee hanno un solo owner. |
 | ✅ | [293 — Workspace TLS](293-secure-workspace/README.md) | TLS/DTLS usa memoria condivisa bounded invece dell'arena privata da 60 KiB. |
 | 🟨 | [294 — Lifecycle servizi](294-service-lifecycle/README.md) | Implementazione pronta; build e Twister devono confermare 100 cicli senza leak. |
-| ⬜ | [295 — Low-energy power](295-low-energy-power/README.md) | Radio e PM seguono una policy verificabile senza fermare Runtime. |
+| ✅ | [295 — Low-energy power](295-low-energy-power/README.md) | Radio e PM seguono una policy verificabile senza fermare Runtime. |
 | ⬜ | [296 — Health supervisor](296-health-supervisor/README.md) | Heartbeat e watchdog rilevano worker bloccati e rendono visibile la causa del reset. |
 | ⬜ | [297 — Topologia Flow](297-flow-topology/README.md) | Il Core descrive Flow, Function Bay ordinate e connettori uniformi da cinque segnali. |
 | ⬜ | [300 — Port e trasporti V1](300-port-transport-v1/README.md) | Port espone bus differenti e serializza controller condivisi senza hardware inventato. |

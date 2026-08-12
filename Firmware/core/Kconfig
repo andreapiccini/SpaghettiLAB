@@ -26,6 +26,8 @@ module = SPAGHETTI_POWER
 module-str = spaghetti_power
 source "subsys/logging/Kconfig.template.log_config"
 
+rsource "subsys/power/Kconfig"
+
 module = SPAGHETTI_CONFIG
 module-str = spaghetti_config
 source "subsys/logging/Kconfig.template.log_config"

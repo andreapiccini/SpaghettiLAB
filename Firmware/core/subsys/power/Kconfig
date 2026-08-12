@@ -1,0 +1,42 @@
+menuconfig SPAGHETTI_ENERGY
+	bool "Spaghetti LAB low-energy policy orchestrator"
+	default y
+	help
+	  Apply LOW_ENERGY and ONLINE connectivity effects on the fake BLE
+	  radio state machine, optional runtime PM, and software metrics.
+
+if SPAGHETTI_ENERGY
+
+config SPAGHETTI_ENERGY_MIN_ADVERTISING_WINDOW_MS
+	int "Minimum BLE advertising window in milliseconds"
+	range 10 60000
+	default 1000
+	help
+	  Lower bound accepted by spaghetti_energy_init() for windowed BLE.
+
+config SPAGHETTI_ENERGY_MAX_ADVERTISING_WINDOW_MS
+	int "Maximum BLE advertising window in milliseconds"
+	range SPAGHETTI_ENERGY_MIN_ADVERTISING_WINDOW_MS 600000
+	default 60000
+	help
+	  Upper bound accepted by spaghetti_energy_init() for windowed BLE.
+
+config SPAGHETTI_ENERGY_MIN_ADVERTISING_PERIOD_MS
+	int "Minimum BLE advertising period in milliseconds"
+	range 50 3600000
+	default 60000
+	help
+	  Lower bound accepted by spaghetti_energy_init() for windowed BLE.
+
+config SPAGHETTI_ENERGY_MAX_ADVERTISING_PERIOD_MS
+	int "Maximum BLE advertising period in milliseconds"
+	range SPAGHETTI_ENERGY_MIN_ADVERTISING_PERIOD_MS 3600000
+	default 3600000
+	help
+	  Upper bound accepted by spaghetti_energy_init() for windowed BLE.
+
+module = SPAGHETTI_ENERGY
+module-str = spaghetti_energy
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # SPAGHETTI_ENERGY

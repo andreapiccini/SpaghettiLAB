@@ -24,6 +24,7 @@ This directory contains contracts shared between firmware components. Headers ex
 | `capabilities.h` | Immutable build profile, bounded limits, and board-backed capability snapshot. |
 | `resource_contract.h` | Pure compile-time consistency predicates shared by firmware and negative build tests. |
 | `connectivity.h` | Persistent connectivity policy and temporary service leases. |
+| `energy.h` | Low-energy BLE availability and connectivity-policy orchestration. |
 | `secure_workspace.h` | Admission and high-water metrics for heavy secure sessions. |
 | `service.h` | Generic lifecycle owner for optional services. |
 | `port.h` | Physical Port access contract. |

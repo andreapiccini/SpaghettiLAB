@@ -6,6 +6,10 @@ Power coordinates a physical resource shared by multiple live Modules. It perfor
 first-acquire activation and final-release deactivation; it is not Zephyr system power
 management, sleep policy, or battery management.
 
+`energy.c` is a sibling file with a different responsibility: it applies the
+LOW_ENERGY/ONLINE connectivity policy to the fake BLE radio state machine, optional
+runtime PM, and software metrics. Do not merge it with `power.c`.
+
 ## Current hardware status
 
 Spaghetti LAB Core V1 does not declare a verified controllable rail. Its Port describes
@@ -73,9 +77,13 @@ sequenceDiagram
 | File | Role |
 |---|---|
 | `include/spaghetti/power.h` | Public types, states and API contract. |
+| `include/spaghetti/energy.h` | BLE availability policy and connectivity orchestration. |
 | `subsys/power/power.c` | Deterministic owner table and transition logic. |
+| `subsys/power/energy.c` | Fake BLE windows, optional runtime PM, and metrics. |
+| `subsys/power/energy_internal.h` | Test seams and internal metrics snapshot. |
 | `subsys/power/power_internal.h` | Private fake-backend seam. |
 | `tests/power/` | Native fake tests for ownership, limits and rollback. |
+| `tests/energy/` | Native fake tests for radio on/off and policy transitions. |
 
 Run:
 

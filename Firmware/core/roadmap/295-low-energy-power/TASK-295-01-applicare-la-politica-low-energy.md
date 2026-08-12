@@ -1,6 +1,6 @@
 # TASK-295-01 — Applicare la politica low-energy
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 295 — Politica low-energy
 
 ## Cosa devo fare
@@ -59,11 +59,11 @@ const struct spaghetti_energy_policy policy = {
 
 ## Checklist di completamento
 
-- [ ] LOW_ENERGY arresta realmente i servizi IP.
-- [ ] BLE off/advertising/windowed sono stati distinti.
-- [ ] Runtime continua quando la radio è spenta.
-- [ ] PM non sospende device o Port occupati.
-- [ ] Metriche software sono separate dalle future misure elettriche.
+- [x] LOW_ENERGY arresta realmente i servizi IP.
+- [x] BLE off/advertising/windowed sono stati distinti.
+- [x] Runtime continua quando la radio è spenta.
+- [x] PM non sospende device o Port occupati.
+- [x] Metriche software sono separate dalle future misure elettriche.
 
 ## Verifica e fine task
 

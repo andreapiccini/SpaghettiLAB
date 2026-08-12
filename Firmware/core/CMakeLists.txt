@@ -80,6 +80,10 @@ target_sources_ifdef(CONFIG_SPAGHETTI_POWER app PRIVATE
   subsys/power/power.c
 )
 
+target_sources_ifdef(CONFIG_SPAGHETTI_ENERGY app PRIVATE
+  subsys/power/energy.c
+)
+
 get_target_property(APP_SRCS app SOURCES)
 
 message(STATUS "========== APP SOURCES ==========")

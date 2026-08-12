@@ -1,0 +1,6 @@
+mainmenu "Spaghetti Energy policy tests"
+
+rsource "../../subsys/connectivity/Kconfig"
+rsource "../../subsys/power/Kconfig"
+
+source "Kconfig.zephyr"
