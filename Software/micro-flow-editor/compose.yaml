@@ -1,0 +1,12 @@
+services:
+  micro-flow-editor:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MICRO_FLOW_EDITOR_PORT:-5173}:5173"
+    volumes:
+      - .:/app
+      - micro-flow-editor-node-modules:/app/node_modules
+
+volumes:
+  micro-flow-editor-node-modules:
