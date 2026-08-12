@@ -7,6 +7,8 @@
 #include <zephyr/sys/atomic.h>
 #include <zephyr/zbus/zbus.h>
 
+#include <spaghetti/record_delivery.h>
+
 LOG_MODULE_REGISTER(spaghetti_data, CONFIG_SPAGHETTI_DATA_LOG_LEVEL);
 
 ZBUS_MSG_SUBSCRIBER_DEFINE(record_logger_subscriber);
@@ -27,16 +29,6 @@ static atomic_t published_count;
 static atomic_t rejected_count;
 static atomic_t delivery_error_count;
 K_MUTEX_DEFINE(data_lock);
-
-/* Phase-345 Record Delivery boundary; empty until that task lands.
- * Marked weak so a later object file can replace this stub.
- */
-__attribute__((weak)) int spaghetti_record_delivery_push(
-	const struct spaghetti_record *record)
-{
-	ARG_UNUSED(record);
-	return 0;
-}
 
 #if CONFIG_SPAGHETTI_DATA_LOGGER
 static void record_logger_thread(void *first, void *second, void *third)
@@ -87,6 +79,7 @@ K_THREAD_DEFINE(record_logger_thread_id,
 
 int spaghetti_data_init(void)
 {
+	uint64_t boot_id;
 	int err = k_mutex_lock(&data_lock, K_FOREVER);
 
 	if (err < 0) {
@@ -95,6 +88,16 @@ int spaghetti_data_init(void)
 	if (atomic_get(&is_initialized) != 0) {
 		k_mutex_unlock(&data_lock);
 		return -EALREADY;
+	}
+
+	boot_id = (uint64_t)k_cycle_get_32();
+	if (boot_id == 0U) {
+		boot_id = 1U;
+	}
+	err = spaghetti_record_delivery_init(boot_id);
+	if (err < 0) {
+		k_mutex_unlock(&data_lock);
+		return err;
 	}
 
 	atomic_set(&published_count, 0);

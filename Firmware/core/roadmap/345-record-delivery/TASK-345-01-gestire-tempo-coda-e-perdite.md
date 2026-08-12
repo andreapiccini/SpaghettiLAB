@@ -1,6 +1,6 @@
 # TASK-345-01 — Gestire tempo, coda e perdite dei record
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 345 — Consegna dei record e disconnessioni
 
 ## Cosa devo fare
@@ -97,13 +97,13 @@ if (spaghetti_record_delivery_peek(MQTT_CONSUMER_ID,
 
 ## Checklist di completamento
 
-- [ ] Uptime e boot ID hanno semantica documentata.
-- [ ] Ring RAM è bounded e non usa heap.
-- [ ] MQTT, BLE e futuri adapter hanno cursori e ACK indipendenti.
-- [ ] Overflow è visibile nel contatore del consumer che perde il record.
-- [ ] Reboot è una discontinuità esplicita.
-- [ ] MQTT e BLE non cambiano il contenuto del record.
-- [ ] Capacità ring e consumer provengono dal profilo 291.
+- [x] Uptime e boot ID hanno semantica documentata.
+- [x] Ring RAM è bounded e non usa heap.
+- [x] MQTT, BLE e futuri adapter hanno cursori e ACK indipendenti.
+- [x] Overflow è visibile nel contatore del consumer che perde il record.
+- [x] Reboot è una discontinuità esplicita.
+- [x] MQTT e BLE non cambiano il contenuto del record.
+- [x] Capacità ring e consumer provengono dal profilo 291.
 
 ## Verifica e fine task
 

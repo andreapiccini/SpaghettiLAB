@@ -82,6 +82,10 @@ module = SPAGHETTI_DATA
 module-str = spaghetti_data
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_RECORD_DELIVERY
+module-str = spaghetti_record_delivery
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_RUNTIME
 module-str = spaghetti_runtime
 source "subsys/logging/Kconfig.template.log_config"

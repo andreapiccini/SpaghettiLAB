@@ -6,6 +6,7 @@ project(spaghetti_mqtt_test)
 target_sources(app PRIVATE
   src/main.c
   ../../subsys/data/data.c
+  ../../subsys/data/record_delivery.c
   ../../subsys/services/mqtt/mqtt.c
   ../../subsys/services/service_thread.c
 )
@@ -15,3 +16,5 @@ target_include_directories(app PRIVATE
   ../../subsys/services/mqtt
   ../../subsys/services
 )
+
+zephyr_linker_sources(SECTIONS ../../subsys/data/record_delivery_sections.ld)

@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.20.0)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(spaghetti_data_test)
+project(spaghetti_record_delivery_test)
 
 target_sources(app PRIVATE
   src/main.c
-  ../../subsys/data/data.c
   ../../subsys/data/record_delivery.c
 )
 

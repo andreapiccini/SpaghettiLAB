@@ -15,6 +15,7 @@
 #include <spaghetti/module_manager.h>
 #include <spaghetti/core.h>
 #include <spaghetti/processing.h>
+#include <spaghetti/record_delivery.h>
 #include <spaghetti/rule_driver.h>
 #include <spaghetti/rule_registry.h>
 #include <spaghetti/schema.h>
@@ -509,6 +510,11 @@ int spaghetti_runtime_init(void)
 	runtime_boot_id = (uint64_t)k_cycle_get_32();
 	if (runtime_boot_id == 0U) {
 		runtime_boot_id = 1U;
+	}
+	err = spaghetti_record_delivery_init(runtime_boot_id);
+	if (err < 0) {
+		k_mutex_unlock(&runtime_lock);
+		return err;
 	}
 	k_sem_reset(&runtime_wake_sem);
 	k_sem_reset(&runtime_stopped_sem);

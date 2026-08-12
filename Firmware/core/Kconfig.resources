@@ -208,14 +208,14 @@ config SPAGHETTI_CONFIG_MIN_WRITE_INTERVAL_MS
 	  rate limit.
 
 config SPAGHETTI_MAX_RECORD_QUEUE
-	int
-	range 2 255
+	int "Maximum retained records in the delivery ring"
+	range 1 255
 	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
 	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
 	default 32
 
 config SPAGHETTI_MAX_RECORD_CONSUMERS
-	int
+	int "Maximum compiled record delivery consumers"
 	range 1 16
 	default 3 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
 	default 4 if SPAGHETTI_RESOURCE_PROFILE_STANDARD

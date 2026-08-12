@@ -76,6 +76,8 @@ target_sources(app PRIVATE
   subsys/services/update/update.c
   subsys/services/update/update_mcuboot.c
   subsys/data/data.c
+  subsys/data/record_delivery.c
+  subsys/data/record_consumer_ble.c
   subsys/services/timer/timer.c
   subsys/processing/processing.c
   subsys/runtime/runtime.c
@@ -110,6 +112,7 @@ zephyr_linker_sources(SECTIONS subsys/driver_registry/driver_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/rule_registry/rule_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/block_registry/block_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/device_profiles/device_profile_sections.ld)
+zephyr_linker_sources(SECTIONS subsys/data/record_delivery_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)
 

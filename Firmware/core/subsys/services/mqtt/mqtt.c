@@ -20,11 +20,17 @@
 #include <zephyr/zbus/zbus.h>
 
 #include <spaghetti/data.h>
+#include <spaghetti/record_delivery.h>
 
 #include "mqtt_internal.h"
 #include "../service_thread.h"
 
 LOG_MODULE_REGISTER(spaghetti_mqtt, CONFIG_SPAGHETTI_MQTT_LOG_LEVEL);
+
+SPAGHETTI_RECORD_CONSUMER_DEFINE(spaghetti_mqtt_record_consumer) = {
+	.id = SPAGHETTI_RECORD_CONSUMER_ID_MQTT,
+	.name = "mqtt",
+};
 
 #define SPAGHETTI_MQTT_COMMAND_QUEUE_DEPTH 2U
 #define SPAGHETTI_MQTT_CLIENT_BUFFER_SIZE 512U
@@ -610,6 +616,8 @@ int spaghetti_mqtt_start(void)
 		k_mutex_unlock(&mqtt_lock);
 		return -EIO;
 	}
+	(void)spaghetti_record_delivery_set_consumer_active(
+		SPAGHETTI_RECORD_CONSUMER_ID_MQTT, true);
 	if (!context.network_callback_registered) {
 		net_mgmt_init_event_callback(
 			&network_callback, network_event_handler,
@@ -648,6 +656,8 @@ int spaghetti_mqtt_start(void)
 		}
 		k_msgq_purge(&command_queue);
 		(void)zbus_obs_set_enable(&record_mqtt_subscriber, false);
+		(void)spaghetti_record_delivery_set_consumer_active(
+			SPAGHETTI_RECORD_CONSUMER_ID_MQTT, false);
 		(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
 		context.started = false;
 		context.status.state = SPAGHETTI_MQTT_STOPPED;
@@ -717,6 +727,8 @@ int spaghetti_mqtt_stop(k_timeout_t timeout)
 		}
 	}
 	(void)zbus_obs_set_enable(&record_mqtt_subscriber, false);
+	(void)spaghetti_record_delivery_set_consumer_active(
+		SPAGHETTI_RECORD_CONSUMER_ID_MQTT, false);
 	(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
 	if (context.network_callback_registered) {
 		net_mgmt_del_event_callback(&network_callback);

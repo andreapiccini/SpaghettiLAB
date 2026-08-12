@@ -6,6 +6,10 @@ config SPAGHETTI_DATA_LOG_LEVEL
 	int
 	default 0
 
+config SPAGHETTI_RECORD_DELIVERY_LOG_LEVEL
+	int
+	default 0
+
 config SPAGHETTI_DATA_LOGGER
 	bool
 	default n

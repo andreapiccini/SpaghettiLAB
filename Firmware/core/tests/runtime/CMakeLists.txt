@@ -6,6 +6,7 @@ project(spaghetti_runtime_test)
 target_sources(app PRIVATE
   src/main.c
   ../../subsys/data/data.c
+  ../../subsys/data/record_delivery.c
   ../../subsys/schema/schema.c
   ../../subsys/rule_registry/rule_registry.c
   ../../subsys/runtime/runtime.c
@@ -19,3 +20,4 @@ target_include_directories(app PRIVATE
 
 zephyr_linker_sources(SECTIONS ../../subsys/core/health_sections.ld)
 zephyr_linker_sources(SECTIONS ../../subsys/rule_registry/rule_sections.ld)
+zephyr_linker_sources(SECTIONS ../../subsys/data/record_delivery_sections.ld)
