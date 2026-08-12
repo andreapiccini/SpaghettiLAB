@@ -30,4 +30,8 @@ config SPAGHETTI_SECURE_WORKSPACE_OTA_WAIT_MS
 	int
 	default 20
 
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 100
+
 source "Kconfig.zephyr"

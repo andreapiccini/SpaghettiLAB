@@ -55,23 +55,95 @@ int spaghetti_remote_console_init(void)
 	}
 	context.initialized = true;
 	context.last_error = 0;
-	if (!credentials_present) {
-		context.state = SPAGHETTI_REMOTE_CONSOLE_DISABLED;
-		LOG_INF("ready: enabled=0");
+	context.state = SPAGHETTI_REMOTE_CONSOLE_DISABLED;
+	LOG_INF("ready: credentials=%u listener=closed",
+		credentials_present ? 1U : 0U);
+	goto unlock;
+
+failed:
+	context.state = SPAGHETTI_REMOTE_CONSOLE_ERROR;
+	context.last_error = err;
+unlock:
+	k_mutex_unlock(&remote_console_lock);
+	return err;
+}
+
+int spaghetti_remote_console_start(void)
+{
+	bool credentials_present;
+	int err = k_mutex_lock(&remote_console_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		err = -EACCES;
 		goto unlock;
+	}
+	if (context.state == SPAGHETTI_REMOTE_CONSOLE_LISTENING) {
+		err = -EALREADY;
+		goto unlock;
+	}
+	err = spaghetti_remote_console_backend_has_credentials(
+		&credentials_present);
+	if ((err < 0) || !credentials_present) {
+		err = (err < 0) ? err : -ENOENT;
+		goto failed;
 	}
 	err = spaghetti_remote_console_backend_open();
 	if (err < 0) {
 		goto failed;
 	}
 	context.state = SPAGHETTI_REMOTE_CONSOLE_LISTENING;
-	LOG_INF("ready: enabled=1 port=%u",
-		CONFIG_SPAGHETTI_REMOTE_CONSOLE_PORT);
+	context.last_error = 0;
+	LOG_INF("listening: port=%u", CONFIG_SPAGHETTI_REMOTE_CONSOLE_PORT);
 	goto unlock;
 
 failed:
 	context.state = SPAGHETTI_REMOTE_CONSOLE_ERROR;
 	context.last_error = err;
+unlock:
+	k_mutex_unlock(&remote_console_lock);
+	return err;
+}
+
+int spaghetti_remote_console_stop(k_timeout_t timeout)
+{
+	int64_t timeout_ms;
+	int err;
+
+	if (K_TIMEOUT_EQ(timeout, K_FOREVER)) {
+		return -EINVAL;
+	}
+	timeout_ms = k_ticks_to_ms_floor64(timeout.ticks);
+	if ((timeout_ms < 0) ||
+	    (timeout_ms > CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS)) {
+		return -EINVAL;
+	}
+	err = k_mutex_lock(&remote_console_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		err = -EACCES;
+		goto unlock;
+	}
+	if (context.state == SPAGHETTI_REMOTE_CONSOLE_DISABLED) {
+		err = -EALREADY;
+		goto unlock;
+	}
+	k_mutex_unlock(&remote_console_lock);
+	err = spaghetti_remote_console_backend_close(timeout);
+	(void)k_mutex_lock(&remote_console_lock, K_FOREVER);
+	if ((err == 0) || (err == -EALREADY)) {
+		context.state = SPAGHETTI_REMOTE_CONSOLE_DISABLED;
+		context.last_error = 0;
+		err = 0;
+	} else {
+		context.state = SPAGHETTI_REMOTE_CONSOLE_ERROR;
+		context.last_error = err;
+	}
 unlock:
 	k_mutex_unlock(&remote_console_lock);
 	return err;

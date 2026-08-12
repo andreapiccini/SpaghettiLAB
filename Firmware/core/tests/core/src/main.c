@@ -12,10 +12,10 @@
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/secure_workspace.h>
+#include <spaghetti/service.h>
 #include <spaghetti/update.h>
 
 enum init_step {
-	STEP_CONNECTIVITY,
 	STEP_SECURE_WORKSPACE,
 	STEP_STORAGE,
 	STEP_UPDATE,
@@ -33,9 +33,12 @@ enum init_step {
 	STEP_MAINTENANCE_ENTER,
 	STEP_COMMUNICATION,
 	STEP_REMOTE_CONSOLE,
+	STEP_SERVICE_REGISTRY,
+	STEP_OTA_START,
+	STEP_CONNECTIVITY,
 };
 
-static enum init_step steps[17];
+static enum init_step steps[19];
 static size_t step_count;
 static struct spaghetti_config initialized_defaults;
 static int trial_confirm_count;
@@ -53,6 +56,17 @@ int spaghetti_connectivity_init(
 {
 	zassert_equal(boot_policy, SPAGHETTI_CONNECTIVITY_ONLINE);
 	return record_step(STEP_CONNECTIVITY);
+}
+
+int spaghetti_service_registry_init(void)
+{
+	return record_step(STEP_SERVICE_REGISTRY);
+}
+
+int spaghetti_service_start(const char *id)
+{
+	zassert_equal(strcmp(id, SPAGHETTI_SERVICE_ID_OTA), 0);
+	return record_step(STEP_OTA_START);
 }
 
 int spaghetti_secure_workspace_init(void)
@@ -298,29 +312,31 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 			SPAGHETTI_CORE_IMAGE_CONFIRMED);
 	zassert_equal(strcmp(info.version, "1.2.3+4"), 0);
 	zassert_equal(spaghetti_core_init(), -EALREADY);
-	zassert_equal(step_count, normal ? 17U : 13U);
-	zassert_equal(steps[0], STEP_CONNECTIVITY);
-	zassert_equal(steps[1], STEP_SECURE_WORKSPACE);
-	zassert_equal(steps[2], STEP_STORAGE);
-	zassert_equal(steps[3], STEP_UPDATE);
-	zassert_equal(steps[4], STEP_MAINTENANCE_INIT);
-	zassert_equal(steps[5], STEP_PORT);
-	zassert_equal(steps[6], STEP_REGISTRY);
-	zassert_equal(steps[7], STEP_MANAGER);
-	zassert_equal(steps[8], STEP_DATA);
-	zassert_equal(steps[9], STEP_CONFIG);
+	zassert_equal(step_count, normal ? 19U : 12U);
+	zassert_equal(steps[0], STEP_SECURE_WORKSPACE);
+	zassert_equal(steps[1], STEP_STORAGE);
+	zassert_equal(steps[2], STEP_UPDATE);
+	zassert_equal(steps[3], STEP_MAINTENANCE_INIT);
+	zassert_equal(steps[4], STEP_PORT);
+	zassert_equal(steps[5], STEP_REGISTRY);
+	zassert_equal(steps[6], STEP_MANAGER);
+	zassert_equal(steps[7], STEP_DATA);
+	zassert_equal(steps[8], STEP_CONFIG);
 	if (normal) {
-		zassert_equal(steps[10], STEP_RUNTIME);
-		zassert_equal(steps[11], STEP_MQTT);
-		zassert_equal(steps[12], STEP_DISCOVERY);
-		zassert_equal(steps[13], STEP_WIFI);
-		zassert_equal(steps[14], STEP_OTA);
-		zassert_equal(steps[15], STEP_COMMUNICATION);
-		zassert_equal(steps[16], STEP_REMOTE_CONSOLE);
+		zassert_equal(steps[9], STEP_RUNTIME);
+		zassert_equal(steps[10], STEP_MQTT);
+		zassert_equal(steps[11], STEP_DISCOVERY);
+		zassert_equal(steps[12], STEP_WIFI);
+		zassert_equal(steps[13], STEP_OTA);
+		zassert_equal(steps[14], STEP_COMMUNICATION);
+		zassert_equal(steps[15], STEP_REMOTE_CONSOLE);
+		zassert_equal(steps[16], STEP_SERVICE_REGISTRY);
+		zassert_equal(steps[17], STEP_OTA_START);
+		zassert_equal(steps[18], STEP_CONNECTIVITY);
 	} else {
-		zassert_equal(steps[10], STEP_WIFI);
-		zassert_equal(steps[11], STEP_MAINTENANCE_ENTER);
-		zassert_equal(steps[12], STEP_COMMUNICATION);
+		zassert_equal(steps[9], STEP_WIFI);
+		zassert_equal(steps[10], STEP_MAINTENANCE_ENTER);
+		zassert_equal(steps[11], STEP_COMMUNICATION);
 	}
 	zassert_equal(initialized_defaults.version, SPAGHETTI_CONFIG_VERSION);
 	zassert_equal(initialized_defaults.module_count, 0U);

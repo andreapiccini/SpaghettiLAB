@@ -24,14 +24,9 @@ opacità per sfondi-chip su qualunque colore semantico o di categoria.
 
 - Altezza: **56px** (`h-14`), `border-bottom: 1px solid #E1E4EB`, sfondo `#FFFFFF`,
   padding orizzontale 16px, gap fra i gruppi 16px.
-- **Badge logo**: 28×28px, `border-radius: 8px`, sfondo
-  `radial-gradient(120% 120% at 20% 0%, #7D2AE8 0%, #3F77DA 55%, #00C4CC 100%)`,
-  lettera "S" bianca, 14px, bold, font `font.heading`.
-  > Nota: è un'improvvisazione del prototipo (non aveva accesso al file del logo
-  > reale). **Decisione da confermare**: tenere questo badge a gradiente (piace,
-  > scalabile, zero asset da caricare) oppure sostituirlo con
-  > `spaghetti-logo-blu.png`/`header-icon.png` reali? Finché non diversamente
-  > specificato, questo documento assume si tenga il badge a gradiente.
+- **Logo**: 28×28px, asset `ux/assets/icon-transparent-28@2x.png` (56×56 reale, 2× per
+  retina), nessuno sfondo/badge colorato dietro — l'icona ha canale alpha vero e il
+  suo disegno (nero/blu) si legge direttamente su `color.surface` bianco.
 - **Wordmark** "SpaghettiLAB": 18px / 600 / line-height 1.3, `font.heading`, colore
   `color.ink`.
 - **Pillola stato Core** (centrata): `border-radius: 999px`, bordo 1px `#E1E4EB`,

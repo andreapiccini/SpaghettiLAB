@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <zephyr/kernel.h>
 
 struct smp_transport;
 
@@ -36,14 +37,38 @@ struct spaghetti_ota_status {
 };
 
 /**
- * @brief Initialize OTA closed and consume an optional one-shot request.
+ * @brief Initialize OTA closed without starting optional runtime resources.
  *
- * @retval 0 OTA initialized; a requested window is open or OTA remains closed.
+ * @retval 0 OTA initialized and remains closed until lifecycle start.
  * @retval -EALREADY OTA was initialized previously.
  * @retval -EIO Secure storage, DTLS, socket, or Update initialization failed.
  * @retval -errno A backend or Update operation failed.
  */
 int spaghetti_ota_init(void);
+
+/**
+ * @brief Start OTA policy and consume an optional persisted one-shot window.
+ *
+ * @retval 0 OTA is started, with the listener open only for a pending request.
+ * @retval -EACCES OTA is not initialized.
+ * @retval -EALREADY OTA is already started.
+ * @retval -errno Credential, Update, workspace, socket, or stack setup failed.
+ */
+int spaghetti_ota_start(void);
+
+/**
+ * @brief Stop OTA and release every optional runtime resource.
+ *
+ * @param[in] timeout Finite cleanup deadline copied by value; K_FOREVER is invalid.
+ *
+ * @retval 0 Work, socket, callback, listener, stack, and workspace are released.
+ * @retval -EINVAL @p timeout is unbounded or exceeds the service limit.
+ * @retval -EACCES OTA is not initialized.
+ * @retval -EALREADY OTA is already stopped.
+ * @retval -EAGAIN The listener did not exit before the deadline.
+ * @retval -errno A backend cleanup operation failed.
+ */
+int spaghetti_ota_stop(k_timeout_t timeout);
 
 /**
  * @brief Persist one per-device DTLS-PSK credential.

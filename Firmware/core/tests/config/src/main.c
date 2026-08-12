@@ -13,6 +13,7 @@
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
 #include <spaghetti/runtime.h>
+#include <spaghetti/service.h>
 
 struct spaghetti_port {
 	spaghetti_port_id_t id;
@@ -43,6 +44,8 @@ static uint32_t fake_runtime_start_count;
 static uint32_t fake_runtime_stop_count;
 static struct spaghetti_mqtt_config fake_mqtt_config;
 static enum spaghetti_mqtt_state fake_mqtt_state = SPAGHETTI_MQTT_STOPPED;
+static enum spaghetti_service_state fake_service_state =
+	SPAGHETTI_SERVICE_RUNNING;
 static struct spaghetti_config fake_stored_config;
 static int fake_storage_error;
 
@@ -133,6 +136,48 @@ int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out)
 		.state = fake_mqtt_state,
 	};
 	return 0;
+}
+
+int spaghetti_service_get_state(
+	const char *id, enum spaghetti_service_state *out)
+{
+	if ((id == NULL) || (out == NULL) ||
+	    (strcmp(id, SPAGHETTI_SERVICE_ID_MQTT) != 0)) {
+		return -EINVAL;
+	}
+	*out = fake_service_state;
+	return 0;
+}
+
+int spaghetti_service_start(const char *id)
+{
+	int err;
+
+	if ((id == NULL) ||
+	    (strcmp(id, SPAGHETTI_SERVICE_ID_MQTT) != 0)) {
+		return -EINVAL;
+	}
+	err = spaghetti_mqtt_start();
+	if ((err == 0) || (err == -EACCES)) {
+		fake_service_state = SPAGHETTI_SERVICE_RUNNING;
+		return 0;
+	}
+	return err;
+}
+
+int spaghetti_service_stop(const char *id, k_timeout_t timeout)
+{
+	if ((id == NULL) ||
+	    (strcmp(id, SPAGHETTI_SERVICE_ID_MQTT) != 0)) {
+		return -EINVAL;
+	}
+	const int err = spaghetti_mqtt_stop(timeout);
+
+	if ((err == 0) || (err == -EALREADY)) {
+		fake_service_state = SPAGHETTI_SERVICE_STOPPED;
+		return 0;
+	}
+	return err;
 }
 
 int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)

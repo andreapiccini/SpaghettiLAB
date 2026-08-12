@@ -102,7 +102,7 @@ Layout fisso su tutte le schermate, tre regioni:
 | Catalog & Topology Explorer | `S040-catalog-topology` | S041–S043 | ⬜ da scrivere |
 | Physical Composition Editor | `S050-physical-composition` | S050 | ⬜ da scrivere |
 | Device Profile Studio | `S060-device-profile-studio` | S061–S063 | ⬜ da scrivere |
-| Processing Graph Editor | `S070-processing-graph-editor` | S071–S073 | ✅ esempio completo (vedi sotto) |
+| Processing Graph Editor | `S070-processing-graph-editor` | S071–S073 | ✅ as-built confermata (prototipo React validato) |
 | Deploy & Diff | `S080-deploy-diff` | S080 | ⬜ da scrivere |
 | Runtime & Diagnostics | `S090-runtime-diagnostics` | S091–S094 | ⬜ da scrivere |
 | Capability Marketplace & OTA | `S100-capability-marketplace` | S101–S103 | ⬜ da scrivere |
@@ -210,11 +210,46 @@ questi, mai un numero arbitrario.
 | `elevation.2` | `0 4px 16px rgba(20,23,31,.10), 0 2px 6px rgba(20,23,31,.08)` — hover/dropdown |
 | `elevation.3` | `0 16px 48px rgba(20,23,31,.22), 0 4px 16px rgba(20,23,31,.12)` — dialoghi modali |
 
+**Convenzione confermata — nomi CSS reali**: nell'implementazione validata (vedi
+sotto) questi token sono variabili CSS `--radius-slsm` / `--radius-slmd` /
+`--radius-sllg` (stessi valori 8/12/16px) e `--shadow-e1` / `--shadow-e2` /
+`--shadow-e3`. Usare questi nomi nel codice per coerenza con quanto già verificato.
+
+**Convenzione confermata — colore su chip**: ogni chip icona (palette, nodo,
+Inspector) usa il colore semantico/categoria con sfondo al **12% di opacità**,
+ottenuto appendendo il suffisso esadecimale `1F` al colore a 6 cifre (es. `#3F77DA1F`).
+Regola generale, non solo per il Processing Graph Editor.
+
 ### Icone
 
 Set unico coerente in tutta l'app — usare [Lucide](https://lucide.dev/) (MIT, stroke
 1.5-2px, stessa famiglia visiva già comune in tool developer moderni). Ogni schermata
 elenca le icone specifiche richieste nel proprio `visual.md`.
+
+### Logo nella top bar — risolto
+
+**Decisione chiusa il 2026-08-12**: si usa il logo reale, non il badge a gradiente con
+"S" generato dal prototipo (quello resta scartato).
+
+Asset canonici (nuovi, con canale alpha reale — verificato, non solo dichiarato):
+
+| File | Origine | Uso |
+|---|---|---|
+| `ux/assets/logo-full.png` (1067×799, alpha) | fornito dal proprietario del prodotto | wordmark completo, per contesti larghi (schermate di benvenuto, export, documentazione) |
+| `ux/assets/icon-transparent-512.png` (512×512, alpha) | ritagliato da `logo-full.png` (solo il simbolo a infinito, senza wordmark) | master da cui derivare ogni icona quadrata |
+| `ux/assets/icon-transparent-28@2x.png` (56×56, alpha) | ridimensionato dal master | badge nella top bar della shell (28×28px logico, asset a 2× per schermi retina) |
+| `ux/assets/favicon.ico` (16/32/48/64px, alpha) | generato dal master | favicon del browser |
+
+Il badge nella top bar (vedi § Shell applicativa) diventa: **28×28px,
+`icon-transparent-28@2x.png`, nessuno sfondo colorato dietro** — l'icona ha già il suo
+disegno (nero/blu) leggibile direttamente su `color.surface` bianco, non serve un
+cerchio a gradiente dietro. Se in futuro serve un badge su sfondo scuro/colorato,
+questo stesso asset trasparente funziona anche lì senza modifiche.
+
+`ux/assets/favicon-icon.png`, fornito insieme agli altri, **non è stato usato**: non
+ha in realtà canale alpha (sfondo bianco pieno, verificato) nonostante il nome — è
+ridondante con gli asset sopra. Lasciato nella cartella ma considerarlo superato;
+dimmi se vuoi che lo rimuova.
 
 ## Sistema di animazione
 
@@ -290,8 +325,11 @@ Valgono per **ogni** schermata, non ripetute in ciascun documento:
 
 ## Prossimo passo
 
-Rivedi `ux/screens/S070-processing-graph-editor/` (i tre file) come campione del
-formato, ora aggiornato con colori campionati dal sito reale e col sistema di
-animazione. Se il livello di dettaglio e la separazione dei tre layer funzionano per
-te, replico lo stesso schema per le altre dieci schermate elencate sopra, una alla
-volta o in blocco.
+`ux/screens/S070-processing-graph-editor/` è ora **confermata "as-built"**: ogni
+valore (px, colore, spring, tasti) è stato verificato contro un prototipo React reale
+funzionante (React + `@xyflow/react` + Motion for React + Tailwind), non è più una
+stima. Questo è il livello di dettaglio e il formato a tre layer da replicare per le
+altre dieci schermate elencate sopra — una alla volta o in blocco, quando sei pronto.
+
+Decisioni ancora aperte da chiudere prima di considerare il design system
+completo: logo badge a gradiente vs asset reale nella top bar (vedi sopra).

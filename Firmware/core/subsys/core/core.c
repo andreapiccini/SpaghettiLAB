@@ -24,11 +24,13 @@
 #include <spaghetti/runtime.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/secure_workspace.h>
+#include <spaghetti/service.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
 
 #include "core_boot_internal.h"
+#include "../services/service_registry.h"
 
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
 
@@ -219,11 +221,6 @@ int spaghetti_core_init(void)
 		(uint32_t)capabilities.max_modules,
 		(uint32_t)capabilities.max_protocol_payload,
 		capabilities.build_capabilities);
-	err = spaghetti_connectivity_init(
-		SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE);
-	if (err < 0) {
-		goto connectivity_failed;
-	}
 	err = spaghetti_secure_workspace_init();
 	if (err < 0) {
 		goto secure_workspace_failed;
@@ -320,6 +317,19 @@ int spaghetti_core_init(void)
 		if (err < 0) {
 			goto remote_console_failed;
 		}
+		err = spaghetti_service_registry_init();
+		if (err < 0) {
+			goto service_registry_failed;
+		}
+		err = spaghetti_service_start(SPAGHETTI_SERVICE_ID_OTA);
+		if (err < 0) {
+			goto ota_start_failed;
+		}
+		err = spaghetti_connectivity_init(
+			SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE);
+		if (err < 0) {
+			goto connectivity_failed;
+		}
 	}
 
 	atomic_set(&core_state, SPAGHETTI_CORE_READY);
@@ -337,6 +347,12 @@ int spaghetti_core_init(void)
 
 remote_console_failed:
 	(void)fail_initialization("Remote Console", err);
+	goto unlock;
+service_registry_failed:
+	(void)fail_initialization("Service Registry", err);
+	goto unlock;
+ota_start_failed:
+	(void)fail_initialization("OTA start", err);
 	goto unlock;
 communication_failed:
 	(void)fail_initialization("Communication", err);

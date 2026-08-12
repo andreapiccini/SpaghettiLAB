@@ -121,8 +121,10 @@ Telnet: the remote peer receives only `spaghetti status`, `spaghetti apply <hex>
 `maintenance reboot`, and `help`. Status and Config still cross the same
 `spaghetti_communication_handle_request()` boundary used by the serial adapter.
 
-The listener exists only in Normal mode and only after a separate 32-byte console
-PSK and 1–32 byte identity have been provisioned while local Maintenance is active.
+The listener can run only in Normal mode, after a separate 32-byte console PSK and
+1–32 byte identity have been provisioned while local Maintenance is active, and while
+Connectivity Manager grants the Remote Console service lifecycle. When stopped it
+owns no listener/client socket, TLS credential registration, worker, or worker stack.
 The final-hardware path uses Maintenance Link management command IDs 10 and 11. The
 development path uses the physical USB Shell: `spaghetti maintenance reboot` writes
 the one-shot marker, and `spaghetti remote provision` reads the PSK with hidden

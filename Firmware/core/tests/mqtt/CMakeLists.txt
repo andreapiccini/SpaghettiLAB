@@ -7,9 +7,11 @@ target_sources(app PRIVATE
   src/main.c
   ../../subsys/data/data.c
   ../../subsys/services/mqtt/mqtt.c
+  ../../subsys/services/service_thread.c
 )
 
 target_include_directories(app PRIVATE
   ../../include
   ../../subsys/services/mqtt
+  ../../subsys/services
 )

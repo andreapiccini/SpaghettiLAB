@@ -10,7 +10,7 @@ Modules, Runtime, or MQTT.
 
 The service stores up to `CONFIG_SPAGHETTI_WIFI_PROFILE_MAX_COUNT` fixed profiles,
 keeps at most one preferred SSID, scans through Zephyr Wi-Fi management, and performs
-all connection work in one static worker. No password is exposed by the public list
+all connection work in one lifecycle-owned worker. No password is exposed by the public list
 or status API, logs, or shell output.
 
 Selection is deterministic:
@@ -77,6 +77,12 @@ Network callbacks only copy scan results, update atomics, and signal semaphores.
 worker performs scans, waits for association events, and retries; Shell, Runtime, and
 MQTT never block on this policy. MQTT still waits for an IPv4 address and reconnects
 through its existing behavior.
+
+Initialization loads only persistent metadata. Connectivity Manager calls
+`spaghetti_wifi_profiles_start()` to register callbacks and allocate the worker stack,
+then calls `spaghetti_wifi_profiles_stop()` to disconnect, join the worker, remove the
+callback, and return that stack. A stopped Wi-Fi service therefore retains profiles
+but no optional worker resource.
 
 In `UNPROVISIONED` and `MAINTENANCE`, Core instead calls
 `spaghetti_wifi_profiles_init_offline()`. Profiles can still be added or removed by

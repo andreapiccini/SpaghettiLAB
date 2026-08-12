@@ -4,6 +4,12 @@
 
 A service wraps a reusable Zephyr or platform capability behind a small product-level contract. Services are optional: include one only when a consumer needs timing, persistence, networking, or another concrete capability.
 
+`service_manager.c` is the single generic lifecycle state owner. Production
+transitions arrive through Connectivity Manager; direct Service Manager calls exist
+for tests and exceptional update orchestration. It publishes `STOPPED` only after the
+service callback has released sockets, callbacks, pending work, subscribers, workers,
+and their dynamic stacks. A failed cleanup remains `DEGRADED` and can be retried.
+
 ## What this component owns
 
 - The lifecycle and private backend state of one reusable capability.
@@ -25,6 +31,8 @@ A service wraps a reusable Zephyr or platform capability behind a small product-
 | `update/` | Exclusive update session, timeout and MCUboot test policy. |
 | `ota/` | One-shot authenticated DTLS-PSK adapter for restricted SMP update. |
 | `secure_workspace/` | Exclusive secure-session admission over the shared libc heap. |
+| `service_manager.c` | Atomic lifecycle state and capability admission for optional services. |
+| `service_thread.c` | Profile-bounded dynamic stack admission, join, release, and peak metrics. |
 | `mqtt/` | Optional MQTT transport adapter when selected by a product. |
 | Each service header/source | Public product contract and private Zephyr integration. |
 
@@ -145,6 +153,12 @@ endmenu
 ## Ownership and concurrency
 
 Each service documents its caller and worker contexts. Inputs retained beyond a direct call are copied. Queue sizes and stop behavior are bounded.
+
+Optional blocking workers use `k_thread_stack_alloc()` only after the profile quota
+accepts their thread count and requested stack bytes. `k_thread_join()` completes
+before `k_thread_stack_free()` returns the allocation to Zephyr's system heap. Wi-Fi,
+MQTT, OTA, and Remote Console therefore own no worker stack while stopped. Short OTA
+lifecycle work uses Zephyr's shared system workqueue instead of a private workqueue.
 
 ## Contract guarantees
 

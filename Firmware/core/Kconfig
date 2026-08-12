@@ -70,6 +70,10 @@ module = SPAGHETTI_WIFI_PROFILES
 module-str = spaghetti_wifi_profiles
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_SERVICE_MANAGER
+module-str = spaghetti_service_manager
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_INA219
 module-str = spaghetti_ina219
 source "subsys/logging/Kconfig.template.log_config"
@@ -81,6 +85,52 @@ source "subsys/logging/Kconfig.template.log_config"
 rsource "Kconfig.resources"
 rsource "subsys/connectivity/Kconfig"
 rsource "subsys/services/secure_workspace/Kconfig"
+
+config SPAGHETTI_SERVICE_MAX_COUNT
+	int "Maximum registered optional services"
+	range 1 16
+	default 4
+	help
+	  Fixed Service Manager state slots. Descriptors and operation tables remain
+	  firmware-owned and are never copied to the heap.
+
+config SPAGHETTI_SERVICE_ID_MAX_SIZE
+	int "Maximum service ID bytes including NUL"
+	range 8 32
+	default 24
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int "Maximum optional-service stop wait in milliseconds"
+	range 1 30000
+	default 10000
+	help
+	  K_FOREVER is rejected so every lifecycle transition has a deadline.
+
+config SPAGHETTI_SERVICE_THREAD_MAX_COUNT
+	int "Maximum simultaneous optional-service threads"
+	range 1 16
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 6 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 8
+
+config SPAGHETTI_SERVICE_THREAD_MAX_STACK_BYTES
+	int "Maximum simultaneous optional-service stack bytes"
+	range 4096 65536
+	default 16384 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 24576 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32768
+	help
+	  Admission limit applied before heap-backed dynamic stack allocation.
+	  A stopped and joined service returns its complete stack to the common heap.
+
+config HEAP_MEM_POOL_SIZE
+	default 20480 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 28672 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 36864 if SPAGHETTI_RESOURCE_PROFILE_EXTENDED
+	help
+	  Reserve the Zephyr system heap used by k_thread_stack_alloc(). Each value
+	  covers the corresponding Spaghetti optional-stack admission limit plus
+	  allocator metadata and alignment overhead.
 
 config SPAGHETTI_DISCOVERY_MAX_RESULTS
 	int "Maximum number of accepted Discovery results"

@@ -38,4 +38,16 @@ config SPAGHETTI_MQTT_PRIORITY
 	int
 	default 5
 
+config SPAGHETTI_SERVICE_THREAD_MAX_COUNT
+	int
+	default 4
+
+config SPAGHETTI_SERVICE_THREAD_MAX_STACK_BYTES
+	int
+	default 16384
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 5000
+
 source "Kconfig.zephyr"

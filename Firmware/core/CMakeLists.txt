@@ -10,6 +10,12 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_subdirectory(subsys/connectivity)
 add_subdirectory(subsys/services/secure_workspace)
 
+target_sources(app PRIVATE
+  subsys/services/service_manager.c
+  subsys/services/service_thread.c
+  subsys/services/service_registry.c
+)
+
 add_custom_target(spaghetti_validator
   COMMAND
     ${Python3_EXECUTABLE}
@@ -77,11 +83,9 @@ target_sources_ifdef(CONFIG_SPAGHETTI_POWER app PRIVATE
 get_target_property(APP_SRCS app SOURCES)
 
 message(STATUS "========== APP SOURCES ==========")
-
 foreach(src ${APP_SRCS})
     message(STATUS "  ${src}")
 endforeach()
-
 
 target_include_directories(app PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include

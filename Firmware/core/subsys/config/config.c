@@ -14,6 +14,7 @@
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/runtime.h>
+#include <spaghetti/service.h>
 #include <spaghetti/storage.h>
 
 LOG_MODULE_REGISTER(spaghetti_config, CONFIG_SPAGHETTI_CONFIG_LOG_LEVEL);
@@ -331,14 +332,18 @@ static bool mqtt_configs_are_equal(
 
 static int configure_mqtt(const struct spaghetti_mqtt_config *mqtt)
 {
-	struct spaghetti_mqtt_status status;
-	int err = spaghetti_mqtt_get_status(&status);
+	enum spaghetti_service_state state;
+	bool restart_service;
+	int err = spaghetti_service_get_state(
+		SPAGHETTI_SERVICE_ID_MQTT, &state);
 
 	if (err < 0) {
 		return err;
 	}
-	if (status.state != SPAGHETTI_MQTT_STOPPED) {
-		err = spaghetti_mqtt_stop(
+	restart_service = state != SPAGHETTI_SERVICE_STOPPED;
+	if (state != SPAGHETTI_SERVICE_STOPPED) {
+		err = spaghetti_service_stop(
+			SPAGHETTI_SERVICE_ID_MQTT,
 			K_MSEC(CONFIG_SPAGHETTI_MQTT_STOP_TIMEOUT_MS));
 		if ((err < 0) && (err != -EALREADY)) {
 			return err;
@@ -346,8 +351,8 @@ static int configure_mqtt(const struct spaghetti_mqtt_config *mqtt)
 	}
 
 	err = spaghetti_mqtt_init(mqtt);
-	if ((err == 0) && mqtt->enabled) {
-		err = spaghetti_mqtt_start();
+	if ((err == 0) && restart_service) {
+		err = spaghetti_service_start(SPAGHETTI_SERVICE_ID_MQTT);
 	}
 
 	return err;

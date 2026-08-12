@@ -104,8 +104,9 @@ int spaghetti_ota_backend_open(void)
 	return 0;
 }
 
-int spaghetti_ota_backend_close(void)
+int spaghetti_ota_backend_close(k_timeout_t timeout)
 {
+	zassert_false(K_TIMEOUT_EQ(timeout, K_FOREVER));
 	if (!listener_open) {
 		return -EALREADY;
 	}
@@ -193,6 +194,7 @@ ZTEST(ota, test_local_provisioning_one_shot_and_network_loss)
 
 	maintenance_state = SPAGHETTI_MAINTENANCE_LINK_NORMAL;
 	zassert_ok(spaghetti_ota_init());
+	zassert_ok(spaghetti_ota_start());
 	zassert_false(pending_request);
 	zassert_equal(update_arm_calls, 1);
 	zassert_equal(backend_open_calls, 1);
@@ -212,6 +214,8 @@ ZTEST(ota, test_local_provisioning_one_shot_and_network_loss)
 	maintenance_state = SPAGHETTI_MAINTENANCE_LINK_ACTIVE;
 	zassert_ok(spaghetti_ota_clear_credentials());
 	expect_status(SPAGHETTI_OTA_CLOSED, false);
+	maintenance_state = SPAGHETTI_MAINTENANCE_LINK_NORMAL;
+	zassert_ok(spaghetti_ota_stop(K_MSEC(50)));
 }
 
 ZTEST_SUITE(ota, NULL, NULL, NULL, NULL, NULL);

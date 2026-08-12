@@ -63,17 +63,28 @@ codecs, tests, and future protocol schemas must consume the corresponding
 |---|---:|---|
 | Main stack | 8,192 B | Zephyr main thread. |
 | Shell UART stack | 5,120 B | Local development and maintenance shell. |
-| Wi-Fi profile worker | 4,096 B | Compiled connectivity worker. |
-| MQTT worker | 4,096 B | Present even when MQTT runtime policy is disabled. |
+| Wi-Fi profile worker | 0 B static | Allocated only while the Wi-Fi service runs. |
+| MQTT workers | 0 B static | Two stacks are allocated only while enabled and running. |
 | Runtime sampling stack | 1,536 B | Bounded sampling worker. |
 | Runtime rule stack | 1,536 B | Bounded rule worker. |
-| OTA listener work stack | 1,536 B | OTA lifecycle support. |
+| OTA lifecycle work stack | 0 B static | Cleanup uses the shared system workqueue. |
+| OTA listener stack | 0 B static | Allocated only during an authenticated OTA window. |
 | Update stack | 1,024 B | Update state machine worker. |
 | Electrical logger stack | 1,024 B | Power diagnostics worker. |
 | Logging stack | 768 B | Zephyr deferred logging. |
 | Private mbedTLS heap | 0 B | Removed by task 293; mbedTLS now uses the flexible common-libc heap. |
 | Minimal secure-workspace contract | 60,000 B | Admission budget and metric threshold; it is not a static allocation. |
 | Production remote-console stack | 0 B | Its TLS backend and worker are not compiled in Minimal. |
+
+Optional-service dynamic admission is limited to 4 threads and 16,384 requested
+stack bytes in Minimal, 6/24,576 in Standard, and 8/32,768 in Extended. The public
+service resource snapshot reports current threads/bytes, their high-water values,
+largest measured joined-stack usage, and allocation failures. Zephyr obtains these
+stacks from its system heap, configured to 20,480 B, 28,672 B, and 36,864 B
+respectively so allocator metadata and alignment cannot consume the admission
+budget. This is distinct from the common-libc heap used by mbedTLS: linked SRAM owns
+the bounded system-heap arena, while stopped services return its blocks for reuse by
+another optional service.
 
 Subsystem pools are bounded by the profile macros. For example, Config and Module
 Manager both use `CONFIG_SPAGHETTI_MAX_MODULES`, while communication and the Config

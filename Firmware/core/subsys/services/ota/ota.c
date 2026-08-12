@@ -22,18 +22,17 @@ struct spaghetti_ota_context {
 	struct k_work_delayable timeout_work;
 	struct k_work_delayable deferred_cancel_work;
 	bool initialized;
+	bool started;
 	bool workspace_acquired;
 	int last_error;
 };
 
 static struct spaghetti_ota_context context;
-static struct k_work_q ota_work_queue;
-K_THREAD_STACK_DEFINE(ota_work_stack, CONFIG_SPAGHETTI_OTA_WORK_STACK_SIZE);
 K_MUTEX_DEFINE(ota_lock);
 
-static int close_locked(bool discard_candidate)
+static int close_locked(bool discard_candidate, k_timeout_t timeout)
 {
-	int first_error = spaghetti_ota_backend_close();
+	int first_error = spaghetti_ota_backend_close(timeout);
 
 	if ((first_error == -EALREADY) || (first_error == -EACCES)) {
 		first_error = 0;
@@ -46,12 +45,13 @@ static int close_locked(bool discard_candidate)
 			first_error = update_error;
 		}
 	}
-	if (context.workspace_acquired) {
+	if (context.workspace_acquired && (first_error == 0)) {
 		const int release_error = spaghetti_secure_workspace_release(
 			SPAGHETTI_SECURE_OWNER_WIFI_OTA);
 
-		context.workspace_acquired = false;
-		if ((release_error < 0) && (first_error == 0)) {
+		if (release_error == 0) {
+			context.workspace_acquired = false;
+		} else {
 			first_error = release_error;
 		}
 	}
@@ -67,7 +67,8 @@ static void timeout_handler(struct k_work *work)
 	ARG_UNUSED(work);
 	(void)k_mutex_lock(&ota_lock, K_FOREVER);
 	if (context.state == SPAGHETTI_OTA_ARMED) {
-		const int err = close_locked(true);
+		const int err = close_locked(
+			true, K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
 
 		if (err < 0) {
 			LOG_ERR("timeout cleanup failed: err=%d", err);
@@ -127,8 +128,7 @@ static int arm_locked(uint32_t timeout_ms)
 
 	context.state = SPAGHETTI_OTA_ARMED;
 	context.last_error = 0;
-	(void)k_work_reschedule_for_queue(
-		&ota_work_queue, &context.timeout_work, K_MSEC(timeout_ms));
+	(void)k_work_reschedule(&context.timeout_work, K_MSEC(timeout_ms));
 	LOG_INF("window open: port=%u timeout_ms=%u",
 		CONFIG_SPAGHETTI_OTA_PORT, timeout_ms);
 	return 0;
@@ -136,7 +136,6 @@ static int arm_locked(uint32_t timeout_ms)
 
 int spaghetti_ota_init(void)
 {
-	uint32_t pending_timeout_ms;
 	int err = k_mutex_lock(&ota_lock, K_FOREVER);
 
 	if (err < 0) {
@@ -154,14 +153,38 @@ int spaghetti_ota_init(void)
 	k_work_init_delayable(&context.timeout_work, timeout_handler);
 	k_work_init_delayable(&context.deferred_cancel_work,
 			      deferred_cancel_handler);
-	k_work_queue_start(&ota_work_queue, ota_work_stack,
-			   K_THREAD_STACK_SIZEOF(ota_work_stack),
-			   CONFIG_SPAGHETTI_OTA_WORK_PRIORITY, NULL);
-	(void)k_thread_name_set(&ota_work_queue.thread, "spaghetti_ota");
 	context.state = SPAGHETTI_OTA_CLOSED;
 	context.initialized = true;
+	context.started = false;
 	context.last_error = 0;
+	LOG_INF("ready: listener=closed");
+	goto unlock;
 
+failed:
+	context.state = SPAGHETTI_OTA_ERROR;
+	context.last_error = err;
+unlock:
+	k_mutex_unlock(&ota_lock);
+	return err;
+}
+
+int spaghetti_ota_start(void)
+{
+	uint32_t pending_timeout_ms;
+	int err = k_mutex_lock(&ota_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		err = -EACCES;
+		goto unlock;
+	}
+	if (context.started) {
+		err = -EALREADY;
+		goto unlock;
+	}
+	context.started = true;
 	err = spaghetti_ota_backend_consume_request(&pending_timeout_ms);
 	if (err == -ENOENT) {
 		err = 0;
@@ -175,16 +198,55 @@ int spaghetti_ota_init(void)
 		err = arm_locked(pending_timeout_ms);
 	}
 	if (err < 0) {
-		goto failed;
+		context.started = false;
+		context.state = SPAGHETTI_OTA_ERROR;
+		context.last_error = err;
+		goto unlock;
 	}
-	LOG_INF("ready: listener=%s",
+	LOG_INF("started: listener=%s",
 		(context.state == SPAGHETTI_OTA_ARMED) ? "open" : "closed");
-	goto unlock;
-
-failed:
-	context.state = SPAGHETTI_OTA_ERROR;
-	context.last_error = err;
 unlock:
+	k_mutex_unlock(&ota_lock);
+	return err;
+}
+
+int spaghetti_ota_stop(k_timeout_t timeout)
+{
+	struct k_work_sync timeout_sync;
+	struct k_work_sync cancel_sync;
+	int64_t timeout_ms;
+	int err;
+
+	if (K_TIMEOUT_EQ(timeout, K_FOREVER)) {
+		return -EINVAL;
+	}
+	timeout_ms = k_ticks_to_ms_floor64(timeout.ticks);
+	if ((timeout_ms < 0) ||
+	    (timeout_ms > CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS)) {
+		return -EINVAL;
+	}
+	(void)k_mutex_lock(&ota_lock, K_FOREVER);
+	if (!context.initialized) {
+		k_mutex_unlock(&ota_lock);
+		return -EACCES;
+	}
+	if (!context.started) {
+		k_mutex_unlock(&ota_lock);
+		return -EALREADY;
+	}
+	k_mutex_unlock(&ota_lock);
+
+	(void)k_work_cancel_delayable_sync(&context.timeout_work, &timeout_sync);
+	(void)k_work_cancel_delayable_sync(
+		&context.deferred_cancel_work, &cancel_sync);
+	(void)k_mutex_lock(&ota_lock, K_FOREVER);
+	err = (context.state == SPAGHETTI_OTA_CLOSED) ?
+		0 : close_locked(true, timeout);
+	if (err == 0) {
+		context.started = false;
+		context.state = SPAGHETTI_OTA_CLOSED;
+		context.last_error = 0;
+	}
 	k_mutex_unlock(&ota_lock);
 	return err;
 }
@@ -261,7 +323,7 @@ int spaghetti_ota_arm(uint32_t timeout_ms)
 	if (err < 0) {
 		return err;
 	}
-	if (!context.initialized) {
+	if (!context.initialized || !context.started) {
 		err = -EACCES;
 	} else {
 		err = arm_locked(timeout_ms);
@@ -283,7 +345,8 @@ int spaghetti_ota_cancel(void)
 		err = -EALREADY;
 	} else {
 		(void)k_work_cancel_delayable(&context.timeout_work);
-		err = close_locked(true);
+		err = close_locked(
+			true, K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
 	}
 	k_mutex_unlock(&ota_lock);
 	return err;
@@ -323,8 +386,8 @@ int spaghetti_ota_get_status(struct spaghetti_ota_status *out)
 void spaghetti_ota_cancel_after_response(void)
 {
 	if (context.initialized) {
-		(void)k_work_reschedule_for_queue(
-			&ota_work_queue, &context.deferred_cancel_work,
+		(void)k_work_reschedule(
+			&context.deferred_cancel_work,
 			K_MSEC(CONFIG_SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS));
 	}
 }
@@ -335,7 +398,8 @@ void spaghetti_ota_prepare_reboot(void)
 	if (context.initialized) {
 		(void)k_work_cancel_delayable(&context.timeout_work);
 		(void)k_work_cancel_delayable(&context.deferred_cancel_work);
-		(void)close_locked(false);
+		(void)close_locked(
+			false, K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
 	}
 	k_mutex_unlock(&ota_lock);
 }

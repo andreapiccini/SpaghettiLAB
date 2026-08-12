@@ -19,10 +19,13 @@
 #include <zephyr/net/tls_credentials.h>
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/sys/atomic.h>
 
 #include <mgmt/mcumgr/transport/smp_internal.h>
 
 #include <spaghetti/ota.h>
+
+#include "../service_thread.h"
 
 #define SPAGHETTI_OTA_RECORD_UID ((psa_storage_uid_t)0x0057FFE1U)
 #define SPAGHETTI_OTA_RECORD_MAGIC 0x534F5441U
@@ -42,20 +45,20 @@ struct spaghetti_ota_record {
 
 struct spaghetti_ota_backend_context {
 	struct smp_transport transport;
-	struct k_thread listener_thread;
 	struct net_mgmt_event_callback network_callback;
 	struct spaghetti_ota_record active_record;
 	int socket;
 	bool initialized;
 	bool listener_running;
 	bool credentials_registered;
+	bool network_callback_registered;
 };
 
 static struct spaghetti_ota_backend_context context = {
 	.socket = -1,
 };
-K_THREAD_STACK_DEFINE(listener_stack,
-		      CONFIG_SPAGHETTI_OTA_LISTENER_STACK_SIZE);
+static struct spaghetti_service_thread listener_thread;
+static atomic_t listener_stop_requested;
 K_MUTEX_DEFINE(backend_lock);
 
 BUILD_ASSERT(sizeof(struct spaghetti_ota_record) <=
@@ -169,7 +172,7 @@ static void listener_entry(void *first, void *second, void *third)
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
 
-	while (true) {
+	while (atomic_get(&listener_stop_requested) == 0) {
 		uint8_t receive_buffer[CONFIG_SPAGHETTI_OTA_MTU];
 		struct net_sockaddr address;
 		net_socklen_t address_size = sizeof(address);
@@ -260,10 +263,6 @@ int spaghetti_ota_backend_init(void)
 	if (err < 0) {
 		goto unlock;
 	}
-	net_mgmt_init_event_callback(
-		&context.network_callback, network_event_handler,
-		NET_EVENT_IPV4_ADDR_DEL | NET_EVENT_WIFI_DISCONNECT_RESULT);
-	net_mgmt_add_event_callback(&context.network_callback);
 	context.initialized = true;
 unlock:
 	k_mutex_unlock(&backend_lock);
@@ -417,13 +416,20 @@ int spaghetti_ota_backend_open(void)
 		err = -errno;
 		goto cleanup;
 	}
-	k_thread_create(&context.listener_thread, listener_stack,
-			K_THREAD_STACK_SIZEOF(listener_stack), listener_entry,
-			NULL, NULL, NULL, CONFIG_SPAGHETTI_OTA_WORK_PRIORITY,
-			0, K_NO_WAIT);
-	(void)k_thread_name_set(&context.listener_thread, "spaghetti_ota_rx");
+	net_mgmt_init_event_callback(
+		&context.network_callback, network_event_handler,
+		NET_EVENT_IPV4_ADDR_DEL | NET_EVENT_WIFI_DISCONNECT_RESULT);
+	net_mgmt_add_event_callback(&context.network_callback);
+	context.network_callback_registered = true;
+	atomic_set(&listener_stop_requested, 0);
+	err = spaghetti_service_thread_start(
+		&listener_thread, CONFIG_SPAGHETTI_OTA_LISTENER_STACK_SIZE,
+		listener_entry, NULL, NULL, NULL,
+		CONFIG_SPAGHETTI_OTA_WORK_PRIORITY, "spaghetti_ota_rx");
+	if (err < 0) {
+		goto cleanup;
+	}
 	context.listener_running = true;
-	err = 0;
 	goto unlock;
 
 cleanup:
@@ -431,35 +437,53 @@ cleanup:
 		(void)zsock_close(context.socket);
 		context.socket = -1;
 	}
+	if (context.network_callback_registered) {
+		net_mgmt_del_event_callback(&context.network_callback);
+		context.network_callback_registered = false;
+	}
 	unregister_credentials();
 unlock:
 	k_mutex_unlock(&backend_lock);
 	return err;
 }
 
-int spaghetti_ota_backend_close(void)
+int spaghetti_ota_backend_close(k_timeout_t timeout)
 {
 	int err = k_mutex_lock(&backend_lock, K_FOREVER);
+	int close_error = 0;
 
 	if (err < 0) {
 		return err;
 	}
-	if (!context.listener_running) {
+	if (!context.listener_running && (listener_thread.stack == NULL)) {
 		err = -EALREADY;
 		goto unlock;
 	}
-	k_thread_abort(&context.listener_thread);
-	smp_rx_clear(&context.transport);
+	atomic_set(&listener_stop_requested, 1);
 	err = (context.socket >= 0) ? zsock_close(context.socket) : 0;
 	if (err < 0) {
-		err = -errno;
+		close_error = -errno;
 	}
 	context.socket = -1;
+	k_mutex_unlock(&backend_lock);
+	if (listener_thread.stack != NULL) {
+		err = spaghetti_service_thread_join_and_release(
+			&listener_thread, timeout);
+		if (err < 0) {
+			return err;
+		}
+	}
+	(void)k_mutex_lock(&backend_lock, K_FOREVER);
+	smp_rx_clear(&context.transport);
 	context.listener_running = false;
+	if (context.network_callback_registered) {
+		net_mgmt_del_event_callback(&context.network_callback);
+		context.network_callback_registered = false;
+	}
 	unregister_credentials();
 unlock:
 	k_mutex_unlock(&backend_lock);
-	return err;
+	return (err < 0) ? err : close_error;
 }
 
 bool spaghetti_ota_backend_is_transport(

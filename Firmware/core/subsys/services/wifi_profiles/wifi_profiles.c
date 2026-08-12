@@ -16,6 +16,7 @@
 #include <zephyr/sys/util.h>
 
 #include "wifi_profiles_internal.h"
+#include "../service_thread.h"
 
 LOG_MODULE_REGISTER(spaghetti_wifi_profiles,
 			CONFIG_SPAGHETTI_WIFI_PROFILES_LOG_LEVEL);
@@ -52,6 +53,9 @@ static atomic_t connect_status;
 static atomic_t wifi_is_connected;
 static atomic_t force_reconnect;
 static atomic_t startup_delay_pending;
+static atomic_t stop_requested;
+static struct spaghetti_service_thread wifi_worker_thread;
+static bool wifi_callback_registered;
 K_SEM_DEFINE(worker_sem, 0, 1);
 K_SEM_DEFINE(scan_done_sem, 0, 1);
 K_SEM_DEFINE(connect_done_sem, 0, 1);
@@ -493,6 +497,9 @@ static int run_connection_cycle(void)
 	if (err < 0) {
 		return err;
 	}
+	if (atomic_get(&stop_requested) != 0) {
+		return -ECANCELED;
+	}
 
 	err = spaghetti_wifi_profiles_order_candidates(
 		scan_profiles, profile_count, ordered, ARRAY_SIZE(ordered),
@@ -507,6 +514,10 @@ static int run_connection_cycle(void)
 	for (size_t candidate_idx = 0U; candidate_idx < ordered_count;
 	     ++candidate_idx) {
 		const size_t profile_idx = ordered[candidate_idx];
+
+		if (atomic_get(&stop_requested) != 0) {
+			return -ECANCELED;
+		}
 
 		err = connect_candidate(iface, slots[profile_idx],
 					&scan_profiles[profile_idx]);
@@ -528,14 +539,21 @@ static void wifi_worker_thread_entry(void *first, void *second, void *third)
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
 
-	while (true) {
+	while (atomic_get(&stop_requested) == 0) {
 		(void)k_sem_take(&worker_sem, K_FOREVER);
+		if (atomic_get(&stop_requested) != 0) {
+			break;
+		}
 		if (atomic_cas(&startup_delay_pending, 1, 0)) {
-			k_sleep(K_MSEC(
-				CONFIG_SPAGHETTI_WIFI_PROFILE_STARTUP_DELAY_MS));
+			(void)k_sem_take(
+				&worker_sem,
+				K_MSEC(CONFIG_SPAGHETTI_WIFI_PROFILE_STARTUP_DELAY_MS));
+			if (atomic_get(&stop_requested) != 0) {
+				break;
+			}
 		}
 
-		while (true) {
+		while (atomic_get(&stop_requested) == 0) {
 			const int err = run_connection_cycle();
 
 			if (err == 0) {
@@ -558,13 +576,14 @@ static void wifi_worker_thread_entry(void *first, void *second, void *third)
 			}
 		}
 	}
-}
+	if (atomic_get(&wifi_is_connected) != 0) {
+		struct net_if *iface = net_if_get_wifi_sta();
 
-K_THREAD_DEFINE(wifi_profiles_worker_id,
-		CONFIG_SPAGHETTI_WIFI_PROFILE_WORKER_STACK_SIZE,
-		wifi_worker_thread_entry, NULL, NULL, NULL,
-		CONFIG_SPAGHETTI_WIFI_PROFILE_WORKER_PRIORITY, 0,
-		SYS_FOREVER_MS);
+		if (iface != NULL) {
+			(void)disconnect_current(iface);
+		}
+	}
+}
 #endif
 
 static int wifi_profiles_init(bool allow_network)
@@ -627,19 +646,6 @@ static int wifi_profiles_init(bool allow_network)
 	wipe_sensitive(preferred_ssid, sizeof(preferred_ssid));
 	k_mutex_unlock(&profiles_lock);
 
-#if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
-	if (allow_network) {
-		atomic_set(&startup_delay_pending, 1);
-		net_mgmt_init_event_callback(
-		&wifi_event_callback, wifi_event_handler,
-		NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE |
-		NET_EVENT_WIFI_CONNECT_RESULT |
-		NET_EVENT_WIFI_DISCONNECT_RESULT);
-		net_mgmt_add_event_callback(&wifi_event_callback);
-		k_thread_start(wifi_profiles_worker_id);
-	}
-#endif
-
 	LOG_INF("ready: profiles=%u preferred=%u",
 		(uint32_t)loaded_profile_count, has_preferred ? 1U : 0U);
 	return 0;
@@ -653,6 +659,109 @@ int spaghetti_wifi_profiles_init(void)
 int spaghetti_wifi_profiles_init_offline(void)
 {
 	return wifi_profiles_init(false);
+}
+
+int spaghetti_wifi_profiles_start(void)
+{
+#if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	int err = k_mutex_lock(&profiles_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		k_mutex_unlock(&profiles_lock);
+		return -EACCES;
+	}
+	if (wifi_worker_thread.stack != NULL) {
+		k_mutex_unlock(&profiles_lock);
+		return -EALREADY;
+	}
+	atomic_set(&network_allowed, 1);
+	atomic_set(&stop_requested, 0);
+	atomic_set(&startup_delay_pending, 1);
+	if (!wifi_callback_registered) {
+		net_mgmt_init_event_callback(
+			&wifi_event_callback, wifi_event_handler,
+			NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE |
+			NET_EVENT_WIFI_CONNECT_RESULT |
+			NET_EVENT_WIFI_DISCONNECT_RESULT);
+		net_mgmt_add_event_callback(&wifi_event_callback);
+		wifi_callback_registered = true;
+	}
+	k_mutex_unlock(&profiles_lock);
+
+	err = spaghetti_service_thread_start(
+		&wifi_worker_thread,
+		CONFIG_SPAGHETTI_WIFI_PROFILE_WORKER_STACK_SIZE,
+		wifi_worker_thread_entry, NULL, NULL, NULL,
+		CONFIG_SPAGHETTI_WIFI_PROFILE_WORKER_PRIORITY,
+		"wifi_profiles");
+	if (err < 0) {
+		(void)k_mutex_lock(&profiles_lock, K_FOREVER);
+		atomic_set(&network_allowed, 0);
+		if (wifi_callback_registered) {
+			net_mgmt_del_event_callback(&wifi_event_callback);
+			wifi_callback_registered = false;
+		}
+		k_mutex_unlock(&profiles_lock);
+		return err;
+	}
+	return 0;
+#else
+	return -ENOTSUP;
+#endif
+}
+
+int spaghetti_wifi_profiles_stop(k_timeout_t timeout)
+{
+#if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	int64_t timeout_ms;
+	int err;
+
+	if (K_TIMEOUT_EQ(timeout, K_FOREVER)) {
+		return -EINVAL;
+	}
+	timeout_ms = k_ticks_to_ms_floor64(timeout.ticks);
+	if ((timeout_ms < 0) ||
+	    (timeout_ms > CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS)) {
+		return -EINVAL;
+	}
+	(void)k_mutex_lock(&profiles_lock, K_FOREVER);
+	if (!context.initialized) {
+		k_mutex_unlock(&profiles_lock);
+		return -EACCES;
+	}
+	if (wifi_worker_thread.stack == NULL) {
+		k_mutex_unlock(&profiles_lock);
+		return -EALREADY;
+	}
+	atomic_set(&network_allowed, 0);
+	atomic_set(&stop_requested, 1);
+	atomic_set(&startup_delay_pending, 0);
+	k_sem_give(&worker_sem);
+	k_sem_give(&scan_done_sem);
+	k_sem_give(&connect_done_sem);
+	k_mutex_unlock(&profiles_lock);
+
+	err = spaghetti_service_thread_join_and_release(
+		&wifi_worker_thread, timeout);
+	if (err < 0) {
+		return err;
+	}
+	(void)k_mutex_lock(&profiles_lock, K_FOREVER);
+	if (wifi_callback_registered) {
+		net_mgmt_del_event_callback(&wifi_event_callback);
+		wifi_callback_registered = false;
+	}
+	context.status.state = SPAGHETTI_WIFI_PROFILES_IDLE;
+	context.status.active_ssid[0] = '\0';
+	k_mutex_unlock(&profiles_lock);
+	return 0;
+#else
+	ARG_UNUSED(timeout);
+	return -ENOTSUP;
+#endif
 }
 
 int spaghetti_wifi_profiles_set(

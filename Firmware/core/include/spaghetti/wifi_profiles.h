@@ -11,6 +11,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <zephyr/kernel.h>
+
 /** Maximum SSID bytes including the terminating NUL. */
 #define SPAGHETTI_WIFI_SSID_SIZE 33U
 
@@ -72,16 +74,16 @@ struct spaghetti_wifi_profiles_status {
 };
 
 /**
- * @brief Load persistent profiles and start automatic connection policy.
+ * @brief Load persistent profiles for a later lifecycle start.
  *
  * Invalid or unauthentic stored records are ignored without exposing their
  * contents. When at least one valid profile exists, the worker requests a scan.
  *
- * @retval 0 Profiles are loaded and the worker is ready.
+ * @retval 0 Profiles are loaded while the network worker remains stopped.
  * @retval -EALREADY The service was already initialized.
  *
  * @note Call once from the boot thread after Settings is initialized. The call
- *       performs bounded persistent reads and starts one static worker thread.
+ *       performs bounded persistent reads without allocating a worker stack.
  */
 int spaghetti_wifi_profiles_init(void);
 
@@ -89,7 +91,7 @@ int spaghetti_wifi_profiles_init(void);
  * @brief Load persistent profiles without starting network activity.
  *
  * This maintenance-only variant enables encrypted profile set/remove calls but
- * does not register Wi-Fi callbacks, start the worker, scan, or connect.
+ * does not register Wi-Fi callbacks, allocate a worker, scan, or connect.
  *
  * @retval 0 Profiles are available in storage-only mode.
  * @retval -EALREADY The service was initialized previously.
@@ -97,6 +99,31 @@ int spaghetti_wifi_profiles_init(void);
  * @note Core calls this only in UNPROVISIONED or MAINTENANCE mode.
  */
 int spaghetti_wifi_profiles_init_offline(void);
+
+/**
+ * @brief Start the optional automatic connection worker.
+ *
+ * @retval 0 Callback and dynamically allocated worker are active.
+ * @retval -EACCES Profiles are not initialized.
+ * @retval -EALREADY The worker is already active.
+ * @retval -ENOMEM The bounded optional-thread budget cannot provide its stack.
+ * @retval -ENOTSUP Automatic connection support is not compiled.
+ */
+int spaghetti_wifi_profiles_start(void);
+
+/**
+ * @brief Stop Wi-Fi activity and return the worker stack.
+ *
+ * @param[in] timeout Finite deadline for disconnect, worker exit, and stack release.
+ *
+ * @retval 0 Callback, connection, worker, and stack are released.
+ * @retval -EINVAL @p timeout is unbounded or exceeds the service limit.
+ * @retval -EACCES Profiles are not initialized.
+ * @retval -EALREADY The worker is already stopped.
+ * @retval -EAGAIN The deadline expired; cleanup can be retried.
+ * @retval -ENOTSUP Automatic connection support is not compiled.
+ */
+int spaghetti_wifi_profiles_stop(k_timeout_t timeout);
 
 /**
  * @brief Add or atomically replace one persistent Wi-Fi profile.

@@ -27,6 +27,7 @@
 #include <spaghetti/storage.h>
 
 #include "communication_internal.h"
+#include "../services/service_thread.h"
 
 #define SPAGHETTI_REMOTE_CONSOLE_RECORD_UID \
 	((psa_storage_uid_t)0x0057FFE2U)
@@ -50,7 +51,6 @@ struct spaghetti_remote_log_chunk {
 };
 
 struct spaghetti_remote_console_backend_context {
-	struct k_thread listener_thread;
 	struct spaghetti_remote_console_record active_record;
 	int server_socket;
 	int client_socket;
@@ -66,9 +66,9 @@ static struct spaghetti_remote_console_backend_context context = {
 static atomic_t client_connected;
 static atomic_t dropped_log_count;
 static atomic_t correlation_id = ATOMIC_INIT(1);
+static atomic_t listener_stop_requested;
 static struct k_work_delayable reboot_work;
-K_THREAD_STACK_DEFINE(remote_console_stack,
-		      CONFIG_SPAGHETTI_REMOTE_CONSOLE_STACK_SIZE);
+static struct spaghetti_service_thread remote_console_thread;
 K_MSGQ_DEFINE(remote_log_queue, sizeof(struct spaghetti_remote_log_chunk),
 	      CONFIG_SPAGHETTI_REMOTE_CONSOLE_LOG_QUEUE_DEPTH, 4);
 K_MUTEX_DEFINE(remote_console_backend_lock);
@@ -496,7 +496,7 @@ static void listener_entry(void *first, void *second, void *third)
 	ARG_UNUSED(first);
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
-	while (true) {
+	while (atomic_get(&listener_stop_requested) == 0) {
 		struct zsock_pollfd descriptors[2] = {
 			{
 				.fd = context.server_socket,
@@ -513,6 +513,9 @@ static void listener_entry(void *first, void *second, void *third)
 			CONFIG_SPAGHETTI_REMOTE_CONSOLE_POLL_MS);
 
 		if (event_count < 0) {
+			if (atomic_get(&listener_stop_requested) != 0) {
+				break;
+			}
 			continue;
 		}
 		if ((descriptors[0].revents & ZSOCK_POLLIN) != 0) {
@@ -556,6 +559,7 @@ static void listener_entry(void *first, void *second, void *third)
 			close_client();
 		}
 	}
+	close_client();
 }
 
 static int register_credentials(void)
@@ -710,14 +714,16 @@ int spaghetti_remote_console_backend_open(void)
 		err = -errno;
 		goto cleanup;
 	}
-	k_thread_create(
-		&context.listener_thread, remote_console_stack,
-		K_THREAD_STACK_SIZEOF(remote_console_stack), listener_entry,
-		NULL, NULL, NULL, CONFIG_SPAGHETTI_REMOTE_CONSOLE_PRIORITY,
-		0, K_NO_WAIT);
-	(void)k_thread_name_set(
-		&context.listener_thread, "spaghetti_remote");
-	err = 0;
+	atomic_set(&listener_stop_requested, 0);
+	err = spaghetti_service_thread_start(
+		&remote_console_thread,
+		CONFIG_SPAGHETTI_REMOTE_CONSOLE_STACK_SIZE,
+		listener_entry, NULL, NULL, NULL,
+		CONFIG_SPAGHETTI_REMOTE_CONSOLE_PRIORITY,
+		"spaghetti_remote");
+	if (err < 0) {
+		goto cleanup;
+	}
 	goto unlock;
 
 cleanup:
@@ -729,6 +735,45 @@ cleanup:
 unlock:
 	k_mutex_unlock(&remote_console_backend_lock);
 	return err;
+}
+
+int spaghetti_remote_console_backend_close(k_timeout_t timeout)
+{
+	struct k_work_sync reboot_sync;
+	int err;
+
+	(void)k_mutex_lock(&remote_console_backend_lock, K_FOREVER);
+	if (!context.initialized) {
+		k_mutex_unlock(&remote_console_backend_lock);
+		return -EACCES;
+	}
+	if ((remote_console_thread.stack == NULL) &&
+	    (context.server_socket < 0)) {
+		k_mutex_unlock(&remote_console_backend_lock);
+		return -EALREADY;
+	}
+	atomic_set(&listener_stop_requested, 1);
+	if (context.server_socket >= 0) {
+		(void)zsock_close(context.server_socket);
+		context.server_socket = -1;
+	}
+	if (context.client_socket >= 0) {
+		(void)zsock_close(context.client_socket);
+		context.client_socket = -1;
+	}
+	k_mutex_unlock(&remote_console_backend_lock);
+
+	err = spaghetti_service_thread_join_and_release(
+		&remote_console_thread, timeout);
+	if (err < 0) {
+		return err;
+	}
+	(void)k_work_cancel_delayable_sync(&reboot_work, &reboot_sync);
+	(void)k_mutex_lock(&remote_console_backend_lock, K_FOREVER);
+	close_client();
+	unregister_credentials();
+	k_mutex_unlock(&remote_console_backend_lock);
+	return 0;
 }
 
 bool spaghetti_remote_console_backend_client_connected(void)

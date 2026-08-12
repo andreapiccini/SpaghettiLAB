@@ -22,6 +22,7 @@
 #include <spaghetti/data.h>
 
 #include "mqtt_internal.h"
+#include "../service_thread.h"
 
 LOG_MODULE_REGISTER(spaghetti_mqtt, CONFIG_SPAGHETTI_MQTT_LOG_LEVEL);
 
@@ -51,6 +52,7 @@ struct spaghetti_mqtt_context {
 	bool initialized;
 	bool started;
 	bool client_active;
+	bool network_callback_registered;
 };
 
 static struct spaghetti_mqtt_context context;
@@ -58,9 +60,11 @@ static struct net_mgmt_event_callback network_callback;
 static atomic_t network_is_ready;
 static atomic_t client_is_connected;
 static atomic_t connection_error;
+static atomic_t stop_requested;
+static struct spaghetti_service_thread mqtt_worker_thread;
+static struct spaghetti_service_thread mqtt_adapter_thread;
 K_MUTEX_DEFINE(mqtt_lock);
 K_SEM_DEFINE(network_event_sem, 0, 1);
-K_SEM_DEFINE(stop_ack_sem, 0, 1);
 K_MSGQ_DEFINE(command_queue, sizeof(enum spaghetti_mqtt_command),
 	      SPAGHETTI_MQTT_COMMAND_QUEUE_DEPTH, __alignof__(enum spaghetti_mqtt_command));
 K_MSGQ_DEFINE(publication_queue, sizeof(struct spaghetti_mqtt_publication),
@@ -387,7 +391,6 @@ static void process_command(enum spaghetti_mqtt_command command)
 	context.started = false;
 	context.status.state = SPAGHETTI_MQTT_STOPPED;
 	k_mutex_unlock(&mqtt_lock);
-	k_sem_give(&stop_ack_sem);
 }
 
 static void mqtt_worker_thread_entry(void *first, void *second, void *third)
@@ -396,12 +399,15 @@ static void mqtt_worker_thread_entry(void *first, void *second, void *third)
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
 
-	while (true) {
+	while (atomic_get(&stop_requested) == 0) {
 		enum spaghetti_mqtt_command command;
 
 		if (k_msgq_get(&command_queue, &command,
 				  K_MSEC(SPAGHETTI_MQTT_POLL_MS)) == 0) {
 			process_command(command);
+			if (command == SPAGHETTI_MQTT_COMMAND_STOP) {
+				break;
+			}
 		}
 
 		(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
@@ -455,6 +461,12 @@ static void mqtt_worker_thread_entry(void *first, void *second, void *third)
 				SPAGHETTI_MQTT_RECONNECT_MAX_MS);
 		}
 	}
+	disconnect_client();
+	k_msgq_purge(&publication_queue);
+	(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
+	context.started = false;
+	context.status.state = SPAGHETTI_MQTT_STOPPED;
+	k_mutex_unlock(&mqtt_lock);
 }
 
 int spaghetti_mqtt_format_electrical(
@@ -502,11 +514,15 @@ static void mqtt_adapter_thread_entry(void *first, void *second, void *third)
 	ARG_UNUSED(second);
 	ARG_UNUSED(third);
 
-	while (true) {
+	while (atomic_get(&stop_requested) == 0) {
 		int err = zbus_sub_wait_msg(&electrical_mqtt_subscriber,
-					    &channel, &message, K_FOREVER);
+					    &channel, &message,
+					    K_MSEC(SPAGHETTI_MQTT_POLL_MS));
 
 		if (err < 0) {
+			if (err == -EAGAIN) {
+				continue;
+			}
 			LOG_ERR("Data receive failed: err=%d", err);
 			continue;
 		}
@@ -528,16 +544,8 @@ static void mqtt_adapter_thread_entry(void *first, void *second, void *third)
 	}
 }
 
-K_THREAD_DEFINE(mqtt_worker_thread_id, CONFIG_SPAGHETTI_MQTT_WORKER_STACK_SIZE,
-		mqtt_worker_thread_entry, NULL, NULL, NULL,
-		CONFIG_SPAGHETTI_MQTT_PRIORITY, 0, SYS_FOREVER_MS);
-K_THREAD_DEFINE(mqtt_adapter_thread_id, CONFIG_SPAGHETTI_MQTT_ADAPTER_STACK_SIZE,
-		mqtt_adapter_thread_entry, NULL, NULL, NULL,
-		CONFIG_SPAGHETTI_MQTT_PRIORITY, 0, SYS_FOREVER_MS);
-
 int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
 {
-	bool is_first_init;
 	int err;
 
 	if (!config_is_valid(config)) {
@@ -549,13 +557,14 @@ int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
 		return err;
 	}
 	if (context.initialized &&
-	    (context.status.state != SPAGHETTI_MQTT_STOPPED)) {
+	    ((context.status.state != SPAGHETTI_MQTT_STOPPED) ||
+	     (mqtt_worker_thread.stack != NULL) ||
+	     (mqtt_adapter_thread.stack != NULL))) {
 		k_mutex_unlock(&mqtt_lock);
 		return -EBUSY;
 	}
 
-	is_first_init = !context.initialized;
-	err = zbus_obs_set_enable(&electrical_mqtt_subscriber, config->enabled);
+	err = zbus_obs_set_enable(&electrical_mqtt_subscriber, false);
 	if (err < 0) {
 		k_mutex_unlock(&mqtt_lock);
 		return -EIO;
@@ -572,15 +581,6 @@ int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
 	context.next_connect_ms = 0;
 	context.initialized = true;
 	k_mutex_unlock(&mqtt_lock);
-
-	if (is_first_init) {
-		net_mgmt_init_event_callback(
-			&network_callback, network_event_handler,
-			NET_EVENT_IPV4_ADDR_ADD | NET_EVENT_IPV4_ADDR_DEL);
-		net_mgmt_add_event_callback(&network_callback);
-		k_thread_start(mqtt_worker_thread_id);
-		k_thread_start(mqtt_adapter_thread_id);
-	}
 
 	LOG_INF("ready: enabled=%u", config->enabled ? 1U : 0U);
 	return 0;
@@ -604,6 +604,19 @@ int spaghetti_mqtt_start(void)
 		return -EALREADY;
 	}
 
+	err = zbus_obs_set_enable(&electrical_mqtt_subscriber, true);
+	if (err < 0) {
+		k_mutex_unlock(&mqtt_lock);
+		return -EIO;
+	}
+	if (!context.network_callback_registered) {
+		net_mgmt_init_event_callback(
+			&network_callback, network_event_handler,
+			NET_EVENT_IPV4_ADDR_ADD | NET_EVENT_IPV4_ADDR_DEL);
+		net_mgmt_add_event_callback(&network_callback);
+		context.network_callback_registered = true;
+	}
+	atomic_set(&stop_requested, 0);
 	err = k_msgq_put(&command_queue, &command, K_NO_WAIT);
 	if (err < 0) {
 		k_mutex_unlock(&mqtt_lock);
@@ -613,14 +626,56 @@ int spaghetti_mqtt_start(void)
 	context.status.state = SPAGHETTI_MQTT_WAIT_NETWORK;
 	context.status.last_error = 0;
 	k_mutex_unlock(&mqtt_lock);
-	return 0;
+
+	err = spaghetti_service_thread_start(
+		&mqtt_worker_thread, CONFIG_SPAGHETTI_MQTT_WORKER_STACK_SIZE,
+		mqtt_worker_thread_entry, NULL, NULL, NULL,
+		CONFIG_SPAGHETTI_MQTT_PRIORITY, "spaghetti_mqtt");
+	if (err == 0) {
+		err = spaghetti_service_thread_start(
+			&mqtt_adapter_thread,
+			CONFIG_SPAGHETTI_MQTT_ADAPTER_STACK_SIZE,
+			mqtt_adapter_thread_entry, NULL, NULL, NULL,
+			CONFIG_SPAGHETTI_MQTT_PRIORITY, "mqtt_adapter");
+	}
+	if (err < 0) {
+		atomic_set(&stop_requested, 1);
+		k_sem_give(&network_event_sem);
+		if (mqtt_worker_thread.stack != NULL) {
+			(void)spaghetti_service_thread_join_and_release(
+				&mqtt_worker_thread, K_SECONDS(1));
+		}
+		k_msgq_purge(&command_queue);
+		(void)zbus_obs_set_enable(&electrical_mqtt_subscriber, false);
+		(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
+		context.started = false;
+		context.status.state = SPAGHETTI_MQTT_STOPPED;
+		context.status.last_error = err;
+		if (context.network_callback_registered) {
+			net_mgmt_del_event_callback(&network_callback);
+			context.network_callback_registered = false;
+		}
+		k_mutex_unlock(&mqtt_lock);
+	}
+	return err;
 }
 
 int spaghetti_mqtt_stop(k_timeout_t timeout)
 {
 	const enum spaghetti_mqtt_command command =
 		SPAGHETTI_MQTT_COMMAND_STOP;
-	int err = k_mutex_lock(&mqtt_lock, K_FOREVER);
+	int64_t timeout_ms;
+	int err;
+
+	if (K_TIMEOUT_EQ(timeout, K_FOREVER)) {
+		return -EINVAL;
+	}
+	timeout_ms = k_ticks_to_ms_floor64(timeout.ticks);
+	if ((timeout_ms < 0) ||
+	    (timeout_ms > CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS)) {
+		return -EINVAL;
+	}
+	err = k_mutex_lock(&mqtt_lock, K_FOREVER);
 
 	if (err < 0) {
 		return err;
@@ -629,24 +684,47 @@ int spaghetti_mqtt_stop(k_timeout_t timeout)
 		k_mutex_unlock(&mqtt_lock);
 		return -EACCES;
 	}
-	if (!context.started) {
+	if (!context.started && (mqtt_worker_thread.stack == NULL) &&
+	    (mqtt_adapter_thread.stack == NULL)) {
 		k_mutex_unlock(&mqtt_lock);
 		return -EALREADY;
 	}
 
-	k_sem_reset(&stop_ack_sem);
-	err = k_msgq_put(&command_queue, &command, K_NO_WAIT);
+	atomic_set(&stop_requested, 1);
+	err = context.started ?
+		k_msgq_put(&command_queue, &command, K_NO_WAIT) : 0;
+	k_sem_give(&network_event_sem);
 	k_mutex_unlock(&mqtt_lock);
 	if (err < 0) {
 		return -ENOMSG;
 	}
 
-	err = k_sem_take(&stop_ack_sem, timeout);
-	if ((err == -EAGAIN) || (err == -EBUSY)) {
-		return -EAGAIN;
-	}
+	const k_timepoint_t deadline = sys_timepoint_calc(timeout);
 
-	return err;
+	if (mqtt_worker_thread.stack != NULL) {
+		err = spaghetti_service_thread_join_and_release(
+			&mqtt_worker_thread, sys_timepoint_timeout(deadline));
+		if (err < 0) {
+			return err;
+		}
+	}
+	if (mqtt_adapter_thread.stack != NULL) {
+		err = spaghetti_service_thread_join_and_release(
+			&mqtt_adapter_thread, sys_timepoint_timeout(deadline));
+		if (err < 0) {
+			return err;
+		}
+	}
+	(void)zbus_obs_set_enable(&electrical_mqtt_subscriber, false);
+	(void)k_mutex_lock(&mqtt_lock, K_FOREVER);
+	if (context.network_callback_registered) {
+		net_mgmt_del_event_callback(&network_callback);
+		context.network_callback_registered = false;
+	}
+	context.started = false;
+	context.status.state = SPAGHETTI_MQTT_STOPPED;
+	k_mutex_unlock(&mqtt_lock);
+	return 0;
 }
 
 int spaghetti_mqtt_publish(

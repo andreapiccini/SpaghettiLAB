@@ -51,6 +51,16 @@ int spaghetti_remote_console_backend_open(void)
 	return 0;
 }
 
+int spaghetti_remote_console_backend_close(k_timeout_t timeout)
+{
+	zassert_false(K_TIMEOUT_EQ(timeout, K_FOREVER));
+	if (!listener_open) {
+		return -EALREADY;
+	}
+	listener_open = false;
+	return 0;
+}
+
 bool spaghetti_remote_console_backend_client_connected(void)
 {
 	return false;
@@ -94,14 +104,18 @@ ZTEST(remote_console, test_local_credentials_and_normal_mode_listener)
 
 	maintenance_state = SPAGHETTI_MAINTENANCE_LINK_NORMAL;
 	zassert_ok(spaghetti_remote_console_init());
-	zassert_true(listener_open);
+	zassert_false(listener_open);
 	zassert_equal(spaghetti_remote_console_init(), -EALREADY);
+	zassert_ok(spaghetti_remote_console_start());
+	zassert_true(listener_open);
 	zassert_ok(spaghetti_remote_console_get_status(&status));
 	zassert_equal(status.state, SPAGHETTI_REMOTE_CONSOLE_LISTENING);
 	zassert_equal(status.port, 1338U);
 	zassert_true(status.credentials_present);
 	zassert_false(status.client_connected);
 	zassert_equal(status.dropped_log_count, 3U);
+	zassert_ok(spaghetti_remote_console_stop(K_MSEC(50)));
+	zassert_false(listener_open);
 }
 
 ZTEST_SUITE(remote_console, NULL, NULL, NULL, NULL, NULL);

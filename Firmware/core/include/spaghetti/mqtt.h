@@ -61,9 +61,9 @@ struct spaghetti_mqtt_status {
 /**
  * @brief Initialize or replace the stopped MQTT service configuration.
  *
- * The first successful call creates the static worker integration. A later
- * call replaces the copied configuration only while the service is stopped
- * and clears queued publications and diagnostics.
+ * The first successful call prepares stopped state without allocating workers.
+ * A later call replaces the copied configuration only while the service is
+ * stopped and clears queued publications and diagnostics.
  *
  * @param[in] config Caller-owned configuration borrowed only for this call
  *                   and copied on success. Disabled configuration must use
@@ -93,14 +93,14 @@ int spaghetti_mqtt_start(void);
 /**
  * @brief Stop reconnect and wait for the worker to release its connection.
  *
- * @param[in] timeout Maximum wait for worker acknowledgement. `K_NO_WAIT`, a
- *                    finite timeout, and `K_FOREVER` are accepted.
+ * @param[in] timeout Finite maximum wait for worker exit and stack release.
  *
  * @retval 0 MQTT reached the stopped state.
  * @retval -EACCES MQTT is uninitialized.
  * @retval -EALREADY MQTT is already stopped.
  * @retval -ENOMSG The bounded command queue is full.
  * @retval -EAGAIN @p timeout expired before acknowledgement.
+ * @retval -EINVAL @p timeout is K_FOREVER or exceeds the service limit.
  *
  * @note Call from thread context. Do not call from ISR context.
  */

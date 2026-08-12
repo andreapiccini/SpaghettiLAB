@@ -69,12 +69,14 @@ int spaghetti_mqtt_publish(
 int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out);
 ```
 
-`init()` validates and copies borrowed Config; it also enables or disables the zbus
-observer. Reconfiguration is accepted only while stopped. `start()` asks the worker
-to wait for IPv4 and connect. `stop()` stops reconnect, disconnects, purges queued
-publications, and waits up to `timeout`. `publish()` validates and copies without
-socket I/O. `get_status()` copies a coherent caller-owned snapshot. All persistent
-MQTT objects and buffers are static; status counters intentionally wrap as `uint32_t`.
+`init()` validates and copies borrowed Config while leaving the observer, callback,
+and workers stopped. Reconfiguration is accepted only while stopped. `start()`
+registers the IPv4 callback, enables the observer, and obtains two stacks from the
+profile-bounded optional-thread budget. `stop()` stops reconnect, disconnects, purges
+queued publications, disables callback and observer, joins both workers, and returns
+their stacks before the finite `timeout`. `publish()` validates and copies without
+socket I/O. `get_status()` copies a coherent caller-owned snapshot. Fixed protocol
+buffers remain static; status counters intentionally wrap as `uint32_t`.
 
 ## Development Wi-Fi and broker test
 

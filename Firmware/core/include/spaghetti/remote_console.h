@@ -11,6 +11,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <zephyr/kernel.h>
+
 /** Fixed per-device TLS pre-shared key size. */
 #define SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE 32U
 
@@ -20,7 +22,7 @@
 /** Observable remote-console lifecycle. */
 enum spaghetti_remote_console_state {
 	SPAGHETTI_REMOTE_CONSOLE_UNINITIALIZED, /**< Normal-mode initialization has not run. */
-	SPAGHETTI_REMOTE_CONSOLE_DISABLED, /**< No credential exists and no socket is open. */
+	SPAGHETTI_REMOTE_CONSOLE_DISABLED, /**< No listener, client, or worker is active. */
 	SPAGHETTI_REMOTE_CONSOLE_LISTENING, /**< TLS-PSK accepts one authenticated client. */
 	SPAGHETTI_REMOTE_CONSOLE_ERROR, /**< Credential, socket, or thread setup failed. */
 };
@@ -39,9 +41,9 @@ struct spaghetti_remote_console_status {
  * @brief Initialize the normal-mode TLS-PSK remote console.
  *
  * A missing credential is a valid disabled configuration. A present credential
- * opens one application-lifetime listener with a single-client policy.
+ * remains closed until Connectivity Manager starts the single-client service.
  *
- * @retval 0 The service is disabled or listening according to stored policy.
+ * @retval 0 Backend and credential policy are ready with no open listener.
  * @retval -EALREADY Initialization already completed.
  * @retval -EIO Secure storage, TLS, socket, or thread setup failed.
  * @retval -errno A selected backend rejected initialization.
@@ -49,6 +51,31 @@ struct spaghetti_remote_console_status {
  * @note Core calls this only in normal mode after Communication initialization.
  */
 int spaghetti_remote_console_init(void);
+
+/**
+ * @brief Start the credential-gated listener and dynamic worker.
+ *
+ * @retval 0 The authenticated listener is running.
+ * @retval -EACCES The backend is not initialized.
+ * @retval -EALREADY The listener is already running.
+ * @retval -ENOENT No console credential is provisioned.
+ * @retval -errno Credential, socket, TLS, or stack setup failed.
+ */
+int spaghetti_remote_console_start(void);
+
+/**
+ * @brief Stop the listener and release every optional runtime resource.
+ *
+ * @param[in] timeout Finite cleanup deadline copied by value; K_FOREVER is invalid.
+ *
+ * @retval 0 Listener, client, work, worker, TLS state, and stack are released.
+ * @retval -EINVAL @p timeout is unbounded or exceeds the service limit.
+ * @retval -EACCES The backend is not initialized.
+ * @retval -EALREADY The listener is already stopped.
+ * @retval -EAGAIN The worker did not exit before the deadline.
+ * @retval -errno Socket, TLS, or stack cleanup failed.
+ */
+int spaghetti_remote_console_stop(k_timeout_t timeout);
 
 /**
  * @brief Persist a separate per-device TLS-PSK console credential.

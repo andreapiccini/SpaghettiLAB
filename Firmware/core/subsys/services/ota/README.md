@@ -5,9 +5,12 @@
 
 OTA owns a short-lived DTLS-PSK server on UDP port 1337. It is initialized only in
 Core `NORMAL` mode and opens only after consuming a locally provisioned one-shot
-request. Service-owned state uses no direct heap allocation: listener stack, lifecycle
-workqueue, SMP buffers and credential record are bounded at build time. Zephyr's
-network/TLS implementation still uses its configured global heap and permits one DTLS
+request. Initialization retains only bounded state. Start consumes the request; an
+open window obtains its listener stack through the profile-bounded optional-thread
+allocator, while timeout cleanup uses Zephyr's shared system workqueue. Stop closes
+the socket, removes the network callback, joins the listener and returns its stack.
+SMP buffers and the credential record remain bounded at build time. Zephyr's
+network/TLS implementation uses the shared secure workspace and permits one DTLS
 client session.
 
 The service stores a 32-byte per-device PSK and a bounded identity in PSA ITS. Only an

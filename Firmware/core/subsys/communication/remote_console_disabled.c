@@ -40,6 +40,12 @@ int spaghetti_remote_console_backend_open(void)
 	return -ENOTSUP;
 }
 
+int spaghetti_remote_console_backend_close(k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+	return -ENOTSUP;
+}
+
 bool spaghetti_remote_console_backend_client_connected(void)
 {
 	return false;
