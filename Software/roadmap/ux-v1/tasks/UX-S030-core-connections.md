@@ -1,6 +1,6 @@
 # UX-S030 — Core Connections
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S030
 
@@ -42,5 +42,15 @@ visibile lo stato di sessione senza ambiguità — con lo stesso dettaglio di
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Core Connections" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Core Connections" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S030-core-connections/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Distingue esplicitamente i due stati indipendenti (sessione vs relazione
+progetto/dispositivo) con badge separati, mai fusi, e copre badge STALE per Core
+offline, isolamento errori per riga, e azione esplicita (mai auto-apply) per ciascuna
+classificazione sync. `backend-behavior.md` riferisce S030 punto per punto (S030 è
+ancora ⬜ TODO — questo documento descrive cosa dovrebbe partire, non richiede
+implementazione già esistente, coerente con la convenzione della roadmap UX).
