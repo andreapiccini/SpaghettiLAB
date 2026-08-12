@@ -48,6 +48,31 @@ its output round-trips through the branded ID constructors below.
   registering the same ID twice, and fails `resolve()` for an ID that was never
   registered instead of returning `undefined`.
 
+### The three graphs and authoring metadata (S013)
+
+- `GraphLayer` (`graph-layer.ts`) — the three distinct models from
+  REACT_FLOW_ARCHITECTURE.md § Tre grafi distinti: `"physical-composition"`,
+  `"device-processing"`, `"system-automation"`. They can be shown together in the
+  UI but must never share ownership or serialization.
+- `Graph<Layer, Id, EdgeId, Data>` (`graph.ts`) — a graph whose nodes/edges all
+  belong to exactly one layer. Adding a node/edge tagged with a different layer is
+  rejected with a structured `DomainError`
+  (`GraphErrorCode.CROSS_LAYER_REFERENCE`) — e.g. a Device Processing → System
+  Automation edge is refused, not silently accepted. An edge whose endpoint isn't a
+  registered node in *this* graph is rejected too
+  (`GraphErrorCode.DANGLING_EDGE_ENDPOINT`). `createPhysicalCompositionGraph`,
+  `createDeviceProcessingGraph`, and `createSystemAutomationGraph` are the three
+  factories.
+- `deployableSnapshot(graph)` — a deterministic, order-independent view of a
+  graph's nodes/edges, used to prove authoring metadata changes never affect
+  deployable content. Not the canonical Config serialization (S072's job) — a
+  domain-level equality check only.
+- `AuthoringMetadata` / `AuthoringMetadataStore<Id>` (`authoring-metadata.ts`) —
+  position, viewport, selection, comment, group: editor-only data, kept in a
+  completely separate store from a graph's nodes. `GraphNode.data` has no field for
+  any of this, so there is no path for it to reach a firmware Config — enforced
+  structurally, not by convention.
+
 ## Commands
 
 ```sh
