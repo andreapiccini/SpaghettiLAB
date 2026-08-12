@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <zephyr/ztest.h>
 #include <zephyr/sys/util.h>
@@ -217,9 +218,9 @@ int spaghetti_config_init(const struct spaghetti_config *defaults)
 }
 
 int spaghetti_config_validate(const struct spaghetti_config *candidate,
-			      struct spaghetti_config_error *error)
+			      struct spaghetti_config_failure *failure)
 {
-	ARG_UNUSED(error);
+	ARG_UNUSED(failure);
 	return (candidate != NULL) ? 0 : -EINVAL;
 }
 
@@ -254,25 +255,35 @@ int spaghetti_remote_console_init(void)
 	return record_step(STEP_REMOTE_CONSOLE);
 }
 
-int spaghetti_config_get_snapshot(struct spaghetti_config *out,
-				  uint32_t *generation)
+int spaghetti_config_get_snapshot(
+	struct spaghetti_config *out,
+	struct spaghetti_config_revision *out_revision)
 {
-	if ((out == NULL) || (generation == NULL)) {
+	if ((out == NULL) || (out_revision == NULL)) {
 		return -EINVAL;
 	}
 
 	*out = initialized_defaults;
-	*generation = 1U;
+	out_revision->generation = 1U;
+	memset(out_revision->sha256, 0, sizeof(out_revision->sha256));
 	return 0;
 }
 
-int spaghetti_config_apply(const struct spaghetti_config *candidate,
-			   uint32_t expected_generation)
+int spaghetti_config_apply(
+	const struct spaghetti_config *candidate,
+	uint32_t expected_generation,
+	struct spaghetti_config_commit_result *out_result)
 {
+	ARG_UNUSED(out_result);
 	zassert_not_null(candidate);
 	zassert_equal(candidate->module_count, 1U);
 	zassert_equal(expected_generation, 1U);
 	return -ENODEV;
+}
+
+int spaghetti_rule_registry_init(void)
+{
+	return 0;
 }
 
 int spaghetti_module_manager_configure(
@@ -359,8 +370,8 @@ ZTEST(core, test_boot_order_and_nonfatal_stored_config_failure)
 	}
 	zassert_equal(initialized_defaults.version, SPAGHETTI_CONFIG_VERSION);
 	zassert_equal(initialized_defaults.module_count, 0U);
-	zassert_false(initialized_defaults.sampling.enabled);
-	zassert_equal(initialized_defaults.sampling.period_ms, 1000U);
+	zassert_equal(initialized_defaults.schedule_count, 0U);
+	zassert_equal(initialized_defaults.rule_count, 0U);
 
 	zassert_ok(spaghetti_core_start());
 	zassert_equal(spaghetti_core_get_state(), SPAGHETTI_CORE_RUNNING);

@@ -10,15 +10,15 @@ config SPAGHETTI_CONFIG_LOG_LEVEL
 	int
 	default 0
 
-config SPAGHETTI_DISCOVERY_MAX_RESULTS
-	int
-	default 8
-
-config SPAGHETTI_DISCOVERY_LOG_LEVEL
+config SPAGHETTI_SCHEMA_LOG_LEVEL
 	int
 	default 0
 
 config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RULE_REGISTRY_LOG_LEVEL
 	int
 	default 0
 
@@ -29,5 +29,13 @@ config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
 config SPAGHETTI_MQTT_STOP_TIMEOUT_MS
 	int
 	default 2000
+
+config SPAGHETTI_CONFIG_MIN_WRITE_INTERVAL_MS
+	int
+	default 0
+
+config ZCBOR
+	bool
+	default y
 
 source "Kconfig.zephyr"

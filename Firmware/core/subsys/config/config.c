@@ -8,17 +8,21 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#include <spaghetti/config_codec.h>
+#include <spaghetti/connectivity.h>
 #include <spaghetti/driver_registry.h>
-#include <spaghetti/discovery.h>
+#include <spaghetti/energy.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/mqtt.h>
+#include <spaghetti/power.h>
+#include <spaghetti/rule_driver.h>
+#include <spaghetti/rule_registry.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/schema.h>
 #include <spaghetti/service.h>
 #include <spaghetti/storage.h>
-
-#include "legacy_driver_config.h"
+#include <spaghetti/topology.h>
 
 LOG_MODULE_REGISTER(spaghetti_config, CONFIG_SPAGHETTI_CONFIG_LOG_LEVEL);
 
@@ -30,14 +34,163 @@ struct spaghetti_config_transaction {
 };
 
 static struct spaghetti_config current_config;
-static uint32_t current_generation;
+static struct spaghetti_config_revision current_revision;
 static bool is_initialized;
+static int64_t last_persistent_write_ms;
 K_MUTEX_DEFINE(config_lock);
 
 BUILD_ASSERT(SPAGHETTI_CONFIG_MAX_MODULES <= CONFIG_SPAGHETTI_MAX_MODULES);
+BUILD_ASSERT(SPAGHETTI_CONFIG_MAX_SCHEDULES <= CONFIG_SPAGHETTI_MAX_SCHEDULES);
+BUILD_ASSERT(SPAGHETTI_CONFIG_MAX_RULES <= CONFIG_SPAGHETTI_MAX_RULES);
 BUILD_ASSERT(SPAGHETTI_CONFIG_TYPE_ID_SIZE == SPAGHETTI_TYPE_ID_MAX);
 
 static bool module_is_absent(spaghetti_module_key_t key);
+
+static uint32_t sha256_rotr(uint32_t value, uint32_t bits)
+{
+	return (value >> bits) | (value << (32U - bits));
+}
+
+static void sha256_transform(uint32_t state[8], const uint8_t block[64])
+{
+	static const uint32_t k[64] = {
+		0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U,
+		0x3956c25bU, 0x59f111f1U, 0x923f82a4U, 0xab1c5ed5U,
+		0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U,
+		0x72be5d74U, 0x80deb1feU, 0x9bdc06a7U, 0xc19bf174U,
+		0xe49b69c1U, 0xefbe4786U, 0x0fc19dc6U, 0x240ca1ccU,
+		0x2de92c6fU, 0x4a7484aaU, 0x5cb0a9dcU, 0x76f988daU,
+		0x983e5152U, 0xa831c66dU, 0xb00327c8U, 0xbf597fc7U,
+		0xc6e00bf3U, 0xd5a79147U, 0x06ca6351U, 0x14292967U,
+		0x27b70a85U, 0x2e1b2138U, 0x4d2c6dfcU, 0x53380d13U,
+		0x650a7354U, 0x766a0abbU, 0x81c2c92eU, 0x92722c85U,
+		0xa2bfe8a1U, 0xa81a664bU, 0xc24b8b70U, 0xc76c51a3U,
+		0xd192e819U, 0xd6990624U, 0xf40e3585U, 0x106aa070U,
+		0x19a4c116U, 0x1e376c08U, 0x2748774cU, 0x34b0bcb5U,
+		0x391c0cb3U, 0x4ed8aa4aU, 0x5b9cca4fU, 0x682e6ff3U,
+		0x748f82eeU, 0x78a5636fU, 0x84c87814U, 0x8cc70208U,
+		0x90befffaU, 0xa4506cebU, 0xbef9a3f7U, 0xc67178f2U,
+	};
+	uint32_t w[64];
+	uint32_t a = state[0];
+	uint32_t b = state[1];
+	uint32_t c = state[2];
+	uint32_t d = state[3];
+	uint32_t e = state[4];
+	uint32_t f = state[5];
+	uint32_t g = state[6];
+	uint32_t h = state[7];
+
+	for (size_t idx = 0U; idx < 16U; ++idx) {
+		w[idx] = ((uint32_t)block[(idx * 4U) + 0U] << 24) |
+			 ((uint32_t)block[(idx * 4U) + 1U] << 16) |
+			 ((uint32_t)block[(idx * 4U) + 2U] << 8) |
+			 ((uint32_t)block[(idx * 4U) + 3U]);
+	}
+	for (size_t idx = 16U; idx < 64U; ++idx) {
+		const uint32_t s0 = sha256_rotr(w[idx - 15U], 7U) ^
+				    sha256_rotr(w[idx - 15U], 18U) ^
+				    (w[idx - 15U] >> 3);
+		const uint32_t s1 = sha256_rotr(w[idx - 2U], 17U) ^
+				    sha256_rotr(w[idx - 2U], 19U) ^
+				    (w[idx - 2U] >> 10);
+
+		w[idx] = w[idx - 16U] + s0 + w[idx - 7U] + s1;
+	}
+
+	for (size_t idx = 0U; idx < 64U; ++idx) {
+		const uint32_t s1 = sha256_rotr(e, 6U) ^ sha256_rotr(e, 11U) ^
+				    sha256_rotr(e, 25U);
+		const uint32_t ch = (e & f) ^ ((~e) & g);
+		const uint32_t temp1 = h + s1 + ch + k[idx] + w[idx];
+		const uint32_t s0 = sha256_rotr(a, 2U) ^ sha256_rotr(a, 13U) ^
+				    sha256_rotr(a, 22U);
+		const uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+		const uint32_t temp2 = s0 + maj;
+
+		h = g;
+		g = f;
+		f = e;
+		e = d + temp1;
+		d = c;
+		c = b;
+		b = a;
+		a = temp1 + temp2;
+	}
+
+	state[0] += a;
+	state[1] += b;
+	state[2] += c;
+	state[3] += d;
+	state[4] += e;
+	state[5] += f;
+	state[6] += g;
+	state[7] += h;
+}
+
+static int compute_sha256(const uint8_t *data, size_t size, uint8_t out[32])
+{
+	uint32_t state[8] = {
+		0x6a09e667U, 0xbb67ae85U, 0x3c6ef372U, 0xa54ff53aU,
+		0x510e527fU, 0x9b05688cU, 0x1f83d9abU, 0x5be0cd19U,
+	};
+	uint8_t block[64];
+	size_t offset = 0U;
+	const uint64_t bit_len = (uint64_t)size * 8U;
+
+	if ((data == NULL) && (size != 0U)) {
+		return -EINVAL;
+	}
+
+	while ((offset + 64U) <= size) {
+		sha256_transform(state, &data[offset]);
+		offset += 64U;
+	}
+
+	memset(block, 0, sizeof(block));
+	if (size > offset) {
+		memcpy(block, &data[offset], size - offset);
+	}
+	block[size - offset] = 0x80U;
+	if ((size - offset) >= 56U) {
+		sha256_transform(state, block);
+		memset(block, 0, sizeof(block));
+	}
+
+	block[56] = (uint8_t)(bit_len >> 56);
+	block[57] = (uint8_t)(bit_len >> 48);
+	block[58] = (uint8_t)(bit_len >> 40);
+	block[59] = (uint8_t)(bit_len >> 32);
+	block[60] = (uint8_t)(bit_len >> 24);
+	block[61] = (uint8_t)(bit_len >> 16);
+	block[62] = (uint8_t)(bit_len >> 8);
+	block[63] = (uint8_t)bit_len;
+	sha256_transform(state, block);
+
+	for (size_t idx = 0U; idx < 8U; ++idx) {
+		out[(idx * 4U) + 0U] = (uint8_t)(state[idx] >> 24);
+		out[(idx * 4U) + 1U] = (uint8_t)(state[idx] >> 16);
+		out[(idx * 4U) + 2U] = (uint8_t)(state[idx] >> 8);
+		out[(idx * 4U) + 3U] = (uint8_t)state[idx];
+	}
+
+	return 0;
+}
+
+static int compute_config_hash(const struct spaghetti_config *config,
+			       uint8_t out_hash[SPAGHETTI_CONFIG_HASH_SIZE])
+{
+	uint8_t encoded[SPAGHETTI_CONFIG_CBOR_MAX_SIZE];
+	size_t written = 0U;
+	int err = spaghetti_config_encode_cbor(config, encoded, sizeof(encoded),
+					       &written);
+
+	if (err < 0) {
+		return err;
+	}
+
+	return compute_sha256(encoded, written, out_hash);
+}
 
 static bool type_id_is_valid(const char *type_id)
 {
@@ -64,8 +217,31 @@ static bool mqtt_config_is_valid(const struct spaghetti_mqtt_config *mqtt)
 		return false;
 	}
 
-	return (mqtt->base_topic[0] != '/') &&
-	       (topic_end[-1] != '/');
+	return (mqtt->base_topic[0] != '/') && (topic_end[-1] != '/');
+}
+
+static bool energy_policy_is_valid(const struct spaghetti_energy_policy *policy)
+{
+	if ((policy->ble_availability != SPAGHETTI_BLE_OFF) &&
+	    (policy->ble_availability != SPAGHETTI_BLE_ADVERTISING) &&
+	    (policy->ble_availability != SPAGHETTI_BLE_WINDOWED)) {
+		return false;
+	}
+	if (policy->ble_availability != SPAGHETTI_BLE_WINDOWED) {
+		return true;
+	}
+
+	return (policy->advertising_window_ms > 0U) &&
+	       (policy->advertising_period_ms > 0U) &&
+	       (policy->advertising_window_ms <
+		policy->advertising_period_ms);
+}
+
+static bool connectivity_policy_is_valid(
+	enum spaghetti_connectivity_policy policy)
+{
+	return (policy == SPAGHETTI_CONNECTIVITY_LOW_ENERGY) ||
+	       (policy == SPAGHETTI_CONNECTIVITY_ONLINE);
 }
 
 static bool endpoint_is_valid(const struct spaghetti_module_endpoint *endpoint)
@@ -107,25 +283,82 @@ static bool endpoints_conflict(
 	       (memcmp(first->value, second->value, first->value_size) == 0);
 }
 
+static bool property_values_equal(const struct spaghetti_value *first,
+				  const struct spaghetti_value *second)
+{
+	if ((first->field_id != second->field_id) ||
+	    (first->type != second->type)) {
+		return false;
+	}
+
+	switch (first->type) {
+	case SPAGHETTI_VALUE_BOOL:
+		return first->data.boolean == second->data.boolean;
+	case SPAGHETTI_VALUE_INT64:
+		return first->data.signed_integer == second->data.signed_integer;
+	case SPAGHETTI_VALUE_UINT64:
+		return first->data.unsigned_integer ==
+		       second->data.unsigned_integer;
+	case SPAGHETTI_VALUE_TEXT:
+		return (first->data.text.size == second->data.text.size) &&
+		       (memcmp(first->data.text.text, second->data.text.text,
+			       first->data.text.size) == 0);
+	case SPAGHETTI_VALUE_BYTES:
+		return (first->data.bytes.size == second->data.bytes.size) &&
+		       (memcmp(first->data.bytes.bytes, second->data.bytes.bytes,
+			       first->data.bytes.size) == 0);
+	default:
+		return false;
+	}
+}
+
+static bool property_sets_are_equal(const struct spaghetti_property_set *first,
+				    const struct spaghetti_property_set *second)
+{
+	if (first->field_count != second->field_count) {
+		return false;
+	}
+
+	for (size_t idx = 0U; idx < first->field_count; ++idx) {
+		const struct spaghetti_value *peer =
+			spaghetti_property_find(second,
+						first->fields[idx].field_id);
+
+		if ((peer == NULL) ||
+		    !property_values_equal(&first->fields[idx], peer)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 static int describe_module(
 	const struct spaghetti_module_config *module_config,
-	struct spaghetti_module_endpoint *out_endpoint)
+	struct spaghetti_module_endpoint *out_endpoint,
+	const struct spaghetti_flow_descriptor **out_flow)
 {
 	const struct spaghetti_module_driver *driver;
 	const struct spaghetti_port *port;
-	struct spaghetti_property_set properties;
+	const struct spaghetti_flow_descriptor *flow;
 	int err;
 
 	if ((module_config->key == 0U) ||
-	    !type_id_is_valid(module_config->type_id) ||
-	    (module_config->driver_config_size == 0U) ||
-	    (module_config->driver_config_size > SPAGHETTI_DRIVER_CONFIG_MAX)) {
+	    !type_id_is_valid(module_config->type_id)) {
 		return -EINVAL;
 	}
+	if ((module_config->power_rail_id != SPAGHETTI_POWER_RAIL_UNSPECIFIED) &&
+	    (module_config->bay_id == SPAGHETTI_BAY_ID_UNSPECIFIED)) {
+		return -EINVAL;
+	}
+
 	port = spaghetti_port_get(module_config->port_id);
 	if (port == NULL) {
 		return -ENOENT;
 	}
+
+	flow = spaghetti_topology_flow_for_port(module_config->port_id);
+	*out_flow = flow;
 
 	driver = spaghetti_driver_registry_find(module_config->type_id);
 	if ((driver == NULL) || (driver->ops == NULL) ||
@@ -138,24 +371,53 @@ static int describe_module(
 	    (driver->ops->deinit == NULL)) {
 		return -ENOTSUP;
 	}
-	if (!spaghetti_port_has_capability(port,
+	if ((driver->required_capabilities != 0U) &&
+	    !spaghetti_port_has_capability(port,
 					   driver->required_capabilities)) {
 		return -ENOTSUP;
 	}
 
-	err = spaghetti_legacy_driver_config_bytes_to_properties(
-		module_config->type_id, module_config->driver_config,
-		module_config->driver_config_size, &properties);
+	if (module_config->bay_id != SPAGHETTI_BAY_ID_UNSPECIFIED) {
+		struct spaghetti_bay_descriptor bay;
+
+		if (flow == NULL) {
+			return -ENOENT;
+		}
+		err = spaghetti_topology_bay_get(flow->id, module_config->bay_id,
+						 &bay);
+		if (err < 0) {
+			return err;
+		}
+	}
+
+	if ((module_config->bay_id != SPAGHETTI_BAY_ID_UNSPECIFIED) &&
+	    (module_config->power_rail_id != SPAGHETTI_POWER_RAIL_UNSPECIFIED)) {
+#if defined(CONFIG_SPAGHETTI_POWER)
+		const struct spaghetti_power_binding binding = {
+			.flow_id = flow->id,
+			.bay_id = module_config->bay_id,
+			.rail_id = module_config->power_rail_id,
+		};
+		enum spaghetti_power_admission_state admission;
+
+		err = spaghetti_power_validate_binding(
+			&binding, &driver->power_requirement, &admission);
+		if (err < 0) {
+			return err;
+		}
+		ARG_UNUSED(admission);
+#else
+		return -ENOTSUP;
+#endif
+	}
+
+	err = driver->ops->validate_config(&module_config->properties);
 	if (err < 0) {
 		return err;
 	}
 
-	err = driver->ops->validate_config(&properties);
-	if (err < 0) {
-		return err;
-	}
-
-	err = driver->ops->describe_endpoint(&properties, out_endpoint);
+	err = driver->ops->describe_endpoint(&module_config->properties,
+					     out_endpoint);
 	if (err < 0) {
 		return err;
 	}
@@ -190,26 +452,11 @@ static bool module_supports_read(const struct spaghetti_config *config,
 	}
 
 	const struct spaghetti_module_driver *driver =
-		spaghetti_driver_registry_find(config->modules[module_idx].type_id);
+		spaghetti_driver_registry_find(
+			config->modules[module_idx].type_id);
 
 	return (driver != NULL) && (driver->ops != NULL) &&
 	       (driver->ops->read != NULL);
-}
-
-static bool module_supports_command(const struct spaghetti_config *config,
-				    spaghetti_module_key_t key)
-{
-	const int module_idx = find_module_index(config, key);
-
-	if (module_idx < 0) {
-		return false;
-	}
-
-	const struct spaghetti_module_driver *driver =
-		spaghetti_driver_registry_find(config->modules[module_idx].type_id);
-
-	return (driver != NULL) && (driver->ops != NULL) &&
-	       (driver->ops->command != NULL);
 }
 
 static bool module_configs_are_equal(
@@ -217,10 +464,10 @@ static bool module_configs_are_equal(
 	const struct spaghetti_module_config *second)
 {
 	return (first->port_id == second->port_id) &&
+	       (first->bay_id == second->bay_id) &&
+	       (first->power_rail_id == second->power_rail_id) &&
 	       (strcmp(first->type_id, second->type_id) == 0) &&
-	       (first->driver_config_size == second->driver_config_size) &&
-	       (memcmp(first->driver_config, second->driver_config,
-		       first->driver_config_size) == 0);
+	       property_sets_are_equal(&first->properties, &second->properties);
 }
 
 static int configure_module(
@@ -228,29 +475,27 @@ static int configure_module(
 	uint32_t revision,
 	struct spaghetti_module_snapshot *out)
 {
-	struct spaghetti_discovery_result result = {
+	const struct spaghetti_module_request request = {
 		.key = module_config->key,
 		.port_id = module_config->port_id,
-		.driver_config_size = module_config->driver_config_size,
-		.source = SPAGHETTI_DISCOVERY_SOURCE_CONFIG,
-		.generation = revision,
+		.type_id = module_config->type_id,
+		.config = &module_config->properties,
+		.placement = {
+			.bay_id = module_config->bay_id,
+			.power_rail_id = module_config->power_rail_id,
+		},
+		.revision = revision,
 	};
-	int err;
-
-	memcpy(result.type_id, module_config->type_id,
-	       strlen(module_config->type_id) + 1U);
-	memcpy(result.driver_config, module_config->driver_config,
-	       module_config->driver_config_size);
-	err = spaghetti_discovery_submit_manual(&result);
+	spaghetti_module_id_t module_id;
+	int err = spaghetti_module_manager_configure(&request, &module_id);
 
 	if (err < 0) {
 		return err;
 	}
 
-	err = spaghetti_module_manager_get_by_key(module_config->key, out);
+	err = spaghetti_module_manager_get_by_id(module_id, out);
 	if (err < 0) {
-		(void)spaghetti_discovery_invalidate(module_config->key,
-						     revision);
+		(void)spaghetti_module_manager_remove(module_id, revision);
 	}
 
 	return err;
@@ -258,83 +503,62 @@ static int configure_module(
 
 static int remove_module(const struct spaghetti_module_snapshot *module)
 {
-	int err = spaghetti_discovery_invalidate(module->key, module->revision);
+	int err = spaghetti_module_manager_remove(module->id, module->revision);
 
 	if ((err < 0) && module_is_absent(module->key)) {
-		const int cleanup_error = spaghetti_discovery_invalidate(
-			module->key, module->revision);
-
-		if ((cleanup_error < 0) && (cleanup_error != -ENOENT)) {
-			return -EIO;
-		}
+		return 0;
 	}
 
 	return err;
+}
+
+static bool config_has_enabled_schedule(const struct spaghetti_config *config)
+{
+	for (size_t idx = 0U; idx < config->schedule_count; ++idx) {
+		if (config->schedules[idx].enabled) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static int load_runtime(const struct spaghetti_config *config)
 {
 	struct spaghetti_runtime_sampling_task task = {0};
 	struct spaghetti_module_snapshot source;
-	struct spaghetti_module_snapshot relay;
 	int err;
 
-	if (config->sampling.enabled) {
-		err = spaghetti_module_manager_get_by_key(
-			config->sampling.source_key, &source);
+	(void)spaghetti_runtime_clear_threshold_rule();
+
+	for (size_t idx = 0U; idx < config->schedule_count; ++idx) {
+		const struct spaghetti_runtime_schedule_config *schedule =
+			&config->schedules[idx];
+
+		if (!schedule->enabled) {
+			continue;
+		}
+
+		err = spaghetti_module_manager_get_by_key(schedule->source_key,
+							  &source);
 		if (err < 0) {
 			return err;
 		}
 
 		task.module_id = source.id;
-		task.period_ms = config->sampling.period_ms;
+		task.period_ms = schedule->period_ms;
 		task.enabled = true;
-	}
-	err = spaghetti_runtime_load(&task);
-	if (err < 0) {
-		return err;
+		break;
 	}
 
-	if (config->threshold_rule.enabled) {
-		const struct spaghetti_runtime_threshold_config *rule_config =
-			&config->threshold_rule;
-
-		err = spaghetti_module_manager_get_by_key(rule_config->source_key,
-						  &source);
-		if (err < 0) {
-			return err;
-		}
-		err = spaghetti_module_manager_get_by_key(rule_config->relay_key,
-						  &relay);
-		if (err < 0) {
-			return err;
-		}
-
-		const struct spaghetti_runtime_threshold_rule rule = {
-			.source_id = source.id,
-			.lower_current_microamps =
-				rule_config->lower_current_microamps,
-			.upper_current_microamps =
-				rule_config->upper_current_microamps,
-			.relay_id = relay.id,
-			.relay_on_above = rule_config->relay_on_above,
-		};
-
-		err = spaghetti_runtime_load_threshold_rule(&rule);
-	} else {
-		err = spaghetti_runtime_clear_threshold_rule();
-	}
-	if (err < 0) {
-		return err;
-	}
-	return 0;
+	return spaghetti_runtime_load(&task);
 }
 
 static int start_runtime(const struct spaghetti_config *config)
 {
 	int err;
 
-	if (!config->sampling.enabled && !config->threshold_rule.enabled) {
+	if (!config_has_enabled_schedule(config)) {
 		return 0;
 	}
 
@@ -356,8 +580,7 @@ static int configure_mqtt(const struct spaghetti_mqtt_config *mqtt)
 {
 	enum spaghetti_service_state state;
 	bool restart_service;
-	int err = spaghetti_service_get_state(
-		SPAGHETTI_SERVICE_ID_MQTT, &state);
+	int err = spaghetti_service_get_state(SPAGHETTI_SERVICE_ID_MQTT, &state);
 
 	if (err < 0) {
 		return err;
@@ -378,6 +601,21 @@ static int configure_mqtt(const struct spaghetti_mqtt_config *mqtt)
 	}
 
 	return err;
+}
+
+static int apply_connectivity_policy(enum spaghetti_connectivity_policy policy)
+{
+	int err = spaghetti_connectivity_set_policy(policy);
+
+	if (err < 0) {
+		return err;
+	}
+
+#if defined(CONFIG_SPAGHETTI_ENERGY)
+	return spaghetti_energy_apply_connectivity(policy);
+#else
+	return 0;
+#endif
 }
 
 static int restore_runtime(const struct spaghetti_config *config)
@@ -444,16 +682,16 @@ static int rollback_transaction(
 	return first_error;
 }
 
-static int validation_failure(struct spaghetti_config_error *error,
-			      enum spaghetti_config_error_field field,
+static int validation_failure(struct spaghetti_config_failure *failure,
+			      enum spaghetti_config_failure_field field,
 			      size_t index,
-			      enum spaghetti_config_error_reason reason,
+			      enum spaghetti_config_failure_reason reason,
 			      int err)
 {
-	if (error != NULL) {
-		error->field = field;
-		error->index = index;
-		error->reason = reason;
+	if (failure != NULL) {
+		failure->field = field;
+		failure->index = index;
+		failure->reason = reason;
 	}
 
 	return err;
@@ -461,8 +699,13 @@ static int validation_failure(struct spaghetti_config_error *error,
 
 int spaghetti_config_init(const struct spaghetti_config *defaults)
 {
+	uint8_t hash[SPAGHETTI_CONFIG_HASH_SIZE];
 	int err = spaghetti_config_validate(defaults, NULL);
 
+	if (err < 0) {
+		return err;
+	}
+	err = compute_config_hash(defaults, hash);
 	if (err < 0) {
 		return err;
 	}
@@ -477,7 +720,9 @@ int spaghetti_config_init(const struct spaghetti_config *defaults)
 	}
 
 	current_config = *defaults;
-	current_generation = 1U;
+	current_revision.generation = 1U;
+	memcpy(current_revision.sha256, hash, sizeof(hash));
+	last_persistent_write_ms = 0;
 	is_initialized = true;
 	k_mutex_unlock(&config_lock);
 	LOG_INF("ready: generation=1");
@@ -485,35 +730,49 @@ int spaghetti_config_init(const struct spaghetti_config *defaults)
 }
 
 int spaghetti_config_validate(const struct spaghetti_config *candidate,
-			      struct spaghetti_config_error *error)
+			      struct spaghetti_config_failure *failure)
 {
 	struct spaghetti_module_endpoint
 		endpoints[SPAGHETTI_CONFIG_MAX_MODULES];
+	const struct spaghetti_flow_descriptor
+		*flows[SPAGHETTI_CONFIG_MAX_MODULES];
 
 	if ((candidate == NULL) ||
 	    (candidate->version != SPAGHETTI_CONFIG_VERSION) ||
-	    (candidate->module_count > SPAGHETTI_CONFIG_MAX_MODULES)) {
-		return validation_failure(error, SPAGHETTI_CONFIG_ERROR_ROOT, 0U,
-			SPAGHETTI_CONFIG_ERROR_RANGE, -EINVAL);
+	    (candidate->module_count > SPAGHETTI_CONFIG_MAX_MODULES) ||
+	    (candidate->schedule_count > SPAGHETTI_CONFIG_MAX_SCHEDULES) ||
+	    (candidate->rule_count > SPAGHETTI_CONFIG_MAX_RULES)) {
+		return validation_failure(failure, SPAGHETTI_CONFIG_FAILURE_ROOT,
+			0U, SPAGHETTI_CONFIG_FAILURE_RANGE, -EINVAL);
 	}
 	if (!mqtt_config_is_valid(&candidate->mqtt)) {
-		return validation_failure(error, SPAGHETTI_CONFIG_ERROR_MQTT, 0U,
-			SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -EINVAL);
+		return validation_failure(failure, SPAGHETTI_CONFIG_FAILURE_MQTT,
+			0U, SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -EINVAL);
+	}
+	if (!connectivity_policy_is_valid(candidate->connectivity_policy)) {
+		return validation_failure(failure,
+			SPAGHETTI_CONFIG_FAILURE_CONNECTIVITY, 0U,
+			SPAGHETTI_CONFIG_FAILURE_RANGE, -EINVAL);
+	}
+	if (!energy_policy_is_valid(&candidate->energy_policy)) {
+		return validation_failure(failure, SPAGHETTI_CONFIG_FAILURE_ENERGY,
+			0U, SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -EINVAL);
 	}
 
 	for (size_t module_idx = 0U; module_idx < candidate->module_count;
 	     ++module_idx) {
 		int err = describe_module(&candidate->modules[module_idx],
-					  &endpoints[module_idx]);
+					  &endpoints[module_idx],
+					  &flows[module_idx]);
 
 		if (err < 0) {
-			const enum spaghetti_config_error_reason reason =
+			const enum spaghetti_config_failure_reason reason =
 				(err == -ENOTSUP) ?
-				SPAGHETTI_CONFIG_ERROR_UNKNOWN_TYPE :
-				SPAGHETTI_CONFIG_ERROR_INCONSISTENT;
+				SPAGHETTI_CONFIG_FAILURE_UNKNOWN_TYPE :
+				SPAGHETTI_CONFIG_FAILURE_INCONSISTENT;
 
-			return validation_failure(error,
-				SPAGHETTI_CONFIG_ERROR_MODULE, module_idx,
+			return validation_failure(failure,
+				SPAGHETTI_CONFIG_FAILURE_MODULE, module_idx,
 				reason, err);
 		}
 
@@ -521,72 +780,118 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate,
 		     ++previous_idx) {
 			if (candidate->modules[previous_idx].key ==
 			    candidate->modules[module_idx].key) {
-				return validation_failure(error,
-					SPAGHETTI_CONFIG_ERROR_MODULE, module_idx,
-					SPAGHETTI_CONFIG_ERROR_DUPLICATE, -EEXIST);
+				return validation_failure(failure,
+					SPAGHETTI_CONFIG_FAILURE_MODULE,
+					module_idx,
+					SPAGHETTI_CONFIG_FAILURE_DUPLICATE,
+					-EEXIST);
 			}
 
 			if ((candidate->modules[previous_idx].port_id ==
 			     candidate->modules[module_idx].port_id) &&
 			    endpoints_conflict(&endpoints[previous_idx],
 					       &endpoints[module_idx])) {
-				return validation_failure(error,
-					SPAGHETTI_CONFIG_ERROR_MODULE, module_idx,
-					SPAGHETTI_CONFIG_ERROR_DUPLICATE,
+				return validation_failure(failure,
+					SPAGHETTI_CONFIG_FAILURE_MODULE,
+					module_idx,
+					SPAGHETTI_CONFIG_FAILURE_DUPLICATE,
+					-EADDRINUSE);
+			}
+
+			if ((candidate->modules[module_idx].bay_id !=
+			     SPAGHETTI_BAY_ID_UNSPECIFIED) &&
+			    (candidate->modules[previous_idx].bay_id ==
+			     candidate->modules[module_idx].bay_id) &&
+			    (flows[previous_idx] != NULL) &&
+			    (flows[module_idx] != NULL) &&
+			    (flows[previous_idx]->id == flows[module_idx]->id)) {
+				return validation_failure(failure,
+					SPAGHETTI_CONFIG_FAILURE_MODULE,
+					module_idx,
+					SPAGHETTI_CONFIG_FAILURE_DUPLICATE,
 					-EADDRINUSE);
 			}
 		}
 	}
 
-	if (candidate->sampling.enabled) {
-		if ((candidate->sampling.source_key == 0U) ||
-		    (candidate->sampling.period_ms == 0U) ||
-		    (find_module_index(candidate,
-				       candidate->sampling.source_key) < 0)) {
-			return validation_failure(error,
-				SPAGHETTI_CONFIG_ERROR_SAMPLING, 0U,
-				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -EINVAL);
+	for (size_t schedule_idx = 0U; schedule_idx < candidate->schedule_count;
+	     ++schedule_idx) {
+		const struct spaghetti_runtime_schedule_config *schedule =
+			&candidate->schedules[schedule_idx];
+
+		if ((schedule->source_key == 0U) ||
+		    (schedule->period_ms == 0U) ||
+		    (find_module_index(candidate, schedule->source_key) < 0)) {
+			return validation_failure(failure,
+				SPAGHETTI_CONFIG_FAILURE_SCHEDULE, schedule_idx,
+				SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -EINVAL);
 		}
-		if (!module_supports_read(candidate,
-					  candidate->sampling.source_key)) {
-			return validation_failure(error,
-				SPAGHETTI_CONFIG_ERROR_SAMPLING, 0U,
-				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -ENOTSUP);
+		if (schedule->enabled &&
+		    !module_supports_read(candidate, schedule->source_key)) {
+			return validation_failure(failure,
+				SPAGHETTI_CONFIG_FAILURE_SCHEDULE, schedule_idx,
+				SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -ENOTSUP);
 		}
 	}
 
-	if (candidate->threshold_rule.enabled) {
-		const struct spaghetti_runtime_threshold_config *rule =
-			&candidate->threshold_rule;
+	for (size_t rule_idx = 0U; rule_idx < candidate->rule_count; ++rule_idx) {
+		const struct spaghetti_rule_config *rule =
+			&candidate->rules[rule_idx];
+		const struct spaghetti_rule_driver *driver;
 
-		if ((rule->source_key == 0U) || (rule->relay_key == 0U) ||
-		    (rule->lower_current_microamps < 0) ||
-		    (rule->lower_current_microamps >=
-		     rule->upper_current_microamps) ||
-		    (find_module_index(candidate, rule->source_key) < 0) ||
-		    (find_module_index(candidate, rule->relay_key) < 0)) {
-			return validation_failure(error,
-				SPAGHETTI_CONFIG_ERROR_THRESHOLD_RULE, 0U,
-				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -EINVAL);
+		if ((rule->key == 0U) || !type_id_is_valid(rule->type_id)) {
+			return validation_failure(failure,
+				SPAGHETTI_CONFIG_FAILURE_RULE, rule_idx,
+				SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -EINVAL);
 		}
-		if (!module_supports_read(candidate, rule->source_key) ||
-		    !module_supports_command(candidate, rule->relay_key)) {
-			return validation_failure(error,
-				SPAGHETTI_CONFIG_ERROR_THRESHOLD_RULE, 0U,
-				SPAGHETTI_CONFIG_ERROR_INCONSISTENT, -ENOTSUP);
+
+		for (size_t previous_idx = 0U; previous_idx < rule_idx;
+		     ++previous_idx) {
+			if (candidate->rules[previous_idx].key == rule->key) {
+				return validation_failure(failure,
+					SPAGHETTI_CONFIG_FAILURE_RULE, rule_idx,
+					SPAGHETTI_CONFIG_FAILURE_DUPLICATE,
+					-EEXIST);
+			}
+		}
+
+		driver = spaghetti_rule_registry_find(rule->type_id);
+		if ((driver == NULL) || (driver->ops == NULL) ||
+		    (driver->ops->validate_config == NULL)) {
+			return validation_failure(failure,
+				SPAGHETTI_CONFIG_FAILURE_RULE, rule_idx,
+				SPAGHETTI_CONFIG_FAILURE_UNKNOWN_TYPE, -ENOTSUP);
+		}
+
+		{
+			const int err =
+				driver->ops->validate_config(&rule->properties);
+
+			if (err < 0) {
+				return validation_failure(failure,
+					SPAGHETTI_CONFIG_FAILURE_RULE, rule_idx,
+					SPAGHETTI_CONFIG_FAILURE_INCONSISTENT,
+					err);
+			}
 		}
 	}
 
 	return 0;
 }
 
-int spaghetti_config_apply(const struct spaghetti_config *candidate,
-			   uint32_t expected_generation)
+int spaghetti_config_apply(
+	const struct spaghetti_config *candidate,
+	uint32_t expected_generation,
+	struct spaghetti_config_commit_result *out_result)
 {
 	struct spaghetti_config_transaction transaction = {0};
 	struct spaghetti_config old_config = {0};
+	struct spaghetti_config_revision old_revision = {0};
+	uint8_t candidate_hash[SPAGHETTI_CONFIG_HASH_SIZE];
 	bool mqtt_changed;
+	bool connectivity_changed;
 	bool mqtt_reconfigured = false;
+	bool connectivity_reconfigured = false;
 	bool candidate_persisted = false;
 	uint32_t next_generation;
 	int apply_error = 0;
@@ -596,8 +901,16 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate,
 	if (err < 0) {
 		return err;
 	}
+	if (candidate->rule_count > 0U) {
+		return -ENOTSUP;
+	}
 	if (expected_generation == 0U) {
 		return -EINVAL;
+	}
+
+	err = compute_config_hash(candidate, candidate_hash);
+	if (err < 0) {
+		return err;
 	}
 
 	err = k_mutex_lock(&config_lock, K_FOREVER);
@@ -608,20 +921,43 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate,
 		err = -EACCES;
 		goto unlock;
 	}
-	if (expected_generation != current_generation) {
+	if (expected_generation != current_revision.generation) {
 		err = -ESTALE;
 		goto unlock;
 	}
-	if (current_generation == UINT32_MAX) {
+	if (memcmp(current_revision.sha256, candidate_hash,
+		   sizeof(candidate_hash)) == 0) {
+		if (out_result != NULL) {
+			out_result->revision = current_revision;
+			out_result->changed = false;
+		}
+		k_mutex_unlock(&config_lock);
+		return 0;
+	}
+	if (current_revision.generation == UINT32_MAX) {
 		err = -EOVERFLOW;
 		goto unlock;
 	}
+	if (CONFIG_SPAGHETTI_CONFIG_MIN_WRITE_INTERVAL_MS > 0) {
+		const int64_t now_ms = k_uptime_get();
+
+		if ((last_persistent_write_ms != 0) &&
+		    ((now_ms - last_persistent_write_ms) <
+		     CONFIG_SPAGHETTI_CONFIG_MIN_WRITE_INTERVAL_MS)) {
+			err = -EBUSY;
+			goto unlock;
+		}
+	}
 
 	old_config = current_config;
-	next_generation = current_generation + 1U;
+	old_revision = current_revision;
+	next_generation = current_revision.generation + 1U;
 	mqtt_changed = !mqtt_configs_are_equal(&old_config.mqtt,
 					       &candidate->mqtt);
-	if (old_config.sampling.enabled || old_config.threshold_rule.enabled) {
+	connectivity_changed =
+		old_config.connectivity_policy != candidate->connectivity_policy;
+
+	if (config_has_enabled_schedule(&old_config)) {
 		err = spaghetti_runtime_stop(
 			K_MSEC(CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS));
 		if ((err < 0) && (err != -EALREADY)) {
@@ -703,6 +1039,15 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate,
 		}
 	}
 
+	if (connectivity_changed) {
+		connectivity_reconfigured = true;
+		err = apply_connectivity_policy(candidate->connectivity_policy);
+		if (err < 0) {
+			apply_error = err;
+			goto rollback;
+		}
+	}
+
 	err = spaghetti_storage_write_config(candidate);
 	if (err < 0) {
 		apply_error = err;
@@ -717,12 +1062,18 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate,
 	}
 
 	current_config = *candidate;
-	current_generation = next_generation;
+	current_revision.generation = next_generation;
+	memcpy(current_revision.sha256, candidate_hash, sizeof(candidate_hash));
+	last_persistent_write_ms = k_uptime_get();
+	if (out_result != NULL) {
+		out_result->revision = current_revision;
+		out_result->changed = true;
+	}
 	k_mutex_unlock(&config_lock);
 
-	LOG_INF("applied: generation=%u modules=%u sampling=%u",
-		current_generation, (uint32_t)candidate->module_count,
-		candidate->sampling.enabled ? 1U : 0U);
+	LOG_INF("applied: generation=%u modules=%u schedules=%u",
+		current_revision.generation, (uint32_t)candidate->module_count,
+		(uint32_t)candidate->schedule_count);
 	return 0;
 
 rollback:
@@ -737,20 +1088,32 @@ rollback:
 			err = mqtt_error;
 		}
 	}
+	if (connectivity_reconfigured) {
+		const int policy_error =
+			apply_connectivity_policy(old_config.connectivity_policy);
+
+		if ((err == 0) && (policy_error < 0)) {
+			err = policy_error;
+		}
+	}
 	if (candidate_persisted) {
-		const int storage_error = spaghetti_storage_write_config(&old_config);
+		const int storage_error =
+			spaghetti_storage_write_config(&old_config);
 
 		if ((err == 0) && (storage_error < 0)) {
 			err = storage_error;
 		}
 	}
+	current_config = old_config;
+	current_revision = old_revision;
 	k_mutex_unlock(&config_lock);
 	if (err < 0) {
 		LOG_ERR("apply failed: err=%d rollback=%d", apply_error, err);
 		return -EIO;
 	}
 
-	LOG_WRN("apply rejected and previous state restored: err=%d", apply_error);
+	LOG_WRN("apply rejected and previous state restored: err=%d",
+		apply_error);
 	return apply_error;
 
 unlock:
@@ -758,12 +1121,13 @@ unlock:
 	return err;
 }
 
-int spaghetti_config_get_snapshot(struct spaghetti_config *out,
-				  uint32_t *generation)
+int spaghetti_config_get_snapshot(
+	struct spaghetti_config *out,
+	struct spaghetti_config_revision *out_revision)
 {
 	int err;
 
-	if ((out == NULL) || (generation == NULL)) {
+	if ((out == NULL) || (out_revision == NULL)) {
 		return -EINVAL;
 	}
 
@@ -778,7 +1142,7 @@ int spaghetti_config_get_snapshot(struct spaghetti_config *out,
 	}
 
 	*out = current_config;
-	*generation = current_generation;
+	*out_revision = current_revision;
 	k_mutex_unlock(&config_lock);
 	return 0;
 }

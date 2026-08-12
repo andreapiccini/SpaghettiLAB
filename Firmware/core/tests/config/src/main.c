@@ -7,366 +7,116 @@
 #include <zephyr/ztest.h>
 
 #include <spaghetti/config.h>
-#include <spaghetti/discovery.h>
+#include <spaghetti/connectivity.h>
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_driver.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
+#include <spaghetti/rule_driver.h>
+#include <spaghetti/rule_registry.h>
 #include <spaghetti/runtime.h>
+#include <spaghetti/schema.h>
 #include <spaghetti/service.h>
+#include <spaghetti/topology.h>
 
 struct spaghetti_port {
 	spaghetti_port_id_t id;
 	uint32_t capabilities;
 };
 
-struct fake_driver_config {
-	uint8_t i2c_address;
-	int init_error;
+enum {
+	FAKE_CONFIG_ADDRESS = 1,
+	FAKE_RULE_FIELD = 1,
+};
+
+static const struct spaghetti_field_descriptor fake_config_fields[] = {
+	{
+		.field_id = FAKE_CONFIG_ADDRESS,
+		.type = SPAGHETTI_VALUE_UINT64,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.unsigned_minimum = 0U,
+		.unsigned_maximum = 0x7FU,
+		.name = "address",
+		.description = "I2C address",
+		.unit = "",
+	},
+};
+
+static const struct spaghetti_schema_descriptor fake_config_schema = {
+	.schema_id = "spaghetti.fake.config",
+	.version = 1U,
+	.fields = fake_config_fields,
+	.field_count = ARRAY_SIZE(fake_config_fields),
+};
+
+static const struct spaghetti_schema_descriptor fake_record_schema = {
+	.schema_id = "spaghetti.fake.sample",
+	.version = 1U,
+	.fields = NULL,
+	.field_count = 0U,
+};
+
+static const struct spaghetti_schema_descriptor *const fake_record_schemas[] = {
+	&fake_record_schema,
+};
+
+static const struct spaghetti_field_descriptor fake_rule_fields[] = {
+	{
+		.field_id = FAKE_RULE_FIELD,
+		.type = SPAGHETTI_VALUE_BOOL,
+		.flags = SPAGHETTI_FIELD_REQUIRED,
+		.name = "enabled",
+		.description = "Rule enabled",
+		.unit = "",
+	},
+};
+
+static const struct spaghetti_schema_descriptor fake_rule_schema = {
+	.schema_id = "spaghetti.fake.rule",
+	.version = 1U,
+	.fields = fake_rule_fields,
+	.field_count = ARRAY_SIZE(fake_rule_fields),
 };
 
 struct fake_driver_context {
 	bool used;
-	uint8_t i2c_address;
+	uint8_t address;
 };
+
+static struct fake_driver_context fake_contexts[CONFIG_SPAGHETTI_MAX_MODULES];
+static struct spaghetti_runtime_sampling_task fake_runtime_task;
+static bool fake_runtime_running;
+static uint32_t fake_storage_write_count;
+static struct spaghetti_config fake_stored_config;
+static int fake_storage_error;
+static enum spaghetti_connectivity_policy fake_connectivity_policy =
+	SPAGHETTI_CONNECTIVITY_ONLINE;
+static struct spaghetti_mqtt_config fake_mqtt_config;
+static enum spaghetti_service_state fake_service_state =
+	SPAGHETTI_SERVICE_STOPPED;
 
 static const struct spaghetti_port fake_port = {
 	.id = 0U,
 	.capabilities = SPAGHETTI_PORT_CAP_I2C,
 };
 
-static struct fake_driver_context fake_contexts[CONFIG_SPAGHETTI_MAX_MODULES];
-static struct spaghetti_runtime_sampling_task fake_runtime_task;
-static struct spaghetti_runtime_threshold_rule fake_runtime_rule;
-static bool fake_runtime_running;
-static bool fake_runtime_rule_enabled;
-static uint32_t fake_runtime_start_count;
-static uint32_t fake_runtime_stop_count;
-static struct spaghetti_mqtt_config fake_mqtt_config;
-static enum spaghetti_mqtt_state fake_mqtt_state = SPAGHETTI_MQTT_STOPPED;
-static enum spaghetti_service_state fake_service_state =
-	SPAGHETTI_SERVICE_RUNNING;
-static struct spaghetti_config fake_stored_config;
-static int fake_storage_error;
-
-int spaghetti_storage_write_config(const struct spaghetti_config *config)
-{
-	if (fake_storage_error < 0) {
-		return fake_storage_error;
-	}
-	if (config == NULL) {
-		return -EINVAL;
-	}
-
-	fake_stored_config = *config;
-	return 0;
-}
-
-static int discovery_sink(const struct spaghetti_discovery_event *event,
-			  void *user_data)
-{
-	struct spaghetti_module_snapshot module;
-	spaghetti_module_id_t id;
-	int err;
-
-	ARG_UNUSED(user_data);
-	if (event->type == SPAGHETTI_DISCOVERY_UPSERT) {
-		const struct spaghetti_module_request request = {
-			.key = event->result.key,
-			.port_id = event->result.port_id,
-			.type_id = event->result.type_id,
-			.driver_config = event->result.driver_config,
-			.driver_config_size = event->result.driver_config_size,
-			.revision = event->result.generation,
-		};
-
-		return spaghetti_module_manager_configure(&request, &id);
-	}
-
-	err = spaghetti_module_manager_get_by_key(event->result.key, &module);
-	if (err == -ENOENT) {
-		return 0;
-	}
-	if (err < 0) {
-		return err;
-	}
-
-	return spaghetti_module_manager_remove(module.id, module.revision);
-}
-
-int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
-{
-	if ((config == NULL) || (fake_mqtt_state != SPAGHETTI_MQTT_STOPPED)) {
-		return -EINVAL;
-	}
-
-	fake_mqtt_config = *config;
-	return 0;
-}
-
-int spaghetti_mqtt_start(void)
-{
-	if (!fake_mqtt_config.enabled) {
-		return -EACCES;
-	}
-
-	fake_mqtt_state = SPAGHETTI_MQTT_WAIT_NETWORK;
-	return 0;
-}
-
-int spaghetti_mqtt_stop(k_timeout_t timeout)
-{
-	ARG_UNUSED(timeout);
-
-	if (fake_mqtt_state == SPAGHETTI_MQTT_STOPPED) {
-		return -EALREADY;
-	}
-
-	fake_mqtt_state = SPAGHETTI_MQTT_STOPPED;
-	return 0;
-}
-
-int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out)
-{
-	if (out == NULL) {
-		return -EINVAL;
-	}
-
-	*out = (struct spaghetti_mqtt_status) {
-		.state = fake_mqtt_state,
-	};
-	return 0;
-}
-
-int spaghetti_service_get_state(
-	const char *id, enum spaghetti_service_state *out)
-{
-	if ((id == NULL) || (out == NULL) ||
-	    (strcmp(id, SPAGHETTI_SERVICE_ID_MQTT) != 0)) {
-		return -EINVAL;
-	}
-	*out = fake_service_state;
-	return 0;
-}
-
-int spaghetti_service_start(const char *id)
-{
-	int err;
-
-	if ((id == NULL) ||
-	    (strcmp(id, SPAGHETTI_SERVICE_ID_MQTT) != 0)) {
-		return -EINVAL;
-	}
-	err = spaghetti_mqtt_start();
-	if ((err == 0) || (err == -EACCES)) {
-		fake_service_state = SPAGHETTI_SERVICE_RUNNING;
-		return 0;
-	}
-	return err;
-}
-
-int spaghetti_service_stop(const char *id, k_timeout_t timeout)
-{
-	if ((id == NULL) ||
-	    (strcmp(id, SPAGHETTI_SERVICE_ID_MQTT) != 0)) {
-		return -EINVAL;
-	}
-	const int err = spaghetti_mqtt_stop(timeout);
-
-	if ((err == 0) || (err == -EALREADY)) {
-		fake_service_state = SPAGHETTI_SERVICE_STOPPED;
-		return 0;
-	}
-	return err;
-}
-
-int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)
-{
-	if (task == NULL) {
-		return -EINVAL;
-	}
-	if (fake_runtime_running) {
-		return -EBUSY;
-	}
-
-	fake_runtime_task = *task;
-	return 0;
-}
-
-int spaghetti_runtime_start(void)
-{
-	if (fake_runtime_running) {
-		return -EALREADY;
-	}
-	if (!fake_runtime_task.enabled && !fake_runtime_rule_enabled) {
-		return -ENOENT;
-	}
-
-	fake_runtime_running = true;
-	++fake_runtime_start_count;
-	return 0;
-}
-
-int spaghetti_runtime_load_threshold_rule(
-	const struct spaghetti_runtime_threshold_rule *rule)
-{
-	if (rule == NULL) {
-		return -EINVAL;
-	}
-	if (fake_runtime_running) {
-		return -EBUSY;
-	}
-
-	fake_runtime_rule = *rule;
-	fake_runtime_rule_enabled = true;
-	return 0;
-}
-
-int spaghetti_runtime_clear_threshold_rule(void)
-{
-	if (fake_runtime_running) {
-		return -EBUSY;
-	}
-
-	memset(&fake_runtime_rule, 0, sizeof(fake_runtime_rule));
-	fake_runtime_rule_enabled = false;
-	return 0;
-}
-
-int spaghetti_runtime_stop(k_timeout_t timeout)
-{
-	ARG_UNUSED(timeout);
-
-	if (!fake_runtime_running) {
-		return -EALREADY;
-	}
-
-	fake_runtime_running = false;
-	++fake_runtime_stop_count;
-	return 0;
-}
-
-static int fake_validate_config(const void *config, size_t config_size)
-{
-	struct fake_driver_config fake_config;
-
-	if ((config == NULL) || (config_size != sizeof(fake_config))) {
-		return -EINVAL;
-	}
-
-	memcpy(&fake_config, config, sizeof(fake_config));
-	return (fake_config.i2c_address <= 0x7FU) ? 0 : -EINVAL;
-}
-
-static int fake_describe_endpoint(const void *config, size_t config_size,
-				  struct spaghetti_module_endpoint *out)
-{
-	struct fake_driver_config fake_config;
-	int err;
-
-	if (out == NULL) {
-		return -EINVAL;
-	}
-
-	err = fake_validate_config(config, config_size);
-	if (err < 0) {
-		return err;
-	}
-
-	memcpy(&fake_config, config, sizeof(fake_config));
-	const struct spaghetti_module_endpoint endpoint = {
-		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-		.value_size = 1U,
-		.value = {fake_config.i2c_address},
-	};
-
-	*out = endpoint;
-	return 0;
-}
-
-static int fake_init(struct spaghetti_module *module, const void *config,
-		     size_t config_size)
-{
-	struct fake_driver_config fake_config;
-	int err = fake_validate_config(config, config_size);
-
-	if ((err < 0) || (module == NULL) || (module->context != NULL)) {
-		return (err < 0) ? err : -EINVAL;
-	}
-
-	memcpy(&fake_config, config, sizeof(fake_config));
-	if (fake_config.init_error < 0) {
-		return fake_config.init_error;
-	}
-
-	for (size_t context_idx = 0U; context_idx < ARRAY_SIZE(fake_contexts);
-	     ++context_idx) {
-		if (!fake_contexts[context_idx].used) {
-			fake_contexts[context_idx].used = true;
-			fake_contexts[context_idx].i2c_address =
-				fake_config.i2c_address;
-			module->context = &fake_contexts[context_idx];
-			return 0;
-		}
-	}
-
-	return -ENOMEM;
-}
-
-static int fake_read(struct spaghetti_module *module,
-		     struct spaghetti_sample *out)
-{
-	ARG_UNUSED(module);
-	ARG_UNUSED(out);
-	return -ENOTSUP;
-}
-
-static int fake_command(struct spaghetti_module *module,
-			const struct spaghetti_command *command)
-{
-	ARG_UNUSED(module);
-
-	return (command != NULL) ? 0 : -EINVAL;
-}
-
-static int fake_deinit(struct spaghetti_module *module)
-{
-	struct fake_driver_context *context;
-
-	if ((module == NULL) || (module->context == NULL)) {
-		return -EINVAL;
-	}
-
-	context = module->context;
-	memset(context, 0, sizeof(*context));
-	module->context = NULL;
-	return 0;
-}
-
-static const struct spaghetti_module_driver_ops fake_ops = {
-	.validate_config = fake_validate_config,
-	.describe_endpoint = fake_describe_endpoint,
-	.init = fake_init,
-	.read = fake_read,
-	.command = fake_command,
-	.deinit = fake_deinit,
+static const struct spaghetti_flow_descriptor fake_flow = {
+	.id = 0U,
+	.port_id = 0U,
+	.direction = SPAGHETTI_FLOW_BIDIRECTIONAL,
+	.signal_count = SPAGHETTI_FLOW_SIGNAL_COUNT,
+	.function_bay_count = 2U,
 };
 
-static const struct spaghetti_module_driver fake_driver = {
-	.type_id = "fake",
-	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
-	.ops = &fake_ops,
-};
-
-const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)
+const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t port_id)
 {
-	return (id == fake_port.id) ? &fake_port : NULL;
+	return (port_id == fake_port.id) ? &fake_port : NULL;
 }
 
 bool spaghetti_port_has_capability(const struct spaghetti_port *port,
-				    uint32_t capabilities)
+				   uint32_t capabilities)
 {
-	return (port != NULL) && (capabilities != 0U) &&
+	return (port != NULL) &&
 	       ((port->capabilities & capabilities) == capabilities);
 }
 
@@ -386,31 +136,279 @@ int spaghetti_port_release(
 	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
 }
 
+const struct spaghetti_flow_descriptor *spaghetti_topology_flow_for_port(
+	spaghetti_port_id_t port_id)
+{
+	return (port_id == fake_flow.port_id) ? &fake_flow : NULL;
+}
+
+int spaghetti_topology_bay_get(spaghetti_flow_id_t flow_id,
+			       spaghetti_bay_id_t bay_id,
+			       struct spaghetti_bay_descriptor *out)
+{
+	if ((out == NULL) || (flow_id != fake_flow.id) || (bay_id > 1U)) {
+		return -ENOENT;
+	}
+	*out = (struct spaghetti_bay_descriptor){
+		.flow_id = flow_id,
+		.id = bay_id,
+		.ordinal_from_field = bay_id,
+	};
+	return 0;
+}
+
+int spaghetti_storage_write_config(const struct spaghetti_config *config)
+{
+	if (fake_storage_error < 0) {
+		return fake_storage_error;
+	}
+	if (config == NULL) {
+		return -EINVAL;
+	}
+	fake_stored_config = *config;
+	++fake_storage_write_count;
+	return 0;
+}
+
+int spaghetti_runtime_load(const struct spaghetti_runtime_sampling_task *task)
+{
+	if (task == NULL) {
+		return -EINVAL;
+	}
+	if (fake_runtime_running) {
+		return -EBUSY;
+	}
+	fake_runtime_task = *task;
+	return 0;
+}
+
+int spaghetti_runtime_clear_threshold_rule(void)
+{
+	return fake_runtime_running ? -EBUSY : 0;
+}
+
+int spaghetti_runtime_start(void)
+{
+	if (fake_runtime_running) {
+		return -EALREADY;
+	}
+	if (!fake_runtime_task.enabled) {
+		return -ENOENT;
+	}
+	fake_runtime_running = true;
+	return 0;
+}
+
+int spaghetti_runtime_stop(k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+	if (!fake_runtime_running) {
+		return -EALREADY;
+	}
+	fake_runtime_running = false;
+	return 0;
+}
+
+int spaghetti_mqtt_init(const struct spaghetti_mqtt_config *config)
+{
+	if (config == NULL) {
+		return -EINVAL;
+	}
+	fake_mqtt_config = *config;
+	return 0;
+}
+
+int spaghetti_service_get_state(const char *id,
+				enum spaghetti_service_state *out)
+{
+	ARG_UNUSED(id);
+	if (out == NULL) {
+		return -EINVAL;
+	}
+	*out = fake_service_state;
+	return 0;
+}
+
+int spaghetti_service_stop(const char *id, k_timeout_t timeout)
+{
+	ARG_UNUSED(id);
+	ARG_UNUSED(timeout);
+	fake_service_state = SPAGHETTI_SERVICE_STOPPED;
+	return 0;
+}
+
+int spaghetti_service_start(const char *id)
+{
+	ARG_UNUSED(id);
+	fake_service_state = SPAGHETTI_SERVICE_RUNNING;
+	return 0;
+}
+
+int spaghetti_connectivity_set_policy(enum spaghetti_connectivity_policy policy)
+{
+	if ((policy != SPAGHETTI_CONNECTIVITY_LOW_ENERGY) &&
+	    (policy != SPAGHETTI_CONNECTIVITY_ONLINE)) {
+		return -EINVAL;
+	}
+	fake_connectivity_policy = policy;
+	return 0;
+}
+
+static int fake_validate_config(const struct spaghetti_property_set *config)
+{
+	return spaghetti_property_validate(config, &fake_config_schema);
+}
+
+static int fake_describe_endpoint(const struct spaghetti_property_set *config,
+				  struct spaghetti_module_endpoint *out)
+{
+	const struct spaghetti_value *address;
+
+	if (out == NULL) {
+		return -EINVAL;
+	}
+	address = spaghetti_property_find(config, FAKE_CONFIG_ADDRESS);
+	if ((address == NULL) || (address->type != SPAGHETTI_VALUE_UINT64)) {
+		return -EINVAL;
+	}
+	*out = (struct spaghetti_module_endpoint){
+		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
+		.value_size = 1U,
+		.value = {(uint8_t)address->data.unsigned_integer},
+	};
+	return 0;
+}
+
+static int fake_init(struct spaghetti_module *module,
+		     const struct spaghetti_property_set *config)
+{
+	const struct spaghetti_value *address =
+		spaghetti_property_find(config, FAKE_CONFIG_ADDRESS);
+
+	if ((module == NULL) || (module->context != NULL) || (address == NULL)) {
+		return -EINVAL;
+	}
+	for (size_t idx = 0U; idx < ARRAY_SIZE(fake_contexts); ++idx) {
+		if (!fake_contexts[idx].used) {
+			fake_contexts[idx].used = true;
+			fake_contexts[idx].address =
+				(uint8_t)address->data.unsigned_integer;
+			module->context = &fake_contexts[idx];
+			return 0;
+		}
+	}
+	return -ENOMEM;
+}
+
+static int fake_read(struct spaghetti_module *module,
+		     struct spaghetti_record_payload *out)
+{
+	ARG_UNUSED(module);
+	ARG_UNUSED(out);
+	return 0;
+}
+
+static int fake_deinit(struct spaghetti_module *module)
+{
+	struct fake_driver_context *context;
+
+	if ((module == NULL) || (module->context == NULL)) {
+		return -EINVAL;
+	}
+	context = module->context;
+	context->used = false;
+	module->context = NULL;
+	return 0;
+}
+
+static const struct spaghetti_module_driver_ops fake_ops = {
+	.validate_config = fake_validate_config,
+	.describe_endpoint = fake_describe_endpoint,
+	.init = fake_init,
+	.read = fake_read,
+	.deinit = fake_deinit,
+};
+
+static const struct spaghetti_module_driver fake_driver = {
+	.type_id = "fake",
+	.api_version = SPAGHETTI_MODULE_DRIVER_API_VERSION,
+	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.transport = SPAGHETTI_PORT_TRANSPORT_I2C,
+	.config_schema = &fake_config_schema,
+	.record_schemas = fake_record_schemas,
+	.record_schema_count = ARRAY_SIZE(fake_record_schemas),
+	.ops = &fake_ops,
+};
+
+static int fake_rule_validate(const struct spaghetti_property_set *config)
+{
+	return spaghetti_property_validate(config, &fake_rule_schema);
+}
+
+static int fake_rule_init(const struct spaghetti_property_set *config,
+			  void **out_context)
+{
+	ARG_UNUSED(config);
+	static int context;
+
+	*out_context = &context;
+	return 0;
+}
+
+static int fake_rule_on_record(void *context,
+			       const struct spaghetti_record *record,
+			       spaghetti_rule_emit_action_cb_t emit,
+			       void *emit_user_data)
+{
+	ARG_UNUSED(context);
+	ARG_UNUSED(record);
+	ARG_UNUSED(emit);
+	ARG_UNUSED(emit_user_data);
+	return 0;
+}
+
+static int fake_rule_deinit(void *context)
+{
+	ARG_UNUSED(context);
+	return 0;
+}
+
+static const struct spaghetti_rule_driver_ops fake_rule_ops = {
+	.validate_config = fake_rule_validate,
+	.init = fake_rule_init,
+	.on_record = fake_rule_on_record,
+	.deinit = fake_rule_deinit,
+};
+
+SPAGHETTI_RULE_DRIVER_DEFINE(spaghetti_fake_rule_driver) = {
+	.type_id = "fake-rule",
+	.api_version = SPAGHETTI_RULE_DRIVER_API_VERSION,
+	.config_schema = &fake_rule_schema,
+	.ops = &fake_rule_ops,
+};
+
 const struct spaghetti_module_driver *spaghetti_driver_registry_find(
 	const char *type_id)
 {
-	if ((type_id != NULL) && (strcmp(type_id, fake_driver.type_id) == 0)) {
+	if ((type_id != NULL) && (strcmp(type_id, "fake") == 0)) {
 		return &fake_driver;
 	}
-
 	return NULL;
 }
 
-static void set_module(struct spaghetti_module_config *module,
-		       spaghetti_module_key_t key, uint8_t address,
-		       int init_error)
+static void fill_module(struct spaghetti_module_config *module,
+			spaghetti_module_key_t key, uint8_t address)
 {
-	const struct fake_driver_config driver_config = {
-		.i2c_address = address,
-		.init_error = init_error,
-	};
-
 	memset(module, 0, sizeof(*module));
 	module->key = key;
 	module->port_id = 0U;
+	module->bay_id = SPAGHETTI_BAY_ID_UNSPECIFIED;
+	module->power_rail_id = SPAGHETTI_POWER_RAIL_UNSPECIFIED;
 	memcpy(module->type_id, "fake", sizeof("fake"));
-	module->driver_config_size = sizeof(driver_config);
-	memcpy(module->driver_config, &driver_config, sizeof(driver_config));
+	module->properties.field_count = 1U;
+	module->properties.fields[0].field_id = FAKE_CONFIG_ADDRESS;
+	module->properties.fields[0].type = SPAGHETTI_VALUE_UINT64;
+	module->properties.fields[0].data.unsigned_integer = address;
 }
 
 static struct spaghetti_config make_config(uint8_t first_address,
@@ -419,144 +417,112 @@ static struct spaghetti_config make_config(uint8_t first_address,
 	struct spaghetti_config config = {
 		.version = SPAGHETTI_CONFIG_VERSION,
 		.module_count = 2U,
-		.sampling = {
-			.enabled = true,
-			.source_key = 10U,
-			.period_ms = 1000U,
+		.schedule_count = 1U,
+		.schedules = {
+			{
+				.enabled = true,
+				.source_key = 10U,
+				.period_ms = 1000U,
+			},
+		},
+		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
+		.energy_policy = {
+			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
 		},
 	};
 
-	set_module(&config.modules[0], 10U, first_address, 0);
-	set_module(&config.modules[1], 11U, second_address, 0);
+	fill_module(&config.modules[0], 10U, first_address);
+	fill_module(&config.modules[1], 11U, second_address);
 	return config;
 }
 
-static void assert_live_endpoint(spaghetti_module_key_t key, uint32_t endpoint)
+static void *config_setup(void)
 {
-	struct spaghetti_module_snapshot live;
-
-	zassert_ok(spaghetti_module_manager_get_by_key(key, &live));
-	zassert_equal(live.endpoint.kind, SPAGHETTI_ENDPOINT_I2C_ADDRESS);
-	zassert_equal(live.endpoint.value_size, 1U);
-	zassert_equal(live.endpoint.value[0], endpoint);
+	zassert_ok(spaghetti_module_manager_init());
+	return NULL;
 }
 
-ZTEST(config, test_validation_reconcile_and_rollback)
+ZTEST(config, test_transaction_snapshot_cas_and_rules)
 {
-	struct spaghetti_module_snapshot key_11_before;
-	struct spaghetti_module_snapshot key_11_after;
 	struct spaghetti_config snapshot;
-	struct spaghetti_config_error validation_error;
-	struct spaghetti_config baseline = make_config(0x40U, 0x41U);
+	struct spaghetti_config_revision revision;
+	struct spaghetti_config_revision revision_b;
+	struct spaghetti_config_commit_result result;
+	struct spaghetti_config_failure failure;
 	const struct spaghetti_config defaults = {
 		.version = SPAGHETTI_CONFIG_VERSION,
+		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
+		.energy_policy = {
+			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+		},
 	};
+	struct spaghetti_config baseline = make_config(0x40U, 0x41U);
 	struct spaghetti_config candidate;
-	uint32_t generation;
+	struct spaghetti_config second = make_config(0x42U, 0x43U);
+	uint32_t writes_before;
 
-	zassert_ok(spaghetti_module_manager_init());
-	zassert_ok(spaghetti_discovery_init(discovery_sink, NULL));
-	zassert_equal(spaghetti_config_get_snapshot(&snapshot, &generation),
+	zassert_equal(spaghetti_config_get_snapshot(&snapshot, &revision),
 		      -EACCES);
 	zassert_ok(spaghetti_config_init(&defaults));
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
-	zassert_equal(generation, 1U);
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &revision));
+	zassert_equal(revision.generation, 1U);
+
 	zassert_ok(spaghetti_config_validate(&baseline, NULL));
-	zassert_equal(spaghetti_config_apply(&baseline, 99U), -ESTALE);
-	zassert_ok(spaghetti_config_apply(&baseline, generation));
-	zassert_true(fake_runtime_running);
-	zassert_equal(fake_runtime_task.period_ms, 1000U);
-	zassert_equal(fake_runtime_start_count, 1U);
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
-	zassert_equal(generation, 2U);
-	zassert_mem_equal(&fake_stored_config, &baseline, sizeof(baseline));
-	zassert_equal(snapshot.module_count, 2U);
-	assert_live_endpoint(10U, 0x40U);
-	assert_live_endpoint(11U, 0x41U);
+	zassert_equal(spaghetti_config_apply(&baseline, 99U, NULL), -ESTALE);
+
+	writes_before = fake_storage_write_count;
+	zassert_ok(spaghetti_config_apply(&baseline, revision.generation,
+					  &result));
+	zassert_true(result.changed);
+	zassert_equal(result.revision.generation, 2U);
+	zassert_equal(fake_storage_write_count, writes_before + 1U);
+
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &revision));
+	revision_b = revision;
+	writes_before = fake_storage_write_count;
+	zassert_ok(spaghetti_config_apply(&snapshot, revision.generation,
+					  &result));
+	zassert_false(result.changed);
+	zassert_equal(result.revision.generation, revision.generation);
+	zassert_equal(fake_storage_write_count, writes_before);
 
 	candidate = baseline;
-	candidate.modules[1].key = 10U;
-	zassert_equal(spaghetti_config_validate(&candidate, &validation_error),
-		      -EEXIST);
-	zassert_equal(validation_error.reason,
-		      SPAGHETTI_CONFIG_ERROR_DUPLICATE);
+	fill_module(&candidate.modules[1], 10U, 0x42U);
+	zassert_equal(spaghetti_config_validate(&candidate, &failure), -EEXIST);
 
 	candidate = baseline;
-	set_module(&candidate.modules[1], 11U, 0x40U, 0);
+	fill_module(&candidate.modules[1], 12U, 0x40U);
 	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EADDRINUSE);
 
 	candidate = baseline;
-	candidate.sampling.source_key = 99U;
-	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EINVAL);
-	candidate = baseline;
-	candidate.mqtt.enabled = true;
-	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EINVAL);
-	candidate = baseline;
-	candidate.threshold_rule.enabled = true;
-	candidate.threshold_rule.source_key = 10U;
-	candidate.threshold_rule.lower_current_microamps = 500000;
-	candidate.threshold_rule.upper_current_microamps = 450000;
-	candidate.threshold_rule.relay_key = 11U;
-	zassert_equal(spaghetti_config_validate(&candidate, NULL), -EINVAL);
-	assert_live_endpoint(10U, 0x40U);
-	assert_live_endpoint(11U, 0x41U);
+	candidate.rule_count = 1U;
+	candidate.rules[0].key = 1U;
+	memcpy(candidate.rules[0].type_id, "fake-rule", sizeof("fake-rule"));
+	candidate.rules[0].properties.field_count = 1U;
+	candidate.rules[0].properties.fields[0].field_id = FAKE_RULE_FIELD;
+	candidate.rules[0].properties.fields[0].type = SPAGHETTI_VALUE_BOOL;
+	candidate.rules[0].properties.fields[0].data.boolean = true;
+	zassert_ok(spaghetti_config_validate(&candidate, NULL));
+	zassert_equal(spaghetti_config_apply(&candidate, revision.generation,
+					     NULL),
+		      -ENOTSUP);
 
-	candidate = baseline;
-	set_module(&candidate.modules[1], 11U, 0x42U, -EIO);
-	zassert_equal(spaghetti_config_apply(&candidate, generation), -EIO);
-	zassert_true(fake_runtime_running);
-	zassert_equal(fake_runtime_start_count, 2U);
-	zassert_equal(fake_runtime_stop_count, 1U);
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
-	zassert_equal(generation, 2U);
-	zassert_mem_equal(&snapshot, &baseline, sizeof(snapshot));
-	assert_live_endpoint(10U, 0x40U);
-	assert_live_endpoint(11U, 0x41U);
+	zassert_ok(spaghetti_config_apply(&second, revision_b.generation, NULL));
+	zassert_equal(spaghetti_config_apply(&baseline, revision_b.generation,
+					     NULL),
+		      -ESTALE);
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &revision));
+	zassert_ok(spaghetti_config_apply(&baseline, revision.generation, NULL));
 
-	zassert_ok(spaghetti_module_manager_get_by_key(11U, &key_11_before));
-	candidate = baseline;
-	candidate.module_count = 2U;
-	candidate.modules[0] = baseline.modules[1];
-	set_module(&candidate.modules[1], 12U, 0x42U, 0);
-	candidate.sampling.source_key = 11U;
-	candidate.threshold_rule.enabled = true;
-	candidate.threshold_rule.source_key = 11U;
-	candidate.threshold_rule.lower_current_microamps = 450000;
-	candidate.threshold_rule.upper_current_microamps = 500000;
-	candidate.threshold_rule.relay_key = 12U;
-	candidate.threshold_rule.relay_on_above = true;
-	candidate.mqtt.enabled = true;
-	memcpy(candidate.mqtt.host, "broker.local", sizeof("broker.local"));
-	candidate.mqtt.port = 1883U;
-	memcpy(candidate.mqtt.base_topic, "spaghetti/test",
-	       sizeof("spaghetti/test"));
-	zassert_ok(spaghetti_config_apply(&candidate, generation));
-	zassert_true(fake_runtime_running);
-	zassert_equal(fake_runtime_start_count, 3U);
-	zassert_equal(fake_runtime_stop_count, 2U);
-	zassert_equal(spaghetti_module_manager_get_by_key(10U, &key_11_after),
-		      -ENOENT);
-	zassert_ok(spaghetti_module_manager_get_by_key(11U, &key_11_after));
-	zassert_equal(key_11_after.id, key_11_before.id);
-	assert_live_endpoint(11U, 0x41U);
-	assert_live_endpoint(12U, 0x42U);
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
-	zassert_equal(generation, 3U);
-	zassert_equal(snapshot.sampling.source_key, 11U);
-	zassert_true(snapshot.threshold_rule.enabled);
-	zassert_true(fake_runtime_rule_enabled);
-	zassert_equal(fake_runtime_rule.source_id, key_11_after.id);
-	zassert_equal(fake_runtime_rule.lower_current_microamps, 450000);
-	zassert_equal(fake_mqtt_state, SPAGHETTI_MQTT_WAIT_NETWORK);
-	zassert_equal(strcmp(snapshot.mqtt.host, "broker.local"), 0);
-
-	candidate.sampling.period_ms = 2000U;
 	fake_storage_error = -ENOSPC;
-	zassert_equal(spaghetti_config_apply(&candidate, generation), -ENOSPC);
-	fake_storage_error = 0;
-	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &generation));
-	zassert_equal(generation, 3U);
-	zassert_equal(snapshot.sampling.period_ms, 1000U);
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &revision));
+	candidate = baseline;
+	candidate.schedules[0].period_ms = 2000U;
+	zassert_equal(spaghetti_config_apply(&candidate, revision.generation,
+					     NULL),
+		      -ENOSPC);
+	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &revision));
+	zassert_equal(snapshot.schedules[0].period_ms, 1000U);
 }
 
-ZTEST_SUITE(config, NULL, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(config, NULL, config_setup, NULL, NULL, NULL);

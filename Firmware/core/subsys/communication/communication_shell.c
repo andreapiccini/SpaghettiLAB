@@ -471,9 +471,9 @@ static int cmd_maintenance_finish(
 {
 	const struct spaghetti_config safe_empty_config = {
 		.version = SPAGHETTI_CONFIG_VERSION,
-		.sampling = {
-			.enabled = false,
-			.period_ms = 1000U,
+		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
+		.energy_policy = {
+			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
 		},
 	};
 	struct spaghetti_config stored_config;

@@ -69,9 +69,9 @@ int spaghetti_storage_write_config(const struct spaghetti_config *config)
 
 int spaghetti_config_validate(
 	const struct spaghetti_config *candidate,
-	struct spaghetti_config_error *error)
+	struct spaghetti_config_failure *failure)
 {
-	ARG_UNUSED(error);
+	ARG_UNUSED(failure);
 	if ((candidate == NULL) ||
 	    (candidate->version != SPAGHETTI_CONFIG_VERSION)) {
 		return -EINVAL;
@@ -182,9 +182,12 @@ int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,
 	return 0;
 }
 
-int spaghetti_config_apply(const struct spaghetti_config *candidate,
-			   uint32_t expected_generation)
+int spaghetti_config_apply(
+	const struct spaghetti_config *candidate,
+	uint32_t expected_generation,
+	struct spaghetti_config_commit_result *out_result)
 {
+	ARG_UNUSED(out_result);
 	++apply_count;
 	if (expected_generation != 7U) {
 		return -ESTALE;
@@ -192,17 +195,19 @@ int spaghetti_config_apply(const struct spaghetti_config *candidate,
 	return (candidate != NULL) ? apply_error : -EINVAL;
 }
 
-int spaghetti_config_get_snapshot(struct spaghetti_config *out,
-				  uint32_t *generation)
+int spaghetti_config_get_snapshot(
+	struct spaghetti_config *out,
+	struct spaghetti_config_revision *out_revision)
 {
-	if ((out == NULL) || (generation == NULL)) {
+	if ((out == NULL) || (out_revision == NULL)) {
 		return -EINVAL;
 	}
 
 	*out = (struct spaghetti_config) {
 		.version = SPAGHETTI_CONFIG_VERSION,
 	};
-	*generation = 7U;
+	out_revision->generation = 7U;
+	memset(out_revision->sha256, 0, sizeof(out_revision->sha256));
 	return 0;
 }
 

@@ -1,0 +1,27 @@
+spaghetti-config-v2 = {
+  0: 3,
+  1: [* module],
+  2: [* schedule],
+  3: [* rule],
+  4: mqtt,
+  5: uint,             ; connectivity policy
+  6: energy-policy
+}
+module = {
+  0: uint,             ; stable Module key
+  1: uint,             ; Port ID, quindi Flow
+  2: tstr,             ; driver type ID
+  3: properties,
+  4: uint / nil,       ; optional Function Bay ID
+  5: uint / nil        ; optional power rail ID
+}
+schedule = { 0: uint, 1: uint, 2: bool }
+rule = { 0: uint, 1: tstr, 2: properties }
+properties = { * uint => (bool / int / uint / tstr / bstr) }
+mqtt = {
+  0: bool,
+  1: tstr .size (0..63),
+  2: 0..65535,
+  3: tstr .size (0..95)
+}
+energy-policy = { 0: uint, 1: uint, 2: uint }

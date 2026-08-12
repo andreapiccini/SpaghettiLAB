@@ -51,12 +51,15 @@ target_sources(app PRIVATE
   subsys/device_profiles/device_profile.c
   subsys/device_profiles/device_profile_exec.c
   subsys/driver_registry/driver_registry.c
+  subsys/rule_registry/rule_registry.c
   subsys/module_manager/module_manager.c
   subsys/discovery/discovery.c
   subsys/config/config.c
   subsys/config/config_cbor.c
+  subsys/config/config_cbor_legacy.c
   subsys/config/legacy_driver_config.c
   subsys/services/storage/storage.c
+  subsys/services/storage/storage_legacy_v3.c
   subsys/services/maintenance_link/maintenance_link.c
   subsys/services/maintenance_link/maintenance_mgmt.c
   subsys/services/ota/ota.c
@@ -94,6 +97,7 @@ target_sources_ifdef(CONFIG_SPAGHETTI_ENERGY app PRIVATE
 
 zephyr_linker_sources(SECTIONS subsys/core/health_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/driver_registry/driver_sections.ld)
+zephyr_linker_sources(SECTIONS subsys/rule_registry/rule_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/device_profiles/device_profile_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)

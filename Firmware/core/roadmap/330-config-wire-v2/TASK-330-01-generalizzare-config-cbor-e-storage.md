@@ -1,6 +1,6 @@
 # TASK-330-01 — Generalizzare Config, CBOR e Storage
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 330 — Config e wire V2
 
 ## Cosa devo fare
@@ -286,19 +286,19 @@ modifiche al codec centrale.
 
 ## Checklist di completamento
 
-- [ ] Config contiene Module, schedule, rule e policy connettività/energia generici.
-- [ ] Un Module dichiarativo riferisce profilo e revisione senza duplicarne i byte.
-- [ ] Ogni Module può dichiarare Bay e rail senza duplicare Flow o GPIO MCU.
-- [ ] Power passivo resta valido ma visibilmente `UNVERIFIED`.
-- [ ] CBOR V2 non contiene switch su driver/rule concreti.
-- [ ] Encoder e decoder fanno round-trip canonico.
-- [ ] Snapshot restituisce generazione e hash canonico.
-- [ ] Validate non produce effetti e apply usa compare-and-swap.
-- [ ] Apply identica non incrementa generazione e non scrive flash.
-- [ ] Storage salva payload versionato con CRC.
-- [ ] Il record precedente migra oppure fallisce senza perdita.
-- [ ] Apply effettua rollback completo per Module/schedule e rifiuta rule non ancora eseguibili.
-- [ ] Tutti i limiti derivano dal profilo 291.
+- [x] Config contiene Module, schedule, rule e policy connettività/energia generici.
+- [x] Un Module dichiarativo riferisce profilo e revisione senza duplicarne i byte.
+- [x] Ogni Module può dichiarare Bay e rail senza duplicare Flow o GPIO MCU.
+- [x] Power passivo resta valido ma visibilmente `UNVERIFIED`.
+- [x] CBOR V2 non contiene switch su driver/rule concreti.
+- [x] Encoder e decoder fanno round-trip canonico.
+- [x] Snapshot restituisce generazione e hash canonico.
+- [x] Validate non produce effetti e apply usa compare-and-swap.
+- [x] Apply identica non incrementa generazione e non scrive flash.
+- [x] Storage salva payload versionato con CRC.
+- [x] Il record precedente migra oppure fallisce senza perdita.
+- [x] Apply effettua rollback completo per Module/schedule e rifiuta rule non ancora eseguibili.
+- [x] Tutti i limiti derivano dal profilo 291.
 
 ## Verifica e fine task
 

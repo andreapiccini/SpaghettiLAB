@@ -6,9 +6,14 @@ project(spaghetti_config_codec_test)
 target_sources(app PRIVATE
   src/main.c
   ../../subsys/config/config_cbor.c
+  ../../subsys/config/config_cbor_legacy.c
+  ../../spaghetti_modules/ina219/ina219.c
+  ../../subsys/schema/schema.c
 )
 
 target_include_directories(app PRIVATE
   ../../include
   ../../spaghetti_modules/ina219
 )
+
+zephyr_linker_sources(SECTIONS ../../subsys/driver_registry/driver_sections.ld)

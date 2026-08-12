@@ -23,6 +23,7 @@
 #include <spaghetti/ota.h>
 #include <spaghetti/port.h>
 #include <spaghetti/power.h>
+#include <spaghetti/rule_registry.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/schema.h>
@@ -39,12 +40,19 @@
 
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
 
+#if defined(CONFIG_SPAGHETTI_CONNECTIVITY_BOOT_LOW_ENERGY)
+#define SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE \
+	SPAGHETTI_CONNECTIVITY_LOW_ENERGY
+#else
+#define SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE \
+	SPAGHETTI_CONNECTIVITY_ONLINE
+#endif
+
 static const struct spaghetti_config empty_config = {
 	.version = SPAGHETTI_CONFIG_VERSION,
-	.sampling = {
-		.enabled = false,
-		.source_key = 0U,
-		.period_ms = 1000U,
+	.connectivity_policy = SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE,
+	.energy_policy = {
+		.ble_availability = SPAGHETTI_BLE_ADVERTISING,
 	},
 };
 
@@ -57,15 +65,6 @@ K_MUTEX_DEFINE(core_lock);
 
 BUILD_ASSERT(sizeof(CONFIG_MCUBOOT_IMGTOOL_SIGN_VERSION) <=
 	     SPAGHETTI_CORE_VERSION_SIZE);
-
-#if defined(CONFIG_SPAGHETTI_CONNECTIVITY_BOOT_LOW_ENERGY)
-#define SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE \
-	SPAGHETTI_CONNECTIVITY_LOW_ENERGY
-#else
-#define SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE \
-	SPAGHETTI_CONNECTIVITY_ONLINE
-#endif
-
 static int fail_initialization(const char *component, int err)
 {
 	atomic_set(&core_state, SPAGHETTI_CORE_FAILED);
@@ -129,7 +128,7 @@ static int discovery_event_sink(const struct spaghetti_discovery_event *event,
 static int retain_startup_config(void)
 {
 	struct spaghetti_config startup_config;
-	struct spaghetti_config_error validation_error;
+	struct spaghetti_config_failure validation_failure;
 	int err = spaghetti_storage_read_config(&startup_config);
 
 	startup_config_present = false;
@@ -137,7 +136,7 @@ static int retain_startup_config(void)
 		LOG_INF("no stored Config: first boot");
 		return 0;
 	}
-	if (err == -EBADMSG) {
+	if ((err == -EBADMSG) || (err == -EPROTONOSUPPORT)) {
 		LOG_WRN("stored Config is corrupt or incompatible; using empty state");
 		return 0;
 	}
@@ -145,12 +144,12 @@ static int retain_startup_config(void)
 		return err;
 	}
 
-	err = spaghetti_config_validate(&startup_config, &validation_error);
+	err = spaghetti_config_validate(&startup_config, &validation_failure);
 	if (err < 0) {
 		LOG_WRN("stored Config invalid: field=%u index=%u reason=%u err=%d",
-			(uint32_t)validation_error.field,
-			(uint32_t)validation_error.index,
-			(uint32_t)validation_error.reason, err);
+			(uint32_t)validation_failure.field,
+			(uint32_t)validation_failure.index,
+			(uint32_t)validation_failure.reason, err);
 		return 0;
 	}
 
@@ -279,6 +278,10 @@ int spaghetti_core_init(void)
 	err = spaghetti_driver_registry_init();
 	if (err < 0) {
 		goto registry_failed;
+	}
+	err = spaghetti_rule_registry_init();
+	if (err < 0) {
+		goto rule_registry_failed;
 	}
 	err = spaghetti_module_manager_init();
 	if (err < 0) {
@@ -433,6 +436,9 @@ data_failed:
 manager_failed:
 	(void)fail_initialization("Module Manager", err);
 	goto unlock;
+rule_registry_failed:
+	(void)fail_initialization("Rule Registry", err);
+	goto unlock;
 registry_failed:
 	(void)fail_initialization("Driver Registry", err);
 	goto unlock;
@@ -467,7 +473,7 @@ unlock:
 int spaghetti_core_start(void)
 {
 	bool confirm_trial;
-	uint32_t generation;
+	struct spaghetti_config_revision revision;
 	struct spaghetti_config startup_config;
 	int err = k_mutex_lock(&core_lock, K_FOREVER);
 
@@ -481,12 +487,14 @@ int spaghetti_core_start(void)
 
 	if ((core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) &&
 	    startup_config_present) {
-		err = spaghetti_config_get_snapshot(&startup_config, &generation);
+		err = spaghetti_config_get_snapshot(&startup_config, &revision);
 		if (err == 0) {
 			err = spaghetti_storage_read_config(&startup_config);
 		}
 		if (err == 0) {
-			err = spaghetti_config_apply(&startup_config, generation);
+			err = spaghetti_config_apply(&startup_config,
+						     revision.generation,
+						     NULL);
 		}
 		if (err < 0) {
 			LOG_WRN("stored Config not applied; empty state remains live: err=%d",

@@ -164,6 +164,23 @@ config SPAGHETTI_MAX_PROTOCOL_PAYLOAD
 	default 1024 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
 	default 2048
 
+config SPAGHETTI_CONFIG_CBOR_MAX_SIZE
+	int
+	range 128 2048
+	default SPAGHETTI_MAX_PROTOCOL_PAYLOAD
+	help
+	  Maximum accepted Config CBOR payload size for encode, decode, and
+	  Storage persistence.
+
+config SPAGHETTI_CONFIG_MIN_WRITE_INTERVAL_MS
+	int
+	range 0 60000
+	default 1000
+	help
+	  Minimum wall-clock interval between distinct persistent Config writes.
+	  Identical no-op applies do not consume the budget. Zero disables the
+	  rate limit.
+
 config SPAGHETTI_MAX_RECORD_QUEUE
 	int
 	range 2 255

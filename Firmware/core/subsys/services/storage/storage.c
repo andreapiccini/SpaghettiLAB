@@ -9,10 +9,16 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/settings/settings.h>
+#include <zephyr/sys/crc.h>
+
+#include <spaghetti/config_codec.h>
+
+#include "storage_legacy_v3.h"
 
 LOG_MODULE_REGISTER(spaghetti_storage, CONFIG_SPAGHETTI_STORAGE_LOG_LEVEL);
 
-#define SPAGHETTI_STORAGE_RECORD_MAGIC 0x53504754U
+#define SPAGHETTI_STORAGE_RECORD_MAGIC_V2 0x53504732U
+#define SPAGHETTI_STORAGE_RECORD_VERSION_V2 1U
 
 enum spaghetti_storage_state {
 	SPAGHETTI_STORAGE_UNINITIALIZED,
@@ -20,84 +26,73 @@ enum spaghetti_storage_state {
 	SPAGHETTI_STORAGE_READY,
 };
 
-struct spaghetti_storage_record {
+struct spaghetti_storage_record_v2 {
 	uint32_t magic;
-	uint32_t version;
-	struct spaghetti_config config;
+	uint16_t record_version;
+	uint16_t payload_size;
+	uint32_t payload_crc32;
+	uint8_t payload[SPAGHETTI_CONFIG_CBOR_MAX_SIZE];
 };
 
 static enum spaghetti_storage_state storage_state =
 	SPAGHETTI_STORAGE_UNINITIALIZED;
-static struct spaghetti_storage_record loaded_record;
+static struct spaghetti_storage_record_v2 loaded_record;
+static struct spaghetti_storage_legacy_record legacy_record;
 static bool record_present;
+static bool legacy_pending;
 static int record_load_error;
 static bool maintenance_marker_present;
 static bool maintenance_marker_corrupt;
 K_MUTEX_DEFINE(storage_lock);
 
-static bool stored_type_id_is_terminated(const char *type_id)
+static int decode_v2_record(const struct spaghetti_storage_record_v2 *record,
+			    struct spaghetti_config *out)
 {
-	return memchr(type_id, '\0', SPAGHETTI_CONFIG_TYPE_ID_SIZE) != NULL;
+	uint32_t crc;
+
+	if ((record->magic != SPAGHETTI_STORAGE_RECORD_MAGIC_V2) ||
+	    (record->record_version != SPAGHETTI_STORAGE_RECORD_VERSION_V2) ||
+	    (record->payload_size == 0U) ||
+	    (record->payload_size > SPAGHETTI_CONFIG_CBOR_MAX_SIZE)) {
+		return -EBADMSG;
+	}
+
+	crc = crc32_ieee(record->payload, record->payload_size);
+	if (crc != record->payload_crc32) {
+		return -EBADMSG;
+	}
+
+	return spaghetti_config_decode_cbor(record->payload,
+					    record->payload_size, out);
 }
 
-static int config_shape_validate(const struct spaghetti_config *config)
+static int encode_v2_record(const struct spaghetti_config *config,
+			    struct spaghetti_storage_record_v2 *record)
 {
-	if ((config->version != SPAGHETTI_CONFIG_VERSION) ||
-	    (config->module_count > SPAGHETTI_CONFIG_MAX_MODULES)) {
-		return -EINVAL;
+	size_t written = 0U;
+	int err;
+
+	memset(record, 0, sizeof(*record));
+	err = spaghetti_config_encode_cbor(config, record->payload,
+					   sizeof(record->payload), &written);
+	if (err < 0) {
+		return err;
 	}
 
-	for (size_t module_idx = 0U; module_idx < config->module_count;
-	     ++module_idx) {
-		const struct spaghetti_module_config *module =
-			&config->modules[module_idx];
-
-		if ((module->key == 0U) ||
-		    !stored_type_id_is_terminated(module->type_id) ||
-		    (module->driver_config_size == 0U) ||
-		    (module->driver_config_size > SPAGHETTI_DRIVER_CONFIG_MAX)) {
-			return -EINVAL;
-		}
-	}
-
+	record->magic = SPAGHETTI_STORAGE_RECORD_MAGIC_V2;
+	record->record_version = SPAGHETTI_STORAGE_RECORD_VERSION_V2;
+	record->payload_size = (uint16_t)written;
+	record->payload_crc32 = crc32_ieee(record->payload, written);
 	return 0;
-}
-
-static void canonicalize_config(const struct spaghetti_config *source,
-				struct spaghetti_config *destination)
-{
-	destination->version = source->version;
-	destination->module_count = source->module_count;
-
-	for (size_t module_idx = 0U; module_idx < source->module_count;
-	     ++module_idx) {
-		const struct spaghetti_module_config *source_module =
-			&source->modules[module_idx];
-		struct spaghetti_module_config *destination_module =
-			&destination->modules[module_idx];
-		const size_t type_id_size =
-			strlen(source_module->type_id) + 1U;
-
-		destination_module->key = source_module->key;
-		destination_module->port_id = source_module->port_id;
-		memcpy(destination_module->type_id, source_module->type_id,
-		       type_id_size);
-		destination_module->driver_config_size =
-			source_module->driver_config_size;
-		memcpy(destination_module->driver_config,
-		       source_module->driver_config,
-		       source_module->driver_config_size);
-	}
-
-	destination->sampling = source->sampling;
-	destination->threshold_rule = source->threshold_rule;
-	destination->mqtt = source->mqtt;
 }
 
 static int storage_settings_set(const char *name, size_t len,
 				settings_read_cb read_cb, void *read_cb_arg)
 {
-	struct spaghetti_storage_record record;
+	uint8_t raw[(sizeof(struct spaghetti_storage_record_v2) >
+		     sizeof(struct spaghetti_storage_legacy_record)) ?
+			    sizeof(struct spaghetti_storage_record_v2) :
+			    sizeof(struct spaghetti_storage_legacy_record)];
 	ssize_t bytes_read;
 	int err;
 
@@ -111,29 +106,59 @@ static int storage_settings_set(const char *name, size_t len,
 	}
 
 	record_present = false;
+	legacy_pending = false;
 	record_load_error = 0;
 	memset(&loaded_record, 0, sizeof(loaded_record));
-	if ((read_cb == NULL) || (len != sizeof(record))) {
+	memset(&legacy_record, 0, sizeof(legacy_record));
+	if ((read_cb == NULL) || (len == 0U) || (len > sizeof(raw))) {
 		record_load_error = -EBADMSG;
 		k_mutex_unlock(&storage_lock);
 		return 0;
 	}
 
-	memset(&record, 0, sizeof(record));
-	bytes_read = read_cb(read_cb_arg, &record, sizeof(record));
+	memset(raw, 0, sizeof(raw));
+	bytes_read = read_cb(read_cb_arg, raw, len);
 	if (bytes_read < 0) {
 		record_load_error = (int)bytes_read;
 		k_mutex_unlock(&storage_lock);
 		return 0;
 	}
-	if ((size_t)bytes_read != sizeof(record)) {
+	if ((size_t)bytes_read != len) {
 		record_load_error = -EBADMSG;
 		k_mutex_unlock(&storage_lock);
 		return 0;
 	}
 
-	loaded_record = record;
-	record_present = true;
+	if (len >= sizeof(uint32_t)) {
+		uint32_t magic;
+
+		memcpy(&magic, raw, sizeof(magic));
+		if (magic == SPAGHETTI_STORAGE_RECORD_MAGIC_V2) {
+			if (len != sizeof(loaded_record)) {
+				record_load_error = -EBADMSG;
+				k_mutex_unlock(&storage_lock);
+				return 0;
+			}
+			memcpy(&loaded_record, raw, sizeof(loaded_record));
+			record_present = true;
+			k_mutex_unlock(&storage_lock);
+			return 0;
+		}
+		if (magic == SPAGHETTI_STORAGE_RECORD_MAGIC_V3) {
+			if (len != sizeof(legacy_record)) {
+				record_load_error = -EBADMSG;
+				k_mutex_unlock(&storage_lock);
+				return 0;
+			}
+			memcpy(&legacy_record, raw, sizeof(legacy_record));
+			legacy_pending = true;
+			record_present = true;
+			k_mutex_unlock(&storage_lock);
+			return 0;
+		}
+	}
+
+	record_load_error = -EBADMSG;
 	k_mutex_unlock(&storage_lock);
 	return 0;
 }
@@ -201,10 +226,12 @@ int spaghetti_storage_init(void)
 
 	storage_state = SPAGHETTI_STORAGE_INITIALIZING;
 	record_present = false;
+	legacy_pending = false;
 	record_load_error = 0;
 	maintenance_marker_present = false;
 	maintenance_marker_corrupt = false;
 	memset(&loaded_record, 0, sizeof(loaded_record));
+	memset(&legacy_record, 0, sizeof(legacy_record));
 	k_mutex_unlock(&storage_lock);
 
 	err = settings_subsys_init();
@@ -231,6 +258,8 @@ int spaghetti_storage_init(void)
 int spaghetti_storage_read_config(struct spaghetti_config *out)
 {
 	struct spaghetti_config config;
+	struct spaghetti_storage_record_v2 migrated;
+	bool should_persist = false;
 	int err;
 
 	if (out == NULL) {
@@ -254,18 +283,39 @@ int spaghetti_storage_read_config(struct spaghetti_config *out)
 		err = -ENOENT;
 		goto unlock;
 	}
-	if ((loaded_record.magic != SPAGHETTI_STORAGE_RECORD_MAGIC) ||
-	    (loaded_record.version != SPAGHETTI_CONFIG_VERSION) ||
-	    (loaded_record.config.version != SPAGHETTI_CONFIG_VERSION)) {
-		err = -EBADMSG;
-		goto unlock;
-	}
 
-	config = loaded_record.config;
-	err = 0;
+	if (legacy_pending) {
+		err = spaghetti_storage_legacy_v3_convert(
+			(const uint8_t *)&legacy_record, sizeof(legacy_record),
+			&config);
+		if (err < 0) {
+			goto unlock;
+		}
+		err = encode_v2_record(&config, &migrated);
+		if (err < 0) {
+			goto unlock;
+		}
+		loaded_record = migrated;
+		legacy_pending = false;
+		should_persist = true;
+	} else {
+		err = decode_v2_record(&loaded_record, &config);
+	}
 
 unlock:
 	k_mutex_unlock(&storage_lock);
+	if ((err == 0) && should_persist) {
+		const int persist_error = settings_save_one(
+			SPAGHETTI_STORAGE_CONFIG_KEY, &migrated,
+			sizeof(migrated));
+
+		if (persist_error < 0) {
+			LOG_WRN("legacy Config migrated in RAM; persist failed: err=%d",
+				persist_error);
+		} else {
+			LOG_INF("legacy Config migrated to V2");
+		}
+	}
 	if (err == 0) {
 		*out = config;
 	}
@@ -274,17 +324,17 @@ unlock:
 
 int spaghetti_storage_write_config(const struct spaghetti_config *config)
 {
-	struct spaghetti_storage_record record;
+	struct spaghetti_storage_record_v2 record;
 	int err;
 
-	if ((config == NULL) || (config_shape_validate(config) < 0)) {
+	if (config == NULL) {
 		return -EINVAL;
 	}
 
-	memset(&record, 0, sizeof(record));
-	record.magic = SPAGHETTI_STORAGE_RECORD_MAGIC;
-	record.version = SPAGHETTI_CONFIG_VERSION;
-	canonicalize_config(config, &record.config);
+	err = encode_v2_record(config, &record);
+	if (err < 0) {
+		return err;
+	}
 
 	err = k_mutex_lock(&storage_lock, K_FOREVER);
 	if (err < 0) {
@@ -300,6 +350,7 @@ int spaghetti_storage_write_config(const struct spaghetti_config *config)
 				sizeof(record));
 	if (err == 0) {
 		loaded_record = record;
+		legacy_pending = false;
 		record_present = true;
 		record_load_error = 0;
 	}

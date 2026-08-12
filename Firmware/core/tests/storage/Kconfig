@@ -2,8 +2,40 @@ mainmenu "Spaghetti Storage tests"
 
 rsource "../../Kconfig.resources"
 
+config SPAGHETTI_MAX_MODULES
+	int
+	default 8
+
 config SPAGHETTI_STORAGE_LOG_LEVEL
 	int
 	default 0
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_INA219_MAX_INSTANCES
+	int
+	default 4
+
+config SPAGHETTI_RELAY_MAX_INSTANCES
+	int
+	default 4
+
+config SPAGHETTI_INA219_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RELAY_LOG_LEVEL
+	int
+	default 0
+
+config ZCBOR
+	bool
+	default y
+
+config CRC
+	bool
+	default y
 
 source "Kconfig.zephyr"

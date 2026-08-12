@@ -12,9 +12,11 @@
 
 #include <zephyr/kernel.h>
 
-#include <spaghetti/config.h>
 #include <spaghetti/module.h>
 #include <spaghetti/port.h>
+
+/** Maximum bytes of packed driver configuration retained per Discovery result. */
+#define SPAGHETTI_DRIVER_CONFIG_MAX 64U
 
 /** Origin of one normalized Discovery result. */
 enum spaghetti_discovery_source {

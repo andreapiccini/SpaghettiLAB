@@ -1,0 +1,13 @@
+mainmenu "Spaghetti Rule Registry tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_RULE_REGISTRY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"
