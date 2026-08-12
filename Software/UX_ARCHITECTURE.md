@@ -105,7 +105,7 @@ Layout fisso su tutte le schermate, tre regioni:
 | Physical Composition Editor | `S050-physical-composition` | S050 | [UX-S050](roadmap/ux-v1/tasks/UX-S050-physical-composition.md) | ✅ |
 | Device Profile Studio | `S060-device-profile-studio` | S061–S063 | [UX-S060](roadmap/ux-v1/tasks/UX-S060-device-profile-studio.md) | ✅ |
 | Processing Graph Editor | `S070-processing-graph-editor` | S071–S073 | — | ✅ as-built confermata (prototipo React validato) |
-| Deploy & Diff | `S080-deploy-diff` | S080 | [UX-S080](roadmap/ux-v1/tasks/UX-S080-deploy-diff.md) | ⬜ da scrivere |
+| Deploy & Diff | `S080-deploy-diff` | S080 | [UX-S080](roadmap/ux-v1/tasks/UX-S080-deploy-diff.md) | ✅ |
 | Runtime & Diagnostics | `S090-runtime-diagnostics` | S091–S094 | [UX-S090](roadmap/ux-v1/tasks/UX-S090-runtime-diagnostics.md) | ⬜ da scrivere |
 | Capability Marketplace & OTA | `S100-capability-marketplace` | S101–S103 | [UX-S100](roadmap/ux-v1/tasks/UX-S100-capability-marketplace.md) | ⬜ da scrivere |
 | Cross-Core Automation | `S110-cross-core-automation` | S111–S113 | [UX-S110](roadmap/ux-v1/tasks/UX-S110-cross-core-automation.md) | ⬜ da scrivere |

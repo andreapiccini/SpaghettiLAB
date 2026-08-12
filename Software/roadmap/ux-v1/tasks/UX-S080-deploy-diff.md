@@ -1,6 +1,6 @@
 # UX-S080 — Deploy & Diff
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S080
 
@@ -42,5 +42,15 @@ la destinazione del pulsante "Invia a Deploy" del Processing Graph Editor.
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Deploy & Diff" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Deploy & Diff" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S080-deploy-diff/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Diff semantico per tipo di entità che ignora esplicitamente i metadata authoring,
+pipeline a stepper con sei tappe distinte (mai una barra indifferenziata), pannello
+conflitto con tre azioni a pari peso e nessun "sovrascrivi", banner di blocco per
+profili/pack mancanti con link diretti a S060/S100, report multi-Core per-target con
+isolamento errori. `backend-behavior.md` cita S080 punto per punto (S080 è ancora
+⬜ TODO).
