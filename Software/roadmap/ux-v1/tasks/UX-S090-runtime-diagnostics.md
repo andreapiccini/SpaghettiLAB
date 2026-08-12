@@ -1,6 +1,6 @@
 # UX-S090 — Runtime & Diagnostics
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S091–S094
 
@@ -40,5 +40,16 @@ risorse — con lo stesso dettaglio di `ux/screens/S070-processing-graph-editor/
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Runtime & Diagnostics" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Runtime & Diagnostics" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S090-runtime-diagnostics/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Cinque tab (Telemetria/Comandi/Discovery/Stato & Risorse/Amministrazione). Regola
+cross-cutting esplicita: ogni azione live (comando/discovery/admin) usa l'accento
+`color.brand.purple-glow`, mai `color.brand.blue` riservato alle azioni Config —
+distingue strutturalmente comando immediato da modifica persistente. Gap/boot ID/
+sequence sempre visibili in telemetria, mai una serie continua che nasconde una
+discontinuità. Resource monitor con card separate per grandezza (mai sommate).
+`backend-behavior.md` cita S091/S092/S093/S094 punto per punto (tutte ⬜ TODO).
