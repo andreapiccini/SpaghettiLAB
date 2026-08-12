@@ -209,6 +209,11 @@ Un nuovo driver crea schema, ops, descriptor e slab privata. CMake compila il fi
 il Registry lo trova automaticamente. Il catalogo delle fasi successive enumera gli
 stessi descrittori.
 
+Questo percorso resta necessario per hardware, timing o algoritmi che richiedono C
+nativo. I normali dispositivi descrivibili come transazioni e registri useranno invece
+il solo driver generico e i Device Profile della fase 325, evitando un driver compilato
+per ogni sensore.
+
 ## Checklist di completamento
 
 - [ ] Descriptor contiene API version e tre schemi coerenti.

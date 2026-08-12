@@ -6,8 +6,8 @@
 
 ## Obiettivo
 
-Definire un unico envelope CBOR versionato per catalogo, stato, capability, Config,
-Discovery, connettività, reset e comandi, riusabile da trasporti locali e remoti con
+Definire un unico envelope CBOR versionato per catalogo, stato, capability, risorse,
+Device Profile, Config, Discovery, connettività, reset e comandi, riusabile da trasporti locali e remoti con
 principal, permessi espliciti, errori pubblici stabili e replay protection centrale.
 
 ## Task
@@ -22,3 +22,4 @@ principal, permessi espliciti, errori pubblici stabili e replay protection centr
 - [ ] Operazioni lunghe usano job bounded senza bloccare i callback di rete.
 - [ ] Policy locale/remota impediscono operazioni non autorizzate.
 - [ ] Capability, diagnostica e stato connettività sono leggibili senza segreti.
+- [ ] Feature Pack, Device Profile e resource report sono enumerabili e autorizzati.

@@ -21,6 +21,10 @@ La guida deve offrire percorsi eseguibili e template copiabili per:
    hardware/real-time che deve restare in Zephyr.
 8. nuovo layout Core con più Flow, Bay e rail passive/controllate, senza cambiare il
    protocollo o l'editor host.
+9. nuovo Device Profile dichiarativo senza sorgenti C o OTA;
+10. nuovo Block Driver e relativo Capability Pack opzionale;
+11. composizione, misura e pubblicazione di una variante firmware con feature-set e
+    resource report.
 
 Per ogni percorso indica file esatti, header pubblico, `.c` privato, schema, iterable
 macro, context slab, CMake, Kconfig, Devicetree/binding/overlay, Config JSON/CBOR, test
@@ -51,6 +55,10 @@ Aggiungi una sezione “Caveat Spaghetti LAB” che spieghi almeno:
 - INT64/UINT64 lossless fra C, CBOR, Python e JavaScript;
 - catalog fingerprint e invalidazione cache dopo OTA;
 - profili risorse, stack misurati e workspace TLS;
+- Device Profile dati contro opcode/driver compilati e revisione/hash riferita;
+- Block graph aciclico, budget CPU/RAM e stato soltanto per istanze attive;
+- Capability Pack come immagine firmata, mai libreria dinamica runtime;
+- flash headroom contro RAM statica, pool/workspace, uso corrente e high-water;
 - heartbeat, watchdog e finestre bounded per Update/flash;
 - capability reali contro feature teoriche del SoC;
 - field semantic/reference group come contratto UI-neutral per React Flow;
@@ -72,7 +80,7 @@ Communication o MQTT per far comparire il nuovo tipo nel catalogo.
 
 ## Checklist di completamento
 
-- [ ] Otto percorsi hanno file, template e comandi completi.
+- [ ] Undici percorsi hanno file, template e comandi completi.
 - [ ] Template compilano nei test.
 - [ ] Guida non contiene API V0 o Registry centrali.
 - [ ] Caveat collega diario problemi e guida implementativa.
@@ -87,5 +95,6 @@ docker compose run --rm --entrypoint sh dev -lc \
   'west twister -T tests/templates -p native_sim/native/64 --inline-logs --clobber-output'
 ```
 
-Il task termina quando una prova “clean room” aggiunge un fake Module e una fake board
-con due Flow seguendo soltanto la guida, senza patch ai sottosistemi centrali.
+Il task termina quando una prova “clean room” aggiunge un fake Module, un Device
+Profile, un Block Driver/pack e una fake board con due Flow seguendo soltanto la guida,
+senza patch ai sottosistemi centrali.

@@ -63,6 +63,13 @@ la fase 340 la migra in un rule driver. Connectivity policy ed energy policy son
 desiderio persistente; lease, connessioni e deadline restano stato runtime del
 Connectivity Manager e non entrano in Config.
 
+Il Module Driver `declarative-device` della fase 325 usa proprietà tipizzate per
+`profile_id`, versione/hash e parametri di istanza: non copia acquisition plan o
+profilo completo nel Config. La validazione risolve la revisione esatta e restituisce
+`-ENOTSUP` se il profilo richiede opcode/Capability Pack non installati. Riserva il
+percorso di migrazione alla versione Config introdotta dalla fase 342 per block/edge;
+decoder e Storage non devono assumere che `rules` sia l'ultima sezione possibile.
+
 ### 2. Definire il contratto dei rule driver prima di validarli
 
 Crea `include/spaghetti/rule_driver.h` e `subsys/rule_registry/` con Registry basato
@@ -280,6 +287,7 @@ modifiche al codec centrale.
 ## Checklist di completamento
 
 - [ ] Config contiene Module, schedule, rule e policy connettività/energia generici.
+- [ ] Un Module dichiarativo riferisce profilo e revisione senza duplicarne i byte.
 - [ ] Ogni Module può dichiarare Bay e rail senza duplicare Flow o GPIO MCU.
 - [ ] Power passivo resta valido ma visibilmente `UNVERIFIED`.
 - [ ] CBOR V2 non contiene switch su driver/rule concreti.

@@ -18,3 +18,4 @@ modificare tabelle o tipi specifici nel firmware centrale.
 - [ ] Driver Registry usa iterable sections Zephyr.
 - [ ] INA219 e Relay implementano il contratto V2.
 - [ ] Letture, eventi e comandi usano valori tipizzati.
+- [ ] Il contratto può ospitare il driver generico dei Device Profile della fase 325.

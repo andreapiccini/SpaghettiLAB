@@ -14,7 +14,10 @@ In Kconfig crea una `choice SPAGHETTI_RESOURCE_PROFILE` con una sola selezione f
 non può cambiare profilo a runtime. Ogni scelta imposta default bounded per Module,
 schedule, rule, proprietà per schema, record in coda, consumer dei record, peer BLE,
 principal, richieste in volo, sessioni TLS, Flow, Function Bay, rail e servizi
-opzionali. Le costanti pubbliche
+opzionali. Riserva inoltre limiti unici per Device Profile persistiti e relativi byte,
+operazioni di acquisition plan, Block/edge del processing graph, context attivi e
+workspace condiviso; le fasi 325, 342 e 348 li useranno senza introdurre capacità
+parallele. Le costanti pubbliche
 continuano a provenire da `CONFIG_SPAGHETTI_*`; non duplicare numeri nei `.c`, negli
 header, nei CDDL o nei test.
 
@@ -47,6 +50,10 @@ struct spaghetti_capabilities {
 	uint16_t max_modules;
 	uint16_t max_schedules;
 	uint16_t max_rules;
+	uint16_t max_device_profiles;
+	uint16_t max_profile_operations;
+	uint16_t max_processing_blocks;
+	uint16_t max_processing_edges;
 	uint16_t max_properties_per_set;
 	uint16_t max_protocol_payload;
 	uint16_t max_record_queue;
@@ -86,8 +93,11 @@ sessioni sicure maggiori del workspace disponibile. Imposta
 `CONFIG_SPAGHETTI_MAX_POWER_RAILS <= 32`, perché la fase 305 usa una mask `uint32_t`
 per dichiarare le rail che raggiungono una Bay. Aggiungi inoltre un test che
 compila deliberatamente una combinazione incoerente e si aspetta un errore di build.
-Crea `verification/resources/BASELINE.md` con flash, RAM statica e limiti di ogni
-build, senza ancora promettere valori del PCB finale.
+Crea `verification/resources/BASELINE.md` con flash, RAM statica, stack, pool,
+workspace e limiti di ogni build, senza ancora promettere valori del PCB finale. Il
+profilo dichiara capacità; la telemetria corrente/high-water e il manifest dei
+Capability Pack appartengono alla fase 348. Non usare RAM libera istantanea per
+selezionare un profilo o accettare una feature.
 
 ## Perché è fatto così
 
@@ -116,6 +126,7 @@ if (spaghetti_capabilities_get(&caps) == 0 &&
 - [ ] Update può confrontare variante, profilo e capability richieste.
 - [ ] Consumer, principal, richieste in volo e sessioni sicure sono bounded.
 - [ ] Flow, Bay e rail hanno limiti unici condivisi da firmware e protocollo.
+- [ ] Device Profile, acquisition plan, Block, edge e context hanno limiti unici.
 - [ ] Pin mux e controllo/misura power compaiono solo se la board ha backend reali.
 - [ ] Build assert, test negativo e baseline coprono ogni variante disponibile.
 

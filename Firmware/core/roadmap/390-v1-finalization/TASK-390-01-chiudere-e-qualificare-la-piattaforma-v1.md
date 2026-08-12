@@ -13,6 +13,8 @@ Crea `tests/v1_extension/` e mantieni tutti i plug-in sotto quella directory:
 - `fake_button`: config GPIO, record evento BOOL, start/stop asincroni;
 - `fake_pwm`: config output, comando UINT64 duty permille;
 - `fake_rule`: osserva un field e comanda PWM;
+- `fake_register_profile_a/b`: due Device Profile sullo stesso driver dichiarativo;
+- `fake_processing_block`: trasforma un field e mantiene stato bounded;
 - `fake_eeprom_provider`: candidate autorevole;
 - `fake_analog_provider`: candidate euristico.
 
@@ -29,7 +31,8 @@ subsys/services/mqtt/
 ```
 
 Il test applica JSON→CBOR con due Module sulla stessa Port, due schedule, una rule,
-evento pulsante e comando PWM. Verifica catalogo, Data, due consumer Record Delivery,
+un processing graph, evento pulsante e comando PWM. Verifica Device Profile, catalogo,
+Data, due consumer Record Delivery,
 MQTT fake, BLE fake e rollback. La fake board espone almeno due Flow da cinque segnali:
 uno con rail passive e uno con rail controllata. Prova Bay nota e non specificata,
 power admission `UNVERIFIED` e `ENFORCED`, due owner I2C e rifiuto di un cambio
@@ -62,6 +65,9 @@ Verifica che manuale e template della fase 385 siano coerenti, quindi crea
 - schema/field/command ID rules;
 - semantica device ID, boot ID, timestamp e sequence;
 - profili risorse, capability e stati connettività;
+- Device Profile, acquisition opcode, Block Driver, processing graph e relative regole
+  di versione/hash;
+- Capability Pack, feature-set hash, manifest immagine e resource report;
 - topologia Flow/Port/Bay, cinque segnali, transport e semantica power admission;
 - permission matrix;
 - scope di reset e lifecycle credenziali;
@@ -84,12 +90,19 @@ Salva in `verification/v1/RESOURCE_BUDGET.md` per ogni profilo e board:
 - dimensione record/property/envelope;
 - capacità queue/slab/cataloghi;
 - massimo Module/schedule/rule/provider/client;
+- massimo Device Profile/opcode/Block/edge/context e relativo uso/high-water;
 - tempo peggiore fake per apply, rollback e scan timeout.
 
 Misura boot LOW_ENERGY, BLE advertising, BLE connesso, BLE più Wi-Fi/MQTT, MQTT TLS,
 OTA Wi-Fi, OTA BLE, stop completo dei servizi e allocazione TLS fallita. Sul profilo
 Minimal verifica una sola sessione sicura pesante e assenza della Remote Console di
 produzione. Ripeti 100 cicli start/stop e connect/disconnect.
+
+Produci build differenziali `base`, `base+kalman`, `base+modbus` e `all-supported`.
+Confronta flash, RAM statica, stack, pool e workspace con baseline e budget; registra
+se l'immagine universale può essere il default oppure quali pack devono restare
+opzionali. Durante gli scenari registra uso corrente, high-water e allocation failure
+per owner, senza derivare l'installabilità da una generica RAM libera istantanea.
 
 Verifica Health Supervisor su ogni profilo: deadline dei worker, window OTA/flash,
 reset cause e watchdog hardware quando dichiarato. Un Core senza chosen watchdog deve
@@ -125,6 +138,14 @@ della fase 375. Con native/fake o board corrente:
     topology/catalog/config del fake Core;
 20. la UI distingue rail manuale non verificata da rail controllata e il Core Pro
     rifiuta un requirement incompatibile.
+21. due Device Profile differenti usano lo stesso driver generico; un terzo profilo
+    compatibile viene installato come dato senza OTA;
+22. Config che usa un blocco assente restituisce UNSUPPORTED senza effetti;
+23. OTA `base+kalman` cambia feature-set/catalog fingerprint, preserva Config e rende
+    il blocco istanziabile senza un secondo update;
+24. OTA che rimuove una feature usata dal Config attivo o persistito è rifiutato;
+25. GET_RESOURCES riporta headroom flash, pool/workspace e high-water coerenti con i
+    report di build e i fault di esaurimento iniettati.
 
 Registra risultati in `verification/v1/PLATFORM_REPORT.md` con commit, Zephyr, board e
 comandi, senza segreti.
@@ -135,7 +156,9 @@ Usa i golden vector della fase 378 in test C, Python e TypeScript. Aggiungi corp
 fuzz harness per decoder envelope, Config CBOR, pagina catalogo e framing BLE. Copri
 chiavi duplicate/extra, lunghezze massime, integer overflow, UTF-8 errato, frammenti
 sovrapposti/fuori ordine, replay, principal revocato, queue piena e paginazione che
-cambia fingerprint a metà lettura.
+cambia fingerprint a metà lettura. Aggiungi Device Profile/acquisition plan,
+processing graph e manifest pack: opcode sconosciuto, budget temporale eccessivo,
+ciclo, edge/type incompatibile, dipendenza pack assente e valori resource overflow.
 
 Il fuzz test non deve richiedere hardware e non può allocare oltre i limiti del profilo.
 Registra seed e crash artifact; zero crash, hang o accesso fuori limite è il gate.
@@ -163,9 +186,12 @@ Nuovi Core aggiungono board/binding/backend Port senza branch applicativi.
 ## Checklist di completamento
 
 - [ ] Sei plug-in fake attraversano il sistema senza patch centrali.
+- [ ] Due Device Profile condividono il driver generico e un Block fake si registra senza patch centrali.
 - [ ] Pulizia software 210 è conclusa e ogni caso hardware rinviato è tracciato.
 - [ ] Protocol, Config wire, schema ID, MQTT topic e BLE UUID/framing sono congelati.
 - [ ] Resource budget di ogni profilo/board è registrato nei carichi peggiori.
+- [ ] Build base/Modbus/Kalman/all-supported e resource high-water determinano la policy dei pack.
+- [ ] Manifest/update impediscono rimozione di capability richieste dal Config.
 - [ ] Gate Node-RED passa sia con MQTT TLS sia con BLE/gateway.
 - [ ] SDK TypeScript, CLI Python e firmware C superano gli stessi golden vector.
 - [ ] Config concorrente/no-op, replay cross-transport e cursori multipli sono provati.
@@ -194,5 +220,5 @@ make node-red-ble-smoke
 ```
 
 Il task termina quando il report V1 contiene zero failure, entrambi i percorsi host
-completano i venti passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema
+completano i venticinque passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema
 centrale.

@@ -24,6 +24,14 @@ because Node-RED's editor isn't built to be replaced at that level (see the
 project discussion this came out of) — full write-up pending in a future
 architecture doc.
 
+The complete functional architecture and implementation backlog now live in:
+
+- [`../REACT_FLOW_ARCHITECTURE.md`](../REACT_FLOW_ARCHITECTURE.md)
+- [`../roadmap/react-flow-v1/README.md`](../roadmap/react-flow-v1/README.md)
+
+They deliberately specify no visual design. The current source remains only the
+running technical prototype until those tasks are implemented.
+
 ## Requirements
 
 - Docker Desktop (macOS, Windows) or Docker Engine + Compose plugin (Linux)
@@ -111,7 +119,6 @@ Then `docker compose up -d`.
 Included: a working React + React Flow canvas in Docker, with placeholder
 nodes, proving the stack runs end to end.
 
-Not included yet: SpaghettiLAB-specific block types, the graph-to-firmware
-compiler, AppBlocks-style visual design, any connection to the Node-RED
-side or the firmware. These will be scoped as separate tasks once this
-base is confirmed working.
+Not included yet in code: the functions specified by the React Flow V1 roadmap. This
+README describes the existing executable prototype; architecture and task documents
+describe the complete target without claiming it is implemented.

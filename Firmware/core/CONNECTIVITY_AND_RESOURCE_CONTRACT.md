@@ -275,13 +275,25 @@ ota_local_supported
 external_ram_bytes
 max_modules
 max_rules
+max_device_profiles
+max_processing_blocks
+max_processing_edges
 max_secure_sessions
+feature_set_hash
 ```
 
 The report describes compiled and verified capability, not an aspirational feature.
 Current state separately reports whether BLE, Wi-Fi, MQTT, maintenance, or update is
 active. Node-RED and host tools must reject unsupported Config before attempting to
 apply it.
+
+The firmware also exposes the phase-348 resource report. Immutable build values include
+slot size, image size/headroom, static RAM, declared stacks/pools/workspaces, and the
+installed Capability Pack list. Runtime values report current use, high-water marks,
+allocation failures, and per-owner pool/workspace/stack observations when compiled.
+These values are diagnostics, not a runtime package loader: instantaneous free RAM
+must never authorize a new feature. Only the signed candidate manifest plus build/link
+gates can prove that another compiled feature set fits the Core and both image slots.
 
 ## Matter, Thread, and Zigbee boundary
 

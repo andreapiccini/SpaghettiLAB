@@ -37,6 +37,13 @@ enum spaghetti_protocol_operation {
 	SPAGHETTI_PROTOCOL_GET_AUDIT_LOG = 18,
 	SPAGHETTI_PROTOCOL_GET_JOB_STATUS = 19,
 	SPAGHETTI_PROTOCOL_GET_TOPOLOGY = 20,
+	SPAGHETTI_PROTOCOL_GET_RESOURCES = 21,
+	SPAGHETTI_PROTOCOL_LIST_DEVICE_PROFILES = 22,
+	SPAGHETTI_PROTOCOL_GET_DEVICE_PROFILE = 23,
+	SPAGHETTI_PROTOCOL_VALIDATE_DEVICE_PROFILE = 24,
+	SPAGHETTI_PROTOCOL_INSTALL_DEVICE_PROFILE = 25,
+	SPAGHETTI_PROTOCOL_REMOVE_DEVICE_PROFILE = 26,
+	SPAGHETTI_PROTOCOL_GET_FEATURES = 27,
 };
 
 enum spaghetti_protocol_status {
@@ -143,12 +150,13 @@ Control prima di chiamarlo e non conosce il trasporto. `principal_id` identifica
 peer autenticato anche dopo un reconnect; l'adapter non può inventare permessi maggiori
 di quelli persistiti per quel principal.
 
-### 3. Implementare i venti handler bounded
+### 3. Implementare i ventisette handler bounded
 
 Dividi `subsys/communication/operations/` per owner:
 
-- catalog: pagina driver/rule/provider/operation e relativi schemi con cursor+limit,
-  versioni Protocol/Config supportate e fingerprint SHA-256 dell'intero catalogo;
+- catalog: pagina driver/rule/block/provider/operation/opcode, Device Profile e
+  Capability Pack con relativi schemi, cursor+limit, versioni Protocol/Config
+  supportate e fingerprint SHA-256 dell'intero catalogo;
 - status: Core, Port, Module, schedule, service, health, reset cause e stale component;
 - get config: restituisce Config CBOR canonica, generation e hash della fase 330;
 - validate config: esegue validazione completa senza effetti e restituisce il failure
@@ -161,6 +169,11 @@ Dividi `subsys/communication/operations/` per owner:
 - module command: stable target key, command ID e property arguments;
 - update status: snapshot read-only.
 - capabilities: profilo, variante, trasporti, OTA path e limiti immutabili;
+- resources: report build/runtime della fase 348 con capacità, uso e high-water
+  separati; lettura non resetta i contatori;
+- features: feature-set hash, pack/versioni, dipendenze e tipi forniti;
+- device profiles: list/get read-only e validate/install/remove autorizzati come
+  definito dalla fase 325; install/remove sono mutazioni serializzate;
 - topology: pagina Flow con direzione, Port, cinque segnali e Bay ordinate; per ogni
   Bay include rail disponibili, assurance e limiti dichiarati, più Module key,
   endpoint e admission correnti quando presenti;
@@ -287,9 +300,11 @@ resta comoda per una persona ma non è più il protocollo dell'app.
 ## Checklist di completamento
 
 - [ ] Envelope V1 ha encoding canonico, limite assoluto 2048 e capacità dichiarata dal profilo.
-- [ ] Venti operation ID e status pubblici sono congelati.
+- [ ] Ventisette operation ID e status pubblici sono congelati.
 - [ ] Handler e relativi schema request/response sono auto-registrati e catalogati.
 - [ ] GET_TOPOLOGY descrive più Flow/Port/Bay e stato power senza hardcode host.
+- [ ] GET_RESOURCES separa capacità, uso e high-water e GET_FEATURES espone i pack.
+- [ ] Device Profile installabili hanno operazioni bounded e autorizzate.
 - [ ] Permessi derivano da principal e limite dell'adapter, non dalla richiesta.
 - [ ] GET/VALIDATE/APPLY Config espongono hash, CAS e conflitti senza scritture cieche.
 - [ ] Replay cache centrale impedisce doppi effetti su ogni trasporto.

@@ -31,11 +31,17 @@ Al termine delle fasi 291–390:
 - controller condivisi e transazioni sono serializzati dal proprietario corretto;
 - driver, regole e provider Discovery si auto-registrano con le iterable sections di
   Zephyr, senza modificare tabelle centrali;
+- profili dispositivo dichiarativi descrivono registri, transazioni e schemi di
+  sensori comuni senza richiedere un driver C per ogni modello;
 - Config usa proprietà tipizzate e versionate, non copie di struct C specifiche;
 - Data trasporta record tipizzati descritti da schema, non soltanto misure INA219;
 - MQTT e BLE leggono la stessa ring con cursori e contatori di perdita indipendenti;
 - Runtime pianifica più sorgenti e carica regole plug-in senza conoscere sensori o
   attuatori concreti;
+- Runtime compila pipeline bounded di blocchi catalogati; filtri ed elaborazioni
+  installati nel firmware vengono istanziati e collegati soltanto tramite Config;
+- ogni immagine dichiara Capability Pack, feature-set hash e consumo misurato; il Core
+  espone headroom flash, pool/workspace e high-water di stack/RAM osservabili;
 - un Module può essere dichiarato manualmente oppure proposto da zero o più provider
   Discovery indipendenti;
 - nessuna EEPROM è obbligatoria: EEPROM, registri I2C, analogico e 1-Wire sono metodi
@@ -70,8 +76,9 @@ Al termine delle fasi 291–390:
    librerie TLS può usare allocazione bounded e ammessa dal Resource Manager, come
    definito nel contratto connettività; non introduce ownership dinamica nei modelli
    centrali.
-8. **Node-RED esegue le automazioni di prodotto.** Il Runtime V2 conserva scheduling
-   locale e regole plug-in essenziali, ma non tenta di diventare un secondo Node-RED.
+8. **Il Core esegue pipeline locali bounded, Node-RED coordina sistemi.** Runtime V2
+   conserva scheduling, acquisizione, elaborazioni catalogate e regole necessarie
+   offline; non accetta codice arbitrario e non tenta di replicare un runtime host.
 9. **Connettività e update sono lifecycle, non effetti collaterali.** Accendere Wi-Fi
    non apre OTA; una lease scade; un solo trasporto possiede Update.
 10. **Tempo e perdita sono espliciti.** Record porta boot ID e uptime; una coda RAM
@@ -84,6 +91,13 @@ Al termine delle fasi 291–390:
     vector e fingerprint catalogo sono congelati per C, Python e TypeScript.
 13. **Node-RED coordina, non esegue Zephyr.** Hardware, real-time e safe state restano
     plug-in firmware; i nodi host chiamano solo operation handler catalogati.
+14. **Capability installata e Config sono livelli distinti.** Un Capability Pack entra
+    tramite immagine MCUboot firmata; dopo il reboot Config può usarne i tipi senza un
+    altro update. Un Device Profile composto da opcode già presenti resta installabile
+    come dato.
+15. **Le risorse sono misure nominate, non una `free_ram` generica.** Build e runtime
+    separano flash/headroom, RAM statica, stack, pool, workspace, uso corrente e
+    high-water; soltanto il manifest della nuova immagine decide la compatibilità.
 
 ## Ordine e dipendenze
 
@@ -103,14 +117,20 @@ flowchart TD
     P300 --> P320["320 · Module Driver V2"]
     P305 --> P320
     P310["310 · Schemi e valori"] --> P320
-    P320 --> P330["330 · Config e wire V2"]
+    P320 --> P325["325 · Profili dispositivo"]
+    P325 --> P330["330 · Config e wire V2"]
     P292 --> P330
     P330 --> P340["340 · Data, Runtime e regole V2"]
-    P340 --> P345["345 · Consegna record"]
+    P340 --> P342["342 · Blocchi elaborazione"]
+    P342 --> P345["345 · Consegna record"]
+    P291 --> P348["348 · Pack e risorse"]
+    P293 --> P348
+    P342 --> P348
+    P345 --> P348
     P300 --> P350["350 · Discovery multi-provider"]
     P310 --> P350
     P330 --> P350
-    P345 --> P360["360 · Communication Protocol V1"]
+    P348 --> P360["360 · Communication Protocol V1"]
     P350 --> P360
     P355 --> P360
     P295 --> P365
@@ -180,6 +200,12 @@ Puoi spostare il lavoro principale su Node-RED quando:
 14. Health Supervisor, fuzzing, validator, Twister e build di ogni profilo passano;
 15. l'host legge una topologia con più Flow senza conoscere la board e distingue
     chiaramente power `UNVERIFIED` da power `ENFORCED`.
+16. due Device Profile con registri differenti usano lo stesso driver dichiarativo e
+    un profilo compatibile viene installato senza OTA;
+17. un blocco Kalman assente rende Config unsupported, compare dopo OTA del relativo
+    Capability Pack ed è poi istanziabile senza ulteriori update;
+18. resource report e manifest distinguono flash, RAM statica, stack, pool, workspace,
+    uso corrente e high-water; una build `all-supported` è accettata solo dai gate.
 
 La qualificazione fisica della fase 290 resta necessaria prima di dichiarare una
 release hardware di produzione, ma non blocca lo sviluppo del contratto Node-RED con

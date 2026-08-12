@@ -119,6 +119,10 @@ bounded evita un thread per Module. Field ID e command ID rendono la soglia rius
 senza dipendenze da driver. Tenere i riferimenti nella Config canonica, invece di
 eseguire codice inviato dall'host, conserva memoria e tempi deterministici.
 
+Le rule restano proprietarie di decisioni e comandi. Le trasformazioni pure o
+stateful di valori diventano Block Driver nella fase 342, così filtri, conversioni e
+pipeline non vengono moltiplicati come rule ad hoc.
+
 ## Come si usa
 
 Config assegna schedule a ogni key leggibile. Un pulsante può emettere eventi senza
