@@ -66,3 +66,6 @@ export const deploymentId = idFactory("DeploymentId");
 
 export type NodeRedResourceId = Branded<string, "NodeRedResourceId">;
 export const nodeRedResourceId = idFactory("NodeRedResourceId");
+
+export type ConnectionProfileId = Branded<string, "ConnectionProfileId">;
+export const connectionProfileId = idFactory("ConnectionProfileId");

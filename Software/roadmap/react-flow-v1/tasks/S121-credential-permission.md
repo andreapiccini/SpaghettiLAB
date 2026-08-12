@@ -1,6 +1,6 @@
 # S121 — Credential store e permission matrix
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** S014
 
 ## Obiettivo
@@ -23,6 +23,33 @@ errore, e che i permessi siano verificati prima di mostrare un'operazione.
 
 ## Fine task
 
-- [ ] Credenziali e progetti hanno storage e portabilità separati.
-- [ ] La permission matrix locale è coerente con l'enforcement remoto, senza
+- [x] Credenziali e progetti hanno storage e portabilità separati.
+- [x] La permission matrix locale è coerente con l'enforcement remoto, senza
       sostituirlo.
+
+## Implementazione (2026-08-12)
+
+`CredentialStore` (porta + `InMemoryCredentialStore` fake) esisteva già da S011.
+Aggiunti in `packages/domain/src`:
+
+- `ids.ts` — `ConnectionProfileId` branded.
+- `connection-profile.ts` — `ConnectionProfile`/`createConnectionProfile()`: nessun
+  campo capace di contenere un segreto, solo `credentialRef` opaco verso
+  `CredentialStore`. Test dedicato verifica che la serializzazione JSON non
+  contenga mai chiavi tipo secret/password/token e che `credentialRef`, quando
+  presente, abbia sempre la forma di un riferimento (`cred://...`), mai un valore
+  incollato per errore.
+- `permission.ts` — `PERMISSION_SCOPES` (Core connect/command/OTA/admin,
+  Node-RED deploy/manage, project import/export) e `checkPermission()`: `Result`
+  strutturato, mai un booleano nudo; il messaggio di remediation chiarisce sempre
+  che è un controllo locale preventivo, non l'enforcement remoto reale.
+- `errors.ts` — nuovo `DomainErrorCode.PERMISSION_DENIED`.
+
+`CoreBindingRecord.connectionProfileId` (S014) resta `string`: è già il
+riferimento opaco verso il registro `ConnectionProfile` a livello Workspace
+(`REACT_FLOW_ARCHITECTURE.md` § Modello dati principale), non serviva
+ristretto a un branded ID per questo task e avrebbe rotto i fixture/test S014
+esistenti senza necessità.
+
+`docker compose run --rm micro-flow-editor npm run ci` — lint, typecheck, 71 test
+(4 nuovi), build: tutti verdi.

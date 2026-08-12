@@ -40,4 +40,6 @@ export const DomainErrorCode = {
   MIGRATION_NOT_FOUND: "domain.schema.migration_not_found",
   NOTHING_TO_UNDO: "domain.command.nothing_to_undo",
   NOTHING_TO_REDO: "domain.command.nothing_to_redo",
+  // S121
+  PERMISSION_DENIED: "domain.permission.denied",
 } as const;

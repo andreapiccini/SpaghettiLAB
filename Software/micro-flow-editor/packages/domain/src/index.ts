@@ -9,4 +9,6 @@ export * from "./hash.js";
 export * from "./project.js";
 export * from "./project-migrations.js";
 export * from "./commands.js";
+export * from "./connection-profile.js";
+export * from "./permission.js";
 export * from "./ports/index.js";

@@ -57,7 +57,7 @@ finale end-to-end).
 | ⬜ | [S112 — Package nodi Node-RED SpaghettiLAB](tasks/S112-node-red-node-package.md) | I nodi Node-RED reali condividono lo stesso SDK Protocol dell'app. |
 | ⬜ | [S113 — Compiler, Admin API deploy e diagnostica runtime](tasks/S113-node-red-compiler-deploy.md) | Il grafo autore diventa un deploy Node-RED revisionato, scoped e osservabile. |
 | | **S120 — Sicurezza, portabilità e recovery** | |
-| ⬜ | [S121 — Credential store e permission matrix](tasks/S121-credential-permission.md) | Nessun segreto entra in progetto/log/errore; i permessi sono verificati prima dell'azione. |
+| ✅ | [S121 — Credential store e permission matrix](tasks/S121-credential-permission.md) | Nessun segreto entra in progetto/log/errore; i permessi sono verificati prima dell'azione. |
 | ⬜ | [S122 — Persistenza robusta: autosave, backup e concorrenza](tasks/S122-persistence-recovery.md) | Crash, migration fallita e tab concorrenti non perdono mai lavoro. |
 | ⬜ | [S123 — Import/export sicuri, redaction e audit](tasks/S123-import-export-audit.md) | Import/export non eseguono codice non trusted; ogni operazione sensibile è auditata. |
 | ⬜ | [S124 — Conferme distruttive, recovery guidato e threat test](tasks/S124-destructive-confirm-recovery-threats.md) | Ogni azione irreversibile è confermata; ogni scenario di guasto ha un recovery testato. |
