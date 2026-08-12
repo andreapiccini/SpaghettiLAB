@@ -131,7 +131,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [348 — Capability Pack e risorse](348-feature-packs-resources/README.md) | Immagini componibili dichiarano feature installate e misurano flash, RAM, pool e stack. |
 | ✅ | [350 — Discovery multi-provider V1](350-discovery-providers-v1/README.md) | Manuale, EEPROM, probe, analogico e 1-Wire convivono come strategie opzionali. |
 | ✅ | [355 — Identità e reset](355-identity-security-lifecycle/README.md) | Identità, principal, permessi, credenziali, revoca e reset hanno ownership definita. |
-| ⬜ | [360 — Communication Protocol V1](360-communication-protocol-v1/README.md) | Envelope CBOR, Config CAS, errori stabili, replay e job sono comuni a ogni adapter. |
+| ✅ | [360 — Communication Protocol V1](360-communication-protocol-v1/README.md) | Envelope CBOR, Config CAS, errori stabili, replay e job sono comuni a ogni adapter. |
 | ⬜ | [365 — Protocollo BLE](365-ble-protocol/README.md) | BLE trasporta envelope V1 autenticati con framing bounded. |
 | ⬜ | [366 — OTA BLE](366-ble-ota/README.md) | BLE alimenta Update Coordinator senza duplicare flash o rollback. |
 | ⬜ | [367 — Handover BLE/Wi-Fi](367-ble-wifi-handover/README.md) | Un peer BLE apre lease, manutenzione o OTA Wi-Fi separatamente. |

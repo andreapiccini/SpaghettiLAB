@@ -95,8 +95,26 @@ target_sources(app PRIVATE
   subsys/processing/processing.c
   subsys/runtime/runtime.c
   subsys/communication/communication.c
+  subsys/communication/protocol_cbor.c
+  subsys/communication/protocol_status.c
+  subsys/communication/ops_helpers.c
   subsys/communication/communication_shell.c
   subsys/communication/remote_console.c
+  subsys/communication/operations/catalog.c
+  subsys/communication/operations/status.c
+  subsys/communication/operations/config_ops.c
+  subsys/communication/operations/discovery_ops.c
+  subsys/communication/operations/module_command.c
+  subsys/communication/operations/update_ops.c
+  subsys/communication/operations/capabilities_ops.c
+  subsys/communication/operations/connectivity_ops.c
+  subsys/communication/operations/reset_ops.c
+  subsys/communication/operations/audit_ops.c
+  subsys/communication/operations/job_ops.c
+  subsys/communication/operations/topology_ops.c
+  subsys/communication/operations/resources_ops.c
+  subsys/communication/operations/features_ops.c
+  subsys/communication/operations/device_profile_ops.c
   subsys/services/mqtt/mqtt.c
   subsys/services/wifi_profiles/wifi_profiles.c
   subsys/services/wifi_profiles/wifi_profiles_storage.c
@@ -128,6 +146,7 @@ zephyr_linker_sources(SECTIONS subsys/device_profiles/device_profile_sections.ld
 zephyr_linker_sources(SECTIONS subsys/data/record_delivery_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/feature_registry/feature_pack_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/discovery/discovery_sections.ld)
+zephyr_linker_sources(SECTIONS subsys/communication/operation_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)
 

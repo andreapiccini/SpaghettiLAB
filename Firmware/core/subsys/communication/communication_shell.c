@@ -15,10 +15,16 @@
 #include <spaghetti/core.h>
 #include <spaghetti/config.h>
 #include <spaghetti/access_control.h>
+#include <spaghetti/communication.h>
 #include <spaghetti/maintenance_link.h>
+#include <spaghetti/protocol.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/wifi_profiles.h>
+
+#include <zcbor_common.h>
+#include <zcbor_decode.h>
+#include <zcbor_encode.h>
 
 static atomic_t next_correlation_id;
 static struct k_work_delayable maintenance_reboot_work;
@@ -94,12 +100,13 @@ static int hex_nibble(char character, uint8_t *out)
 
 int spaghetti_communication_shell_decode_hex(
 	const char *hex,
-	struct spaghetti_request *request)
+	uint8_t *out,
+	size_t capacity,
+	size_t *out_size)
 {
-	struct spaghetti_request decoded = {0};
 	size_t hex_size;
 
-	if ((hex == NULL) || (request == NULL)) {
+	if ((hex == NULL) || (out == NULL) || (out_size == NULL)) {
 		return -EINVAL;
 	}
 
@@ -107,14 +114,12 @@ int spaghetti_communication_shell_decode_hex(
 	if ((hex_size == 0U) || ((hex_size % 2U) != 0U)) {
 		return -EINVAL;
 	}
-	if (hex_size > (SPAGHETTI_COMM_PAYLOAD_MAX * 2U)) {
+	if ((hex_size / 2U) > capacity) {
 		return -EMSGSIZE;
 	}
 
-	decoded.correlation_id = request->correlation_id;
-	decoded.type = SPAGHETTI_REQUEST_SET_CONFIG;
-	decoded.payload_size = hex_size / 2U;
-	for (size_t byte_idx = 0U; byte_idx < decoded.payload_size; ++byte_idx) {
+	*out_size = hex_size / 2U;
+	for (size_t byte_idx = 0U; byte_idx < *out_size; ++byte_idx) {
 		uint8_t high;
 		uint8_t low;
 		int err = hex_nibble(hex[byte_idx * 2U], &high);
@@ -126,16 +131,57 @@ int spaghetti_communication_shell_decode_hex(
 		if (err < 0) {
 			return err;
 		}
-		decoded.payload[byte_idx] = (uint8_t)((high << 4U) | low);
+		out[byte_idx] = (uint8_t)((high << 4U) | low);
 	}
 
-	*request = decoded;
+	return 0;
+}
+
+uint32_t spaghetti_communication_shell_permissions(enum spaghetti_core_mode mode)
+{
+	const uint32_t normal_permissions =
+		SPAGHETTI_PERMISSION_READ | SPAGHETTI_PERMISSION_CONFIGURE |
+		SPAGHETTI_PERMISSION_COMMAND | SPAGHETTI_PERMISSION_DISCOVER |
+		SPAGHETTI_PERMISSION_UPDATE;
+
+	if ((mode == SPAGHETTI_CORE_MODE_MAINTENANCE) ||
+	    (mode == SPAGHETTI_CORE_MODE_UNPROVISIONED)) {
+		return normal_permissions | SPAGHETTI_PERMISSION_PROVISION;
+	}
+	return normal_permissions;
+}
+
+uint32_t spaghetti_communication_remote_console_permissions(void)
+{
+	return SPAGHETTI_PERMISSION_READ | SPAGHETTI_PERMISSION_CONFIGURE |
+	       SPAGHETTI_PERMISSION_COMMAND | SPAGHETTI_PERMISSION_DISCOVER;
+}
+
+static int build_shell_context(struct spaghetti_request_context *out)
+{
+	struct spaghetti_core_info info;
+	int err = spaghetti_core_get_info(&info);
+
+	if ((out == NULL) || (err < 0)) {
+		return (err < 0) ? err : -EINVAL;
+	}
+	*out = (struct spaghetti_request_context) {
+		.principal_id = SPAGHETTI_PRINCIPAL_MAINTENANCE_ID,
+		.permissions = spaghetti_communication_shell_permissions(info.mode),
+		.local = true,
+		.core_mode = info.mode,
+	};
 	return 0;
 }
 
 static uint32_t allocate_correlation_id(void)
 {
-	return (uint32_t)atomic_inc(&next_correlation_id);
+	uint32_t value;
+
+	do {
+		value = (uint32_t)atomic_inc(&next_correlation_id) + 1U;
+	} while (value == 0U);
+	return value;
 }
 
 static void maintenance_reboot_handler(struct k_work *work)
@@ -163,12 +209,13 @@ static const char *remote_console_state_name(
 
 static int cmd_status(const struct shell *shell, size_t argc, char **argv)
 {
-	const struct spaghetti_request request = {
+	struct spaghetti_request_context context;
+	struct spaghetti_protocol_request request = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
 		.correlation_id = allocate_correlation_id(),
-		.type = SPAGHETTI_REQUEST_GET_STATUS,
+		.operation = SPAGHETTI_PROTOCOL_GET_STATUS,
 	};
-	struct spaghetti_communication_status_payload status = {0};
-	struct spaghetti_response response;
+	struct spaghetti_protocol_response response;
 	int err;
 
 	ARG_UNUSED(argv);
@@ -176,45 +223,90 @@ static int cmd_status(const struct shell *shell, size_t argc, char **argv)
 		shell_error(shell, "usage: spaghetti status");
 		return -EINVAL;
 	}
+	if (request.correlation_id == 0U) {
+		request.correlation_id = allocate_correlation_id() + 1U;
+	}
 
-	err = spaghetti_communication_handle_request(&request, &response);
+	err = build_shell_context(&context);
+	if (err < 0) {
+		shell_error(shell, "context failed: %d", err);
+		return err;
+	}
+	err = spaghetti_communication_handle_request(&context, &request, &response);
 	if (err < 0) {
 		shell_error(shell, "dispatch failed: %d", err);
 		return err;
 	}
-	if (response.status < 0) {
-		shell_error(shell, "correlation=%u status=%d",
-			    response.correlation_id, response.status);
+	if (response.status != SPAGHETTI_PROTOCOL_STATUS_OK) {
+		shell_error(shell, "correlation=%u status=%u",
+			    response.correlation_id, (unsigned int)response.status);
 		return 0;
 	}
-	if ((response.payload_size <
-	     offsetof(struct spaghetti_communication_status_payload, modules)) ||
-	    (response.payload_size > sizeof(status))) {
-		shell_error(shell, "invalid status payload: %u",
-			    (uint32_t)response.payload_size);
-		return -EBADMSG;
-	}
 
-	memcpy(&status, response.payload, response.payload_size);
-	shell_print(shell,
-		    "correlation=%u status=0 core=%u mode=%s image=%s "
-		    "slot=%u confirmed=%u version=%s ports=%u modules=%u",
-		    response.correlation_id, status.core_state,
-		    core_mode_name(status.core_mode),
-		    (status.image_state == SPAGHETTI_CORE_IMAGE_TRIAL) ?
-			    "trial" : "confirmed",
-		    status.active_slot, status.image_confirmed, status.version,
-		    status.port_count, status.module_count);
-	for (size_t module_idx = 0U; module_idx < status.module_count;
-	     ++module_idx) {
-		const struct spaghetti_communication_module_status *module =
-			&status.modules[module_idx];
+	{
+		uint32_t core_state = 0U;
+		uint32_t core_mode = 0U;
+		uint32_t image_state = 0U;
+		uint32_t active_slot = 0U;
+		bool image_confirmed = false;
+		struct zcbor_string version = {0};
+		uint32_t port_count = 0U;
+		uint32_t key;
+		char version_text[SPAGHETTI_CORE_VERSION_SIZE] = {0};
 
+		ZCBOR_STATE_D(state, 4U, response.payload.bytes,
+			       response.payload.size, 1U, 0U);
+
+		if (!zcbor_map_start_decode(state)) {
+			shell_error(shell, "invalid status payload");
+			return -EBADMSG;
+		}
+		while (!zcbor_array_at_end(state)) {
+			if (!zcbor_uint32_decode(state, &key)) {
+				shell_error(shell, "invalid status payload");
+				return -EBADMSG;
+			}
+			switch (key) {
+			case 0U:
+				(void)zcbor_uint32_decode(state, &core_state);
+				break;
+			case 1U:
+				(void)zcbor_uint32_decode(state, &core_mode);
+				break;
+			case 2U:
+				(void)zcbor_uint32_decode(state, &image_state);
+				break;
+			case 3U:
+				(void)zcbor_uint32_decode(state, &active_slot);
+				break;
+			case 4U:
+				(void)zcbor_bool_decode(state, &image_confirmed);
+				break;
+			case 5U:
+				(void)zcbor_tstr_decode(state, &version);
+				break;
+			case 6U:
+				(void)zcbor_uint32_decode(state, &port_count);
+				break;
+			default:
+				(void)zcbor_any_skip(state, NULL);
+				break;
+			}
+		}
+		if (version.value != NULL) {
+			const size_t copy = MIN(version.len, sizeof(version_text) - 1U);
+
+			memcpy(version_text, version.value, copy);
+		}
 		shell_print(shell,
-			    "port=%u key=%u id=%u type=%s endpoint=%u:%u state=%u",
-			    module->port_id, module->key, module->runtime_id,
-			    module->type_id, module->endpoint_kind,
-			    module->endpoint_value, module->state);
+			    "correlation=%u status=0 core=%u mode=%s image=%s "
+			    "slot=%u confirmed=%u version=%s ports=%u",
+			    response.correlation_id, core_state,
+			    core_mode_name((uint8_t)core_mode),
+			    (image_state == SPAGHETTI_CORE_IMAGE_TRIAL) ?
+				    "trial" : "confirmed",
+			    active_slot, image_confirmed ? 1U : 0U, version_text,
+			    port_count);
 	}
 
 	return 0;
@@ -222,31 +314,68 @@ static int cmd_status(const struct shell *shell, size_t argc, char **argv)
 
 static int cmd_apply(const struct shell *shell, size_t argc, char **argv)
 {
-	struct spaghetti_request request = {
+	struct spaghetti_request_context context;
+	struct spaghetti_protocol_request request = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
 		.correlation_id = allocate_correlation_id(),
+		.operation = SPAGHETTI_PROTOCOL_APPLY_CONFIG,
 	};
-	struct spaghetti_response response;
+	struct spaghetti_protocol_response response;
+	uint8_t config_bytes[SPAGHETTI_PROTOCOL_PAYLOAD_MAX];
+	size_t config_size = 0U;
+	struct spaghetti_config snapshot;
+	struct spaghetti_config_revision revision;
 	int err;
 
 	if (argc != 2U) {
 		shell_error(shell, "usage: spaghetti apply <hex>");
 		return -EINVAL;
 	}
+	if (request.correlation_id == 0U) {
+		request.correlation_id = 1U;
+	}
 
-	err = spaghetti_communication_shell_decode_hex(argv[1], &request);
+	err = spaghetti_communication_shell_decode_hex(
+		argv[1], config_bytes, sizeof(config_bytes), &config_size);
 	if (err < 0) {
 		shell_error(shell, "invalid hex payload: %d", err);
 		return err;
 	}
+	err = spaghetti_config_get_snapshot(&snapshot, &revision);
+	if (err < 0) {
+		shell_error(shell, "config snapshot failed: %d", err);
+		return err;
+	}
 
-	err = spaghetti_communication_handle_request(&request, &response);
+	{
+		ZCBOR_STATE_E(state, 4U, request.payload.bytes,
+			       sizeof(request.payload.bytes), 1U);
+
+		if (!zcbor_map_start_encode(state, 2U) ||
+		    !zcbor_uint32_put(state, 0U) ||
+		    !zcbor_uint32_put(state, revision.generation) ||
+		    !zcbor_uint32_put(state, 1U) ||
+		    !zcbor_bstr_encode_ptr(state, config_bytes, config_size) ||
+		    !zcbor_map_end_encode(state, 2U)) {
+			shell_error(shell, "apply payload too large");
+			return -EMSGSIZE;
+		}
+		request.payload.size = (size_t)(state->payload - request.payload.bytes);
+	}
+
+	err = build_shell_context(&context);
+	if (err < 0) {
+		shell_error(shell, "context failed: %d", err);
+		return err;
+	}
+	err = spaghetti_communication_handle_request(&context, &request, &response);
 	if (err < 0) {
 		shell_error(shell, "dispatch failed: %d", err);
 		return err;
 	}
 
-	shell_print(shell, "correlation=%u status=%d",
-		    response.correlation_id, response.status);
+	shell_print(shell, "correlation=%u status=%u",
+		    response.correlation_id, (unsigned int)response.status);
 	return 0;
 }
 

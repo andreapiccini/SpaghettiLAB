@@ -1,6 +1,6 @@
 # TASK-360-01 — Implementare il protocollo macchina V1
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 360 — Communication Protocol V1
 
 ## Cosa devo fare
@@ -299,21 +299,21 @@ resta comoda per una persona ma non è più il protocollo dell'app.
 
 ## Checklist di completamento
 
-- [ ] Envelope V1 ha encoding canonico, limite assoluto 2048 e capacità dichiarata dal profilo.
-- [ ] Ventisette operation ID e status pubblici sono congelati.
-- [ ] Handler e relativi schema request/response sono auto-registrati e catalogati.
-- [ ] GET_TOPOLOGY descrive più Flow/Port/Bay e stato power senza hardcode host.
-- [ ] GET_RESOURCES separa capacità, uso e high-water e GET_FEATURES espone i pack.
-- [ ] Device Profile installabili hanno operazioni bounded e autorizzate.
-- [ ] Permessi derivano da principal e limite dell'adapter, non dalla richiesta.
-- [ ] GET/VALIDATE/APPLY Config espongono hash, CAS e conflitti senza scritture cieche.
-- [ ] Replay cache centrale impedisce doppi effetti su ogni trasporto.
-- [ ] Mutazioni e job lunghi non vengono eseguiti nei callback degli adapter.
-- [ ] Shell e Remote Console passano da Communication V1.
-- [ ] Eventi record/status/discovery hanno codec bounded.
-- [ ] Capability, connettività, diagnostica e reset hanno contratti macchina.
-- [ ] Catalog fingerprint e versioni permettono cache host invalidabile dopo OTA.
-- [ ] Tre fake transport producono lo stesso risultato.
+- [x] Envelope V1 ha encoding canonico, limite assoluto 2048 e capacità dichiarata dal profilo.
+- [x] Ventisette operation ID e status pubblici sono congelati.
+- [x] Handler e relativi schema request/response sono auto-registrati e catalogati.
+- [x] GET_TOPOLOGY descrive più Flow/Port/Bay e stato power senza hardcode host.
+- [x] GET_RESOURCES separa capacità, uso e high-water e GET_FEATURES espone i pack.
+- [x] Device Profile installabili hanno operazioni bounded e autorizzate.
+- [x] Permessi derivano da principal e limite dell'adapter, non dalla richiesta.
+- [x] GET/VALIDATE/APPLY Config espongono hash, CAS e conflitti senza scritture cieche.
+- [x] Replay cache centrale impedisce doppi effetti su ogni trasporto.
+- [x] Mutazioni e job lunghi non vengono eseguiti nei callback degli adapter.
+- [x] Shell e Remote Console passano da Communication V1.
+- [x] Eventi record/status/discovery hanno codec bounded.
+- [x] Capability, connettività, diagnostica e reset hanno contratti macchina.
+- [x] Catalog fingerprint e versioni permettono cache host invalidabile dopo OTA.
+- [x] Tre fake transport producono lo stesso risultato.
 
 ## Verifica e fine task
 

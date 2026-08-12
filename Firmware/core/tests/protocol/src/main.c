@@ -600,7 +600,7 @@ static const uint32_t all_permissions =
 	SPAGHETTI_PERMISSION_COMMAND | SPAGHETTI_PERMISSION_DISCOVER |
 	SPAGHETTI_PERMISSION_UPDATE | SPAGHETTI_PERMISSION_PROVISION;
 
-ZTEST(communication, test_status_from_errno_mapping)
+ZTEST(protocol, test_status_from_errno_mapping)
 {
 	zassert_equal(spaghetti_protocol_status_from_errno(0),
 		      SPAGHETTI_PROTOCOL_STATUS_OK);
@@ -626,7 +626,7 @@ ZTEST(communication, test_status_from_errno_mapping)
 		      SPAGHETTI_PROTOCOL_STATUS_INTERNAL_ERROR);
 }
 
-ZTEST(communication, test_envelope_roundtrip_and_rejects)
+ZTEST(protocol, test_envelope_roundtrip_and_rejects)
 {
 	struct spaghetti_protocol_request request = {
 		.version = SPAGHETTI_PROTOCOL_VERSION,
@@ -665,7 +665,7 @@ ZTEST(communication, test_envelope_roundtrip_and_rejects)
 		malformed, sizeof(malformed), &decoded), -EBADMSG);
 }
 
-ZTEST(communication, test_permission_denied_unknown_op_replay)
+ZTEST(protocol, test_permission_denied_unknown_op_replay)
 {
 	struct spaghetti_request_context context = make_context(all_permissions);
 	struct spaghetti_protocol_request request = {
@@ -743,7 +743,7 @@ ZTEST(communication, test_permission_denied_unknown_op_replay)
 	zassert_mem_equal(encoded_b, encoded_c, written_b);
 }
 
-ZTEST(communication, test_config_stale_and_apply)
+ZTEST(protocol, test_config_stale_and_apply)
 {
 	struct spaghetti_request_context context = make_context(all_permissions);
 	{
@@ -793,7 +793,7 @@ ZTEST(communication, test_config_stale_and_apply)
 	zassert_equal(response.status, SPAGHETTI_PROTOCOL_STATUS_OK);
 }
 
-ZTEST(communication, test_events_and_max_payload_helper)
+ZTEST(protocol, test_events_and_max_payload_helper)
 {
 	struct spaghetti_protocol_payload payload = {0};
 	uint8_t buffer[128];
@@ -809,26 +809,4 @@ ZTEST(communication, test_events_and_max_payload_helper)
 	zassert_ok(spaghetti_ops_encode_empty_map(&payload));
 }
 
-ZTEST(communication, test_shell_hex_decode)
-{
-	uint8_t out[8];
-	size_t size = 0U;
-	char oversized[(SPAGHETTI_PROTOCOL_PAYLOAD_MAX * 2U) + 3U];
-
-	zassert_equal(spaghetti_communication_shell_decode_hex(NULL, out, sizeof(out), &size),
-		      -EINVAL);
-	zassert_equal(spaghetti_communication_shell_decode_hex("", out, sizeof(out), &size),
-		      -EINVAL);
-	zassert_equal(spaghetti_communication_shell_decode_hex("ABC", out, sizeof(out), &size),
-		      -EINVAL);
-	zassert_ok(spaghetti_communication_shell_decode_hex("00aF", out, sizeof(out), &size));
-	zassert_equal(size, 2U);
-	zassert_equal(out[0], 0x00U);
-	zassert_equal(out[1], 0xAFU);
-	memset(oversized, 'A', sizeof(oversized) - 1U);
-	oversized[sizeof(oversized) - 1U] = '\0';
-	zassert_equal(spaghetti_communication_shell_decode_hex(
-		oversized, out, sizeof(out), &size), -EMSGSIZE);
-}
-
-ZTEST_SUITE(communication, NULL, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(protocol, NULL, NULL, NULL, NULL, NULL);

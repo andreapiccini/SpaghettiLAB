@@ -21,10 +21,17 @@
 #include <zephyr/sys/util.h>
 
 #include <spaghetti/communication.h>
+#include <spaghetti/config.h>
 #include <spaghetti/core.h>
+#include <spaghetti/protocol.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/secure_workspace.h>
 #include <spaghetti/storage.h>
+#include <spaghetti/access_control.h>
+
+#include <zcbor_common.h>
+#include <zcbor_decode.h>
+#include <zcbor_encode.h>
 
 #include "communication_internal.h"
 #include "../services/service_thread.h"
@@ -218,75 +225,185 @@ static int send_format(int socket_fd, const char *format, ...)
 			  (size_t)line_size);
 }
 
-static int send_status_response(int socket_fd)
+static int build_remote_context(struct spaghetti_request_context *out)
 {
-	const struct spaghetti_request request = {
-		.correlation_id = (uint32_t)atomic_inc(&correlation_id),
-		.type = SPAGHETTI_REQUEST_GET_STATUS,
-	};
-	struct spaghetti_communication_status_payload status = {0};
-	struct spaghetti_response response;
-	int err = spaghetti_communication_handle_request(&request, &response);
+	struct spaghetti_remote_console_credential_metadata meta;
+	struct spaghetti_core_info info;
+	int err;
 
-	if (err < 0) {
-		return send_format(socket_fd, "dispatch failed: %d\n", err);
+	if (out == NULL) {
+		return -EINVAL;
 	}
-	if (response.status < 0) {
-		return send_format(socket_fd, "correlation=%u status=%d\n",
-			response.correlation_id, response.status);
-	}
-	if ((response.payload_size <
-	     offsetof(struct spaghetti_communication_status_payload, modules)) ||
-	    (response.payload_size > sizeof(status))) {
-		return send_text(socket_fd, "invalid status payload\n");
-	}
-	memcpy(&status, response.payload, response.payload_size);
-	err = send_format(
-		socket_fd,
-		"correlation=%u status=0 core=%u mode=%u image=%u slot=%u "
-		"confirmed=%u version=%s ports=%u modules=%u\n",
-		response.correlation_id, status.core_state, status.core_mode,
-		status.image_state, status.active_slot, status.image_confirmed,
-		status.version, status.port_count, status.module_count);
+	err = spaghetti_core_get_info(&info);
 	if (err < 0) {
 		return err;
 	}
-	for (size_t module_idx = 0U; module_idx < status.module_count;
-	     ++module_idx) {
-		const struct spaghetti_communication_module_status *module =
-			&status.modules[module_idx];
-
-		err = send_format(
-			socket_fd,
-			"port=%u key=%u id=%u type=%s endpoint=%u:%u state=%u\n",
-			module->port_id, module->key, module->runtime_id,
-			module->type_id, module->endpoint_kind,
-			module->endpoint_value, module->state);
-		if (err < 0) {
-			return err;
-		}
+	err = spaghetti_remote_console_get_credential_metadata(&meta);
+	if (err < 0) {
+		return err;
 	}
+	*out = (struct spaghetti_request_context) {
+		.principal_id = (meta.principal_id != 0U) ?
+			meta.principal_id : SPAGHETTI_PRINCIPAL_MAINTENANCE_ID,
+		.permissions = spaghetti_communication_remote_console_permissions(),
+		.local = false,
+		.core_mode = info.mode,
+	};
 	return 0;
+}
+
+static int send_status_response(int socket_fd)
+{
+	struct spaghetti_request_context context;
+	struct spaghetti_protocol_request request = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
+		.correlation_id = (uint32_t)atomic_inc(&correlation_id) + 1U,
+		.operation = SPAGHETTI_PROTOCOL_GET_STATUS,
+	};
+	struct spaghetti_protocol_response response;
+	int err;
+
+	if (request.correlation_id == 0U) {
+		request.correlation_id = 1U;
+	}
+	err = build_remote_context(&context);
+	if (err < 0) {
+		return send_format(socket_fd, "context failed: %d\n", err);
+	}
+	err = spaghetti_communication_handle_request(&context, &request, &response);
+	if (err < 0) {
+		return send_format(socket_fd, "dispatch failed: %d\n", err);
+	}
+	if (response.status != SPAGHETTI_PROTOCOL_STATUS_OK) {
+		return send_format(socket_fd, "correlation=%u status=%u\n",
+			response.correlation_id, (unsigned int)response.status);
+	}
+	{
+		uint32_t core_state = 0U;
+		uint32_t core_mode = 0U;
+		uint32_t image_state = 0U;
+		uint32_t active_slot = 0U;
+		bool image_confirmed = false;
+		struct zcbor_string version = {0};
+		uint32_t port_count = 0U;
+		uint32_t module_count = 0U;
+		uint32_t key;
+		char version_text[SPAGHETTI_CORE_VERSION_SIZE] = {0};
+
+		ZCBOR_STATE_D(state, 4U, response.payload.bytes,
+			       response.payload.size, 1U, 0U);
+
+		if (!zcbor_map_start_decode(state)) {
+			return send_text(socket_fd, "invalid status payload\n");
+		}
+		while (!zcbor_array_at_end(state)) {
+			if (!zcbor_uint32_decode(state, &key)) {
+				return send_text(socket_fd, "invalid status payload\n");
+			}
+			switch (key) {
+			case 0U:
+				(void)zcbor_uint32_decode(state, &core_state);
+				break;
+			case 1U:
+				(void)zcbor_uint32_decode(state, &core_mode);
+				break;
+			case 2U:
+				(void)zcbor_uint32_decode(state, &image_state);
+				break;
+			case 3U:
+				(void)zcbor_uint32_decode(state, &active_slot);
+				break;
+			case 4U:
+				(void)zcbor_bool_decode(state, &image_confirmed);
+				break;
+			case 5U:
+				(void)zcbor_tstr_decode(state, &version);
+				break;
+			case 6U:
+				(void)zcbor_uint32_decode(state, &port_count);
+				break;
+			case 9U:
+				if (zcbor_list_start_decode(state)) {
+					while (!zcbor_array_at_end(state)) {
+						++module_count;
+						(void)zcbor_any_skip(state, NULL);
+					}
+					(void)zcbor_list_end_decode(state);
+				}
+				break;
+			default:
+				(void)zcbor_any_skip(state, NULL);
+				break;
+			}
+		}
+		if (version.value != NULL) {
+			const size_t copy = MIN(version.len, sizeof(version_text) - 1U);
+
+			memcpy(version_text, version.value, copy);
+		}
+		return send_format(
+			socket_fd,
+			"correlation=%u status=0 core=%u mode=%u image=%u slot=%u "
+			"confirmed=%u version=%s ports=%u modules=%u\n",
+			response.correlation_id, core_state, core_mode, image_state,
+			active_slot, image_confirmed ? 1U : 0U, version_text,
+			port_count, module_count);
+	}
 }
 
 static int apply_config(int socket_fd, const char *hex_payload)
 {
-	struct spaghetti_request request = {
-		.correlation_id = (uint32_t)atomic_inc(&correlation_id),
+	struct spaghetti_request_context context;
+	struct spaghetti_protocol_request request = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
+		.correlation_id = (uint32_t)atomic_inc(&correlation_id) + 1U,
+		.operation = SPAGHETTI_PROTOCOL_APPLY_CONFIG,
 	};
-	struct spaghetti_response response;
-	int err = spaghetti_communication_shell_decode_hex(
-		hex_payload, &request);
+	struct spaghetti_protocol_response response;
+	uint8_t config_bytes[SPAGHETTI_PROTOCOL_PAYLOAD_MAX];
+	size_t config_size = 0U;
+	struct spaghetti_config snapshot;
+	struct spaghetti_config_revision revision;
+	int err;
 
+	if (request.correlation_id == 0U) {
+		request.correlation_id = 1U;
+	}
+	err = spaghetti_communication_shell_decode_hex(
+		hex_payload, config_bytes, sizeof(config_bytes), &config_size);
 	if (err < 0) {
 		return send_format(socket_fd, "invalid hex payload: %d\n", err);
 	}
-	err = spaghetti_communication_handle_request(&request, &response);
+	err = spaghetti_config_get_snapshot(&snapshot, &revision);
+	if (err < 0) {
+		return send_format(socket_fd, "config snapshot failed: %d\n", err);
+	}
+	{
+		ZCBOR_STATE_E(state, 4U, request.payload.bytes,
+			       sizeof(request.payload.bytes), 1U);
+
+		if (!zcbor_map_start_encode(state, 2U) ||
+		    !zcbor_uint32_put(state, 0U) ||
+		    !zcbor_uint32_put(state, revision.generation) ||
+		    !zcbor_uint32_put(state, 1U) ||
+		    !zcbor_bstr_encode_ptr(state, config_bytes, config_size) ||
+		    !zcbor_map_end_encode(state, 2U)) {
+			return send_text(socket_fd, "apply payload too large\n");
+		}
+		request.payload.size =
+			(size_t)(state->payload - request.payload.bytes);
+	}
+	err = build_remote_context(&context);
+	if (err < 0) {
+		return send_format(socket_fd, "context failed: %d\n", err);
+	}
+	err = spaghetti_communication_handle_request(&context, &request, &response);
 	if (err < 0) {
 		return send_format(socket_fd, "dispatch failed: %d\n", err);
 	}
-	return send_format(socket_fd, "correlation=%u status=%d\n",
-			   response.correlation_id, response.status);
+	return send_format(socket_fd, "correlation=%u status=%u\n",
+			   response.correlation_id,
+			   (unsigned int)response.status);
 }
 
 static void reboot_handler(struct k_work *work)

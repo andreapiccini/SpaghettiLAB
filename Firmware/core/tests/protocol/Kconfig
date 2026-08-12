@@ -1,4 +1,4 @@
-mainmenu "Spaghetti Communication tests"
+mainmenu "Spaghetti Protocol V1 tests"
 
 rsource "../../Kconfig.resources"
 rsource "../../subsys/core/Kconfig.health"

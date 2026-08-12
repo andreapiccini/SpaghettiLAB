@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Public bounded Communication request and response contract.
+ * @brief Public Communication Protocol V1 request dispatch contract.
  * @ingroup spaghetti_communication
  */
 
@@ -10,80 +10,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <spaghetti/config.h>
-#include <spaghetti/core.h>
 #include <spaghetti/access_control.h>
+#include <spaghetti/protocol.h>
 
 /** Maximum request or response payload bytes retained in one envelope. */
-#define SPAGHETTI_COMM_PAYLOAD_MAX CONFIG_SPAGHETTI_MAX_PROTOCOL_PAYLOAD
-
-/** Maximum type ID bytes returned by the compact status representation. */
-#define SPAGHETTI_COMM_STATUS_TYPE_ID_SIZE 16U
-
-/** Transport-independent requests implemented by Communication V0. */
-enum spaghetti_request_type {
-	SPAGHETTI_REQUEST_GET_STATUS, /**< Return bounded Core and Module status. */
-	SPAGHETTI_REQUEST_SET_CONFIG, /**< Submit encoded Config bytes to a codec. */
-};
+#define SPAGHETTI_COMM_PAYLOAD_MAX SPAGHETTI_PROTOCOL_PAYLOAD_MAX
 
 /**
- * @brief Complete caller-owned bounded request envelope.
- */
-struct spaghetti_request {
-	uint32_t correlation_id; /**< Caller identity copied into the response. */
-	enum spaghetti_request_type type; /**< Selects the domain operation. */
-	size_t payload_size; /**< Valid leading bytes in @ref payload. */
-	uint8_t payload[SPAGHETTI_COMM_PAYLOAD_MAX]; /**< Owned encoded input bytes. */
-};
-
-/**
- * @brief Complete caller-owned bounded response envelope.
- */
-struct spaghetti_response {
-	uint32_t correlation_id; /**< Exact ID copied from the accepted request. */
-	int status; /**< Domain-operation result as zero or negative errno. */
-	size_t payload_size; /**< Valid leading bytes in @ref payload. */
-	uint8_t payload[SPAGHETTI_COMM_PAYLOAD_MAX]; /**< Owned encoded output bytes. */
-};
-
-/**
- * @brief Compact copy of one Module snapshot returned by GET_STATUS.
- */
-struct spaghetti_communication_module_status {
-	uint32_t key; /**< Stable Config-owned Module key. */
-	uint32_t endpoint_value; /**< Value interpreted through @ref endpoint_kind. */
-	uint8_t runtime_id; /**< Ephemeral live Module ID. */
-	uint8_t port_id; /**< Physical Port shared or owned by the Module. */
-	uint8_t state; /**< Numeric @ref spaghetti_module_state value. */
-	uint8_t endpoint_kind; /**< Numeric endpoint-kind value. */
-	char type_id[SPAGHETTI_COMM_STATUS_TYPE_ID_SIZE]; /**< Complete driver type ID. */
-};
-
-/**
- * @brief Bounded GET_STATUS payload copied into response payload bytes.
- *
- * Consumers must use memcpy into an aligned instance before reading fields;
- * they must not cast the byte array in @ref spaghetti_response directly.
- */
-struct spaghetti_communication_status_payload {
-	uint8_t core_state; /**< Numeric @ref spaghetti_core_state value. */
-	uint8_t core_mode; /**< Numeric @ref spaghetti_core_mode value. */
-	uint8_t image_state; /**< Numeric @ref spaghetti_core_image_state value. */
-	uint8_t active_slot; /**< MCUboot slot currently executing. */
-	uint8_t image_confirmed; /**< One when the running image is permanent. */
-	uint8_t port_count; /**< Number of physical Ports reported by Core. */
-	uint8_t module_count; /**< Used elements in @ref modules. */
-	uint8_t reserved; /**< Always zero; retained for stable field alignment. */
-	char version[SPAGHETTI_CORE_VERSION_SIZE]; /**< Signed application version. */
-	struct spaghetti_communication_module_status
-		modules[SPAGHETTI_CONFIG_MAX_MODULES]; /**< Every live Module snapshot. */
-};
-
-/**
- * @brief Initialize Communication and its Shell adapter once.
+ * @brief Initialize Communication, adapters, replay cache, and workers once.
  *
  * @retval 0 Communication accepts requests.
  * @retval -EALREADY Communication was initialized previously.
+ * @retval -EEXIST Duplicate operation handlers are registered.
  * @retval -EIO The selected adapter failed to initialize.
  *
  * @note Core calls this from boot thread context after Config restoration.
@@ -91,31 +29,39 @@ struct spaghetti_communication_status_payload {
 int spaghetti_communication_init(void);
 
 /**
- * @brief Validate and synchronously dispatch one complete request.
+ * @brief Validate, authorize, and dispatch one Protocol V1 request.
  *
- * The input is borrowed only for this call. A complete response is copied to
- * @p response only when this function returns zero. Domain failures, such as
- * an unavailable Config codec, are reported in @ref spaghetti_response.status.
+ * The adapter supplies an already-capped @p context. Communication authorizes
+ * the principal, consults the replay cache, schedules by execution class, maps
+ * internal errno into public status, and writes @p response only when this
+ * function returns zero. Domain failures appear in
+ * @ref spaghetti_protocol_response.status.
  *
- * @param[in] request Caller-owned request valid and suitably aligned for this call.
+ * @param[in] context Borrowed authenticated adapter context.
+ * @param[in] request Borrowed complete Protocol V1 request.
  * @param[out] response Caller-owned destination written only on dispatch success.
  *
- * @retval 0 A complete response was produced, including any domain errno.
- * @retval -EINVAL A pointer or command-specific payload shape is invalid.
+ * @retval 0 A complete response was produced, including any public status.
+ * @retval -EINVAL A pointer or envelope field is invalid.
  * @retval -EACCES Communication has not been initialized.
- * @retval -EMSGSIZE @ref spaghetti_request.payload_size exceeds the fixed limit.
- * @retval -ENOTSUP @ref spaghetti_request.type is unknown.
+ * @retval -EMSGSIZE A payload exceeds the profile ceiling.
+ * @retval -ENOTSUP The operation or protocol version is unknown.
  *
- * @note Call from thread context. GET_STATUS performs bounded Manager queries.
+ * @note Call from thread context. Mutation and async jobs never run inside
+ *       MQTT/BLE adapter callbacks; adapters must hand work to this API from
+ *       their worker threads.
  */
 int spaghetti_communication_handle_request(
-	const struct spaghetti_request *request,
-	struct spaghetti_response *response);
+	const struct spaghetti_request_context *context,
+	const struct spaghetti_protocol_request *request,
+	struct spaghetti_protocol_response *response);
 
 /**
  * @brief Invalidate every active Communication session.
  *
- * Phase 360 owns real session state. Until then this symbol may be a weak no-op.
+ * Protocol V1 does not yet track durable transport sessions; adapters own
+ * sockets and console clients. This entry point remains for Access Control
+ * revoke hooks and is a documented no-op until adapters register sessions.
  */
 void spaghetti_communication_invalidate_sessions(void);
 
@@ -124,7 +70,8 @@ void spaghetti_communication_invalidate_sessions(void);
  *
  * @param[in] principal_id Principal whose sessions must close.
  *
- * Phase 360 owns real session state. Until then this symbol may be a weak no-op.
+ * Also drops matching replay-cache entries for @p principal_id so revoked
+ * peers cannot reuse cached mutation responses after reconnect.
  */
 void spaghetti_communication_invalidate_principal(
 	spaghetti_principal_id_t principal_id);

@@ -43,7 +43,8 @@ This directory contains contracts shared between firmware components. Headers ex
 | `config_codec.h` | Bounded CBOR-to-Config decode contract. |
 | `data.h` | Normalized values and events. |
 | `runtime.h` | Autonomous behavior contract. |
-| `communication.h` | Transport-independent request/response boundary. |
+| `communication.h` | Protocol V1 request dispatch and session hooks. |
+| `protocol.h` | Protocol V1 envelope, operations, status, events, handlers. |
 | `mqtt.h` | Optional bounded MQTT service contract. |
 | `wifi_profiles.h` | Persistent Wi-Fi credentials and selection-policy contract. |
 | `discovery.h` | Bounded per-key identification results and lifecycle events. |
