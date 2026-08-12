@@ -17,6 +17,7 @@
 
 #include <spaghetti/config_codec.h>
 #include <spaghetti/core.h>
+#include <spaghetti/access_control.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/ota.h>
 #include <spaghetti/remote_console.h>
@@ -445,7 +446,8 @@ static int ota_credentials_write(struct smp_streamer *ctxt)
 		return MGMT_ERR_EINVAL;
 	}
 	err = spaghetti_ota_set_credentials(
-		psk.value, psk.len, identity.value, identity.len);
+		psk.value, psk.len, identity.value, identity.len,
+		SPAGHETTI_PRINCIPAL_MAINTENANCE_ID);
 	return encode_result(zse, err);
 }
 
@@ -510,7 +512,8 @@ static int remote_console_credentials_write(struct smp_streamer *ctxt)
 		return MGMT_ERR_EINVAL;
 	}
 	err = spaghetti_remote_console_set_credentials(
-		psk.value, psk.len, identity.value, identity.len);
+		psk.value, psk.len, identity.value, identity.len,
+		SPAGHETTI_PRINCIPAL_MAINTENANCE_ID);
 	return encode_result(zse, err);
 }
 

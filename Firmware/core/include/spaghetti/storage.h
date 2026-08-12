@@ -76,6 +76,20 @@ int spaghetti_storage_read_config(struct spaghetti_config *out);
 int spaghetti_storage_write_config(const struct spaghetti_config *config);
 
 /**
+ * @brief Delete the persistent Config record and clear the in-memory copy.
+ *
+ * @retval 0 No Config record remains; a later read reports @c -ENOENT.
+ * @retval -EACCES Storage has not completed initialization.
+ * @retval -ENOENT No Config record existed.
+ * @retval -EIO The Settings backend rejected deletion or verification failed.
+ * @retval -errno The selected Settings backend rejected deletion.
+ *
+ * @note Call from thread context. This performs synchronous flash I/O and does
+ *       not erase MCUboot slots or unrelated Settings namespaces.
+ */
+int spaghetti_storage_delete_config(void);
+
+/**
  * @brief Persist one authenticated request to enter maintenance after reboot.
  *
  * @retval 0 The one-shot marker was durably stored.

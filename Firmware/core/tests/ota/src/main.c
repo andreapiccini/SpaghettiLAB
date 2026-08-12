@@ -176,14 +176,14 @@ ZTEST(ota, test_local_provisioning_one_shot_and_network_loss)
 	zassert_equal(spaghetti_ota_arm(101U), -EINVAL);
 	zassert_equal(spaghetti_ota_arm(50U), -EACCES);
 	zassert_equal(spaghetti_ota_set_credentials(
-		psk, sizeof(psk), identity, sizeof(identity) - 1U), -EACCES);
+		psk, sizeof(psk), identity, sizeof(identity) - 1U, 0U), -EACCES);
 
 	maintenance_state = SPAGHETTI_MAINTENANCE_LINK_ACTIVE;
 	zassert_equal(spaghetti_ota_set_credentials(
 		psk, sizeof(psk) - 1U, identity,
-		sizeof(identity) - 1U), -EINVAL);
+		sizeof(identity) - 1U, 0U), -EINVAL);
 	zassert_ok(spaghetti_ota_set_credentials(
-		psk, sizeof(psk), identity, sizeof(identity) - 1U));
+		psk, sizeof(psk), identity, sizeof(identity) - 1U, 0U));
 	expect_status(SPAGHETTI_OTA_UNINITIALIZED, true);
 	zassert_equal(spaghetti_ota_request_once(50U), -ENOENT);
 

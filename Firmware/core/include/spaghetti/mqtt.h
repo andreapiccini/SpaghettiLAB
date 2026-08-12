@@ -13,6 +13,8 @@
 
 #include <zephyr/kernel.h>
 
+#include <spaghetti/access_control.h>
+
 /** Maximum MQTT broker host bytes, including the terminating NUL. */
 #define SPAGHETTI_MQTT_HOST_SIZE 64U
 
@@ -24,6 +26,12 @@
 
 /** Maximum MQTT application payload bytes. */
 #define SPAGHETTI_MQTT_PAYLOAD_SIZE 128U
+
+/** Fixed MQTT PSK size for the minimal credential vault stub. */
+#define SPAGHETTI_MQTT_PSK_SIZE 32U
+
+/** Maximum MQTT credential identity bytes including NUL. */
+#define SPAGHETTI_MQTT_CREDENTIAL_IDENTITY_SIZE 32U
 
 /** MQTT service lifecycle visible to diagnostics. */
 enum spaghetti_mqtt_state {
@@ -56,6 +64,13 @@ struct spaghetti_mqtt_status {
 	uint32_t published; /**< Publications successfully passed to MQTT. */
 	uint32_t dropped; /**< Publications rejected or lost after acceptance. */
 	int last_error; /**< Latest negative errno, or zero when none is recorded. */
+};
+
+/** Non-sensitive metadata for the MQTT credential vault stub. */
+struct spaghetti_mqtt_credential_metadata {
+	bool present; /**< True when a credential record exists. */
+	spaghetti_principal_id_t principal_id; /**< Bound principal, or zero. */
+	char identity[SPAGHETTI_MQTT_CREDENTIAL_IDENTITY_SIZE]; /**< Public label. */
 };
 
 /**
@@ -135,5 +150,69 @@ int spaghetti_mqtt_publish(
  * @note Thread-safe and callable from thread context without network I/O.
  */
 int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out);
+
+/**
+ * @brief Store one MQTT credential bound to a principal.
+ *
+ * @param[in] psk Caller-owned secret borrowed only for this call.
+ * @param[in] psk_size Must equal @ref SPAGHETTI_MQTT_PSK_SIZE.
+ * @param[in] identity Caller-owned public NUL-terminated label.
+ * @param[in] principal_id Principal bound to this credential, or zero.
+ *
+ * @retval 0 The credential metadata and secret were stored.
+ * @retval -EINVAL A pointer or size is invalid.
+ * @retval -EACCES Local maintenance is not active.
+ */
+int spaghetti_mqtt_set_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const char *identity,
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Replace the MQTT secret while preserving principal binding.
+ *
+ * @param[in] psk Caller-owned secret borrowed only for this call.
+ * @param[in] psk_size Must equal @ref SPAGHETTI_MQTT_PSK_SIZE.
+ * @param[in] identity Caller-owned public NUL-terminated label.
+ *
+ * @retval 0 The credential was rotated.
+ * @retval -EINVAL A pointer or size is invalid.
+ * @retval -EACCES Local maintenance is not active.
+ * @retval -ENOENT No credential was stored.
+ */
+int spaghetti_mqtt_rotate_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const char *identity);
+
+/**
+ * @brief Delete the MQTT credential vault entry.
+ *
+ * @retval 0 The credential was deleted.
+ * @retval -ENOENT No credential was stored.
+ */
+int spaghetti_mqtt_clear_credentials(void);
+
+/**
+ * @brief Delete the MQTT credential when bound to @p principal_id.
+ *
+ * @param[in] principal_id Principal whose credential should be removed.
+ *
+ * @retval 0 The credential was deleted.
+ * @retval -EINVAL @p principal_id is zero.
+ * @retval -ENOENT No credential is bound to that principal.
+ */
+int spaghetti_mqtt_delete_credentials_for_principal(
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Copy non-sensitive MQTT credential metadata.
+ *
+ * @param[out] out Caller-owned destination written only on success.
+ *
+ * @retval 0 @p out contains metadata without secrets.
+ * @retval -EINVAL @p out is NULL.
+ */
+int spaghetti_mqtt_get_credential_metadata(
+	struct spaghetti_mqtt_credential_metadata *out);
 
 #endif /* SPAGHETTI_MQTT_H */

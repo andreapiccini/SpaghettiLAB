@@ -1,0 +1,21 @@
+mainmenu "Spaghetti factory-reset tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_FACTORY_RESET_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_ACCESS_CONTROL_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 100
+
+config SPAGHETTI_SERVICE_ID_MAX_SIZE
+	int
+	default 24
+
+source "Kconfig.zephyr"

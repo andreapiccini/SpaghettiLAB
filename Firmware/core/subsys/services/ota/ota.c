@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -24,6 +25,9 @@ struct spaghetti_ota_context {
 	bool initialized;
 	bool started;
 	bool workspace_acquired;
+	spaghetti_principal_id_t principal_id;
+	uint8_t identity_size;
+	uint8_t identity[SPAGHETTI_OTA_IDENTITY_MAX_SIZE];
 	int last_error;
 };
 
@@ -253,8 +257,11 @@ int spaghetti_ota_stop(k_timeout_t timeout)
 
 int spaghetti_ota_set_credentials(
 	const uint8_t *psk, size_t psk_size,
-	const uint8_t *identity, size_t identity_size)
+	const uint8_t *identity, size_t identity_size,
+	spaghetti_principal_id_t principal_id)
 {
+	int err;
+
 	if ((psk == NULL) || (psk_size != SPAGHETTI_OTA_PSK_SIZE) ||
 	    (identity == NULL) || (identity_size == 0U) ||
 	    (identity_size > SPAGHETTI_OTA_IDENTITY_MAX_SIZE)) {
@@ -265,8 +272,80 @@ int spaghetti_ota_set_credentials(
 		return -EACCES;
 	}
 
-	return spaghetti_ota_backend_set_credentials(
+	err = spaghetti_ota_backend_set_credentials(
 		psk, psk_size, identity, identity_size);
+	if (err == 0) {
+		(void)k_mutex_lock(&ota_lock, K_FOREVER);
+		context.principal_id = principal_id;
+		context.identity_size = (uint8_t)identity_size;
+		memcpy(context.identity, identity, identity_size);
+		if (identity_size < sizeof(context.identity)) {
+			memset(&context.identity[identity_size], 0,
+			       sizeof(context.identity) - identity_size);
+		}
+		k_mutex_unlock(&ota_lock);
+	}
+	return err;
+}
+
+int spaghetti_ota_rotate_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const uint8_t *identity, size_t identity_size)
+{
+	spaghetti_principal_id_t principal_id;
+	bool credentials_present = false;
+	int err;
+
+	if ((psk == NULL) || (psk_size != SPAGHETTI_OTA_PSK_SIZE) ||
+	    (identity == NULL) || (identity_size == 0U) ||
+	    (identity_size > SPAGHETTI_OTA_IDENTITY_MAX_SIZE)) {
+		return -EINVAL;
+	}
+	if (spaghetti_maintenance_link_get_state() !=
+	    SPAGHETTI_MAINTENANCE_LINK_ACTIVE) {
+		return -EACCES;
+	}
+
+	err = spaghetti_ota_backend_has_credentials(&credentials_present);
+	if (err < 0) {
+		return err;
+	}
+	if (!credentials_present) {
+		return -ENOENT;
+	}
+
+	(void)k_mutex_lock(&ota_lock, K_FOREVER);
+	principal_id = context.principal_id;
+	k_mutex_unlock(&ota_lock);
+
+	err = spaghetti_ota_backend_set_credentials(
+		psk, psk_size, identity, identity_size);
+	if (err == 0) {
+		(void)k_mutex_lock(&ota_lock, K_FOREVER);
+		context.principal_id = principal_id;
+		context.identity_size = (uint8_t)identity_size;
+		memcpy(context.identity, identity, identity_size);
+		if (identity_size < sizeof(context.identity)) {
+			memset(&context.identity[identity_size], 0,
+			       sizeof(context.identity) - identity_size);
+		}
+		k_mutex_unlock(&ota_lock);
+	}
+	return err;
+}
+
+int spaghetti_ota_erase_credentials(void)
+{
+	int err = spaghetti_ota_backend_clear_credentials();
+
+	if ((err == 0) || (err == -ENOENT)) {
+		(void)k_mutex_lock(&ota_lock, K_FOREVER);
+		context.principal_id = 0U;
+		context.identity_size = 0U;
+		memset(context.identity, 0, sizeof(context.identity));
+		k_mutex_unlock(&ota_lock);
+	}
+	return err;
 }
 
 int spaghetti_ota_clear_credentials(void)
@@ -278,8 +357,54 @@ int spaghetti_ota_clear_credentials(void)
 		return -EACCES;
 	}
 
-	err = spaghetti_ota_backend_clear_credentials();
+	err = spaghetti_ota_erase_credentials();
 	return err;
+}
+
+int spaghetti_ota_delete_credentials_for_principal(
+	spaghetti_principal_id_t principal_id)
+{
+	int err;
+
+	if (principal_id == 0U) {
+		return -EINVAL;
+	}
+
+	(void)k_mutex_lock(&ota_lock, K_FOREVER);
+	if (context.principal_id != principal_id) {
+		k_mutex_unlock(&ota_lock);
+		return -ENOENT;
+	}
+	k_mutex_unlock(&ota_lock);
+
+	err = spaghetti_ota_erase_credentials();
+	return err;
+}
+
+int spaghetti_ota_get_credential_metadata(
+	struct spaghetti_ota_credential_metadata *out)
+{
+	bool credentials_present = false;
+	int err;
+
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	err = spaghetti_ota_backend_has_credentials(&credentials_present);
+	if (err < 0) {
+		return err;
+	}
+
+	(void)k_mutex_lock(&ota_lock, K_FOREVER);
+	*out = (struct spaghetti_ota_credential_metadata) {
+		.present = credentials_present,
+		.principal_id = context.principal_id,
+		.identity_size = context.identity_size,
+	};
+	memcpy(out->identity, context.identity, sizeof(out->identity));
+	k_mutex_unlock(&ota_lock);
+	return 0;
 }
 
 int spaghetti_ota_request_once(uint32_t timeout_ms)

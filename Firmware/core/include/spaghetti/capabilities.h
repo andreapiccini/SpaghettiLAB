@@ -54,6 +54,7 @@ struct spaghetti_capabilities {
 	uint8_t max_record_consumers; /**< Independent record cursors. */
 	uint8_t max_ble_peers; /**< Simultaneous BLE peers. */
 	uint8_t max_principals; /**< Persisted security principals. */
+	uint8_t max_audit_entries; /**< Bounded access-control audit ring slots. */
 	uint8_t max_inflight_requests; /**< Replay/request entries. */
 	uint8_t max_secure_sessions; /**< Heavy secure sessions. */
 	uint8_t max_flows; /**< Physical Core Flows. */

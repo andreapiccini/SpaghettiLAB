@@ -88,19 +88,19 @@ ZTEST(remote_console, test_local_credentials_and_normal_mode_listener)
 	zassert_equal(status.state, SPAGHETTI_REMOTE_CONSOLE_UNINITIALIZED);
 	zassert_false(status.credentials_present);
 	zassert_equal(spaghetti_remote_console_set_credentials(
-		psk, sizeof(psk), identity, sizeof(identity) - 1U), -EACCES);
+		psk, sizeof(psk), identity, sizeof(identity) - 1U, 0U), -EACCES);
 	zassert_equal(spaghetti_remote_console_clear_credentials(), -EACCES);
 
 	maintenance_state = SPAGHETTI_MAINTENANCE_LINK_ACTIVE;
 	zassert_equal(spaghetti_remote_console_set_credentials(
 		psk, sizeof(psk) - 1U, identity,
-		sizeof(identity) - 1U), -EINVAL);
+		sizeof(identity) - 1U, 0U), -EINVAL);
 	zassert_ok(spaghetti_remote_console_set_credentials(
-		psk, sizeof(psk), identity, sizeof(identity) - 1U));
+		psk, sizeof(psk), identity, sizeof(identity) - 1U, 0U));
 	zassert_ok(spaghetti_remote_console_clear_credentials());
 	zassert_equal(spaghetti_remote_console_clear_credentials(), -ENOENT);
 	zassert_ok(spaghetti_remote_console_set_credentials(
-		psk, sizeof(psk), identity, sizeof(identity) - 1U));
+		psk, sizeof(psk), identity, sizeof(identity) - 1U, 0U));
 
 	maintenance_state = SPAGHETTI_MAINTENANCE_LINK_NORMAL;
 	zassert_ok(spaghetti_remote_console_init());

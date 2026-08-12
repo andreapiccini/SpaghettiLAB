@@ -20,6 +20,7 @@
 #include <zephyr/zbus/zbus.h>
 
 #include <spaghetti/data.h>
+#include <spaghetti/maintenance_link.h>
 #include <spaghetti/record_delivery.h>
 
 #include "mqtt_internal.h"
@@ -69,6 +70,10 @@ static atomic_t connection_error;
 static atomic_t stop_requested;
 static struct spaghetti_service_thread mqtt_worker_thread;
 static struct spaghetti_service_thread mqtt_adapter_thread;
+static bool mqtt_credential_present;
+static spaghetti_principal_id_t mqtt_credential_principal_id;
+static uint8_t mqtt_credential_psk[SPAGHETTI_MQTT_PSK_SIZE];
+static char mqtt_credential_identity[SPAGHETTI_MQTT_CREDENTIAL_IDENTITY_SIZE];
 K_MUTEX_DEFINE(mqtt_lock);
 K_SEM_DEFINE(network_event_sem, 0, 1);
 K_MSGQ_DEFINE(command_queue, sizeof(enum spaghetti_mqtt_command),
@@ -93,6 +98,13 @@ static bool bounded_string_is_valid(const char *value, size_t capacity,
 	}
 
 	return true;
+}
+
+static size_t bounded_string_size(const char *value, size_t capacity)
+{
+	const char *terminator = memchr(value, '\0', capacity);
+
+	return (terminator != NULL) ? (size_t)(terminator - value) : capacity;
 }
 
 static bool config_is_valid(const struct spaghetti_mqtt_config *config)
@@ -788,6 +800,149 @@ int spaghetti_mqtt_get_status(struct spaghetti_mqtt_status *out)
 	}
 
 	*out = context.status;
+	k_mutex_unlock(&mqtt_lock);
+	return 0;
+}
+
+int spaghetti_mqtt_set_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const char *identity,
+	spaghetti_principal_id_t principal_id)
+{
+	size_t identity_size;
+	int err;
+
+	if ((psk == NULL) || (psk_size != SPAGHETTI_MQTT_PSK_SIZE) ||
+	    (identity == NULL)) {
+		return -EINVAL;
+	}
+	identity_size = bounded_string_size(identity,
+					    SPAGHETTI_MQTT_CREDENTIAL_IDENTITY_SIZE);
+	if ((identity_size == 0U) ||
+	    (identity_size >= SPAGHETTI_MQTT_CREDENTIAL_IDENTITY_SIZE)) {
+		return -EINVAL;
+	}
+	if (spaghetti_maintenance_link_get_state() !=
+	    SPAGHETTI_MAINTENANCE_LINK_ACTIVE) {
+		return -EACCES;
+	}
+
+	err = k_mutex_lock(&mqtt_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	memcpy(mqtt_credential_psk, psk, SPAGHETTI_MQTT_PSK_SIZE);
+	memset(mqtt_credential_identity, 0, sizeof(mqtt_credential_identity));
+	memcpy(mqtt_credential_identity, identity, identity_size);
+	mqtt_credential_principal_id = principal_id;
+	mqtt_credential_present = true;
+	k_mutex_unlock(&mqtt_lock);
+	return 0;
+}
+
+int spaghetti_mqtt_rotate_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const char *identity)
+{
+	spaghetti_principal_id_t principal_id;
+	size_t identity_size;
+	int err;
+
+	if ((psk == NULL) || (psk_size != SPAGHETTI_MQTT_PSK_SIZE) ||
+	    (identity == NULL)) {
+		return -EINVAL;
+	}
+	identity_size = bounded_string_size(identity,
+					    SPAGHETTI_MQTT_CREDENTIAL_IDENTITY_SIZE);
+	if ((identity_size == 0U) ||
+	    (identity_size >= SPAGHETTI_MQTT_CREDENTIAL_IDENTITY_SIZE)) {
+		return -EINVAL;
+	}
+	if (spaghetti_maintenance_link_get_state() !=
+	    SPAGHETTI_MAINTENANCE_LINK_ACTIVE) {
+		return -EACCES;
+	}
+
+	err = k_mutex_lock(&mqtt_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (!mqtt_credential_present) {
+		k_mutex_unlock(&mqtt_lock);
+		return -ENOENT;
+	}
+	principal_id = mqtt_credential_principal_id;
+	memcpy(mqtt_credential_psk, psk, SPAGHETTI_MQTT_PSK_SIZE);
+	memset(mqtt_credential_identity, 0, sizeof(mqtt_credential_identity));
+	memcpy(mqtt_credential_identity, identity, identity_size);
+	mqtt_credential_principal_id = principal_id;
+	k_mutex_unlock(&mqtt_lock);
+	return 0;
+}
+
+int spaghetti_mqtt_clear_credentials(void)
+{
+	int err = k_mutex_lock(&mqtt_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!mqtt_credential_present) {
+		k_mutex_unlock(&mqtt_lock);
+		return -ENOENT;
+	}
+	memset(mqtt_credential_psk, 0, sizeof(mqtt_credential_psk));
+	memset(mqtt_credential_identity, 0, sizeof(mqtt_credential_identity));
+	mqtt_credential_principal_id = 0U;
+	mqtt_credential_present = false;
+	k_mutex_unlock(&mqtt_lock);
+	return 0;
+}
+
+int spaghetti_mqtt_delete_credentials_for_principal(
+	spaghetti_principal_id_t principal_id)
+{
+	int err;
+
+	if (principal_id == 0U) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&mqtt_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (!mqtt_credential_present ||
+	    (mqtt_credential_principal_id != principal_id)) {
+		k_mutex_unlock(&mqtt_lock);
+		return -ENOENT;
+	}
+	memset(mqtt_credential_psk, 0, sizeof(mqtt_credential_psk));
+	memset(mqtt_credential_identity, 0, sizeof(mqtt_credential_identity));
+	mqtt_credential_principal_id = 0U;
+	mqtt_credential_present = false;
+	k_mutex_unlock(&mqtt_lock);
+	return 0;
+}
+
+int spaghetti_mqtt_get_credential_metadata(
+	struct spaghetti_mqtt_credential_metadata *out)
+{
+	int err;
+
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&mqtt_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	*out = (struct spaghetti_mqtt_credential_metadata) {
+		.present = mqtt_credential_present,
+		.principal_id = mqtt_credential_principal_id,
+	};
+	memcpy(out->identity, mqtt_credential_identity, sizeof(out->identity));
 	k_mutex_unlock(&mqtt_lock);
 	return 0;
 }

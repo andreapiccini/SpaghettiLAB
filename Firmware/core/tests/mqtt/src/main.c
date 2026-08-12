@@ -7,12 +7,19 @@
 #include <zephyr/ztest.h>
 
 #include <spaghetti/data.h>
+#include <spaghetti/maintenance_link.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/schema.h>
 
 #include "mqtt_internal.h"
 
 ZBUS_OBS_DECLARE(record_logger_subscriber);
+
+enum spaghetti_maintenance_link_state
+spaghetti_maintenance_link_get_state(void)
+{
+	return SPAGHETTI_MAINTENANCE_LINK_NORMAL;
+}
 
 static struct spaghetti_mqtt_config valid_config(void)
 {

@@ -144,6 +144,16 @@ int spaghetti_storage_init(void)
 	return record_step(STEP_STORAGE);
 }
 
+int spaghetti_identity_init(void)
+{
+	return 0;
+}
+
+int spaghetti_access_control_init(void)
+{
+	return 0;
+}
+
 int spaghetti_update_init(void)
 {
 	return record_step(STEP_UPDATE);
@@ -295,6 +305,11 @@ int spaghetti_config_apply(
 }
 
 int spaghetti_rule_registry_init(void)
+{
+	return 0;
+}
+
+int spaghetti_device_profile_init(void)
 {
 	return 0;
 }

@@ -203,6 +203,37 @@ int spaghetti_wifi_profiles_set_preferred(const char *ssid);
 int spaghetti_wifi_profiles_clear_preferred(void);
 
 /**
+ * @brief Remove every persistent Wi-Fi profile and the preferred selection.
+ *
+ * @retval 0 No profiles remain in cache or secure storage.
+ * @retval -EACCES The service is not initialized.
+ * @retval -EIO Authenticated persistent storage rejected a deletion.
+ *
+ * @note Thread-safe. Secrets are wiped from temporary buffers and never logged.
+ */
+int spaghetti_wifi_profiles_delete_all(void);
+
+/**
+ * @brief Replace the passphrase of one stored profile without changing its SSID.
+ *
+ * @param[in] ssid Caller-owned NUL-terminated stored SSID borrowed for this call.
+ * @param[in] passphrase Caller-owned secret bytes borrowed only for this call.
+ * @param[in] passphrase_size Valid leading passphrase bytes; zero for open networks.
+ *
+ * @retval 0 The encrypted profile was rotated in place.
+ * @retval -EINVAL A pointer, SSID, or passphrase is invalid.
+ * @retval -EACCES The service is not initialized.
+ * @retval -ENOENT No stored profile has that SSID.
+ * @retval -EIO Authenticated persistent storage rejected the write.
+ *
+ * @note Does not change any principal binding metadata owned elsewhere.
+ */
+int spaghetti_wifi_profiles_rotate(
+	const char *ssid,
+	const uint8_t *passphrase,
+	size_t passphrase_size);
+
+/**
  * @brief Copy non-sensitive summaries of every stored profile.
  *
  * @param[out] out Caller-owned array written only on success. Pass NULL only

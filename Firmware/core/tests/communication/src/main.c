@@ -81,8 +81,10 @@ int spaghetti_config_validate(
 
 int spaghetti_remote_console_set_credentials(
 	const uint8_t *psk, size_t psk_size,
-	const uint8_t *identity, size_t identity_size)
+	const uint8_t *identity, size_t identity_size,
+	spaghetti_principal_id_t principal_id)
 {
+	ARG_UNUSED(principal_id);
 	if ((psk == NULL) ||
 	    (psk_size != SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE) ||
 	    (identity == NULL) || (identity_size == 0U)) {

@@ -13,6 +13,8 @@
 
 #include <zephyr/kernel.h>
 
+#include <spaghetti/access_control.h>
+
 /** Fixed per-device TLS pre-shared key size. */
 #define SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE 32U
 
@@ -35,6 +37,14 @@ struct spaghetti_remote_console_status {
 	bool client_connected; /**< True while one authenticated client owns the session. */
 	uint32_t dropped_log_count; /**< Log chunks discarded because their queue was full. */
 	int last_error; /**< Last lifecycle errno, or zero. */
+};
+
+/** Non-sensitive metadata for the remote-console credential vault entry. */
+struct spaghetti_remote_console_credential_metadata {
+	bool present; /**< True when a complete credential record exists. */
+	spaghetti_principal_id_t principal_id; /**< Bound principal, or zero. */
+	uint8_t identity_size; /**< Public identity byte count. */
+	uint8_t identity[SPAGHETTI_REMOTE_CONSOLE_IDENTITY_MAX_SIZE]; /**< Public identity. */
 };
 
 /**
@@ -84,6 +94,7 @@ int spaghetti_remote_console_stop(k_timeout_t timeout);
  * @param[in] psk_size Must equal @ref SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE.
  * @param[in] identity Caller-owned public identity borrowed only for this call.
  * @param[in] identity_size Number of identity bytes, from one to 32.
+ * @param[in] principal_id Principal bound to this credential, or zero if unbound.
  *
  * @retval 0 The encrypted/authenticated PSA ITS record was replaced.
  * @retval -EINVAL A pointer or size is invalid.
@@ -94,6 +105,25 @@ int spaghetti_remote_console_stop(k_timeout_t timeout);
  * @note No caller pointer is retained and no credential bytes are logged.
  */
 int spaghetti_remote_console_set_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const uint8_t *identity, size_t identity_size,
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Replace the console secret while preserving the bound principal.
+ *
+ * @param[in] psk Caller-owned 32-byte secret borrowed only for this call.
+ * @param[in] psk_size Must equal @ref SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE.
+ * @param[in] identity Caller-owned public identity borrowed only for this call.
+ * @param[in] identity_size Number of identity bytes, from one to 32.
+ *
+ * @retval 0 The credential was rotated without changing principal binding.
+ * @retval -EINVAL A pointer or size is invalid.
+ * @retval -EACCES Local maintenance UART is not active.
+ * @retval -ENOENT No credential was stored.
+ * @retval -errno Secure storage rejected the record.
+ */
+int spaghetti_remote_console_rotate_credentials(
 	const uint8_t *psk, size_t psk_size,
 	const uint8_t *identity, size_t identity_size);
 
@@ -106,6 +136,43 @@ int spaghetti_remote_console_set_credentials(
  * @retval -errno Secure storage rejected deletion.
  */
 int spaghetti_remote_console_clear_credentials(void);
+
+/**
+ * @brief Erase the console credential vault without Maintenance authorization.
+ *
+ * Used by factory reset after the reset itself has been authorized.
+ *
+ * @retval 0 The credential was erased.
+ * @retval -ENOENT No credential was stored.
+ * @retval -ENOTSUP Remote console credentials are not compiled.
+ * @retval -EIO Secure storage rejected deletion.
+ */
+int spaghetti_remote_console_erase_credentials(void);
+
+/**
+ * @brief Delete the console credential when it is bound to @p principal_id.
+ *
+ * @param[in] principal_id Principal whose credential should be removed.
+ *
+ * @retval 0 The credential was deleted.
+ * @retval -EINVAL @p principal_id is zero.
+ * @retval -ENOENT No credential is bound to that principal.
+ * @retval -errno Secure storage rejected deletion.
+ */
+int spaghetti_remote_console_delete_credentials_for_principal(
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Copy non-sensitive remote-console credential metadata.
+ *
+ * @param[out] out Caller-owned destination written only on success.
+ *
+ * @retval 0 @p out contains present/principal/identity metadata.
+ * @retval -EINVAL @p out is NULL.
+ * @retval -errno Secure storage rejected the query.
+ */
+int spaghetti_remote_console_get_credential_metadata(
+	struct spaghetti_remote_console_credential_metadata *out);
 
 /**
  * @brief Copy current remote-console state.

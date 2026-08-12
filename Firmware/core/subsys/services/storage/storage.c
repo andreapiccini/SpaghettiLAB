@@ -363,6 +363,37 @@ int spaghetti_storage_write_config(const struct spaghetti_config *config)
 	return err;
 }
 
+int spaghetti_storage_delete_config(void)
+{
+	int err = k_mutex_lock(&storage_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (storage_state != SPAGHETTI_STORAGE_READY) {
+		k_mutex_unlock(&storage_lock);
+		return -EACCES;
+	}
+	if (!record_present && (record_load_error == 0)) {
+		k_mutex_unlock(&storage_lock);
+		return -ENOENT;
+	}
+
+	err = settings_delete(SPAGHETTI_STORAGE_CONFIG_KEY);
+	if (err == 0) {
+		memset(&loaded_record, 0, sizeof(loaded_record));
+		legacy_pending = false;
+		record_present = false;
+		record_load_error = 0;
+	}
+	k_mutex_unlock(&storage_lock);
+
+	if (err == 0) {
+		LOG_INF("Config deleted");
+	}
+	return err;
+}
+
 int spaghetti_storage_request_maintenance_once(void)
 {
 	const uint8_t marker = 1U;

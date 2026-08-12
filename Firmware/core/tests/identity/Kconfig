@@ -1,0 +1,9 @@
+mainmenu "Spaghetti identity tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_IDENTITY_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

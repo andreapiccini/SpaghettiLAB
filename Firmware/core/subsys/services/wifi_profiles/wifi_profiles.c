@@ -972,6 +972,111 @@ int spaghetti_wifi_profiles_clear_preferred(void)
 	return err;
 }
 
+int spaghetti_wifi_profiles_delete_all(void)
+{
+	int first_error = 0;
+	int err = k_mutex_lock(&profiles_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		k_mutex_unlock(&profiles_lock);
+		return -EACCES;
+	}
+
+	if (context.preferred_slot != SPAGHETTI_WIFI_INVALID_SLOT) {
+		err = spaghetti_wifi_profiles_storage_remove_preferred();
+		if ((err < 0) && (err != -ENOENT)) {
+			first_error = err;
+		} else {
+			context.preferred_slot = SPAGHETTI_WIFI_INVALID_SLOT;
+		}
+	}
+
+	for (size_t slot = 0U; slot < CONFIG_SPAGHETTI_WIFI_PROFILE_MAX_COUNT;
+	     ++slot) {
+		if (!context.slots[slot].used) {
+			continue;
+		}
+		err = spaghetti_wifi_profiles_storage_remove(slot);
+		if ((err < 0) && (err != -ENOENT) && (first_error == 0)) {
+			first_error = err;
+			continue;
+		}
+		memset(&context.slots[slot], 0, sizeof(context.slots[slot]));
+	}
+	update_profile_count_locked();
+	context.status.active_ssid[0] = '\0';
+	k_mutex_unlock(&profiles_lock);
+	return first_error;
+}
+
+int spaghetti_wifi_profiles_rotate(
+	const char *ssid,
+	const uint8_t *passphrase,
+	size_t passphrase_size)
+{
+	struct spaghetti_wifi_profile_config config;
+	struct spaghetti_wifi_profile_secret secret;
+	size_t ignored_ssid_size;
+	size_t slot;
+	int err = validate_ssid(ssid, &ignored_ssid_size);
+
+	if (err < 0) {
+		return err;
+	}
+	ARG_UNUSED(ignored_ssid_size);
+
+	err = k_mutex_lock(&profiles_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		k_mutex_unlock(&profiles_lock);
+		return -EACCES;
+	}
+
+	slot = find_slot_locked(ssid);
+	if (slot == SPAGHETTI_WIFI_INVALID_SLOT) {
+		k_mutex_unlock(&profiles_lock);
+		return -ENOENT;
+	}
+
+	err = spaghetti_wifi_profiles_storage_read(slot, &secret);
+	if (err < 0) {
+		k_mutex_unlock(&profiles_lock);
+		return err;
+	}
+
+	memset(&config, 0, sizeof(config));
+	memcpy(config.ssid, secret.ssid, sizeof(config.ssid));
+	config.security = secret.security;
+	if (config.security == SPAGHETTI_WIFI_SECURITY_OPEN) {
+		if ((passphrase != NULL) && (passphrase_size != 0U)) {
+			wipe_sensitive(&secret, sizeof(secret));
+			k_mutex_unlock(&profiles_lock);
+			return -EINVAL;
+		}
+		config.passphrase_size = 0U;
+	} else {
+		if ((passphrase == NULL) || (passphrase_size < 8U) ||
+		    (passphrase_size > (SPAGHETTI_WIFI_PASSPHRASE_SIZE - 1U))) {
+			wipe_sensitive(&secret, sizeof(secret));
+			k_mutex_unlock(&profiles_lock);
+			return -EINVAL;
+		}
+		config.passphrase_size = passphrase_size;
+		memcpy(config.passphrase, passphrase, passphrase_size);
+	}
+	wipe_sensitive(&secret, sizeof(secret));
+
+	err = spaghetti_wifi_profiles_storage_write(slot, &config);
+	wipe_sensitive(&config, sizeof(config));
+	k_mutex_unlock(&profiles_lock);
+	return err;
+}
+
 int spaghetti_wifi_profiles_list(
 	struct spaghetti_wifi_profile_summary *out,
 	size_t capacity,

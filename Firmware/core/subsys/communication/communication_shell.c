@@ -14,6 +14,7 @@
 
 #include <spaghetti/core.h>
 #include <spaghetti/config.h>
+#include <spaghetti/access_control.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/storage.h>
@@ -565,7 +566,8 @@ static int cmd_remote_console_provision(
 		psk[byte_idx] = (uint8_t)((high << 4U) | low);
 	}
 	err = spaghetti_remote_console_set_credentials(
-		psk, sizeof(psk), (const uint8_t *)argv[1], identity_size);
+		psk, sizeof(psk), (const uint8_t *)argv[1], identity_size,
+		SPAGHETTI_PRINCIPAL_MAINTENANCE_ID);
 	wipe_sensitive(psk, sizeof(psk));
 	wipe_sensitive(psk_hex, sizeof(psk_hex));
 	if (err < 0) {

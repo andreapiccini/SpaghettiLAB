@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -18,6 +19,9 @@ LOG_MODULE_REGISTER(spaghetti_remote_console,
 struct spaghetti_remote_console_context {
 	enum spaghetti_remote_console_state state;
 	bool initialized;
+	spaghetti_principal_id_t principal_id;
+	uint8_t identity_size;
+	uint8_t identity[SPAGHETTI_REMOTE_CONSOLE_IDENTITY_MAX_SIZE];
 	int last_error;
 };
 
@@ -151,8 +155,11 @@ unlock:
 
 int spaghetti_remote_console_set_credentials(
 	const uint8_t *psk, size_t psk_size,
-	const uint8_t *identity, size_t identity_size)
+	const uint8_t *identity, size_t identity_size,
+	spaghetti_principal_id_t principal_id)
 {
+	int err;
+
 	if ((psk == NULL) ||
 	    (psk_size != SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE) ||
 	    (identity == NULL) || (identity_size == 0U) ||
@@ -164,8 +171,82 @@ int spaghetti_remote_console_set_credentials(
 		return -EACCES;
 	}
 
-	return spaghetti_remote_console_backend_set_credentials(
+	err = spaghetti_remote_console_backend_set_credentials(
 		psk, psk_size, identity, identity_size);
+	if (err == 0) {
+		(void)k_mutex_lock(&remote_console_lock, K_FOREVER);
+		context.principal_id = principal_id;
+		context.identity_size = (uint8_t)identity_size;
+		memcpy(context.identity, identity, identity_size);
+		if (identity_size < sizeof(context.identity)) {
+			memset(&context.identity[identity_size], 0,
+			       sizeof(context.identity) - identity_size);
+		}
+		k_mutex_unlock(&remote_console_lock);
+	}
+	return err;
+}
+
+int spaghetti_remote_console_rotate_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const uint8_t *identity, size_t identity_size)
+{
+	spaghetti_principal_id_t principal_id;
+	bool credentials_present = false;
+	int err;
+
+	if ((psk == NULL) ||
+	    (psk_size != SPAGHETTI_REMOTE_CONSOLE_PSK_SIZE) ||
+	    (identity == NULL) || (identity_size == 0U) ||
+	    (identity_size > SPAGHETTI_REMOTE_CONSOLE_IDENTITY_MAX_SIZE)) {
+		return -EINVAL;
+	}
+	if (spaghetti_maintenance_link_get_state() !=
+	    SPAGHETTI_MAINTENANCE_LINK_ACTIVE) {
+		return -EACCES;
+	}
+
+	err = spaghetti_remote_console_backend_has_credentials(
+		&credentials_present);
+	if (err < 0) {
+		return err;
+	}
+	if (!credentials_present) {
+		return -ENOENT;
+	}
+
+	(void)k_mutex_lock(&remote_console_lock, K_FOREVER);
+	principal_id = context.principal_id;
+	k_mutex_unlock(&remote_console_lock);
+
+	err = spaghetti_remote_console_backend_set_credentials(
+		psk, psk_size, identity, identity_size);
+	if (err == 0) {
+		(void)k_mutex_lock(&remote_console_lock, K_FOREVER);
+		context.principal_id = principal_id;
+		context.identity_size = (uint8_t)identity_size;
+		memcpy(context.identity, identity, identity_size);
+		if (identity_size < sizeof(context.identity)) {
+			memset(&context.identity[identity_size], 0,
+			       sizeof(context.identity) - identity_size);
+		}
+		k_mutex_unlock(&remote_console_lock);
+	}
+	return err;
+}
+
+int spaghetti_remote_console_erase_credentials(void)
+{
+	int err = spaghetti_remote_console_backend_clear_credentials();
+
+	if ((err == 0) || (err == -ENOENT) || (err == -ENOTSUP)) {
+		(void)k_mutex_lock(&remote_console_lock, K_FOREVER);
+		context.principal_id = 0U;
+		context.identity_size = 0U;
+		memset(context.identity, 0, sizeof(context.identity));
+		k_mutex_unlock(&remote_console_lock);
+	}
+	return err;
 }
 
 int spaghetti_remote_console_clear_credentials(void)
@@ -176,8 +257,55 @@ int spaghetti_remote_console_clear_credentials(void)
 	    SPAGHETTI_MAINTENANCE_LINK_ACTIVE) {
 		return -EACCES;
 	}
-	err = spaghetti_remote_console_backend_clear_credentials();
+	err = spaghetti_remote_console_erase_credentials();
 	return err;
+}
+
+int spaghetti_remote_console_delete_credentials_for_principal(
+	spaghetti_principal_id_t principal_id)
+{
+	int err;
+
+	if (principal_id == 0U) {
+		return -EINVAL;
+	}
+
+	(void)k_mutex_lock(&remote_console_lock, K_FOREVER);
+	if (context.principal_id != principal_id) {
+		k_mutex_unlock(&remote_console_lock);
+		return -ENOENT;
+	}
+	k_mutex_unlock(&remote_console_lock);
+
+	err = spaghetti_remote_console_erase_credentials();
+	return err;
+}
+
+int spaghetti_remote_console_get_credential_metadata(
+	struct spaghetti_remote_console_credential_metadata *out)
+{
+	bool credentials_present = false;
+	int err;
+
+	if (out == NULL) {
+		return -EINVAL;
+	}
+
+	err = spaghetti_remote_console_backend_has_credentials(
+		&credentials_present);
+	if (err < 0) {
+		return err;
+	}
+
+	(void)k_mutex_lock(&remote_console_lock, K_FOREVER);
+	*out = (struct spaghetti_remote_console_credential_metadata) {
+		.present = credentials_present,
+		.principal_id = context.principal_id,
+		.identity_size = context.identity_size,
+	};
+	memcpy(out->identity, context.identity, sizeof(out->identity));
+	k_mutex_unlock(&remote_console_lock);
+	return 0;
 }
 
 int spaghetti_remote_console_get_status(

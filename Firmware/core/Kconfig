@@ -6,6 +6,18 @@ module = SPAGHETTI_CORE
 module-str = spaghetti_core
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_IDENTITY
+module-str = spaghetti_identity
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_ACCESS_CONTROL
+module-str = spaghetti_access_control
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_FACTORY_RESET
+module-str = spaghetti_factory_reset
+source "subsys/logging/Kconfig.template.log_config"
+
 rsource "subsys/core/Kconfig.health"
 
 module = SPAGHETTI_PORT

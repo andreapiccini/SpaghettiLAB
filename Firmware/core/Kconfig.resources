@@ -235,6 +235,15 @@ config SPAGHETTI_MAX_PRINCIPALS
 	default 8 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
 	default 16
 
+config SPAGHETTI_MAX_AUDIT_ENTRIES
+	int
+	range 1 64
+	default 8 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32
+	help
+	  Bounded audit-ring capacity for principal-sensitive operations.
+
 config SPAGHETTI_MAX_INFLIGHT_REQUESTS
 	int
 	range 1 32

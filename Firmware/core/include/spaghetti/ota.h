@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <zephyr/kernel.h>
 
+#include <spaghetti/access_control.h>
+
 struct smp_transport;
 
 /** Fixed per-device DTLS pre-shared key size. */
@@ -34,6 +36,14 @@ struct spaghetti_ota_status {
 	uint16_t port; /**< UDP port, in host byte order. */
 	bool credentials_present; /**< A complete PSK record exists. */
 	int last_error; /**< Last lifecycle errno, or zero. */
+};
+
+/** Non-sensitive metadata for the single OTA credential vault entry. */
+struct spaghetti_ota_credential_metadata {
+	bool present; /**< True when a complete credential record exists. */
+	spaghetti_principal_id_t principal_id; /**< Bound principal, or zero. */
+	uint8_t identity_size; /**< Public identity byte count. */
+	uint8_t identity[SPAGHETTI_OTA_IDENTITY_MAX_SIZE]; /**< Public identity copy. */
 };
 
 /**
@@ -77,6 +87,7 @@ int spaghetti_ota_stop(k_timeout_t timeout);
  * @param[in] psk_size Must equal @ref SPAGHETTI_OTA_PSK_SIZE.
  * @param[in] identity Caller-owned public identity bytes borrowed for this call.
  * @param[in] identity_size Number of identity bytes, from one to 32.
+ * @param[in] principal_id Principal bound to this credential, or zero if unbound.
  *
  * @retval 0 The encrypted/authenticated PSA ITS record was replaced.
  * @retval -EINVAL A pointer or size is invalid.
@@ -85,6 +96,25 @@ int spaghetti_ota_stop(k_timeout_t timeout);
  * @retval -errno Secure storage rejected the record.
  */
 int spaghetti_ota_set_credentials(
+	const uint8_t *psk, size_t psk_size,
+	const uint8_t *identity, size_t identity_size,
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Replace the OTA secret while preserving the bound principal.
+ *
+ * @param[in] psk Caller-owned 32-byte secret borrowed only for this call.
+ * @param[in] psk_size Must equal @ref SPAGHETTI_OTA_PSK_SIZE.
+ * @param[in] identity Caller-owned public identity bytes borrowed for this call.
+ * @param[in] identity_size Number of identity bytes, from one to 32.
+ *
+ * @retval 0 The credential was rotated without changing principal binding.
+ * @retval -EINVAL A pointer or size is invalid.
+ * @retval -EACCES Local maintenance is not active.
+ * @retval -ENOENT No credential was stored.
+ * @retval -errno Secure storage rejected the record.
+ */
+int spaghetti_ota_rotate_credentials(
 	const uint8_t *psk, size_t psk_size,
 	const uint8_t *identity, size_t identity_size);
 
@@ -97,6 +127,42 @@ int spaghetti_ota_set_credentials(
  * @retval -errno Secure storage rejected deletion.
  */
 int spaghetti_ota_clear_credentials(void);
+
+/**
+ * @brief Erase the OTA credential vault without Maintenance authorization.
+ *
+ * Used by factory reset after the reset itself has been authorized.
+ *
+ * @retval 0 The credential was erased.
+ * @retval -ENOENT No credential was stored.
+ * @retval -EIO Secure storage rejected deletion.
+ */
+int spaghetti_ota_erase_credentials(void);
+
+/**
+ * @brief Delete the OTA credential when it is bound to @p principal_id.
+ *
+ * @param[in] principal_id Principal whose credential should be removed.
+ *
+ * @retval 0 The credential was deleted.
+ * @retval -EINVAL @p principal_id is zero.
+ * @retval -ENOENT No credential is bound to that principal.
+ * @retval -errno Secure storage rejected deletion.
+ */
+int spaghetti_ota_delete_credentials_for_principal(
+	spaghetti_principal_id_t principal_id);
+
+/**
+ * @brief Copy non-sensitive OTA credential metadata.
+ *
+ * @param[out] out Caller-owned destination written only on success.
+ *
+ * @retval 0 @p out contains present/principal/identity metadata.
+ * @retval -EINVAL @p out is NULL.
+ * @retval -errno Secure storage rejected the query.
+ */
+int spaghetti_ota_get_credential_metadata(
+	struct spaghetti_ota_credential_metadata *out);
 
 /**
  * @brief Save one OTA request that will be consumed by the next normal boot.

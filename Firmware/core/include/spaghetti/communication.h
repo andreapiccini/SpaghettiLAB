@@ -12,6 +12,7 @@
 
 #include <spaghetti/config.h>
 #include <spaghetti/core.h>
+#include <spaghetti/access_control.h>
 
 /** Maximum request or response payload bytes retained in one envelope. */
 #define SPAGHETTI_COMM_PAYLOAD_MAX CONFIG_SPAGHETTI_MAX_PROTOCOL_PAYLOAD
@@ -110,5 +111,22 @@ int spaghetti_communication_init(void);
 int spaghetti_communication_handle_request(
 	const struct spaghetti_request *request,
 	struct spaghetti_response *response);
+
+/**
+ * @brief Invalidate every active Communication session.
+ *
+ * Phase 360 owns real session state. Until then this symbol may be a weak no-op.
+ */
+void spaghetti_communication_invalidate_sessions(void);
+
+/**
+ * @brief Invalidate sessions owned by one principal.
+ *
+ * @param[in] principal_id Principal whose sessions must close.
+ *
+ * Phase 360 owns real session state. Until then this symbol may be a weak no-op.
+ */
+void spaghetti_communication_invalidate_principal(
+	spaghetti_principal_id_t principal_id);
 
 #endif /* SPAGHETTI_COMMUNICATION_H */

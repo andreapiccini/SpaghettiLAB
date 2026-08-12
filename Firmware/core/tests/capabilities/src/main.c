@@ -92,6 +92,8 @@ ZTEST(capabilities, test_snapshot_matches_build_contract)
 		      CONFIG_SPAGHETTI_MAX_BLE_PEERS);
 	zassert_equal(snapshot.max_principals,
 		      CONFIG_SPAGHETTI_MAX_PRINCIPALS);
+	zassert_equal(snapshot.max_audit_entries,
+		      CONFIG_SPAGHETTI_MAX_AUDIT_ENTRIES);
 	zassert_equal(snapshot.max_inflight_requests,
 		      CONFIG_SPAGHETTI_MAX_INFLIGHT_REQUESTS);
 	zassert_equal(snapshot.max_secure_sessions,

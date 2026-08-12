@@ -240,3 +240,15 @@ int spaghetti_communication_handle_request(
 	(void)spaghetti_health_heartbeat(SPAGHETTI_HEALTH_ID_COMMUNICATION);
 	return 0;
 }
+
+void spaghetti_communication_invalidate_sessions(void)
+{
+	/* Phase 360 will close transport sessions. */
+}
+
+void spaghetti_communication_invalidate_principal(
+	spaghetti_principal_id_t principal_id)
+{
+	ARG_UNUSED(principal_id);
+	/* Phase 360 will close sessions owned by principal_id. */
+}

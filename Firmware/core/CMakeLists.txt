@@ -51,6 +51,7 @@ target_sources(app PRIVATE
   subsys/core/capabilities.c
   subsys/core/core.c
   subsys/core/core_boot_backend.c
+  subsys/core/factory_reset.c
   subsys/core/health.c
   subsys/feature_registry/feature_registry.c
   subsys/feature_registry/image_manifest.c
@@ -79,6 +80,8 @@ target_sources(app PRIVATE
   subsys/config/legacy_driver_config.c
   subsys/services/storage/storage.c
   subsys/services/storage/storage_legacy_v3.c
+  subsys/services/identity/identity.c
+  subsys/services/identity/access_control.c
   subsys/services/maintenance_link/maintenance_link.c
   subsys/services/maintenance_link/maintenance_mgmt.c
   subsys/services/ota/ota.c

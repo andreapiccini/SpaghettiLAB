@@ -1,6 +1,6 @@
 # TASK-355-01 — Definire identità, credenziali e reset
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 355 — Identità, credenziali e reset
 
 ## Cosa devo fare
@@ -146,13 +146,13 @@ struct spaghetti_identity identity;
 
 ## Checklist di completamento
 
-- [ ] Device ID, nome e credenziali sono concetti distinti.
-- [ ] Ogni vault supporta elenco metadata, rotazione e revoca.
-- [ ] Ogni credenziale risolve un principal bounded con ruolo e permessi espliciti.
-- [ ] Revoca chiude le sessioni del principal senza cancellare gli altri peer.
-- [ ] Reset richiede autorizzazione e non cancella MCUboot.
-- [ ] Errore parziale entra in Maintenance.
-- [ ] Nessun segreto compare in log, argv o Config.
+- [x] Device ID, nome e credenziali sono concetti distinti.
+- [x] Ogni vault supporta elenco metadata, rotazione e revoca.
+- [x] Ogni credenziale risolve un principal bounded con ruolo e permessi espliciti.
+- [x] Revoca chiude le sessioni del principal senza cancellare gli altri peer.
+- [x] Reset richiede autorizzazione e non cancella MCUboot.
+- [x] Errore parziale entra in Maintenance.
+- [x] Nessun segreto compare in log, argv o Config.
 
 ## Verifica e fine task
 

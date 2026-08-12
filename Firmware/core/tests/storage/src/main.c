@@ -178,12 +178,21 @@ int spaghetti_test_settings_delete(const char *name)
 	if (fake_delete_error < 0) {
 		return fake_delete_error;
 	}
-	if (strcmp(name, SPAGHETTI_STORAGE_MAINTENANCE_BOOT_ONCE_KEY) != 0) {
-		return -ENOENT;
+	if (strcmp(name, SPAGHETTI_STORAGE_MAINTENANCE_BOOT_ONCE_KEY) == 0) {
+		maintenance_marker_present = false;
+		maintenance_marker = 0U;
+		return 0;
 	}
-	maintenance_marker_present = false;
-	maintenance_marker = 0U;
-	return 0;
+	if (strcmp(name, SPAGHETTI_STORAGE_CONFIG_KEY) == 0) {
+		if (!persistent_present) {
+			return -ENOENT;
+		}
+		persistent_present = false;
+		persistent_size = 0U;
+		memset(persistent_bytes, 0, sizeof(persistent_bytes));
+		return 0;
+	}
+	return -ENOENT;
 }
 
 static struct spaghetti_config make_config(void)
@@ -310,6 +319,12 @@ ZTEST(storage, test_v2_round_trip_crc_and_legacy)
 	zassert_equal(strcmp(output.rules[0].type_id, "threshold"), 0);
 	zassert_equal(output.rules[0].properties.field_count, 8U);
 	zassert_equal(strcmp(output.mqtt.host, "legacy"), 0);
+
+	zassert_ok(spaghetti_storage_write_config(&config));
+	zassert_ok(spaghetti_storage_delete_config());
+	zassert_equal(spaghetti_storage_read_config(&output), -ENOENT);
+	zassert_false(persistent_present);
+	zassert_equal(spaghetti_storage_delete_config(), -ENOENT);
 }
 
 ZTEST_SUITE(storage, NULL, NULL, NULL, NULL, NULL);

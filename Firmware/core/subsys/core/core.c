@@ -18,6 +18,8 @@
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/feature_pack.h>
 #include <spaghetti/health.h>
+#include <spaghetti/identity.h>
+#include <spaghetti/access_control.h>
 #include <spaghetti/image_manifest.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
@@ -208,6 +210,14 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto storage_failed;
 	}
+	err = spaghetti_identity_init();
+	if (err < 0) {
+		goto identity_failed;
+	}
+	err = spaghetti_access_control_init();
+	if (err < 0) {
+		goto access_control_failed;
+	}
 	err = spaghetti_update_init();
 	if (err < 0) {
 		goto update_failed;
@@ -391,6 +401,12 @@ update_status_failed:
 	goto unlock;
 maintenance_link_failed:
 	(void)fail_initialization("Maintenance Link", err);
+	goto unlock;
+access_control_failed:
+	(void)fail_initialization("Access Control", err);
+	goto unlock;
+identity_failed:
+	(void)fail_initialization("Identity", err);
 	goto unlock;
 storage_failed:
 	(void)fail_initialization("Storage", err);
