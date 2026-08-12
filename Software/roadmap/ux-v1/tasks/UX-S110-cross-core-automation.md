@@ -1,6 +1,6 @@
 # UX-S110 — Cross-Core Automation
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S111–S113
 
@@ -43,5 +43,18 @@ rappresentano campi/comandi di Core diversi, non Block locali.
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Cross-Core Automation" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Cross-Core Automation" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S110-cross-core-automation/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Decisione centrale motivata esplicitamente: i nodi sono colorati per **Core
+proprietario** (palette rotazionale a 6 colori), non per categoria di
+comportamento come in S070 — icona/forma distingue invece record field/command/
+Node-RED processing. Trasformazione esplicita obbligatoria per edge fra schemi
+incompatibili (mai conversione implicita), link stale dopo catalog change con
+stile tratteggiato dedicato e azione "Rivalida", tab Deploy con banner di scope
+sempre visibile e classificazione IN_SYNC/DIVERGED riusata da `UX-S030`,
+diagnostica end-to-end a breadcrumb con isolamento per tappa offline.
+`backend-behavior.md` cita S111/S112/S113 punto per punto (tutte ⬜ TODO).

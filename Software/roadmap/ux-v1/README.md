@@ -28,7 +28,7 @@ esiste, non richiede che esista già.
 | ✅ | [UX-S080](tasks/UX-S080-deploy-diff.md) | Deploy & Diff | S080 |
 | ✅ | [UX-S090](tasks/UX-S090-runtime-diagnostics.md) | Runtime & Diagnostics | S091–S094 |
 | ✅ | [UX-S100](tasks/UX-S100-capability-marketplace.md) | Capability Marketplace & OTA | S101–S103 |
-| ⬜ | [UX-S110](tasks/UX-S110-cross-core-automation.md) | Cross-Core Automation | S111–S113 |
+| ✅ | [UX-S110](tasks/UX-S110-cross-core-automation.md) | Cross-Core Automation | S111–S113 |
 | ⬜ | [UX-S120](tasks/UX-S120-settings-security.md) | Settings, Security & Recovery | S121–S124 |
 
 ## Convenzione
