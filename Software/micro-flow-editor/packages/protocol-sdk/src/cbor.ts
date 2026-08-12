@@ -89,12 +89,26 @@ export function encodeText(value: string): Uint8Array {
   return concatBytes([encodeHead(MAJOR_TEXT, BigInt(utf8.length)), utf8]);
 }
 
-export function encodeArrayHeader(length: number): Uint8Array {
-  return encodeHead(MAJOR_ARRAY, BigInt(length));
+/**
+ * Indefinite-length array start (major type 4, additional info 31) —
+ * verified against the actual firmware build (not just its source): zcbor
+ * in this build does **not** use canonical definite-length collections, it
+ * emits `0x9F <items...> 0xFF` for arrays and `0xBF <pairs...> 0xFF` for
+ * maps. This was confirmed by building and running
+ * `Firmware/core/tests/protocol` in `native_sim` and inspecting the actual
+ * encoded bytes — the initial source-reading-only research had assumed
+ * canonical/definite-length, which turned out to be wrong.
+ */
+export function encodeArrayHeader(): Uint8Array {
+  return Uint8Array.of((MAJOR_ARRAY << 5) | 31);
 }
 
-export function encodeMapHeader(pairCount: number): Uint8Array {
-  return encodeHead(MAJOR_MAP, BigInt(pairCount));
+export function encodeMapHeader(): Uint8Array {
+  return Uint8Array.of((MAJOR_MAP << 5) | 31);
+}
+
+export function encodeBreak(): Uint8Array {
+  return Uint8Array.of((MAJOR_SIMPLE << 5) | 31);
 }
 
 export function encodeBool(value: boolean): Uint8Array {
@@ -107,21 +121,22 @@ export function encodeSequence(...items: readonly Uint8Array[]): Uint8Array {
 }
 
 /**
- * Builds a canonical definite-length map from `[key, valueBytes]` pairs, in
- * the order given — callers pass field IDs in ascending order (0,1,2,...),
- * which for small integer keys (the only kind this protocol ever uses) is
- * already canonical order, matching zcbor's canonical mode.
+ * Builds an indefinite-length map from `[key, valueBytes]` pairs, in the
+ * order given (ascending field ID, matching the firmware's own field
+ * ordering) — see `encodeMapHeader`'s doc comment for why this is
+ * indefinite-length rather than canonical.
  */
 export function encodeMap(pairs: ReadonlyArray<readonly [number, Uint8Array]>): Uint8Array {
-  const parts: Uint8Array[] = [encodeMapHeader(pairs.length)];
+  const parts: Uint8Array[] = [encodeMapHeader()];
   for (const [key, value] of pairs) {
     parts.push(encodeUint(BigInt(key)), value);
   }
+  parts.push(encodeBreak());
   return concatBytes(parts);
 }
 
 export function encodeArray(items: readonly Uint8Array[]): Uint8Array {
-  return concatBytes([encodeArrayHeader(items.length), ...items]);
+  return concatBytes([encodeArrayHeader(), ...items, encodeBreak()]);
 }
 
 export type CborValue =
@@ -174,9 +189,12 @@ export class CborReader {
       const b = this.readBytes(8);
       return new DataView(b.buffer, b.byteOffset, 8).getBigUint64(0, false);
     }
-    throw new ProtocolCodecError(
-      `unsupported CBOR additional info ${additionalInfo} — indefinite-length items are never used by this protocol`,
-    );
+    throw new ProtocolCodecError(`unsupported CBOR additional info ${additionalInfo}`);
+  }
+
+  /** True if the next byte is the indefinite-length "break" marker (0xFF) — does not consume it. */
+  private atBreak(): boolean {
+    return this.remaining > 0 && this.bytes[this.offset] === 0xff;
   }
 
   readValue(): CborValue {
@@ -195,15 +213,21 @@ export class CborReader {
         return { kind: "text", value: new TextDecoder("utf-8", { fatal: true }).decode(raw) };
       }
       case MAJOR_ARRAY: {
-        const length = Number(this.readArgument(additionalInfo));
         const items: CborValue[] = [];
-        for (let i = 0; i < length; i++) items.push(this.readValue());
+        if (additionalInfo === 31) {
+          // Indefinite-length — the shape the actual firmware build emits
+          // (see `encodeArrayHeader`'s doc comment); read until the break.
+          while (!this.atBreak()) items.push(this.readValue());
+          this.readByte(); // consume 0xFF
+        } else {
+          const length = Number(this.readArgument(additionalInfo));
+          for (let i = 0; i < length; i++) items.push(this.readValue());
+        }
         return { kind: "array", value: items };
       }
       case MAJOR_MAP: {
-        const length = Number(this.readArgument(additionalInfo));
         const map = new Map<number, CborValue>();
-        for (let i = 0; i < length; i++) {
+        const readPair = () => {
           const key = this.readValue();
           if (key.kind !== "uint") {
             throw new ProtocolCodecError("CBOR map key must be a non-negative integer");
@@ -213,6 +237,13 @@ export class CborReader {
             throw new ProtocolCodecError(`duplicate CBOR map key ${numericKey}`);
           }
           map.set(numericKey, this.readValue());
+        };
+        if (additionalInfo === 31) {
+          while (!this.atBreak()) readPair();
+          this.readByte(); // consume 0xFF
+        } else {
+          const length = Number(this.readArgument(additionalInfo));
+          for (let i = 0; i < length; i++) readPair();
         }
         return { kind: "map", value: map };
       }

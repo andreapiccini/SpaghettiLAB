@@ -32,10 +32,13 @@ describe("envelope — request/response/event round trip", () => {
     expect(decodeEvent(bytes)).toEqual({ sequence: 7, type: EventType.RECORD, payload });
   });
 
-  it("produces the exact canonical 4-key map layout for every envelope kind", () => {
-    // {0:1, 1:1, 2:2, 3: bstr(0x A0)} — version=1, correlation=1, operation=2 (GET_STATUS), payload={0xA0}
+  it("produces the exact indefinite-length 4-key map layout the real firmware build emits, verified via Firmware/core/tests/protocol's test_envelope_golden_vectors", () => {
+    // {0:1, 1:1, 2:2, 3: bstr(0x A0)} — version=1, correlation=1, operation=2 (GET_STATUS), payload={0xA0}.
+    // zcbor in this firmware build does NOT use canonical/definite-length
+    // collections — it emits 0xBF <pairs...> 0xFF, confirmed by building and
+    // running the firmware's own protocol test suite in native_sim.
     const bytes = encodeRequest({ correlationId: 1, operation: Operation.GET_STATUS, payload: new Uint8Array([0xa0]) });
-    expect(Array.from(bytes)).toEqual([0xa4, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x03, 0x41, 0xa0]);
+    expect(Array.from(bytes)).toEqual([0xbf, 0x00, 0x01, 0x01, 0x01, 0x02, 0x02, 0x03, 0x41, 0xa0, 0xff]);
   });
 });
 

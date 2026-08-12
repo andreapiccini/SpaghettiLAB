@@ -23,9 +23,10 @@ Protocol V1 firmware.
 
 ## Fine task
 
-- [x] Ogni tipo del Protocol V1 necessario alla V1 ha codec testato (vedi nota sui
-      golden vector sotto — non letteralmente "su golden vector firmware", perché
-      non esistono).
+- [x] Ogni tipo del Protocol V1 necessario alla V1 ha codec testato. L'envelope ha
+      ora golden vector **reali**, aggiunti al firmware e verificati in
+      `native_sim` (vedi nota sotto); le 27 operazioni restano su vettori
+      spec-conformant scritti da me (non firmware).
 - [x] Nessuna perdita di precisione sui tipi a 64 bit.
 
 ## Implementazione (2026-08-12)
@@ -35,28 +36,48 @@ appena completata da Cursor: `subsys/communication/`, `protocol.h`,
 `tests/protocol/src/main.c`, i quattro `.cddl` di Config) per estrarre la forma
 esatta wire-per-wire.
 
-### Scostamento onesto dal criterio originale: non esistono golden vector firmware
+### Golden vector dell'envelope: aggiunti al firmware, verificati in native_sim
 
-Il criterio "stessi golden vector superano round-trip identico in TypeScript e
-firmware" **non è soddisfacibile alla lettera**: `tests/protocol/src/main.c` non
-pubblica vettori di byte fissi — verifica solo che la stessa codifica prodotta più
-volte dia byte identici (determinismo interno), non un riferimento pubblicato. I
-test TypeScript in `packages/protocol-sdk/src/__tests__/` sono quindi **vettori
-spec-conformant scritti da me**, derivati dalla struttura esatta estratta dal
-codice firmware (field ID, tipi, range), non vettori pubblicati dal firmware
-stesso — dichiarato esplicitamente nei commenti di `operations.test.ts`. L'unico
-vettore realmente proveniente dal firmware è la sequenza `[0xA1, 0x00, 0x01]`
-citata testualmente da `test_envelope_roundtrip_and_rejects` in
-`tests/protocol/src/main.c`, riusata sia in `cbor.test.ts` sia in
-`envelope.test.ts`.
+Il criterio originale ("stessi golden vector superano round-trip identico in
+TypeScript e firmware") non era soddisfacibile alla lettera: `tests/protocol/
+src/main.c` non pubblicava vettori di byte fissi — verificava solo determinismo
+interno (la stessa codifica prodotta più volte dà byte identici), non un
+riferimento pubblicato. **Ho risolto il gap aggiungendo io stesso un test
+`test_envelope_golden_vectors` al firmware** (`Firmware/core/tests/protocol/
+src/main.c`, autorizzato esplicitamente dall'utente per questo task specifico),
+con vettori fissi per request/response dell'envelope, e l'ho **eseguito
+davvero in `native_sim`** (immagine `esp32c3-zephyr-dev`, `west twister -p
+native_sim/native/64 -T tests/protocol`) prima di fidarmene.
+
+**Questo ha scoperto un bug reale nel mio codec TypeScript**: avevo assunto CBOR
+canonico a lunghezza definita (`0xA4 ...`) basandomi sulla sola lettura del
+codice sorgente firmware — l'esecuzione reale ha mostrato che zcbor in questa
+build usa invece **collezioni a lunghezza indefinita** (`0xBF <coppie> 0xFF` per
+le mappe, `0x9F <elementi> 0xFF` per le liste). Corretto `cbor.ts` (encoder e
+decoder, quest'ultimo ora supporta entrambe le forme) e tutti i test che
+asserivano byte letterali. Senza questa verifica end-to-end, il codec sarebbe
+stato incompatibile byte-per-byte col firmware reale nonostante tutti i test
+"spec-conformant" passassero — la lezione pratica: leggere il codice non
+sostituisce l'eseguirlo.
+
+L'envelope ha quindi ora un vero golden vector, pubblicato nel firmware e
+verificato in CI Zephyr. Le 27 operazioni restano su vettori spec-conformant
+scritti da me (stessa struttura, non ancora verificati byte-per-byte contro il
+firmware — richiederebbe cablare ogni singolo handler in un test, fuori scope
+per questo giro). L'unico altro vettore realmente proveniente dal firmware,
+riusato com'era, è la sequenza `[0xA1, 0x00, 0x01]` citata testualmente da
+`test_envelope_roundtrip_and_rejects`.
 
 ### Cosa è stato implementato
 
 `packages/protocol-sdk/src/`:
-- `cbor.ts` — primitivi CBOR canonici scritti a mano (non una libreria generica):
-  solo i major type che questo protocollo usa davvero (uint/negint/bytes/text/
-  array/map/bool), encoding sempre a lunghezza minima, mai indefinite-length/
-  float/tag/bignum — coerente con quanto osservato nel firmware zcbor.
+- `cbor.ts` — primitivi CBOR scritti a mano (non una libreria generica): solo i
+  major type che questo protocollo usa davvero (uint/negint/bytes/text/array/
+  map/bool). Interi sempre a lunghezza minima; array/map **a lunghezza
+  indefinita** (`0x9F.../0xBF...0xFF`) — corretto dopo verifica reale in
+  `native_sim`, vedi sotto. Mai float/tag/bignum. Il decoder accetta sia forma
+  indefinita sia definita (il vettore "malformato" del firmware stesso usa la
+  forma definita).
 - `int64.ts` — regola lossless richiesta dal punto 2 del task: bigint↔stringa
   decimale in JSON, rifiuto (mai arrotondamento) di un numero JS non
   rappresentabile come intero sicuro.

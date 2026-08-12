@@ -15,6 +15,7 @@ export {
   encodeText,
   encodeArrayHeader,
   encodeMapHeader,
+  encodeBreak,
   encodeBool,
   encodeSequence,
   encodeArray,
