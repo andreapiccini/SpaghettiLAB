@@ -82,8 +82,11 @@ gli altri Module (collisione endpoint, conflitto `moduleKey`), raccogliendo tutt
 problemi invece di fermarsi al primo (stesso pattern di `validateProjectV1`). Un rail
 che richiede acknowledgement fallisce la validazione finché l'ID del nodo Module non è
 nel set `acknowledgedModuleNodeIds` fornito dal chiamante. Il transport (I2C/SPI) non
-esiste sul wire (`ModuleDriverEntry` è solo `{typeId, commandCount}`): `TransportOf` è
-un classificatore fornito dal chiamante, stesso pattern di
+esiste sul wire a livello di Module Driver generico (`ModuleDriverEntry` è solo
+`{typeId, commandCount}`) — esiste invece a livello di Device Profile
+(`GET_DEVICE_PROFILE` espone un `transport` reale, fase firmware 325), ma
+`catalog-model` non lo indicizza ancora in `ProfileIndex`. `TransportOf` resta quindi un
+classificatore fornito dal chiamante, stesso pattern di
 `checkHandleCompatibility`/`installedCapabilities` in `editor-model` — se omesso, il
 controllo transport semplicemente non viene eseguito, mai indovinato.
 

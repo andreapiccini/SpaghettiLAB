@@ -45,11 +45,22 @@ first — matching `@spaghettilab/domain`'s `validateProjectV1` precedent. A rai
 requiring acknowledgement (`requiresPowerAcknowledgement`) fails validation unless its
 Module's node ID is in the caller-supplied `acknowledgedModuleNodeIds` set.
 
-Transport (I2C vs SPI) has **no wire field** — `catalog-model`'s `ModuleDriverEntry` is
-only `{typeId, commandCount}`. `TransportOf` is a caller-supplied classifier, the same
-"caller-supplied, not invented" pattern `@spaghettilab/editor-model`'s
-`checkHandleCompatibility` uses for `installedCapabilities`. Omit it entirely and
-transport mismatch simply isn't checked — never guessed.
+Transport (I2C vs SPI) has **no wire field at the generic Module Driver level** —
+`catalog-model`'s `ModuleDriverEntry` is only `{typeId, commandCount}`. `TransportOf` is
+a caller-supplied classifier, the same "caller-supplied, not invented" pattern
+`@spaghettilab/editor-model`'s `checkHandleCompatibility` uses for
+`installedCapabilities`. Omit it entirely and transport mismatch simply isn't checked —
+never guessed.
+
+Transport **does** exist on the wire one level down, at the Device Profile level:
+`protocol-sdk`'s `GET_DEVICE_PROFILE` (op 23) response carries a real `transport: number`
+and `requiredCapabilities: number` (firmware phase 325, "Profili dispositivo
+dichiarativi" — a single generic `declarative-device` driver executes a bounded
+acquisition plan per profile, so the firmware never needs to know a specific sensor's
+registers; profiles are authored/installed independently, see S061-S063). `catalog-model`
+does not yet index that field into `ProfileIndex` (`{profileId, version, hash}` only
+today) — this package's `TransportOf` stays caller-supplied until that indexing exists,
+not because the data is unavailable, but because nothing upstream surfaces it yet.
 
 ## Discovery integration (`discovery.ts`)
 
@@ -85,5 +96,7 @@ effect to model: it is simply never accepted, so there is no function for it.
 - **Port has no attributes beyond a numeric ID.** Anything Port-related beyond that ID
   (name, electrical description) is out of scope by construction — there is nothing to
   read it from.
-- **Transport (I2C/SPI) is not on the wire.** See `validate-composition.ts`'s
-  `TransportOf` note above.
+- **Transport (I2C/SPI) is not on the wire at the generic Module Driver level.** It does
+  exist at the Device Profile level (`GET_DEVICE_PROFILE`'s `transport` field) — see
+  `validate-composition.ts`'s `TransportOf` note above for the distinction and why
+  `catalog-model` not yet indexing it is the actual current gap, not the wire itself.

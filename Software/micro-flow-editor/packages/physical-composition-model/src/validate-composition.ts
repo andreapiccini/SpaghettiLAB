@@ -7,11 +7,14 @@ import { requiresPowerAcknowledgement } from "./power.js";
 export type ModuleTransport = "i2c" | "spi";
 
 /**
- * The wire protocol has no transport field for a Module driver
- * (`@spaghettilab/catalog-model`'s `ModuleDriverEntry` is only
- * `{typeId, commandCount}`) — so unlike every other check in this file,
- * transport classification cannot be read from real Core data and must come
- * from the caller, the same "caller-supplied, not invented" pattern
+ * `@spaghettilab/catalog-model`'s `ModuleDriverEntry` (the generic Module
+ * Driver catalog entry) is only `{typeId, commandCount}` — no transport
+ * field. Transport *does* exist one level down, on `GET_DEVICE_PROFILE`'s
+ * response (`protocol-sdk`, firmware phase 325's declarative Device
+ * Profiles), but `catalog-model` does not index it into `ProfileIndex` yet.
+ * So unlike every other check in this file, transport classification cannot
+ * be read through this package's current inputs and must come from the
+ * caller — the same "caller-supplied, not invented" pattern
  * `@spaghettilab/editor-model`'s `checkHandleCompatibility` uses for
  * `installedCapabilities`. Omitted entirely, transport mismatch simply isn't
  * checked for that driver — never guessed.
