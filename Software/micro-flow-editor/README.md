@@ -42,11 +42,19 @@ npm workspace with one package per architectural boundary from
 packages/
   domain/               pure TypeScript domain kernel — no React, no React Flow,
                          no browser API (enforced by having no such dependency).
-                         Currently: abstract infrastructure ports (clock, UUID,
-                         storage, credentials, logger, audit) + an in-memory/
-                         deterministic fake for each, used by every package's tests.
-  protocol-sdk/          placeholder — Protocol V1 codec/client/transports (S021-S024)
-  project-store/         placeholder — ProjectV1 schema/persistence/commands (S014)
+                         ProjectV1 schema/migrations/commands, branded IDs, graphs,
+                         connection profiles, permission matrix, sandboxed import/
+                         export, audit guard, plus abstract infrastructure ports
+                         (clock, UUID, storage, credentials, logger, audit) with an
+                         in-memory/deterministic fake for each (S011-S014, S121-S123).
+  protocol-sdk/          Protocol V1 CBOR codec, SpaghettiClient, MQTT/WebSocket/
+                         WebSerial transport adapters, event streaming with
+                         backpressure/gap signaling (S021-S024).
+  core-session/          Device Session Manager — per-Core session state machine,
+                         sync classification, catalog cache, discovery binding
+                         (S030).
+  project-store/         ProjectV1 persistence: repository + transactional
+                         autosave/history/concurrency (S014, S122).
   react-flow-adapter/     placeholder — Domain <-> React Flow bridge (S043)
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)

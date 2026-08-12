@@ -22,11 +22,17 @@ export function fakeRecordEvent(sequence: number, sourceKey = 1, schemaId = "fak
   });
 }
 
-export function fakeStatusEvent(sequence: number, bootId: bigint, queueDepth = 0, dropCount = 0): Uint8Array {
+export function fakeStatusEvent(
+  sequence: number,
+  bootId: bigint,
+  queueDepth = 0,
+  dropCount = 0,
+  deviceId: Uint8Array = new Uint8Array([0xfa, 0xce]),
+): Uint8Array {
   return encodeEvent({
     sequence,
     type: EventType.STATUS,
-    payload: encodeStatusEventPayload({ deviceId: new Uint8Array([0xfa, 0xce]), bootId, queueDepth, dropCount }),
+    payload: encodeStatusEventPayload({ deviceId, bootId, queueDepth, dropCount }),
   });
 }
 
