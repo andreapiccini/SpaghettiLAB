@@ -20,7 +20,7 @@ esiste, non richiede che esista già.
 | Stato | Task | Schermata | Fase backend collegata (riferimento, non dipendenza) |
 |---|---|---|---|
 | ✅ | — | Processing Graph Editor | S071–S073 (già scritta, è il campione di formato) |
-| ⬜ | [UX-S010](tasks/UX-S010-workspace-shell.md) | Project/Workspace Shell | S011–S014 |
+| ✅ | [UX-S010](tasks/UX-S010-workspace-shell.md) | Project/Workspace Shell | S011–S014 |
 | ⬜ | [UX-S030](tasks/UX-S030-core-connections.md) | Core Connections | S030 |
 | ⬜ | [UX-S040](tasks/UX-S040-catalog-topology.md) | Catalog & Topology Explorer | S041–S043 |
 | ⬜ | [UX-S050](tasks/UX-S050-physical-composition.md) | Physical Composition Editor | S050 |

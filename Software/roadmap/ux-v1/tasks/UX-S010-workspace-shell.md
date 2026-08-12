@@ -1,6 +1,6 @@
 # UX-S010 — Project/Workspace Shell
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S011–S014
 
@@ -39,5 +39,15 @@ e le affordance globali di undo/redo — con lo stesso dettaglio di
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Project/Workspace Shell" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Project/Workspace Shell" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S010-workspace-shell/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Il task copre due superfici distinte: il project picker pre-apertura (senza la shell
+a tre colonne, dato che non esiste ancora un Core attivo) e l'estensione della top bar
+standard (undo/redo + command palette) visibile dentro un progetto aperto.
+`backend-behavior.md` nota un limite reale non risolto da questo task:
+`ProjectRepository` non ha un metodo "list con metadati leggeri", quindi popolare la
+griglia di progetti richiede caricare ogni progetto per intero.
