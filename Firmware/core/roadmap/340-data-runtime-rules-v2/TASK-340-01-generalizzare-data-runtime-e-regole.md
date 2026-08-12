@@ -99,7 +99,10 @@ Il context slab conserva limiti, target e ultimo stato. `on_record()` ignora sou
 field differenti, accetta INT64/UINT64 rappresentabili, applica isteresi ed emette un
 comando BOOL solo sulla transizione. Non include header INA219 o Relay. Descriptor:
 `type_id = "threshold"`, schema `spaghetti.rule.threshold`, version 1, registrato con
-iterable section.
+iterable section. Nel descriptor assegna semantic/reference group: source key e source
+field al gruppo 1; target key, command ID e command field al gruppo 2. Il Runtime non
+riceve un grafo React Flow: riceve la Config normalizzata e risolve questi riferimenti
+bounded. L'editor host disegna nodi e archi leggendo la stessa semantica dal catalogo.
 
 ### 6. Migrare consumer e test
 
@@ -113,7 +116,8 @@ target assente e action fallita.
 Data distribuisce fatti, Runtime decide quando acquisirli, rule plug-in applicano
 piccole automazioni offline e Node-RED può fare logiche più ricche. Un solo scheduler
 bounded evita un thread per Module. Field ID e command ID rendono la soglia riusabile
-senza dipendenze da driver.
+senza dipendenze da driver. Tenere i riferimenti nella Config canonica, invece di
+eseguire codice inviato dall'host, conserva memoria e tempi deterministici.
 
 ## Come si usa
 
@@ -128,6 +132,7 @@ BOOL compatibile. Senza rule, i record raggiungono comunque Node-RED.
 - [ ] Eventi asincroni sono copiati e fermabili.
 - [ ] Rule Registry crea context bounded e rollbackabile.
 - [ ] Threshold non include INA219/Relay.
+- [ ] I collegamenti rule sono risolvibili dal catalogo senza metadati React-specifici.
 - [ ] Errori di una sorgente/regola non fermano le altre.
 - [ ] Ogni record porta boot ID e attraversa un solo confine di consegna.
 

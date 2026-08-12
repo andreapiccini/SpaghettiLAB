@@ -36,6 +36,7 @@ enum spaghetti_protocol_operation {
 	SPAGHETTI_PROTOCOL_VALIDATE_CONFIG = 17,
 	SPAGHETTI_PROTOCOL_GET_AUDIT_LOG = 18,
 	SPAGHETTI_PROTOCOL_GET_JOB_STATUS = 19,
+	SPAGHETTI_PROTOCOL_GET_TOPOLOGY = 20,
 };
 
 enum spaghetti_protocol_status {
@@ -142,7 +143,7 @@ Control prima di chiamarlo e non conosce il trasporto. `principal_id` identifica
 peer autenticato anche dopo un reconnect; l'adapter non può inventare permessi maggiori
 di quelli persistiti per quel principal.
 
-### 3. Implementare i diciannove handler bounded
+### 3. Implementare i venti handler bounded
 
 Dividi `subsys/communication/operations/` per owner:
 
@@ -160,6 +161,9 @@ Dividi `subsys/communication/operations/` per owner:
 - module command: stable target key, command ID e property arguments;
 - update status: snapshot read-only.
 - capabilities: profilo, variante, trasporti, OTA path e limiti immutabili;
+- topology: pagina Flow con direzione, Port, cinque segnali e Bay ordinate; per ogni
+  Bay include rail disponibili, assurance e limiti dichiarati, più Module key,
+  endpoint e admission correnti quando presenti;
 - connectivity status: policy, servizi attivi, lease/deadline e ultimo errore;
 - acquire/release lease: servizi richiesti e durata bounded;
 - network maintenance e Wi-Fi update: operazioni distinte, mai implicite;
@@ -172,6 +176,9 @@ zero. Ogni pagina del catalogo ripete il fingerprint: un host invalida la propri
 se cambia dopo OTA. Module command risolve key in ID soltanto durante la chiamata; non
 espone ID effimeri come identità persistente. Il Core non effettua merge della Config:
 il client legge, modifica la copia desiderata e applica con compare-and-swap.
+Topology non restituisce GPIO MCU né presume una sola board. Distingue sempre
+`UNVERIFIED` da `ENFORCED`, così l'interfaccia non mostra un jumper passivo come
+protezione automatica.
 
 ### 4. Dare a ogni adapter una policy costante
 
@@ -280,8 +287,9 @@ resta comoda per una persona ma non è più il protocollo dell'app.
 ## Checklist di completamento
 
 - [ ] Envelope V1 ha encoding canonico, limite assoluto 2048 e capacità dichiarata dal profilo.
-- [ ] Diciannove operation ID e status pubblici sono congelati.
+- [ ] Venti operation ID e status pubblici sono congelati.
 - [ ] Handler e relativi schema request/response sono auto-registrati e catalogati.
+- [ ] GET_TOPOLOGY descrive più Flow/Port/Bay e stato power senza hardcode host.
 - [ ] Permessi derivano da principal e limite dell'adapter, non dalla richiesta.
 - [ ] GET/VALIDATE/APPLY Config espongono hash, CAS e conflitti senza scritture cieche.
 - [ ] Replay cache centrale impedisce doppi effetti su ogni trasporto.

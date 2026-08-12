@@ -19,6 +19,8 @@ byte driver con property set:
 struct spaghetti_module_config {
 	spaghetti_module_key_t key;
 	spaghetti_port_id_t port_id;
+	spaghetti_bay_id_t bay_id;
+	spaghetti_power_rail_id_t power_rail_id;
 	char type_id[SPAGHETTI_CONFIG_TYPE_ID_SIZE];
 	struct spaghetti_property_set properties;
 };
@@ -50,7 +52,12 @@ struct spaghetti_config {
 };
 ```
 
-Config possiede ogni valore e non conserva puntatori. Più schedule sostituiscono la
+Config possiede ogni valore e non conserva puntatori. `port_id` seleziona la
+terminazione firmware e determina il Flow; `bay_id` descrive la posizione fisica
+oppure vale `SPAGHETTI_BAY_ID_UNSPECIFIED`; `power_rail_id` dichiara la selezione
+desiderata oppure vale `SPAGHETTI_POWER_RAIL_UNSPECIFIED`. Su hardware passivo questi
+campi descrivono ciò che l'utente deve impostare col jumper, ma non lo certificano.
+Più schedule sostituiscono la
 singola sorgente. La vecchia `threshold_rule` concreta sparisce dal modello centrale;
 la fase 340 la migra in un rule driver. Connectivity policy ed energy policy sono
 desiderio persistente; lease, connessioni e deadline restano stato runtime del
@@ -110,7 +117,14 @@ spaghetti-config-v2 = {
   5: uint,             ; connectivity policy
   6: energy-policy
 }
-module = { 0: uint, 1: uint, 2: tstr, 3: properties }
+module = {
+  0: uint,             ; stable Module key
+  1: uint,             ; Port ID, quindi Flow
+  2: tstr,             ; driver type ID
+  3: properties,
+  4: uint / nil,       ; optional Function Bay ID
+  5: uint / nil        ; optional power rail ID
+}
 schedule = { 0: uint, 1: uint, 2: bool }
 rule = { 0: uint, 1: tstr, 2: properties }
 properties = { * uint => (bool / int / uint / tstr / bstr) }
@@ -193,6 +207,11 @@ Apri `subsys/config/config.c`. Moduli invariati per key restano vivi solo se Por
 type e property set coincidono. Schedule riferiscono una key esistente con op `read`;
 rule type deve esistere nel Rule Registry. Valida tutto prima del primo cambiamento.
 
+Prima di ogni effetto valida Port→Flow, Bay, rail, collisione di Bay quando entrambe
+le configurazioni dichiarano una posizione, compatibilità transport e
+`spaghetti_power_validate_binding()`. `UNVERIFIED` è uno stato valido e deve comparire
+nel risultato/status; non diventa errore soltanto perché la base usa jumper.
+
 Apply esegue: stop Runtime, prepara nuovi Module, applica la policy tramite Connectivity
 Manager, commit Config e Storage, configura le schedule e riavvia Runtime. Su qualsiasi
 errore ripristina policy, Module e schedule
@@ -261,6 +280,8 @@ modifiche al codec centrale.
 ## Checklist di completamento
 
 - [ ] Config contiene Module, schedule, rule e policy connettività/energia generici.
+- [ ] Ogni Module può dichiarare Bay e rail senza duplicare Flow o GPIO MCU.
+- [ ] Power passivo resta valido ma visibilmente `UNVERIFIED`.
 - [ ] CBOR V2 non contiene switch su driver/rule concreti.
 - [ ] Encoder e decoder fanno round-trip canonico.
 - [ ] Snapshot restituisce generazione e hash canonico.

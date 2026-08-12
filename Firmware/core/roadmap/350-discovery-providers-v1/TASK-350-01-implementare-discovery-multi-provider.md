@@ -37,6 +37,9 @@ enum spaghetti_discovery_probe_flags {
 struct spaghetti_discovery_candidate {
 	spaghetti_discovery_candidate_id_t id;
 	spaghetti_port_id_t port_id;
+	spaghetti_flow_id_t flow_id;
+	spaghetti_bay_id_t bay_id;
+	spaghetti_power_rail_id_t power_rail_id;
 	char provider_id[SPAGHETTI_DISCOVERY_PROVIDER_ID_SIZE];
 	enum spaghetti_discovery_method method;
 	enum spaghetti_discovery_confidence confidence;
@@ -53,6 +56,9 @@ Candidate ID è effimero; identity sono byte stabili letti dall'hardware quando
 disponibili. `suggested_*` possono essere vuoti per un dispositivo rilevato ma non
 identificato. HEURISTIC non viene mai applicato automaticamente. Un Module manuale
 continua a entrare direttamente da Config e non richiede un candidate.
+Flow deriva sempre dalla Port. Bay e rail valgono `UNSPECIFIED` quando il metodo non
+può osservarle; un provider non deduce la posizione dall'ordine degli indirizzi I2C o
+dall'ordine temporale della scansione.
 
 ### 2. Rendere i provider auto-registranti
 
@@ -115,7 +121,8 @@ int spaghetti_discovery_reject(
 Scan policy è caller-owned e borrowed. `list(NULL, 0, &count)` fa count-only.
 `accept()` richiede candidate autorevole con type/config completi, oppure un candidato
 euristico esplicitamente scelto dall'utente; copia una module config pronta da inserire
-in una nuova Config, ma non la applica. `reject()` rimuove soltanto il candidate.
+in una nuova Config, inclusa la posizione soltanto quando conosciuta, ma non la
+applica. `reject()` rimuove soltanto il candidate.
 Generation impedisce di accettare un risultato già sostituito.
 
 ### 4. Predisporre metodi senza fingere di avere hardware
@@ -177,6 +184,7 @@ autorevoli conosciute.
 - [ ] Provider sono auto-registrati e capability-filtered.
 - [ ] Manuale funziona senza alcun provider.
 - [ ] Candidati possiedono identity, suggerimenti e generation.
+- [ ] Candidate distingue Bay/rail osservate da quelle non conoscibili.
 - [ ] Probe state-changing richiede policy esplicita.
 - [ ] Accept produce Config ma non crea direttamente Module.
 - [ ] Fake coprono EEPROM, I2C register, analogico e 1-Wire.

@@ -21,6 +21,7 @@ CLI:
 spaghetti catalog
 spaghetti status
 spaghetti capabilities
+spaghetti topology
 spaghetti connectivity status
 spaghetti connectivity lease --services wifi --duration 120s
 spaghetti connectivity release
@@ -50,6 +51,8 @@ Il file utente contiene nomi leggibili:
     {
       "key": 10,
       "port": 0,
+      "bay": 0,
+      "power_rail": 1,
       "type": "ina219",
       "properties": {
         "i2c_address": 64,
@@ -69,6 +72,11 @@ Il CLI legge catalogo dal Core, verifica il fingerprint, risolve nome → field
 ID/type/range, produce Config CBOR V2 e può salvarla con `--output`. Non possiede una
 tabella INA219. Se il Core non conosce tipo/campo, termina prima di inviare. `validate`
 chiama VALIDATE_CONFIG sul Core e non cambia dispositivo.
+
+`topology` stampa Flow, direzione, Port, cinque segnali, Bay e rail. Mostra
+esplicitamente `unverified/manual jumper` per rail passive e `enforced` solo per
+backend controllati. `--json` conserva gli stessi campi stabili consumabili
+dall'editor React Flow.
 
 `config get` salva Config, generation e hash. `config apply` usa per default la
 generation appena letta; con un file ottenuto in precedenza richiede la generation
@@ -156,6 +164,7 @@ Dopo questa fase lo stesso JSON può essere generato o inviato dal flow Node-RED
 - [ ] Serial, TLS, MQTT e BLE trasportano lo stesso envelope.
 - [ ] UART/DTLS/BLE update mostrano progress e verificano trial.
 - [ ] CLI espone capability, lease e reset con conferma esplicita.
+- [ ] CLI topology espone Flow/Bay/rail e distingue power advisory da enforced.
 - [ ] Nessun segreto entra in argv/log/repository.
 - [ ] Fake coprono errori, reconnect e resume.
 - [ ] Python supera gli stessi golden vector CBOR dell'SDK JavaScript.

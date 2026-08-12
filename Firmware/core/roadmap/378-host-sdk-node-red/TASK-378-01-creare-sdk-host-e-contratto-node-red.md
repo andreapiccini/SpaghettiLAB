@@ -42,6 +42,33 @@ export interface ApplyResult {
   changed: boolean;
   revision: ConfigRevision;
 }
+
+export interface FunctionBay {
+  id: number;
+  ordinalFromField: number;
+  availablePowerRails: number[];
+}
+
+export interface HardwareFlow {
+  id: number;
+  portId: number;
+  direction: "field_to_core" | "core_to_field" | "bidirectional";
+  signalCount: 5;
+  bays: FunctionBay[];
+}
+
+export interface PowerRail {
+  id: number;
+  assurance: "unmanaged" | "switched" | "switched_and_measured";
+  minMicrovolts?: number;
+  maxMicrovolts?: number;
+  maxTotalMicroamps?: number;
+}
+
+export interface CoreTopology {
+  flows: HardwareFlow[];
+  powerRails: PowerRail[];
+}
 ```
 
 `Uint8Array` è owned dal chiamante fino alla risoluzione di `send()`; il transport deve
@@ -55,6 +82,7 @@ export class SpaghettiClient {
   constructor(transport: ProtocolTransport, options?: ClientOptions);
   getCatalog(forceRefresh?: boolean): Promise<Catalog>;
   getStatus(): Promise<CoreStatus>;
+  getTopology(): Promise<CoreTopology>;
   getConfig(): Promise<ConfigSnapshot>;
   validateConfig(config: SpaghettiConfig): Promise<void>;
   applyConfig(
@@ -77,6 +105,12 @@ può ritentare soltanto entro la replay window dichiarata e se `boot_id` non è 
 Dopo un nuovo boot rilegge stato e non ripete automaticamente command, reset o update.
 Se cambia il catalog fingerprint elimina l'intera cache prima di interpretare nuovi
 record.
+
+Catalog field semantic e `referenceGroup` restano UI-neutral. Esponi un helper puro
+`buildEditorModel(catalog, topology, config)` che restituisce tipi di nodo, handle,
+Flow/Bay e collegamenti normalizzati; non importa React, React Flow o Node-RED. La UI
+React Flow potrà adattare questo modello senza duplicare regole firmware. Un rail
+unmanaged deve mantenere lo stato `unverified`, mai diventare implicitamente sicuro.
 
 ### Implementare CBOR e valori senza perdita
 
@@ -174,7 +208,14 @@ const coordinator = new ConfigCoordinator(client);
 
 coordinator.setFragment({
   ownerId: "flow-ina219-0",
-  modules: [{key: 10, port: 0, type: "ina219", properties: {i2c_address: 64}}]
+  modules: [{
+    key: 10,
+    port: 0,
+    bay: 0,
+    powerRail: 1,
+    type: "ina219",
+    properties: {i2c_address: 64}
+  }]
 });
 
 const result = await coordinator.synchronize();
@@ -187,6 +228,7 @@ const result = await coordinator.synchronize();
 - [ ] Status V1 non dipende da errno Zephyr.
 - [ ] INT64/UINT64 attraversano CBOR e JSON senza perdita.
 - [ ] Catalog cache usa il fingerprint e viene invalidata dopo OTA.
+- [ ] Topology e modello editor descrivono più Flow da cinque segnali senza hardcode di board.
 - [ ] Config Coordinator impedisce lost update e apply durante deploy parziale.
 - [ ] MQTT e WebSocket superano gli stessi test di contratto.
 - [ ] C, Python e TypeScript leggono gli stessi golden vector.

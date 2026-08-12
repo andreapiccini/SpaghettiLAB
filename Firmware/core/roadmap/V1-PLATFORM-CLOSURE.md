@@ -20,6 +20,10 @@ Al termine delle fasi 291–390:
   risorse quando vengono arrestati;
 - Health Supervisor controlla heartbeat e watchdog senza permettere a un worker di
   alimentarlo autonomamente;
+- ogni Core pubblica quanti Flow possiede, la loro direzione, la Port terminale e le
+  Function Bay ordinate; ogni connettore funzionale espone cinque segnali;
+- un Core base può dichiarare rail con jumper non verificabili, mentre un Core Pro
+  applica limiti elettrici solo quando board e Module forniscono dati reali;
 - BLE è il trasporto low-energy autenticato del protocollo comune e può ricevere OTA o
   richiedere un handover Wi-Fi bounded;
 - una Port può esporre I2C, SPI, UART, GPIO, ADC o 1-Wire tramite un contratto
@@ -93,7 +97,11 @@ flowchart TD
     P294 --> P295["295 · Low energy"]
     P291 --> P296["296 · Health supervisor"]
     P294 --> P296
-    P300["300 · Port e trasporti"] --> P320["320 · Module Driver V2"]
+    P291 --> P297["297 · Topologia Flow"]
+    P297 --> P300["300 · Port e trasporti"]
+    P300 --> P305["305 · Rail e power admission"]
+    P300 --> P320["320 · Module Driver V2"]
+    P305 --> P320
     P310["310 · Schemi e valori"] --> P320
     P320 --> P330["330 · Config e wire V2"]
     P292 --> P330
@@ -128,7 +136,7 @@ flowchart TD
 ```
 
 La qualifica fisica 290 può procedere in parallelo. Segui l'ordine numerico da 291;
-le fasi 300 e 310 possono essere sviluppate separatamente prima di convergere nella 320.
+la fase 310 può procedere in parallelo a 297–305 prima di convergere nella 320.
 
 ## Cosa non viene inventato ora
 
@@ -139,6 +147,8 @@ le fasi 300 e 310 possono essere sviluppate separatamente prima di convergere ne
 - Root key/eFuse e provisioning irreversibile di produzione.
 - Valori prestazionali definitivi di MTU, throughput, intervalli e numero peer prima
   delle misure su ESP32-C3.
+- Tensione massima `PWR_RAW`, corrente totale, corrente per Bay e circuiti di
+  selezione/misura non ancora congelati dallo schema elettrico.
 - Uno stack Matter/Zigbee soltanto perché una futura variante può avere la radio.
 
 Le API, i provider e i fake vengono predisposti ora. Il backend reale viene aggiunto
@@ -167,7 +177,9 @@ Puoi spostare il lavoro principale su Node-RED quando:
 11. Config identica non incrementa generation e non scrive Storage;
 12. retry cross-transport non ripete Config o comandi;
 13. SDK TypeScript e CLI Python superano gli stessi golden vector del firmware;
-14. Health Supervisor, fuzzing, validator, Twister e build di ogni profilo passano.
+14. Health Supervisor, fuzzing, validator, Twister e build di ogni profilo passano;
+15. l'host legge una topologia con più Flow senza conoscere la board e distingue
+    chiaramente power `UNVERIFIED` da power `ENFORCED`.
 
 La qualificazione fisica della fase 290 resta necessaria prima di dichiarare una
 release hardware di produzione, ma non blocca lo sviluppo del contratto Node-RED con

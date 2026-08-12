@@ -48,7 +48,11 @@ Aggiorna `subsys/module_manager/module_manager.c` con un helper privato
 Port e hanno kind/size/byte uguali; `PORT_EXCLUSIVE` confligge con ogni endpoint di
 quella Port. Output e UART esclusivi mantengono una sola istanza.
 
-### 2. Estendere il contratto Port
+Per `GPIO_LINE` e `ADC_CHANNEL`, il valore è l'indice del segnale nel connettore e
+deve essere compreso tra zero e quattro. Non usare il numero GPIO del microcontrollore
+nel payload Config: la board traduce l'indice logico nel pin reale.
+
+### 2. Estendere il contratto Port e il suo modo runtime
 
 Apri `include/spaghetti/port.h` e definisci queste capability:
 
@@ -63,6 +67,48 @@ enum spaghetti_port_capability {
 	SPAGHETTI_PORT_CAP_W1 = BIT(6),
 };
 ```
+
+Una Port termina un Flow da cinque segnali. Gli stessi segnali possono supportare più
+funzioni possibili, ma una sola famiglia elettrica compatibile alla volta. Aggiungi:
+
+```c
+typedef uint32_t spaghetti_port_owner_t;
+
+enum spaghetti_port_transport {
+	SPAGHETTI_PORT_TRANSPORT_I2C,
+	SPAGHETTI_PORT_TRANSPORT_SPI,
+	SPAGHETTI_PORT_TRANSPORT_UART,
+	SPAGHETTI_PORT_TRANSPORT_GPIO,
+	SPAGHETTI_PORT_TRANSPORT_ADC,
+	SPAGHETTI_PORT_TRANSPORT_W1,
+};
+
+int spaghetti_port_acquire(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner,
+	enum spaghetti_port_transport transport);
+int spaghetti_port_release(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner);
+int spaghetti_port_get_active_transport(
+	const struct spaghetti_port *port,
+	enum spaghetti_port_transport *out_transport,
+	size_t *out_owner_count);
+```
+
+`owner` è la Module key nonzero copiata per valore. Al primo owner, `acquire()`
+seleziona il backend/pinctrl predefinito dalla board; owner successivi sono ammessi
+solo per lo stesso transport condivisibile. I2C, SPI e 1-Wire sono condivisibili con
+endpoint distinti; UART e un endpoint `PORT_EXCLUSIVE` restano esclusivi. L'ultimo
+`release()` applica lo stato safe/sleep della Port. Un transport differente riceve
+`-EBUSY`, capability/backend assente `-ENOTSUP`, owner duplicato `-EALREADY` e limiti
+esauriti `-ENOMEM`. Gli output cambiano solo al successo.
+
+Module Manager acquisisce la Port prima del power attach e di `driver->ops->init()`;
+in rimozione esegue `stop()`, `deinit()`, power detach e infine Port release. Nel
+modello intermedio di questo task deriva il transport dall'endpoint; il task 320 lo
+leggerà esplicitamente dal descriptor del driver. Un fallimento esegue rollback in
+ordine inverso senza disturbare gli altri owner I2C/SPI/1-Wire.
 
 Aggiungi gli include Zephyr dei tipi usati e le API complete:
 
@@ -119,7 +165,7 @@ Le funzioni restituiscono `0`, `-EINVAL`, `-ENOTSUP`, `-ENODEV`, `-EBUSY`,
 `-ETIMEDOUT`, `-EIO` e gli errori originali Zephyr. Documenta thread context e il
 fatto che I2C/SPI/ADC/1-Wire possono attendere il lock bounded del controller.
 
-### 3. Collegare Devicetree senza inventare hardware
+### 3. Collegare Devicetree e Topology senza inventare hardware
 
 Devicetree descrive wiring build-time; `struct device` è l'oggetto runtime creato dal
 Device Model. I phandle collegano la Port ai controller reali. Apri
@@ -128,6 +174,28 @@ proprietà opzionali `spi`, `spi-cs-gpios`, `uart`, `input-gpios`, `output-gpios
 `io-channels` e `w1`. Specifica tipo e significato. Almeno una capability viene
 garantita con `BUILD_ASSERT()` in C, perché il binding YAML corrente non esprime in
 modo portabile “almeno una tra queste proprietà”.
+
+Per ogni transport riconfigurabile, il nodo Port riferisce solo stati pinctrl e
+controller realmente presenti. `spaghetti_topology_init()` verifica che ogni Port
+compaia in un solo Flow e che il connettore abbia cinque segnali. Port non duplica
+direzione o numero di Bay.
+
+Non chiamare pinctrl da Module Manager. Crea il confine privato
+`subsys/port/port_backend.h`:
+
+```c
+int spaghetti_port_backend_select(
+	spaghetti_port_id_t port_id,
+	enum spaghetti_port_transport transport);
+int spaghetti_port_backend_safe(spaghetti_port_id_t port_id);
+```
+
+Il backend riceve ID per valore, non conserva owner e non gestisce reference count.
+`port.c` è l'unico owner di lock, active transport e owner table. La board corrente,
+il cui I2C è già fissato dal DTS, accetta solo I2C e rende `safe()` un no-op
+documentato. Una futura board con pin condivisi implementa questi due hook applicando
+soltanto stati pinctrl dichiarati nel proprio DTS. Il fake registra ogni transizione.
+Non permettere alla Config di fornire nomi pinctrl o numeri pin.
 
 Non aggiungere queste proprietà a `spaghettilab_core_v1.dts`: lo schema corrente
 verifica soltanto I2C. La predisposizione esiste nel binding e nel C, ma una capability
@@ -175,11 +243,13 @@ Estendi `tests/module_manager/`, `tests/ina219_runtime/` e crea `tests/port_tran
 Il fake espone due Port con lo stesso controller e verifica che il massimo numero di
 transazioni contemporanee sia uno. Verifica endpoint I2C diversi, ROM 1-Wire diverse,
 esclusivo contro indirizzato, capability assente, indice fuori range, errore backend e
-output invariato.
+output invariato. Verifica inoltre due owner I2C sulla stessa Port, rifiuto I2C→UART,
+rollback dell'acquire e ritorno safe all'ultimo release.
 
 ## Perché è fatto così
 
-Capability e risorse descrivono il Core; endpoint e proprietà descrivono il Module.
+Topology descrive Flow e Bay; capability e risorse descrivono il Core; endpoint e
+proprietà descrivono il Module.
 Separarli consente nuovi bus senza branch sul nome della board. Il lock appartiene al
 controller condiviso, non a un singolo Module: è l'unico livello che vede quando due
 Port referenziano lo stesso device Zephyr.
@@ -195,6 +265,9 @@ DTS reali; il codice centrale non cambia.
 - [ ] Endpoint supporta valori da zero a otto byte e collisioni corrette.
 - [ ] Capability e API dei sei trasporti sono documentate e bounded.
 - [ ] Controller condivisi usano lo stesso lock.
+- [ ] Port seleziona un transport runtime predefinito dalla board e torna safe.
+- [ ] Più owner dello stesso bus convivono; transport incompatibili sono rifiutati.
+- [ ] Gli indici di linea sono sempre 0–4 e mai GPIO MCU nel Config.
 - [ ] INA219 usa Port per ogni transazione.
 - [ ] Core V1 non dichiara capability non presenti.
 - [ ] Test fake coprono condivisione, limiti ed errori.

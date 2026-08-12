@@ -19,6 +19,8 @@ La guida deve offrire percorsi eseguibili e template copiabili per:
 6. nuova operation Protocol V1 compatibile.
 7. nuovo nodo Node-RED basato sull'SDK host, distinguendo orchestrazione host da logica
    hardware/real-time che deve restare in Zephyr.
+8. nuovo layout Core con più Flow, Bay e rail passive/controllate, senza cambiare il
+   protocollo o l'editor host.
 
 Per ogni percorso indica file esatti, header pubblico, `.c` privato, schema, iterable
 macro, context slab, CMake, Kconfig, Devicetree/binding/overlay, Config JSON/CBOR, test
@@ -28,6 +30,11 @@ test dedicato: non lasciare pseudo-codice non verificato.
 Aggiungi una sezione “Caveat Spaghetti LAB” che spieghi almeno:
 
 - Port 1:N Module ed endpoint/collisioni;
+- Flow contro Port contro Bay: topologia fisica, terminazione firmware e posizione;
+- connettore uniforme da cinque segnali e indici 0–4 contro numeri GPIO MCU;
+- pinctrl/transport supportati dalla board contro selezione runtime della Config;
+- power `UNVERIFIED` su jumper passivo contro `ENFORCED` su backend controllato;
+- limiti elettrici sconosciuti rappresentati da zero e mai inventati dal firmware;
 - key persistente contro ID runtime;
 - ownership e lifetime di device Zephyr, descriptor, property e context;
 - nessun puntatore in Config/record persistenti;
@@ -46,6 +53,7 @@ Aggiungi una sezione “Caveat Spaghetti LAB” che spieghi almeno:
 - profili risorse, stack misurati e workspace TLS;
 - heartbeat, watchdog e finestre bounded per Update/flash;
 - capability reali contro feature teoriche del SoC;
+- field semantic/reference group come contratto UI-neutral per React Flow;
 - credenziali fuori da Config, log, argv e repository;
 - Maintenance, connectivity policy e image trial come stati distinti;
 - `make pristine`, DTS generato, `.config`, linker error e validator CMake-aware.
@@ -64,7 +72,7 @@ Communication o MQTT per far comparire il nuovo tipo nel catalogo.
 
 ## Checklist di completamento
 
-- [ ] Sette percorsi hanno file, template e comandi completi.
+- [ ] Otto percorsi hanno file, template e comandi completi.
 - [ ] Template compilano nei test.
 - [ ] Guida non contiene API V0 o Registry centrali.
 - [ ] Caveat collega diario problemi e guida implementativa.
@@ -80,4 +88,4 @@ docker compose run --rm --entrypoint sh dev -lc \
 ```
 
 Il task termina quando una prova “clean room” aggiunge un fake Module e una fake board
-seguendo soltanto la guida, senza patch ai sottosistemi centrali.
+con due Flow seguendo soltanto la guida, senza patch ai sottosistemi centrali.

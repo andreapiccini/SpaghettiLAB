@@ -79,6 +79,18 @@ enum spaghetti_field_flags {
 	SPAGHETTI_FIELD_ENUM = BIT(3),
 };
 
+enum spaghetti_field_semantic {
+	SPAGHETTI_FIELD_SEMANTIC_VALUE,
+	SPAGHETTI_FIELD_SEMANTIC_MODULE_KEY_REF,
+	SPAGHETTI_FIELD_SEMANTIC_RECORD_FIELD_REF,
+	SPAGHETTI_FIELD_SEMANTIC_COMMAND_REF,
+	SPAGHETTI_FIELD_SEMANTIC_PORT_REF,
+	SPAGHETTI_FIELD_SEMANTIC_FLOW_REF,
+	SPAGHETTI_FIELD_SEMANTIC_BAY_REF,
+	SPAGHETTI_FIELD_SEMANTIC_POWER_RAIL_REF,
+	SPAGHETTI_FIELD_SEMANTIC_DURATION_MS,
+};
+
 struct spaghetti_enum_option {
 	struct spaghetti_value value;
 	const char *name;
@@ -88,6 +100,8 @@ struct spaghetti_enum_option {
 struct spaghetti_field_descriptor {
 	uint16_t field_id;
 	enum spaghetti_value_type type;
+	enum spaghetti_field_semantic semantic;
+	uint8_t reference_group;
 	uint32_t flags;
 	int64_t signed_minimum;
 	int64_t signed_maximum;
@@ -121,6 +135,14 @@ usa la propria coppia di limiti; i campi non applicabili
 sono zero.
 `schema_id` è una stringa stabile come `"spaghetti.ina219.sample"`; `version` cambia
 quando cambia un field ID, tipo o significato incompatibile.
+
+`semantic` non cambia il tipo sul wire: dice a validatore e host che un `UINT64`
+rappresenta, per esempio, una Module key o una Bay invece di un numero generico.
+`reference_group` unisce riferimenti composti: source Module key e record field ID
+usano lo stesso gruppo nonzero; target Module key e command ID ne usano un altro.
+React Flow può quindi mostrare handle e collegamenti usando il catalogo, senza nomi
+speciali per INA219 o threshold. `VALUE` usa gruppo zero. Il firmware rifiuta semantica
+incompatibile col tipo e riferimenti che Config non riesce a risolvere.
 
 Congela anche la rappresentazione host: INT64/UINT64 vengono decodificati come
 `BigInt`; nell'output JSON e nei messaggi Node-RED diventano stringhe decimali quando
@@ -214,7 +236,8 @@ TEXT UTF-8/terminazione, BYTES oltre limite, default incoerenti ed enum non amme
 
 Crea `tests/schema/` con CMake, Kconfig, prj.conf, testcase e ztest. Copri ogni tipo,
 min/max, required, default, enum, UTF-8, duplicati, schema sbagliato, buffer massimo e
-output immutato.
+semantica/reference group incoerenti. Copri inoltre riferimenti Module/Flow/Bay/rail
+validi e mancanti tramite resolver fake e output immutato.
 Misura con `sizeof(struct spaghetti_record)` e documenta in `subsys/schema/README.md`
 la RAM consumata da un elemento zbus prima di scegliere le capacità della fase 340.
 
@@ -242,6 +265,7 @@ tabella specifica INA219.
 - [ ] Timestamp, boot ID, sequence e rollover hanno semantica non ambigua.
 - [ ] Lookup e validazione coprono duplicati, required, tipi e range.
 - [ ] Il mapping lossless INT64/UINT64 per JavaScript è documentato.
+- [ ] Semantic e reference group permettono a un editor di costruire collegamenti senza hardcode.
 - [ ] Tutte le capacità provengono dal profilo 291.
 - [ ] Dimensione RAM del record è documentata.
 

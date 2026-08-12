@@ -30,7 +30,10 @@ subsys/services/mqtt/
 
 Il test applica JSON→CBOR con due Module sulla stessa Port, due schedule, una rule,
 evento pulsante e comando PWM. Verifica catalogo, Data, due consumer Record Delivery,
-MQTT fake, BLE fake e rollback.
+MQTT fake, BLE fake e rollback. La fake board espone almeno due Flow da cinque segnali:
+uno con rail passive e uno con rail controllata. Prova Bay nota e non specificata,
+power admission `UNVERIFIED` e `ENFORCED`, due owner I2C e rifiuto di un cambio
+transport incompatibile.
 
 ### 2. Eseguire la pulizia rimasta dalla fase 210
 
@@ -59,6 +62,7 @@ Verifica che manuale e template della fase 385 siano coerenti, quindi crea
 - schema/field/command ID rules;
 - semantica device ID, boot ID, timestamp e sequence;
 - profili risorse, capability e stati connettività;
+- topologia Flow/Port/Bay, cinque segnali, transport e semantica power admission;
 - permission matrix;
 - scope di reset e lifecycle credenziali;
 - error mapping;
@@ -117,6 +121,10 @@ della fase 375. Con native/fake o board corrente:
 16. retry della stessa request da un altro adapter non ripete l'effetto;
 17. OTA cambia catalog fingerprint e Node-RED invalida la cache;
 18. un intero a 64 bit oltre il safe range attraversa C/CBOR/TypeScript senza perdita.
+19. React Flow può costruire corsie, Bay, nodi e handle usando solo
+    topology/catalog/config del fake Core;
+20. la UI distingue rail manuale non verificata da rail controllata e il Core Pro
+    rifiuta un requirement incompatibile.
 
 Registra risultati in `verification/v1/PLATFORM_REPORT.md` con commit, Zephyr, board e
 comandi, senza segreti.
@@ -161,6 +169,8 @@ Nuovi Core aggiungono board/binding/backend Port senza branch applicativi.
 - [ ] Gate Node-RED passa sia con MQTT TLS sia con BLE/gateway.
 - [ ] SDK TypeScript, CLI Python e firmware C superano gli stessi golden vector.
 - [ ] Config concorrente/no-op, replay cross-transport e cursori multipli sono provati.
+- [ ] Due Flow, cinque segnali, Port mux e power passive/controlled superano i fake.
+- [ ] Il modello editor host nasce solo da topology/catalog/config.
 - [ ] Fuzzing dei decoder e framing termina senza crash o hang.
 - [ ] Health Supervisor e watchdog dichiarato superano fault injection.
 - [ ] Lifecycle, workspace TLS, lease, reset e record drop superano i failure test.
@@ -183,6 +193,6 @@ make node-red-mqtt-smoke
 make node-red-ble-smoke
 ```
 
-Il task termina quando il report V1 contiene zero failure, entrambi i percorsi Node-RED
-completano i diciotto passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema
+Il task termina quando il report V1 contiene zero failure, entrambi i percorsi host
+completano i venti passi e l'aggiunta di un nuovo fake non modifica alcun sottosistema
 centrale.

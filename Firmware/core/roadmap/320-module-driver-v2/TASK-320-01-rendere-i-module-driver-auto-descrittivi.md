@@ -59,6 +59,8 @@ struct spaghetti_module_driver {
 	const char *type_id;
 	uint16_t api_version;
 	uint32_t required_capabilities;
+	enum spaghetti_port_transport transport;
+	struct spaghetti_module_power_requirement power_requirement;
 	const struct spaghetti_schema_descriptor *config_schema;
 	const struct spaghetti_schema_descriptor *const *record_schemas;
 	size_t record_schema_count;
@@ -73,6 +75,12 @@ count zero e relativa op NULL. Read/event possono dichiarare più schemi; ogni c
 ha il proprio argument schema. `start` e `stop` devono essere entrambi presenti o
 entrambi NULL. `api_version` vale `SPAGHETTI_MODULE_DRIVER_API_VERSION` e impedisce di
 accettare un plug-in con ABI incompatibile.
+
+`transport` dice al Manager quale modo Port acquisire prima di `init()`; un driver non
+riconfigura pin o controller. `power_requirement` è copiato nel descriptor immutabile:
+se il datasheet non offre ancora dati verificati usa `declared=false`, mai valori
+inventati. Su base passiva questo produce admission `UNVERIFIED`; su Core controllato
+un requirement dichiarato viene applicato rigidamente dalla fase 305.
 
 ### 2. Eliminare la tabella centrale con iterable sections
 
@@ -95,6 +103,8 @@ SPAGHETTI_MODULE_DRIVER_DEFINE(spaghetti_example_driver) = {
 	.type_id = "example",
 	.api_version = SPAGHETTI_MODULE_DRIVER_API_VERSION,
 	.required_capabilities = SPAGHETTI_PORT_CAP_I2C,
+	.transport = SPAGHETTI_PORT_TRANSPORT_I2C,
+	.power_requirement = { .declared = false },
 	.config_schema = &example_config_schema,
 	.record_schemas = example_record_schemas,
 	.record_schema_count = ARRAY_SIZE(example_record_schemas),
@@ -139,9 +149,22 @@ accetta command ID 1 con un BOOL field 1. Nessun file comune contiene più
 ### 4. Aggiornare Module Manager
 
 Apri header e `.c`. `spaghetti_module_request.driver_config` diventa una
-`const struct spaghetti_property_set *config`. `configure()` la presta a validate,
-endpoint e init. `read()` restituisce `struct spaghetti_record *`; `command()` riceve
-il nuovo comando. Aggiungi:
+`const struct spaghetti_property_set *config` e la request aggiunge la posizione e
+la scelta power runtime:
+
+```c
+struct spaghetti_module_placement {
+	spaghetti_bay_id_t bay_id;
+	spaghetti_power_rail_id_t power_rail_id;
+};
+```
+
+Il Flow deriva dalla Port tramite Topology. Entrambi gli ID possono essere
+`UNSPECIFIED`; se la Bay è dichiarata deve esistere nel Flow e se la rail è dichiarata
+serve anche una Bay. `configure()` presta properties a validate, endpoint e init,
+acquisisce nell'ordine Port→Power→context e pubblica in snapshot placement e stato
+admission. `read()` restituisce `struct spaghetti_record *`; `command()` riceve il
+nuovo comando. Aggiungi:
 
 ```c
 int spaghetti_module_manager_start_events(
@@ -192,6 +215,8 @@ stessi descrittori.
 - [ ] Registry non include né elenca driver concreti.
 - [ ] INA219 e Relay usano proprietà/record/comandi generici.
 - [ ] Manager gestisce start/stop e impedisce callback dopo remove.
+- [ ] Manager acquisisce Port e Power prima di init e li rilascia in ordine inverso.
+- [ ] Snapshot espone Flow/Bay/rail e admission senza fingere controlli passivi.
 - [ ] Un driver test-only compare senza modifiche centrali.
 
 ## Verifica e fine task

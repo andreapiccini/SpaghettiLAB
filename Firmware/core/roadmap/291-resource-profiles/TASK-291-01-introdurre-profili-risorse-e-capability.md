@@ -13,7 +13,8 @@ In Kconfig crea una `choice SPAGHETTI_RESOURCE_PROFILE` con una sola selezione f
 `MINIMAL`, `STANDARD` ed `EXTENDED`. La board ESP32-C3 seleziona `MINIMAL`; una board
 non può cambiare profilo a runtime. Ogni scelta imposta default bounded per Module,
 schedule, rule, proprietà per schema, record in coda, consumer dei record, peer BLE,
-principal, richieste in volo, sessioni TLS e servizi opzionali. Le costanti pubbliche
+principal, richieste in volo, sessioni TLS, Flow, Function Bay, rail e servizi
+opzionali. Le costanti pubbliche
 continuano a provenire da `CONFIG_SPAGHETTI_*`; non duplicare numeri nei `.c`, negli
 header, nei CDDL o nei test.
 
@@ -35,6 +36,9 @@ enum spaghetti_build_capability {
 	SPAGHETTI_BUILD_CAP_REMOTE_CONSOLE = BIT(5),
 	SPAGHETTI_BUILD_CAP_EXTERNAL_RAM = BIT(6),
 	SPAGHETTI_BUILD_CAP_HARDWARE_WATCHDOG = BIT(7),
+	SPAGHETTI_BUILD_CAP_RUNTIME_PORT_MUX = BIT(8),
+	SPAGHETTI_BUILD_CAP_POWER_SWITCHING = BIT(9),
+	SPAGHETTI_BUILD_CAP_POWER_MEASUREMENT = BIT(10),
 };
 
 struct spaghetti_capabilities {
@@ -51,6 +55,9 @@ struct spaghetti_capabilities {
 	uint8_t max_principals;
 	uint8_t max_inflight_requests;
 	uint8_t max_secure_sessions;
+	uint8_t max_flows;
+	uint8_t max_function_bays_per_flow;
+	uint8_t max_power_rails;
 	uint32_t replay_window_ms;
 	char core_variant[32];
 };
@@ -69,12 +76,15 @@ Definisci una sola macro di capacità per ogni dimensione, per esempio
 `CONFIG_SPAGHETTI_MAX_MODULES`, e usala direttamente per Config, Module Manager, codec,
 pool e capability pubblicata. Il task 310 dovrà usare
 `CONFIG_SPAGHETTI_MAX_PROPERTIES_PER_SET`; i task 345 e 360 useranno rispettivamente
-consumer e richieste in volo. Un profilo non è valido se due owner vedono limiti
+consumer e richieste in volo; le fasi 297 e 305 useranno Flow, Bay e rail. Un profilo
+non è valido se due owner vedono limiti
 diversi.
 
 Aggiungi `BUILD_ASSERT` per relazioni impossibili, per esempio capacità Config diversa
 dalla capacità Module Manager, consumer record minori dei transport compilati o
-sessioni sicure maggiori del workspace disponibile. Aggiungi inoltre un test che
+sessioni sicure maggiori del workspace disponibile. Imposta
+`CONFIG_SPAGHETTI_MAX_POWER_RAILS <= 32`, perché la fase 305 usa una mask `uint32_t`
+per dichiarare le rail che raggiungono una Bay. Aggiungi inoltre un test che
 compila deliberatamente una combinazione incoerente e si aspetta un errore di build.
 Crea `verification/resources/BASELINE.md` con flash, RAM statica e limiti di ogni
 build, senza ancora promettere valori del PCB finale.
@@ -105,6 +115,8 @@ if (spaghetti_capabilities_get(&caps) == 0 &&
 - [ ] Minimal non compila la console remota di produzione.
 - [ ] Update può confrontare variante, profilo e capability richieste.
 - [ ] Consumer, principal, richieste in volo e sessioni sicure sono bounded.
+- [ ] Flow, Bay e rail hanno limiti unici condivisi da firmware e protocollo.
+- [ ] Pin mux e controllo/misura power compaiono solo se la board ha backend reali.
 - [ ] Build assert, test negativo e baseline coprono ogni variante disponibile.
 
 ## Verifica e fine task

@@ -1,5 +1,10 @@
 # Fase 190 — Power
 
+> [!NOTE]
+> Questa fase completata introduce ownership e rollback delle risorse condivise. La
+> [fase 305](../305-power-topology/README.md) aggiungerà rail per Flow/Bay e distinguerà
+> jumper passivi da controllo elettrico verificabile, senza invalidare questa base.
+
 [← Indice del backlog](../README.md)
 
 **Stato:** ✅ DONE
