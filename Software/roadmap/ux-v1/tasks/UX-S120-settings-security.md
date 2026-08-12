@@ -1,6 +1,6 @@
 # UX-S120 — Settings, Security & Recovery
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S121–S124
 
@@ -50,5 +50,19 @@ applica per prima la convenzione "conferme distruttive" già definita in
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Settings, Security & Recovery" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Settings, Security & Recovery" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S120-settings-security/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Sei tab (Credenziali/Permessi/Backup & Versioni/Import-Export/Audit/Recovery).
+Credenziali sempre per riferimento opaco, mai un campo che ripopola un segreto
+esistente. Permesso mancante visivamente distinto da errore di rete. Export con
+sezione "Escluso automaticamente" sempre visibile e due opt-in espliciti
+deselezionati di default. Sei flussi di recovery guidato dedicati, mai un "riprova"
+condiviso. Pattern unico di conferma distruttiva (device ID/scope/conseguenze
+prima della conferma, digitare il nome per azioni multi-Core) applicato a tutte e
+cinque le operazioni di S124. `backend-behavior.md` cita S121/S122/S123/S124 punto
+per punto (tutte ⬜ TODO). **Questo era l'ultimo task della roadmap UX — tutte le 11
+schermate sono ora documentate.**
