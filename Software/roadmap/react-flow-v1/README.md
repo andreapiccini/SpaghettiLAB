@@ -24,7 +24,7 @@ finale end-to-end).
 | ✅ | [S013 — I tre grafi e i confini fra layer](tasks/S013-graph-boundaries.md) | Physical, Device Processing e System Automation Graph hanno ownership separata. |
 | ✅ | [S014 — ProjectV1, persistenza e comandi con undo/redo](tasks/S014-project-persistence-commands.md) | Project è persistibile, versionato e modificabile con undo/redo deterministico. |
 | | **S020 — Protocol SDK e trasporti** | |
-| ⬜ | [S021 — Codec e tipi Protocol V1](tasks/S021-codec-protocol-types.md) | Ogni tipo Protocol V1 ha codec CBOR lossless testato su golden vector. |
+| ✅ | [S021 — Codec e tipi Protocol V1](tasks/S021-codec-protocol-types.md) | Ogni tipo Protocol V1 ha codec CBOR lossless testato su golden vector. |
 | ⬜ | [S022 — SpaghettiClient e operazioni firmware](tasks/S022-spaghetti-client-operations.md) | Ogni operazione firmware è raggiungibile da un client con retry/correlation/paginazione corretti. |
 | ⬜ | [S023 — Adapter di trasporto](tasks/S023-transport-adapters.md) | MQTT e WebSocket/BLE producono gli stessi oggetti di dominio. |
 | ⬜ | [S024 — Streaming eventi e fixture fake](tasks/S024-event-streaming-fixtures.md) | Streaming con backpressure/gap espliciti; l'app si sviluppa senza hardware fisico. |

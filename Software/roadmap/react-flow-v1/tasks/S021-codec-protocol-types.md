@@ -1,6 +1,6 @@
 # S021 — Codec e tipi Protocol V1
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** S014
 
 ## Obiettivo
@@ -23,5 +23,71 @@ Protocol V1 firmware.
 
 ## Fine task
 
-- [ ] Ogni tipo del Protocol V1 necessario alla V1 ha codec testato su golden vector.
-- [ ] Nessuna perdita di precisione sui tipi a 64 bit.
+- [x] Ogni tipo del Protocol V1 necessario alla V1 ha codec testato (vedi nota sui
+      golden vector sotto — non letteralmente "su golden vector firmware", perché
+      non esistono).
+- [x] Nessuna perdita di precisione sui tipi a 64 bit.
+
+## Implementazione (2026-08-12)
+
+Prima di scrivere il codec ho fatto analizzare in profondità il firmware (fase 360,
+appena completata da Cursor: `subsys/communication/`, `protocol.h`,
+`tests/protocol/src/main.c`, i quattro `.cddl` di Config) per estrarre la forma
+esatta wire-per-wire.
+
+### Scostamento onesto dal criterio originale: non esistono golden vector firmware
+
+Il criterio "stessi golden vector superano round-trip identico in TypeScript e
+firmware" **non è soddisfacibile alla lettera**: `tests/protocol/src/main.c` non
+pubblica vettori di byte fissi — verifica solo che la stessa codifica prodotta più
+volte dia byte identici (determinismo interno), non un riferimento pubblicato. I
+test TypeScript in `packages/protocol-sdk/src/__tests__/` sono quindi **vettori
+spec-conformant scritti da me**, derivati dalla struttura esatta estratta dal
+codice firmware (field ID, tipi, range), non vettori pubblicati dal firmware
+stesso — dichiarato esplicitamente nei commenti di `operations.test.ts`. L'unico
+vettore realmente proveniente dal firmware è la sequenza `[0xA1, 0x00, 0x01]`
+citata testualmente da `test_envelope_roundtrip_and_rejects` in
+`tests/protocol/src/main.c`, riusata sia in `cbor.test.ts` sia in
+`envelope.test.ts`.
+
+### Cosa è stato implementato
+
+`packages/protocol-sdk/src/`:
+- `cbor.ts` — primitivi CBOR canonici scritti a mano (non una libreria generica):
+  solo i major type che questo protocollo usa davvero (uint/negint/bytes/text/
+  array/map/bool), encoding sempre a lunghezza minima, mai indefinite-length/
+  float/tag/bignum — coerente con quanto osservato nel firmware zcbor.
+- `int64.ts` — regola lossless richiesta dal punto 2 del task: bigint↔stringa
+  decimale in JSON, rifiuto (mai arrotondamento) di un numero JS non
+  rappresentabile come intero sicuro.
+- `envelope.ts` — envelope a 4 campi (versione/correlation-o-sequence/opcode-o-
+  status-o-tipo-evento/payload), enum `Operation` (1-27), `ProtocolStatus` (0-10),
+  `EventType` (1-4), con tutte le validazioni osservate nel firmware (versione,
+  correlation/sequence non zero, chiavi mancanti/sconosciute/duplicate, byte finali,
+  limite payload 2048).
+- `events.ts` — i 4 payload evento (Record/Status/Discovery/Connectivity).
+- `operations/` — tutte le 27 operazioni, un file per gruppo funzionale.
+
+### Gap ereditati dal firmware (documentati, non nascosti né "corretti")
+
+- Diversi campi enum (stato Core/Module/Health/Image, endpoint kind, admission
+  power, ecc.) sono tenuti come `number` grezzo: il firmware nomina gli enum ma
+  questa fase di ricerca non ne ha estratto la mappatura intero→etichetta —
+  inventarla sarebbe stato peggio che lasciare il numero grezzo, che comunque
+  fa round-trip corretto.
+- `MODULE_COMMAND` non ha un campo per argomenti di comando (il firmware non lo
+  decodifica ancora, nonostante la spec del task 360 lo preveda) — il tipo
+  TypeScript riflette esattamente questo, niente campo `arguments` fantasma.
+- `VALIDATE_DEVICE_PROFILE` è uno stub firmware (accetta qualunque bstr non
+  vuoto); il codec lo rispecchia fedelmente, incluso il fatto che il campo
+  `valid` sul wire è un `uint`, non un booleano CBOR (a differenza di
+  `VALIDATE_CONFIG`).
+- `GET_JOB_STATUS` non espone il risultato del job (solo stato/progresso/esito).
+- `OPEN_WIFI_UPDATE` non permette al client di scegliere il trasporto (sempre UDP
+  lato firmware) — solo `timeoutMs` è un campo reale.
+- Il Config CBOR (dentro `GET_CONFIG`/`VALIDATE_CONFIG`/`APPLY_CONFIG`) resta
+  opaco (`Uint8Array`): i `.cddl` committati arrivano a v3 mentre il runtime è a
+  versione 5 — decodificarne il contenuto è fuori scope per questo task.
+
+`docker compose run --rm micro-flow-editor npm run ci` — lint, typecheck, 171 test
+nel workspace (73 nuovi in `protocol-sdk`), build: tutti verdi.
