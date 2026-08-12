@@ -218,10 +218,8 @@ void spaghetti_core_boot_reboot(void)
 	ztest_test_fail();
 }
 
-int spaghetti_discovery_init(spaghetti_discovery_sink_t sink, void *user_data)
+int spaghetti_discovery_init(void)
 {
-	ARG_UNUSED(user_data);
-	zassert_not_null(sink);
 	return record_step(STEP_DISCOVERY);
 }
 

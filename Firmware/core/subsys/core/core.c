@@ -40,7 +40,6 @@
 #include <spaghetti/wifi_profiles.h>
 
 #include "core_boot_internal.h"
-#include "../config/legacy_driver_config.h"
 #include "../services/service_registry.h"
 
 LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
@@ -75,59 +74,6 @@ static int fail_initialization(const char *component, int err)
 	atomic_set(&core_state, SPAGHETTI_CORE_FAILED);
 	LOG_ERR("%s initialization failed: err=%d", component, err);
 	return err;
-}
-
-static int discovery_event_sink(const struct spaghetti_discovery_event *event,
-				void *user_data)
-{
-	struct spaghetti_module_snapshot module;
-	spaghetti_module_id_t module_id;
-	int err;
-
-	ARG_UNUSED(user_data);
-	if (event == NULL) {
-		return -EINVAL;
-	}
-
-	if (event->type == SPAGHETTI_DISCOVERY_UPSERT) {
-		struct spaghetti_property_set properties;
-		struct spaghetti_module_request request;
-		int convert_err;
-
-		convert_err = spaghetti_legacy_driver_config_bytes_to_properties(
-			event->result.type_id, event->result.driver_config,
-			event->result.driver_config_size, &properties);
-		if (convert_err < 0) {
-			return convert_err;
-		}
-
-		memset(&request, 0, sizeof(request));
-		request.key = event->result.key;
-		request.port_id = event->result.port_id;
-		request.type_id = event->result.type_id;
-		request.config = &properties;
-		request.placement.bay_id = SPAGHETTI_BAY_ID_UNSPECIFIED;
-		request.placement.power_rail_id = SPAGHETTI_POWER_RAIL_UNSPECIFIED;
-		request.revision = event->result.generation;
-
-		return spaghetti_module_manager_configure(&request, &module_id);
-	}
-	if (event->type != SPAGHETTI_DISCOVERY_REMOVE) {
-		return -EINVAL;
-	}
-
-	err = spaghetti_module_manager_get_by_key(event->result.key, &module);
-	if (err == -ENOENT) {
-		return 0;
-	}
-	if (err < 0) {
-		return err;
-	}
-	if (module.revision != event->result.generation) {
-		return -ESTALE;
-	}
-
-	return spaghetti_module_manager_remove(module.id, module.revision);
 }
 
 static int retain_startup_config(void)
@@ -342,7 +288,7 @@ int spaghetti_core_init(void)
 		if (err < 0) {
 			goto mqtt_failed;
 		}
-		err = spaghetti_discovery_init(discovery_event_sink, NULL);
+		err = spaghetti_discovery_init();
 		if (err < 0) {
 			goto discovery_failed;
 		}

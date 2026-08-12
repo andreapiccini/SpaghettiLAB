@@ -129,7 +129,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [342 — Blocchi elaborazione](342-processing-blocks/README.md) | Pipeline bounded collegano blocchi firmware catalogati usando soltanto Config. |
 | ✅ | [345 — Consegna record](345-record-delivery/README.md) | Ogni adapter ha un cursore indipendente e perdite/reboot restano espliciti. |
 | ✅ | [348 — Capability Pack e risorse](348-feature-packs-resources/README.md) | Immagini componibili dichiarano feature installate e misurano flash, RAM, pool e stack. |
-| ⬜ | [350 — Discovery multi-provider V1](350-discovery-providers-v1/README.md) | Manuale, EEPROM, probe, analogico e 1-Wire convivono come strategie opzionali. |
+| ✅ | [350 — Discovery multi-provider V1](350-discovery-providers-v1/README.md) | Manuale, EEPROM, probe, analogico e 1-Wire convivono come strategie opzionali. |
 | ⬜ | [355 — Identità e reset](355-identity-security-lifecycle/README.md) | Identità, principal, permessi, credenziali, revoca e reset hanno ownership definita. |
 | ⬜ | [360 — Communication Protocol V1](360-communication-protocol-v1/README.md) | Envelope CBOR, Config CAS, errori stabili, replay e job sono comuni a ogni adapter. |
 | ⬜ | [365 — Protocollo BLE](365-ble-protocol/README.md) | BLE trasporta envelope V1 autenticati con framing bounded. |

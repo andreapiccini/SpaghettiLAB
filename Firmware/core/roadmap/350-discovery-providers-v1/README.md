@@ -2,7 +2,7 @@
 
 [← Indice del backlog](../README.md)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 
 ## Obiettivo
 
@@ -11,10 +11,10 @@ senza rendere obbligatoria EEPROM o probing automatico.
 
 ## Task
 
-1. ⬜ [TASK-350-01 — Implementare Discovery multi-provider](TASK-350-01-implementare-discovery-multi-provider.md)
+1. ✅ [TASK-350-01 — Implementare Discovery multi-provider](TASK-350-01-implementare-discovery-multi-provider.md)
 
 ## Criteri di completamento della fase
 
-- [ ] Provider auto-registrati dichiarano metodo, affidabilità e invasività.
-- [ ] Manuale e Discovery convivono.
-- [ ] Un candidato non crea hardware runtime prima dell'accettazione.
+- [x] Provider auto-registrati dichiarano metodo, affidabilità e invasività.
+- [x] Manuale e Discovery convivono.
+- [x] Un candidato non crea hardware runtime prima dell'accettazione.

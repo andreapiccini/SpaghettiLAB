@@ -175,12 +175,12 @@ config HEAP_MEM_POOL_SIZE
 	  allocator metadata and alignment overhead.
 
 config SPAGHETTI_DISCOVERY_MAX_RESULTS
-	int "Maximum number of accepted Discovery results"
+	int "Maximum number of retained Discovery candidates"
 	range 1 SPAGHETTI_MAX_MODULES
 	default SPAGHETTI_MAX_MODULES
 	help
-	  Fixed capacity of the Discovery table indexed by stable Module key.
-	  Several entries may reference the same physical Port.
+	  Fixed capacity of the Discovery candidate table. Several candidates may
+	  reference the same physical Port. Manual Modules do not consume slots.
 
 config SPAGHETTI_POWER
 	bool "Enable shared controllable power resources"

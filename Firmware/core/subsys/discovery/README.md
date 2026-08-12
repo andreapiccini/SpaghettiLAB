@@ -1,122 +1,96 @@
 # Discovery
 
 [← Project README](../../README.md) · [Architecture](../../ARCHITECTURE.md) ·
-[1:N migration](../../roadmap/PORT-MODULE-1-N-MIGRATION.md)
+[Providers](providers/README.md)
 
-Discovery normalizes proposed Module identities. One provider scan of a shared Port may
-produce zero, one, or many results. Discovery never treats a Port as one proposal slot
-and never creates a live Module itself.
+Discovery collects ephemeral hardware candidates from optional providers. It never
+creates live Modules and never applies Config. Manual Modules continue to enter
+Config directly and do not consume Discovery slots.
 
 ## Ownership and model
 
 Discovery owns a fixed-capacity table of
-`CONFIG_SPAGHETTI_DISCOVERY_MAX_RESULTS` accepted proposals indexed by stable
-`spaghetti_module_key_t`. The capacity cannot exceed the Module Manager capacity.
-Generation is tracked per key, not per Port, so a stale response for INA219 `0x40`
-cannot invalidate INA219 `0x41` on the same Port.
+`CONFIG_SPAGHETTI_DISCOVERY_MAX_RESULTS` candidates. Duplicate keys are
+`port + provider_id + identity`. Candidate IDs are ephemeral; generation supports
+compare-and-swap accept/reject.
 
 ```c
-struct spaghetti_discovery_result {
-    spaghetti_module_key_t key;
+struct spaghetti_discovery_candidate {
+    spaghetti_discovery_candidate_id_t id;
     spaghetti_port_id_t port_id;
-    char type_id[SPAGHETTI_TYPE_ID_MAX];
-    uint8_t driver_config[SPAGHETTI_DRIVER_CONFIG_MAX];
-    size_t driver_config_size;
-    enum spaghetti_discovery_source source;
+    spaghetti_flow_id_t flow_id;
+    spaghetti_bay_id_t bay_id;
+    spaghetti_power_rail_id_t power_rail_id;
+    char provider_id[SPAGHETTI_DISCOVERY_PROVIDER_ID_SIZE];
+    enum spaghetti_discovery_method method;
+    enum spaghetti_discovery_confidence confidence;
+    uint32_t probe_flags;
+    uint8_t identity_size;
+    uint8_t identity[SPAGHETTI_DISCOVERY_IDENTITY_MAX];
+    char suggested_type_id[SPAGHETTI_TYPE_ID_MAX];
+    struct spaghetti_property_set suggested_properties;
     uint32_t generation;
 };
-
-enum spaghetti_discovery_event_type {
-    SPAGHETTI_DISCOVERY_UPSERT,
-    SPAGHETTI_DISCOVERY_REMOVE,
-};
-
-struct spaghetti_discovery_event {
-    enum spaghetti_discovery_event_type type;
-    struct spaghetti_discovery_result result;
-};
 ```
 
-The result and event contain owned bounded arrays, not provider pointers. An UPSERT
-contains complete identity/config. A REMOVE uses the exact key and expected generation;
-it removes only that desired/live instance.
+HEURISTIC candidates are never auto-applied. AUTHORITATIVE candidates may be
+auto-accepted later only by an explicit allowlisted policy. Bay and rail remain
+`UNSPECIFIED` when the method cannot observe them.
 
-## Provider and sink contracts
+## Provider registry
 
-```c
-typedef int (*spaghetti_discovery_sink_t)(
-    const struct spaghetti_discovery_event *event,
-    void *user_data);
-
-typedef int (*spaghetti_discovery_emit_t)(
-    const struct spaghetti_discovery_result *result,
-    void *user_data);
-
-struct spaghetti_discovery_provider_ops {
-    int (*scan)(spaghetti_port_id_t port_id,
-                spaghetti_discovery_emit_t emit,
-                void *emit_user_data,
-                k_timeout_t timeout);
-};
-```
-
-`scan()` may call `emit()` several times before returning. Each call is bounded and the
-result is copied. The provider owns neither Config nor Manager slots. A provider must
-have a real identity mechanism; probing arbitrary I2C addresses cannot identify an
-unknown module type by itself.
+Providers self-register with `SPAGHETTI_DISCOVERY_PROVIDER_DEFINE` into a linker
+section. Discovery iterates providers whose required Port capabilities match and
+whose probe flags are allowed by the caller-owned scan policy. Board V1 links
+zero hardware providers. Fake providers exist only under
+`tests/discovery_providers/`.
 
 ## API contract
 
 ```c
-int spaghetti_discovery_init(spaghetti_discovery_sink_t sink, void *user_data);
-int spaghetti_discovery_submit_manual(
-    const struct spaghetti_discovery_result *result);
-int spaghetti_discovery_scan_port(spaghetti_port_id_t port_id,
-                                  k_timeout_t timeout);
-int spaghetti_discovery_invalidate(spaghetti_module_key_t key,
-                                   uint32_t expected_generation);
+int spaghetti_discovery_init(void);
+int spaghetti_discovery_scan_port(
+    spaghetti_port_id_t port_id,
+    const struct spaghetti_discovery_scan_policy *policy);
+int spaghetti_discovery_list(
+    struct spaghetti_discovery_candidate *out,
+    size_t capacity,
+    size_t *out_count);
+int spaghetti_discovery_accept(
+    spaghetti_discovery_candidate_id_t candidate_id,
+    spaghetti_module_key_t key,
+    uint32_t expected_generation,
+    struct spaghetti_module_config *out_module);
+int spaghetti_discovery_reject(
+    spaghetti_discovery_candidate_id_t candidate_id,
+    uint32_t expected_generation);
 ```
 
-- `init()` stores a firmware-lifetime sink/context and clears the bounded proposal
-  table;
-- `submit_manual()` validates and copies one result, rejects a duplicate/stale key, and
-  emits UPSERT;
-- `scan_port()` validates the Port and currently returns `-ENOTSUP`: the ESP32-C3
-  board has no hardware identity provider, and probing an I2C address would not prove
-  which driver owns that address;
-- `invalidate()` emits REMOVE for one exact key after the generation check. Sibling
-  keys on the same Port are unchanged.
+- `init()` clears the candidate table;
+- `scan_port()` clears candidates for that Port, runs matching providers, and
+  returns `0` with an empty list when no providers match;
+- `list(NULL, 0, &count)` is count-only;
+- `accept()` copies a Module config ready for Config and removes the candidate;
+  it does not apply Config or call Manager;
+- `reject()` removes only the candidate.
 
-All functions run in thread/workqueue context. `timeout` is passed by value and bounds
-provider work. Input pointers are borrowed for each call; Discovery copies any data it
-retains. Expected errors include `-EINVAL`, `-ENOENT`, `-ENOSPC`, `-ESTALE`,
-`-ENOTSUP`, `-EBUSY`, `-ETIMEDOUT`, and sink/provider errors.
+## Communication
 
-The provider operation type is the contract for a future board-specific identity
-mechanism. It is deliberately not registered by this phase. The complete Engine adds
-the Config/Manager reconciliation sink; Discovery itself remains independent of both
-owners.
+A future Communication event may notify hosts when a scan completes. Until then,
+callers poll with `spaghetti_discovery_list()` after a successful scan.
 
 ## Flow
 
 ```mermaid
 sequenceDiagram
-    participant Provider
+    participant Host
     participant Discovery
-    participant Sink as Config/Manager sink
-    Provider->>Discovery: scan Port 0
-    Provider->>Discovery: emit key 10, ina219, 0x40
-    Discovery->>Sink: UPSERT key 10
-    Provider->>Discovery: emit key 11, ina219, 0x41
-    Discovery->>Sink: UPSERT key 11
-    Discovery->>Sink: REMOVE key 10, generation N
-    Note over Sink: key 11 remains active on Port 0
+    participant Provider
+    participant Config
+    Host->>Discovery: scan_port(policy)
+    Discovery->>Provider: scan(port)
+    Provider->>Discovery: emit candidate
+    Host->>Discovery: list / accept(key)
+    Discovery-->>Host: module_config
+    Host->>Config: insert module + apply
 ```
-
-## Contract guarantees
-
-- One Port may appear in many independent proposal records; Discovery owns those
-  bounded records.
-- Generation and invalidation operate on stable Module keys.
-- A scan may emit several Modules and never implies Port exclusivity.
-- Discovery normalizes identity; Manager remains the sole owner of live instances.

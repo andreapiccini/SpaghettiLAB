@@ -72,6 +72,7 @@ target_sources(app PRIVATE
   subsys/block_registry/block_registry.c
   subsys/module_manager/module_manager.c
   subsys/discovery/discovery.c
+  subsys/discovery/identity_record.c
   subsys/config/config.c
   subsys/config/config_cbor.c
   subsys/config/config_cbor_legacy.c
@@ -123,6 +124,7 @@ zephyr_linker_sources(SECTIONS subsys/block_registry/block_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/device_profiles/device_profile_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/data/record_delivery_sections.ld)
 zephyr_linker_sources(SECTIONS subsys/feature_registry/feature_pack_sections.ld)
+zephyr_linker_sources(SECTIONS subsys/discovery/discovery_sections.ld)
 
 get_target_property(APP_SRCS app SOURCES)
 

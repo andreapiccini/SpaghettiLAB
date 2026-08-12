@@ -1,6 +1,6 @@
 # TASK-350-01 — Implementare Discovery multi-provider
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 350 — Discovery multi-provider V1
 
 ## Cosa devo fare
@@ -181,13 +181,13 @@ autorevoli conosciute.
 
 ## Checklist di completamento
 
-- [ ] Provider sono auto-registrati e capability-filtered.
-- [ ] Manuale funziona senza alcun provider.
-- [ ] Candidati possiedono identity, suggerimenti e generation.
-- [ ] Candidate distingue Bay/rail osservate da quelle non conoscibili.
-- [ ] Probe state-changing richiede policy esplicita.
-- [ ] Accept produce Config ma non crea direttamente Module.
-- [ ] Fake coprono EEPROM, I2C register, analogico e 1-Wire.
+- [x] Provider sono auto-registrati e capability-filtered.
+- [x] Manuale funziona senza alcun provider.
+- [x] Candidati possiedono identity, suggerimenti e generation.
+- [x] Candidate distingue Bay/rail osservate da quelle non conoscibili.
+- [x] Probe state-changing richiede policy esplicita.
+- [x] Accept produce Config ma non crea direttamente Module.
+- [x] Fake coprono EEPROM, I2C register, analogico e 1-Wire.
 
 ## Verifica e fine task
 
