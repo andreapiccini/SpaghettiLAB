@@ -81,7 +81,10 @@ struct spaghetti_module {
 };
 
 /**
- * @brief Normalized electrical measurement returned by a Module driver.
+ * @brief Legacy electrical measurement returned by V0 Module drivers.
+ *
+ * Prefer schema-backed @c spaghetti_record_payload for new drivers. Runtime and
+ * Data still consume this type until phase 340 migrates the electrical path.
  */
 struct spaghetti_sample {
 	int32_t bus_voltage_microvolts; /**< Bus voltage in microvolts. */

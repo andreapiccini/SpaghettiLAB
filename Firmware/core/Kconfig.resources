@@ -138,6 +138,25 @@ config SPAGHETTI_MAX_PROPERTIES_PER_SET
 	default 16 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
 	default 24
 
+config SPAGHETTI_VALUE_BYTES_MAX
+	int
+	range 1 128
+	default 16 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 32 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 64
+	help
+	  Maximum owned opaque bytes in one SPAGHETTI_VALUE_BYTES field.
+
+config SPAGHETTI_VALUE_TEXT_MAX
+	int
+	range 1 128
+	default 32 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 48 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 64
+	help
+	  Maximum UTF-8 payload bytes in one SPAGHETTI_VALUE_TEXT field,
+	  excluding the mandatory terminating NUL.
+
 config SPAGHETTI_MAX_PROTOCOL_PAYLOAD
 	int
 	range 128 2048

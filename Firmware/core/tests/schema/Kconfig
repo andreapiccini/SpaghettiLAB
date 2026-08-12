@@ -1,0 +1,9 @@
+mainmenu "Spaghetti Schema tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 3
+
+source "Kconfig.zephyr"

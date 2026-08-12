@@ -1,6 +1,6 @@
 # TASK-310-01 — Introdurre schemi e valori tipizzati
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 310 — Schemi e valori V1
 
 ## Cosa devo fare
@@ -258,16 +258,16 @@ tabella specifica INA219.
 
 ## Checklist di completamento
 
-- [ ] Property set contiene solo valori owned e bounded.
-- [ ] Descrittori hanno lifetime firmware e schema/version stabili.
-- [ ] Testo, enum, default e descrizioni sono rappresentabili senza puntatori nei valori.
-- [ ] Record e comandi non contengono tipi INA219/Relay.
-- [ ] Timestamp, boot ID, sequence e rollover hanno semantica non ambigua.
-- [ ] Lookup e validazione coprono duplicati, required, tipi e range.
-- [ ] Il mapping lossless INT64/UINT64 per JavaScript è documentato.
-- [ ] Semantic e reference group permettono a un editor di costruire collegamenti senza hardcode.
-- [ ] Tutte le capacità provengono dal profilo 291.
-- [ ] Dimensione RAM del record è documentata.
+- [x] Property set contiene solo valori owned e bounded.
+- [x] Descrittori hanno lifetime firmware e schema/version stabili.
+- [x] Testo, enum, default e descrizioni sono rappresentabili senza puntatori nei valori.
+- [x] Record e comandi non contengono tipi INA219/Relay.
+- [x] Timestamp, boot ID, sequence e rollover hanno semantica non ambigua.
+- [x] Lookup e validazione coprono duplicati, required, tipi e range.
+- [x] Il mapping lossless INT64/UINT64 per JavaScript è documentato.
+- [x] Semantic e reference group permettono a un editor di costruire collegamenti senza hardcode.
+- [x] Tutte le capacità provengono dal profilo 291.
+- [x] Dimensione RAM del record è documentata.
 
 ## Verifica e fine task
 

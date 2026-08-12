@@ -16,6 +16,10 @@ module = SPAGHETTI_TOPOLOGY
 module-str = spaghetti_topology
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_SCHEMA
+module-str = spaghetti_schema
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_DRIVER_REGISTRY
 module-str = spaghetti_driver_registry
 source "subsys/logging/Kconfig.template.log_config"

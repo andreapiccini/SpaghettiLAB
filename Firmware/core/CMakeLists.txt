@@ -46,6 +46,7 @@ target_sources(app PRIVATE
   subsys/port/port.c
   subsys/port/port_backend_board.c
   subsys/topology/topology.c
+  subsys/schema/schema.c
   subsys/driver_registry/driver_registry.c
   subsys/module_manager/module_manager.c
   subsys/discovery/discovery.c
