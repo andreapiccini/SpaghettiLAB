@@ -1,6 +1,6 @@
 # TASK-365-01 — Aggiungere il trasporto BLE
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 365 — Protocollo Spaghetti su BLE
 
 ## Cosa devo fare
@@ -93,15 +93,15 @@ la fase 375.
 
 ## Checklist di completamento
 
-- [ ] Capability BLE deriva dalla build e da `bt_enable()` riuscito.
-- [ ] UUID e framing sono congelati.
-- [ ] Request oltre 2048 byte o incompleta viene scartata.
-- [ ] Pairing senza prova applicativa non autorizza operazioni.
-- [ ] La credenziale risolve un principal revocabile con permessi bounded.
-- [ ] Il consumer Record Delivery BLE ha cursore indipendente da MQTT.
-- [ ] L'adapter non possiede una seconda replay cache.
-- [ ] Stop libera connessione, advertising, callback e buffer.
-- [ ] BLE e Wi-Fi sono provati insieme su ESP32-C3.
+- [x] Capability BLE deriva dalla build e da `bt_enable()` riuscito.
+- [x] UUID e framing sono congelati.
+- [x] Request oltre 2048 byte o incompleta viene scartata.
+- [x] Pairing senza prova applicativa non autorizza operazioni.
+- [x] La credenziale risolve un principal revocabile con permessi bounded.
+- [x] Il consumer Record Delivery BLE ha cursore indipendente da MQTT.
+- [x] L'adapter non possiede una seconda replay cache.
+- [x] Stop libera connessione, advertising, callback e buffer.
+- [ ] BLE e Wi-Fi sono provati insieme su ESP32-C3 (`CONFIG_BT` ancora off: budget DRAM board V1).
 
 ## Verifica e fine task
 

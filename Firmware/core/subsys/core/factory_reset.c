@@ -10,6 +10,7 @@
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/ota.h>
+#include <spaghetti/ble.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/service.h>
@@ -54,6 +55,8 @@ static void stop_runtime_services(void)
 	(void)spaghetti_wifi_profiles_stop(
 		K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
 	(void)spaghetti_remote_console_stop(
+		K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
+	(void)spaghetti_ble_stop(
 		K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
 	(void)spaghetti_ota_stop(
 		K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
@@ -108,8 +111,12 @@ static int delete_credentials_scope(void)
 
 static int delete_ble_bonds_scope(void)
 {
-	/* Phase 365 will clear BLE bonds. Documented no-op success for V1. */
-	return 0;
+	int err = spaghetti_ble_clear_bonds();
+
+	if ((err == 0) || (err == -ENOENT) || (err == -ENOTSUP)) {
+		return 0;
+	}
+	return err;
 }
 
 static int force_maintenance(void)

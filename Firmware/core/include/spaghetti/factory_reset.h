@@ -19,7 +19,7 @@ enum spaghetti_reset_scope {
 	SPAGHETTI_RESET_CONFIG = BIT(0), /**< Persistent Config Settings record. */
 	SPAGHETTI_RESET_NETWORK = BIT(1), /**< Wi-Fi profiles and preferred SSID. */
 	SPAGHETTI_RESET_CREDENTIALS = BIT(2), /**< OTA, MQTT, and remote-console secrets. */
-	SPAGHETTI_RESET_BLE_BONDS = BIT(3), /**< BLE bonds; no-op stub until phase 365. */
+	SPAGHETTI_RESET_BLE_BONDS = BIT(3), /**< BLE bonds and app credentials. */
 	SPAGHETTI_RESET_ALL = 0x0f, /**< Every defined reset scope. */
 };
 
@@ -58,7 +58,8 @@ void spaghetti_factory_reset_set_acting_principal(spaghetti_principal_id_t id);
  * @retval -EIO At least one selected namespace could not be deleted.
  * @retval -errno A stop, delete, or maintenance transition failed.
  *
- * @note BLE bond clearing is a documented no-op success until phase 365.
+ * @note BLE bond and application-credential clearing runs when
+ *       @ref SPAGHETTI_RESET_BLE_BONDS is selected.
  */
 int spaghetti_factory_reset(uint32_t scope);
 

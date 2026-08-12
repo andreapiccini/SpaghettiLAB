@@ -535,6 +535,12 @@ int spaghetti_remote_console_get_status(
 	return 0;
 }
 
+void spaghetti_ble_close_peers_for_principal(
+	spaghetti_principal_id_t principal_id)
+{
+	ARG_UNUSED(principal_id);
+}
+
 int spaghetti_wifi_profiles_set(
 	const struct spaghetti_wifi_profile_config *config)
 {

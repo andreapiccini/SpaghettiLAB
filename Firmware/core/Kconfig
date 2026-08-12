@@ -114,6 +114,10 @@ module = SPAGHETTI_REMOTE_CONSOLE
 module-str = spaghetti_remote_console
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_BLE
+module-str = spaghetti_ble
+source "subsys/logging/Kconfig.template.log_config"
+
 module = SPAGHETTI_MQTT
 module-str = spaghetti_mqtt
 source "subsys/logging/Kconfig.template.log_config"
@@ -436,6 +440,30 @@ config SPAGHETTI_REMOTE_CONSOLE_CREDENTIAL_INPUT_TIMEOUT_SECONDS
 	default 60
 	help
 	  Maximum hidden-input wait used only by the local development USB Shell.
+
+config SPAGHETTI_BLE
+	bool
+	default y
+	depends on BT
+	help
+	  Compile the authenticated BLE Protocol V1 adapter. Selected automatically
+	  when CONFIG_BT is enabled so capability snapshots stay accurate.
+
+config SPAGHETTI_BLE_REASSEMBLY_TIMEOUT_MS
+	int "BLE request reassembly timeout in milliseconds"
+	depends on BT
+	range 100 60000
+	default 5000
+	help
+	  Incomplete framed requests are discarded after this idle interval.
+
+config SPAGHETTI_BLE_EVENT_CREDIT
+	int "BLE event notify credit per authenticated peer"
+	depends on BT
+	range 1 16
+	default 4
+	help
+	  Bounded notify credit. Exhausted credit increments event_dropped.
 
 config SPAGHETTI_OTA_WORK_PRIORITY
 	int "OTA lifecycle workqueue priority"

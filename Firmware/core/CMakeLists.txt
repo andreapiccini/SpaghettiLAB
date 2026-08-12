@@ -130,6 +130,16 @@ else()
   )
 endif()
 
+if(CONFIG_BT)
+  target_sources(app PRIVATE
+    subsys/communication/ble.c
+  )
+else()
+  target_sources(app PRIVATE
+    subsys/communication/ble_disabled.c
+  )
+endif()
+
 target_sources_ifdef(CONFIG_SPAGHETTI_POWER app PRIVATE
   subsys/power/power.c
 )

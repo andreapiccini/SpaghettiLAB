@@ -9,6 +9,7 @@
 
 #include <spaghetti/capabilities.h>
 #include <spaghetti/connectivity.h>
+#include <spaghetti/ble.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/ota.h>
 #include <spaghetti/remote_console.h>
@@ -114,12 +115,18 @@ static const char *service_id(
 static int connectivity_start(
 	enum spaghetti_connectivity_service service)
 {
-	const char *id = service_id(service);
+	const char *id;
 	int err;
 
+	if (service == SPAGHETTI_CONNECTIVITY_SERVICE_BLE) {
+		err = spaghetti_ble_start();
+		return ((err == 0) || (err == -EALREADY) ||
+			(err == -ENOTSUP)) ? 0 : err;
+	}
+
+	id = service_id(service);
 	if (id == NULL) {
-		return (service == SPAGHETTI_CONNECTIVITY_SERVICE_BLE) ? 0 :
-			-EINVAL;
+		return -EINVAL;
 	}
 	err = spaghetti_service_start(id);
 	return (err == -EALREADY) ? 0 : err;
@@ -128,12 +135,19 @@ static int connectivity_start(
 static int connectivity_stop(
 	enum spaghetti_connectivity_service service)
 {
-	const char *id = service_id(service);
+	const char *id;
 	int err;
 
+	if (service == SPAGHETTI_CONNECTIVITY_SERVICE_BLE) {
+		err = spaghetti_ble_stop(
+			K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));
+		return ((err == 0) || (err == -EALREADY) ||
+			(err == -ENOTSUP)) ? 0 : err;
+	}
+
+	id = service_id(service);
 	if (id == NULL) {
-		return (service == SPAGHETTI_CONNECTIVITY_SERVICE_BLE) ? 0 :
-			-EINVAL;
+		return -EINVAL;
 	}
 	err = spaghetti_service_stop(
 		id, K_MSEC(CONFIG_SPAGHETTI_SERVICE_STOP_MAX_MS));

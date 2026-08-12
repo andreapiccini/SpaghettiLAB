@@ -13,6 +13,7 @@
 #include <zephyr/sys/util.h>
 
 #include <spaghetti/access_control.h>
+#include <spaghetti/ble.h>
 #include <spaghetti/health.h>
 #include <spaghetti/protocol.h>
 
@@ -718,4 +719,5 @@ void spaghetti_communication_invalidate_principal(
 		}
 	}
 	k_mutex_unlock(&communication_lock);
+	spaghetti_ble_close_peers_for_principal(principal_id);
 }

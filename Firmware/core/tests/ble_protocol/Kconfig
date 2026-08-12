@@ -1,0 +1,29 @@
+mainmenu "Spaghetti BLE protocol tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_BLE_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RECORD_DELIVERY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_COMMUNICATION_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_BLE_REASSEMBLY_TIMEOUT_MS
+	int
+	default 50
+
+config SPAGHETTI_BLE_EVENT_CREDIT
+	int
+	default 2
+
+config SPAGHETTI_PROTOCOL_REPLAY_WINDOW_MS
+	int
+	default 1000
+
+source "Kconfig.zephyr"

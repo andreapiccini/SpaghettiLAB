@@ -9,6 +9,7 @@
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/ota.h>
+#include <spaghetti/ble.h>
 #include <spaghetti/remote_console.h>
 #include <spaghetti/communication.h>
 
@@ -78,6 +79,7 @@ static void revoke_bound_credentials(spaghetti_principal_id_t id)
 	(void)spaghetti_ota_delete_credentials_for_principal(id);
 	(void)spaghetti_remote_console_delete_credentials_for_principal(id);
 	(void)spaghetti_mqtt_delete_credentials_for_principal(id);
+	(void)spaghetti_ble_delete_credentials_for_principal(id);
 	spaghetti_communication_invalidate_principal(id);
 }
 

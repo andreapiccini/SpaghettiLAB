@@ -6,6 +6,7 @@
 #include <zephyr/ztest.h>
 
 #include <spaghetti/access_control.h>
+#include <spaghetti/ble.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/mqtt.h>
 #include <spaghetti/ota.h>
@@ -16,11 +17,14 @@ static enum spaghetti_maintenance_link_state maintenance_state =
 static spaghetti_principal_id_t ota_principal;
 static spaghetti_principal_id_t console_principal;
 static spaghetti_principal_id_t mqtt_principal;
+static spaghetti_principal_id_t ble_principal;
 static bool ota_present;
 static bool console_present;
 static bool mqtt_present;
+static bool ble_present;
 static spaghetti_principal_id_t invalidated_principal;
 static int invalidate_calls;
+static int ble_close_calls;
 
 enum spaghetti_maintenance_link_state
 spaghetti_maintenance_link_get_state(void)
@@ -64,6 +68,19 @@ int spaghetti_mqtt_delete_credentials_for_principal(
 	return 0;
 }
 
+int spaghetti_ble_delete_credentials_for_principal(
+	spaghetti_principal_id_t principal_id)
+{
+	if ((principal_id == 0U) || !ble_present ||
+	    (ble_principal != principal_id)) {
+		return -ENOENT;
+	}
+	ble_present = false;
+	ble_principal = 0U;
+	++ble_close_calls;
+	return 0;
+}
+
 void spaghetti_communication_invalidate_principal(
 	spaghetti_principal_id_t principal_id)
 {
@@ -77,11 +94,14 @@ static void reset_state(void)
 	ota_present = false;
 	console_present = false;
 	mqtt_present = false;
+	ble_present = false;
 	ota_principal = 0U;
 	console_principal = 0U;
 	mqtt_principal = 0U;
+	ble_principal = 0U;
 	invalidated_principal = 0U;
 	invalidate_calls = 0;
+	ble_close_calls = 0;
 }
 
 ZTEST(access_control, test_roles_authorize_revoke_and_audit)
@@ -130,6 +150,8 @@ ZTEST(access_control, test_roles_authorize_revoke_and_audit)
 	console_principal = 2U;
 	mqtt_present = true;
 	mqtt_principal = 3U;
+	ble_present = true;
+	ble_principal = 2U;
 
 	zassert_ok(spaghetti_principal_revoke(2U));
 	zassert_equal(spaghetti_principal_authorize(
@@ -138,7 +160,9 @@ ZTEST(access_control, test_roles_authorize_revoke_and_audit)
 		3U, SPAGHETTI_PERMISSION_READ));
 	zassert_false(ota_present);
 	zassert_false(console_present);
+	zassert_false(ble_present);
 	zassert_true(mqtt_present);
+	zassert_equal(ble_close_calls, 1);
 	zassert_equal(invalidate_calls, 1);
 	zassert_equal(invalidated_principal, 2U);
 	zassert_equal(spaghetti_principal_revoke(

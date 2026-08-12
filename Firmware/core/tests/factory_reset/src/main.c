@@ -7,6 +7,7 @@
 #include <zephyr/ztest.h>
 
 #include <spaghetti/access_control.h>
+#include <spaghetti/ble.h>
 #include <spaghetti/factory_reset.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/mqtt.h>
@@ -24,13 +25,17 @@ static bool wifi_present = true;
 static bool ota_present = true;
 static bool console_present = true;
 static bool mqtt_present = true;
+static bool ble_bonds_present = true;
 static int wifi_delete_error;
 static int config_delete_error;
 static int ota_clear_error;
+static int ble_clear_error;
 static int reboot_calls;
 static int maintenance_once_calls;
 static int maintenance_enter_calls;
 static int session_invalidate_calls;
+static int ble_stop_calls;
+static int ble_clear_calls;
 
 enum spaghetti_maintenance_link_state
 spaghetti_maintenance_link_get_state(void)
@@ -188,6 +193,26 @@ int spaghetti_remote_console_stop(k_timeout_t timeout)
 	return -EACCES;
 }
 
+int spaghetti_ble_stop(k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+	++ble_stop_calls;
+	return -EACCES;
+}
+
+int spaghetti_ble_clear_bonds(void)
+{
+	++ble_clear_calls;
+	if (ble_clear_error < 0) {
+		return ble_clear_error;
+	}
+	if (!ble_bonds_present) {
+		return -ENOENT;
+	}
+	ble_bonds_present = false;
+	return 0;
+}
+
 int spaghetti_ota_stop(k_timeout_t timeout)
 {
 	ARG_UNUSED(timeout);
@@ -212,13 +237,17 @@ static void reset_state(void)
 	ota_present = true;
 	console_present = true;
 	mqtt_present = true;
+	ble_bonds_present = true;
 	wifi_delete_error = 0;
 	config_delete_error = 0;
 	ota_clear_error = 0;
+	ble_clear_error = 0;
 	reboot_calls = 0;
 	maintenance_once_calls = 0;
 	maintenance_enter_calls = 0;
 	session_invalidate_calls = 0;
+	ble_stop_calls = 0;
+	ble_clear_calls = 0;
 	spaghetti_factory_reset_set_acting_principal(0U);
 }
 
@@ -275,6 +304,8 @@ ZTEST(factory_reset, test_scopes_auth_failure_and_reboot)
 	zassert_false(console_present);
 	zassert_false(mqtt_present);
 	expect_clean_scope(SPAGHETTI_RESET_BLE_BONDS);
+	zassert_false(ble_bonds_present);
+	zassert_true(ble_clear_calls > 0);
 	expect_clean_scope(SPAGHETTI_RESET_ALL);
 	zassert_false(config_present);
 	zassert_false(wifi_present);
