@@ -1,6 +1,6 @@
 # UX-S100 — Capability Marketplace & OTA
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
 **Fase backend collegata (riferimento):** S101–S103
 
@@ -40,5 +40,17 @@ segue un aggiornamento firmware — con lo stesso dettaglio di
 
 ## Fine task
 
-- [ ] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
-- [ ] La riga "Capability Marketplace & OTA" in `UX_ARCHITECTURE.md` passa a "✅".
+- [x] I tre file esistono e seguono il formato di `S070-processing-graph-editor`.
+- [x] La riga "Capability Marketplace & OTA" in `UX_ARCHITECTURE.md` passa a "✅".
+
+## Implementazione (2026-08-12)
+
+Scritti `ux/screens/S100-capability-marketplace/{visual.md,ui-behavior.md,backend-behavior.md}`.
+Tre tab (Marketplace/Preflight/Aggiornamento). Marketplace con tre liste
+esplicitamente separate (Disponibili/Installati/Richiesti dal progetto) e
+dependency resolver con motivazione testuale sempre presente per ogni esito.
+Preflight con tabella budget a tre colonne (richiesto/capacità/margine, mai RAM
+libera istantanea). OTA con stepper a 8 tappe riusando lo stile di `UX-S080`,
+indicatore doppio versione stabile/in prova sempre visibile durante il trial, e
+banner di rollback deliberatamente rassicurante (`color.info`, mai `color.error`).
+`backend-behavior.md` cita S101/S102/S103 punto per punto (tutte ⬜ TODO).
