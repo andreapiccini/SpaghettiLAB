@@ -262,7 +262,8 @@ int spaghetti_module_manager_list_by_port(
 		.type_id = "ina219",
 		.endpoint = {
 			.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-			.value = 0x40U,
+			.value_size = 1U,
+			.value = {0x40U},
 		},
 		.state = SPAGHETTI_MODULE_READY,
 	};
@@ -273,7 +274,7 @@ int spaghetti_module_manager_list_by_port(
 		.type_id = "relay",
 		.endpoint = {
 			.kind = SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE,
-			.value = 0U,
+			.value_size = 0U,
 		},
 		.state = SPAGHETTI_MODULE_READY,
 	};

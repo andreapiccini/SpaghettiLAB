@@ -10,6 +10,7 @@
 
 #include <spaghetti/driver_registry.h>
 #include <spaghetti/module_driver.h>
+#include <spaghetti/port.h>
 
 LOG_MODULE_REGISTER(spaghetti_module_manager,
 		    CONFIG_SPAGHETTI_MODULE_MANAGER_LOG_LEVEL);
@@ -33,11 +34,20 @@ static bool endpoint_is_valid(const struct spaghetti_module_endpoint *endpoint)
 {
 	switch (endpoint->kind) {
 	case SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE:
-		return endpoint->value == 0U;
+	case SPAGHETTI_ENDPOINT_UART_EXCLUSIVE:
+		return endpoint->value_size == 0U;
 	case SPAGHETTI_ENDPOINT_I2C_ADDRESS:
-		return endpoint->value <= 0x7FU;
+		return (endpoint->value_size == 1U) &&
+		       (endpoint->value[0] <= 0x7FU);
 	case SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT:
-		return true;
+		return (endpoint->value_size == 1U) &&
+		       (endpoint->value[0] <= 4U);
+	case SPAGHETTI_ENDPOINT_GPIO_LINE:
+	case SPAGHETTI_ENDPOINT_ADC_CHANNEL:
+		return (endpoint->value_size == 1U) &&
+		       (endpoint->value[0] <= 4U);
+	case SPAGHETTI_ENDPOINT_W1_ROM:
+		return endpoint->value_size == SPAGHETTI_ENDPOINT_VALUE_MAX;
 	default:
 		return false;
 	}
@@ -48,11 +58,50 @@ static bool endpoints_conflict(
 	const struct spaghetti_module_endpoint *second)
 {
 	if ((first->kind == SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE) ||
-	    (second->kind == SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE)) {
+	    (second->kind == SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE) ||
+	    (first->kind == SPAGHETTI_ENDPOINT_UART_EXCLUSIVE) ||
+	    (second->kind == SPAGHETTI_ENDPOINT_UART_EXCLUSIVE)) {
 		return true;
 	}
 
-	return (first->kind == second->kind) && (first->value == second->value);
+	return (first->kind == second->kind) &&
+	       (first->value_size == second->value_size) &&
+	       (memcmp(first->value, second->value, first->value_size) == 0);
+}
+
+static enum spaghetti_port_transport transport_from_endpoint(
+	const struct spaghetti_module_endpoint *endpoint)
+{
+	switch (endpoint->kind) {
+	case SPAGHETTI_ENDPOINT_I2C_ADDRESS:
+		return SPAGHETTI_PORT_TRANSPORT_I2C;
+	case SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT:
+		return SPAGHETTI_PORT_TRANSPORT_SPI;
+	case SPAGHETTI_ENDPOINT_UART_EXCLUSIVE:
+		return SPAGHETTI_PORT_TRANSPORT_UART;
+	case SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE:
+	case SPAGHETTI_ENDPOINT_GPIO_LINE:
+		return SPAGHETTI_PORT_TRANSPORT_GPIO;
+	case SPAGHETTI_ENDPOINT_ADC_CHANNEL:
+		return SPAGHETTI_PORT_TRANSPORT_ADC;
+	case SPAGHETTI_ENDPOINT_W1_ROM:
+		return SPAGHETTI_PORT_TRANSPORT_W1;
+	default:
+		return SPAGHETTI_PORT_TRANSPORT_I2C;
+	}
+}
+
+static uint32_t endpoint_log_value(
+	const struct spaghetti_module_endpoint *endpoint)
+{
+	uint32_t value = 0U;
+	const size_t copy_size = MIN(endpoint->value_size, sizeof(value));
+
+	if (copy_size > 0U) {
+		memcpy(&value, endpoint->value, copy_size);
+	}
+
+	return value;
 }
 
 static struct spaghetti_module_slot *find_slot_by_id(spaghetti_module_id_t id)
@@ -208,16 +257,26 @@ int spaghetti_module_manager_configure(
 	slot->module.endpoint = endpoint;
 	k_mutex_unlock(&slots_lock);
 
-	err = driver->ops->init(&slot->module, request->driver_config,
-				request->driver_config_size);
-
-	(void)k_mutex_lock(&slots_lock, K_FOREVER);
+	err = spaghetti_port_acquire(
+		port, request->key, transport_from_endpoint(&endpoint));
 	if (err < 0) {
+		(void)k_mutex_lock(&slots_lock, K_FOREVER);
 		memset(slot, 0, sizeof(*slot));
 		k_mutex_unlock(&slots_lock);
 		return err;
 	}
 
+	err = driver->ops->init(&slot->module, request->driver_config,
+				request->driver_config_size);
+	if (err < 0) {
+		(void)spaghetti_port_release(port, request->key);
+		(void)k_mutex_lock(&slots_lock, K_FOREVER);
+		memset(slot, 0, sizeof(*slot));
+		k_mutex_unlock(&slots_lock);
+		return err;
+	}
+
+	(void)k_mutex_lock(&slots_lock, K_FOREVER);
 	slot->module.state = SPAGHETTI_MODULE_READY;
 	slot->used = true;
 	slot->reserved = false;
@@ -225,7 +284,8 @@ int spaghetti_module_manager_configure(
 	k_mutex_unlock(&slots_lock);
 
 	LOG_INF("configured: key=%u id=%u port=%u endpoint=%u", request->key,
-		(uint32_t)*out_id, (uint32_t)request->port_id, endpoint.value);
+		(uint32_t)*out_id, (uint32_t)request->port_id,
+		endpoint_log_value(&endpoint));
 	return 0;
 
 unlock:
@@ -237,6 +297,7 @@ int spaghetti_module_manager_remove(spaghetti_module_id_t id,
 				    uint32_t expected_revision)
 {
 	struct spaghetti_module_slot *slot;
+	const struct spaghetti_port *port;
 	spaghetti_module_key_t key;
 	int err;
 
@@ -267,9 +328,11 @@ int spaghetti_module_manager_remove(spaghetti_module_id_t id,
 
 	slot->busy = true;
 	key = slot->module.key;
+	port = slot->module.port;
 	k_mutex_unlock(&slots_lock);
 
 	err = slot->module.driver->ops->deinit(&slot->module);
+	(void)spaghetti_port_release(port, key);
 
 	(void)k_mutex_lock(&slots_lock, K_FOREVER);
 	memset(slot, 0, sizeof(*slot));

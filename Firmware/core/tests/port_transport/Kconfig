@@ -1,0 +1,9 @@
+mainmenu "Spaghetti Port transport tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_PORT_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

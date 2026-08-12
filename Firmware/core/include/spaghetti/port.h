@@ -11,7 +11,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/spi.h>
+#include <zephyr/kernel.h>
 #include <zephyr/sys/util.h>
+
+#include <spaghetti/module.h>
 
 /**
  * @brief Port identifier type.
@@ -22,31 +27,62 @@
 typedef uint8_t spaghetti_port_id_t;
 
 /**
+ * @brief Nonzero Module key that currently owns a Port transport reference.
+ */
+typedef uint32_t spaghetti_port_owner_t;
+
+/**
  * @brief Capabilities exposed by a Spaghetti Port.
  *
  * Capabilities are represented as individual bits so that a Port can expose
- * multiple capabilities at the same time.
+ * multiple possible functions. Only one electrical family is active at runtime.
  */
 enum spaghetti_port_capability {
-	SPAGHETTI_PORT_CAP_I2C = BIT(0), /**< I2C capability */
-	SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT = BIT(1), /**< One exclusive digital output. */
+	SPAGHETTI_PORT_CAP_I2C = BIT(0), /**< Shared I2C controller. */
+	SPAGHETTI_PORT_CAP_SPI = BIT(1), /**< Shared SPI controller. */
+	SPAGHETTI_PORT_CAP_UART = BIT(2), /**< Exclusive UART controller. */
+	SPAGHETTI_PORT_CAP_DIGITAL_INPUT = BIT(3), /**< Digital input line. */
+	SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT = BIT(4), /**< Digital output line. */
+	SPAGHETTI_PORT_CAP_ADC = BIT(5), /**< ADC channel on the connector. */
+	SPAGHETTI_PORT_CAP_W1 = BIT(6), /**< 1-Wire controller. */
 };
 
-/*
- * Forward declarations.
- *
- * The full definition of struct spaghetti_port remains private to port.c.
- * struct device is provided by Zephyr and represents a device managed by
- * Zephyr's Device Model.
+/**
+ * @brief Active electrical transport selected for one Port.
  */
-struct spaghetti_port;
-struct device;
+enum spaghetti_port_transport {
+	SPAGHETTI_PORT_TRANSPORT_I2C, /**< Shared I2C bus. */
+	SPAGHETTI_PORT_TRANSPORT_SPI, /**< Shared SPI bus. */
+	SPAGHETTI_PORT_TRANSPORT_UART, /**< Exclusive UART. */
+	SPAGHETTI_PORT_TRANSPORT_GPIO, /**< Digital GPIO family. */
+	SPAGHETTI_PORT_TRANSPORT_ADC, /**< ADC family. */
+	SPAGHETTI_PORT_TRANSPORT_W1, /**< Shared 1-Wire bus. */
+};
 
 /**
- * @brief Initialize all Spaghetti Ports.
- *
- * Initializes the Port subsystem and associates each Port with the hardware
- * resources required by the current board.
+ * @brief Borrowed I2C transfer request valid only for one Port call.
+ */
+struct spaghetti_port_i2c_request {
+	uint16_t address; /**< 7-bit I2C address. */
+	struct i2c_msg *messages; /**< Borrowed Zephyr message array. */
+	uint8_t message_count; /**< Number of messages. */
+};
+
+/**
+ * @brief Borrowed SPI transfer request valid only for one Port call.
+ */
+struct spaghetti_port_spi_request {
+	uint8_t chip_select; /**< Logical chip-select index on the Port. */
+	uint32_t frequency_hz; /**< Requested SPI clock. */
+	spi_operation_t operation; /**< Zephyr SPI operation flags. */
+	const struct spi_buf_set *tx; /**< Optional borrowed TX buffers. */
+	const struct spi_buf_set *rx; /**< Optional borrowed RX buffers. */
+};
+
+struct spaghetti_port;
+
+/**
+ * @brief Initialize all Spaghetti Ports and shared controller locks.
  *
  * @retval 0 Initialization completed successfully.
  * @retval -ENODEV A required hardware device is unavailable or not ready.
@@ -87,17 +123,121 @@ bool spaghetti_port_has_capability(
 	uint32_t capabilities);
 
 /**
+ * @brief Acquire a Port transport for one Module owner.
+ *
+ * Call from thread context. The first owner selects the board backend. Later
+ * owners must request the same shareable transport.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] owner Nonzero Module key copied by value.
+ * @param[in] transport Requested electrical family.
+ *
+ * @retval 0 Ownership recorded.
+ * @retval -EINVAL @p port is NULL or @p owner is zero.
+ * @retval -ENOTSUP Capability or backend is unavailable.
+ * @retval -EBUSY A different transport is already active.
+ * @retval -EALREADY @p owner already holds this Port.
+ * @retval -ENOMEM Owner table is full.
+ */
+int spaghetti_port_acquire(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner,
+	enum spaghetti_port_transport transport);
+
+/**
+ * @brief Release one Module owner from a Port.
+ *
+ * The last release returns the Port to the board safe/sleep state.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] owner Nonzero Module key previously acquired.
+ *
+ * @retval 0 Ownership released.
+ * @retval -EINVAL @p port is NULL or @p owner is zero.
+ * @retval -ENOENT @p owner does not hold this Port.
+ */
+int spaghetti_port_release(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner);
+
+/**
+ * @brief Copy the active transport and owner count.
+ *
+ * Outputs change only on success.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[out] out_transport Optional active transport.
+ * @param[out] out_owner_count Optional owner count.
+ *
+ * @retval 0 Snapshot written.
+ * @retval -EINVAL @p port is NULL.
+ * @retval -ENOENT No transport is currently active.
+ */
+int spaghetti_port_get_active_transport(
+	const struct spaghetti_port *port,
+	enum spaghetti_port_transport *out_transport,
+	size_t *out_owner_count);
+
+/**
  * @brief Return the Zephyr I2C device associated with a Port.
  *
  * @param[in] port Port to inspect.
  *
- * @return Pointer to the Zephyr I2C device used by the Port.
- * @return NULL if @p port is NULL, does not support I2C, or has no I2C device.
- *
- * The returned device is owned by Zephyr and must not be modified or freed by
- * the caller.
+ * @return Borrowed Zephyr I2C device, or NULL when unavailable.
  */
 const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port);
+
+/**
+ * @brief Serialize an I2C transfer on the Port controller lock.
+ *
+ * Call from thread context. @p timeout bounds only the shared-controller lock
+ * wait; @c K_FOREVER is rejected. Zephyr keeps its own hardware timeouts.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] request Borrowed transfer descriptor valid for this call.
+ * @param[in] timeout Bounded lock wait; must not be @c K_FOREVER.
+ *
+ * @retval 0 Transfer completed.
+ * @retval -EINVAL Invalid argument or forever timeout.
+ * @retval -ENOTSUP Port has no I2C capability.
+ * @retval -ENODEV Controller is not ready.
+ * @retval -EBUSY Lock wait timed out.
+ * @retval -EIO Or other original Zephyr I2C errno.
+ */
+int spaghetti_port_i2c_transfer(
+	const struct spaghetti_port *port,
+	const struct spaghetti_port_i2c_request *request,
+	k_timeout_t timeout);
+
+/**
+ * @brief Serialize an SPI transfer on the Port controller lock.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] request Borrowed transfer descriptor valid for this call.
+ * @param[in] timeout Bounded lock wait; must not be @c K_FOREVER.
+ *
+ * @retval 0 Transfer completed.
+ * @retval -EINVAL Invalid argument or forever timeout.
+ * @retval -ENOTSUP Port has no SPI capability.
+ * @retval -ENODEV Controller is not ready.
+ * @retval -EBUSY Lock wait timed out.
+ * @retval -EIO Or other original Zephyr SPI errno.
+ */
+int spaghetti_port_spi_transceive(
+	const struct spaghetti_port *port,
+	const struct spaghetti_port_spi_request *request,
+	k_timeout_t timeout);
+
+/**
+ * @brief Return the borrowed UART device for an exclusive Port endpoint.
+ *
+ * Framing and callbacks remain the Module driver's responsibility.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ *
+ * @return Borrowed UART device, or NULL when unavailable.
+ */
+const struct device *spaghetti_port_uart_device(const struct spaghetti_port *port);
 
 /**
  * @brief Drive the raw electrical level of a Port digital output.
@@ -115,5 +255,66 @@ const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port
  *       Module driver, not to this raw Port operation.
  */
 int spaghetti_port_set_output(const struct spaghetti_port *port, bool high);
+
+/**
+ * @brief Read the raw electrical level of a Port digital input.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[out] out_high Written only on success.
+ *
+ * @retval 0 Level copied.
+ * @retval -EINVAL @p port or @p out_high is NULL.
+ * @retval -ENOTSUP Input capability or GPIO resource is absent.
+ * @retval -ENODEV GPIO controller is unavailable.
+ */
+int spaghetti_port_get_input(const struct spaghetti_port *port, bool *out_high);
+
+/**
+ * @brief Read one logical ADC channel through the shared controller lock.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] channel Logical connector index in 0..4.
+ * @param[out] out_raw Optional raw sample written only on success.
+ * @param[out] out_microvolts Optional converted value written only on success.
+ * @param[in] timeout Bounded lock wait; must not be @c K_FOREVER.
+ *
+ * @retval 0 Sample acquired.
+ * @retval -EINVAL Invalid argument, channel, or forever timeout.
+ * @retval -ENOTSUP ADC capability is absent.
+ * @retval -ENODEV Controller is not ready.
+ * @retval -EBUSY Lock wait timed out.
+ */
+int spaghetti_port_adc_read(
+	const struct spaghetti_port *port,
+	uint8_t channel,
+	int32_t *out_raw,
+	int32_t *out_microvolts,
+	k_timeout_t timeout);
+
+/**
+ * @brief Perform a bounded 1-Wire write/read against one ROM identity.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] rom Eight-byte ROM identity.
+ * @param[in] write_data Optional borrowed TX bytes.
+ * @param[in] write_size TX byte count.
+ * @param[out] read_data Optional RX buffer written only on success.
+ * @param[in] read_size RX byte count.
+ * @param[in] timeout Bounded lock wait; must not be @c K_FOREVER.
+ *
+ * @retval 0 Transaction completed.
+ * @retval -EINVAL Invalid argument or forever timeout.
+ * @retval -ENOTSUP 1-Wire capability is absent.
+ * @retval -ENODEV Controller is not ready.
+ * @retval -EBUSY Lock wait timed out.
+ */
+int spaghetti_port_w1_write_read(
+	const struct spaghetti_port *port,
+	const uint8_t rom[SPAGHETTI_ENDPOINT_VALUE_MAX],
+	const uint8_t *write_data,
+	size_t write_size,
+	uint8_t *read_data,
+	size_t read_size,
+	k_timeout_t timeout);
 
 #endif /* SPAGHETTI_PORT_H */

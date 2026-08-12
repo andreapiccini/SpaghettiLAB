@@ -27,7 +27,8 @@ static int fake_describe(const void *config, size_t config_size,
 
 	*out = (struct spaghetti_module_endpoint) {
 		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-		.value = *(const uint8_t *)config,
+		.value_size = 1U,
+		.value = {*(const uint8_t *)config},
 	};
 	return 0;
 }

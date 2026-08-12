@@ -50,7 +50,7 @@ static int relay_describe_endpoint(const void *config, size_t config_size,
 
 	const struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE,
-		.value = 0U,
+		.value_size = 0U,
 	};
 
 	*out = endpoint;

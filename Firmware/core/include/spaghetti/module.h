@@ -15,6 +15,9 @@ struct spaghetti_port;
 /** Maximum bytes in a Module type ID, including the terminating NUL. */
 #define SPAGHETTI_TYPE_ID_MAX 24U
 
+/** Maximum bytes stored in one Module endpoint value. */
+#define SPAGHETTI_ENDPOINT_VALUE_MAX 8U
+
 /**
  * @brief Runtime identifier for a live Module.
  *
@@ -45,18 +48,23 @@ enum spaghetti_module_state {
  */
 enum spaghetti_module_endpoint_kind {
 	SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE, /**< The Module requires the whole Port. */
-	SPAGHETTI_ENDPOINT_I2C_ADDRESS, /**< Value is a 7-bit I2C address. */
-	SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT, /**< Value identifies one SPI chip select. */
+	SPAGHETTI_ENDPOINT_I2C_ADDRESS, /**< One-byte 7-bit I2C address. */
+	SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT, /**< One-byte SPI chip-select index. */
+	SPAGHETTI_ENDPOINT_UART_EXCLUSIVE, /**< Exclusive UART termination. */
+	SPAGHETTI_ENDPOINT_GPIO_LINE, /**< Logical connector signal index 0..4. */
+	SPAGHETTI_ENDPOINT_ADC_CHANNEL, /**< Logical connector signal index 0..4. */
+	SPAGHETTI_ENDPOINT_W1_ROM, /**< Full eight-byte 1-Wire ROM identity. */
 };
 
 /**
  * @brief Normalized hardware endpoint of one Module.
  *
- * The concrete driver derives this value from its validated runtime config.
+ * @p kind selects the namespace. @p value_size bounds the owned @p value bytes.
  */
 struct spaghetti_module_endpoint {
-	enum spaghetti_module_endpoint_kind kind; /**< Namespace used to interpret value. */
-	uint32_t value; /**< Endpoint value within @ref kind. */
+	enum spaghetti_module_endpoint_kind kind; /**< Namespace for @ref value. */
+	uint8_t value_size; /**< Valid byte count in @ref value. */
+	uint8_t value[SPAGHETTI_ENDPOINT_VALUE_MAX]; /**< Owned endpoint payload. */
 };
 
 /**

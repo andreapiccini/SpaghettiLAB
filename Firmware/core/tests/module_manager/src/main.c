@@ -63,7 +63,8 @@ static int fake_describe_endpoint(const void *config, size_t config_size,
 
 	const struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-		.value = fake_config->i2c_address,
+		.value_size = 1U,
+		.value = {fake_config->i2c_address},
 	};
 
 	*out = endpoint;
@@ -88,7 +89,7 @@ static int fake_describe_exclusive_endpoint(
 
 	*out = (struct spaghetti_module_endpoint) {
 		.kind = SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE,
-		.value = 0U,
+		.value_size = 0U,
 	};
 	return 0;
 }
@@ -211,6 +212,22 @@ bool spaghetti_port_has_capability(const struct spaghetti_port *port,
 	       ((port->capabilities & capabilities) == capabilities);
 }
 
+int spaghetti_port_acquire(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner,
+	enum spaghetti_port_transport transport)
+{
+	ARG_UNUSED(transport);
+	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
+}
+
+int spaghetti_port_release(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner)
+{
+	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
+}
+
 const struct spaghetti_module_driver *spaghetti_driver_registry_find(
 	const char *type_id)
 {
@@ -296,7 +313,8 @@ ZTEST(module_manager, test_shared_port_lifecycle)
 	zassert_equal(snapshots[2].key, 12U);
 	zassert_ok(spaghetti_module_manager_get_by_id(id_11, &snapshot));
 	zassert_equal(snapshot.key, 11U);
-	zassert_equal(snapshot.endpoint.value, 0x41U);
+	zassert_equal(snapshot.endpoint.value_size, 1U);
+	zassert_equal(snapshot.endpoint.value[0], 0x41U);
 
 	snapshot.key = 99U;
 	err = spaghetti_module_manager_list_by_port(0U, &snapshot, 1U, &module_count);

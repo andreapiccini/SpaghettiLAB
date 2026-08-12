@@ -140,7 +140,40 @@ bool spaghetti_port_has_capability(const struct spaghetti_port *port,
 
 const struct device *spaghetti_port_i2c_device(const struct spaghetti_port *port)
 {
-	return (port == &fake_port) ? DEVICE_GET(fake_i2c) : NULL;
+	ARG_UNUSED(port);
+	return NULL;
+}
+
+int spaghetti_port_i2c_transfer(
+	const struct spaghetti_port *port,
+	const struct spaghetti_port_i2c_request *request,
+	k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+
+	if ((port != &fake_port) || (request == NULL) ||
+	    (request->messages == NULL) || (request->message_count == 0U)) {
+		return -EINVAL;
+	}
+
+	return fake_i2c_transfer(DEVICE_GET(fake_i2c), request->messages,
+				 request->message_count, request->address);
+}
+
+int spaghetti_port_acquire(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner,
+	enum spaghetti_port_transport transport)
+{
+	ARG_UNUSED(transport);
+	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
+}
+
+int spaghetti_port_release(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner)
+{
+	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
 }
 
 const struct spaghetti_module_driver *spaghetti_driver_registry_find(
@@ -196,7 +229,8 @@ ZTEST(ina219_runtime, test_validation_and_two_runtime_instances)
 	};
 	struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE,
-		.value = UINT32_MAX,
+		.value_size = 0U,
+		.value = {0xFFU},
 	};
 	struct spaghetti_module_snapshot snapshot;
 	struct spaghetti_sample sample;
@@ -214,15 +248,15 @@ ZTEST(ina219_runtime, test_validation_and_two_runtime_instances)
 	zassert_equal(spaghetti_ina219_driver.ops->describe_endpoint(
 		&invalid_address, sizeof(invalid_address), &endpoint), -EINVAL);
 	zassert_equal(endpoint.kind, SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE);
-	zassert_equal(endpoint.value, UINT32_MAX);
+	zassert_equal(endpoint.value[0], 0xFFU);
 
 	zassert_ok(spaghetti_module_manager_init());
 	zassert_ok(configure_ina219(10U, 0x40U, &id_40));
 	zassert_ok(configure_ina219(11U, 0x41U, &id_41));
 	zassert_ok(spaghetti_module_manager_get_by_key(10U, &snapshot));
-	zassert_equal(snapshot.endpoint.value, 0x40U);
+	zassert_equal(snapshot.endpoint.value[0], 0x40U);
 	zassert_ok(spaghetti_module_manager_get_by_key(11U, &snapshot));
-	zassert_equal(snapshot.endpoint.value, 0x41U);
+	zassert_equal(snapshot.endpoint.value[0], 0x41U);
 	zassert_ok(spaghetti_module_manager_list_by_port(0U, NULL, 0U, &module_count));
 	zassert_equal(module_count, 2U);
 

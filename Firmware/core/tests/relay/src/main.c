@@ -67,7 +67,7 @@ ZTEST(relay, test_safe_state_polarity_commands_and_errors)
 	zassert_ok(spaghetti_relay_driver.ops->describe_endpoint(
 		&active_low_safe_off, sizeof(active_low_safe_off), &endpoint));
 	zassert_equal(endpoint.kind, SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE);
-	zassert_equal(endpoint.value, 0U);
+	zassert_equal(endpoint.value_size, 0U);
 
 	zassert_ok(spaghetti_relay_driver.ops->init(
 		&module, &active_low_safe_off, sizeof(active_low_safe_off)));

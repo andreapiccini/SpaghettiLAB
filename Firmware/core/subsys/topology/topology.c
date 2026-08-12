@@ -65,6 +65,9 @@ int spaghetti_topology_init(void)
 	if (ARRAY_SIZE(flows) > CONFIG_SPAGHETTI_MAX_FLOWS) {
 		return -E2BIG;
 	}
+	if (ARRAY_SIZE(flows) != spaghetti_port_count()) {
+		return -EINVAL;
+	}
 
 	for (size_t idx = 0U; idx < ARRAY_SIZE(flows); ++idx) {
 		const struct spaghetti_flow_descriptor *flow = &flows[idx];

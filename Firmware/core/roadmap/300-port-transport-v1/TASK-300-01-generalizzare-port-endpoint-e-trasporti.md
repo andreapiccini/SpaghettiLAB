@@ -1,6 +1,6 @@
 # TASK-300-01 — Generalizzare Port, endpoint e trasporti
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 300 — Port e trasporti V1
 
 ## Cosa devo fare
@@ -262,15 +262,15 @@ DTS reali; il codice centrale non cambia.
 
 ## Checklist di completamento
 
-- [ ] Endpoint supporta valori da zero a otto byte e collisioni corrette.
-- [ ] Capability e API dei sei trasporti sono documentate e bounded.
-- [ ] Controller condivisi usano lo stesso lock.
-- [ ] Port seleziona un transport runtime predefinito dalla board e torna safe.
-- [ ] Più owner dello stesso bus convivono; transport incompatibili sono rifiutati.
-- [ ] Gli indici di linea sono sempre 0–4 e mai GPIO MCU nel Config.
-- [ ] INA219 usa Port per ogni transazione.
-- [ ] Core V1 non dichiara capability non presenti.
-- [ ] Test fake coprono condivisione, limiti ed errori.
+- [x] Endpoint supporta valori da zero a otto byte e collisioni corrette.
+- [x] Capability e API dei sei trasporti sono documentate e bounded.
+- [x] Controller condivisi usano lo stesso lock.
+- [x] Port seleziona un transport runtime predefinito dalla board e torna safe.
+- [x] Più owner dello stesso bus convivono; transport incompatibili sono rifiutati.
+- [x] Gli indici di linea sono sempre 0–4 e mai GPIO MCU nel Config.
+- [x] INA219 usa Port per ogni transazione.
+- [x] Core V1 non dichiara capability non presenti.
+- [x] Test fake coprono condivisione, limiti ed errori.
 
 ## Verifica e fine task
 

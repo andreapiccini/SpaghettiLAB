@@ -133,7 +133,15 @@ static int build_status_payload(struct spaghetti_response *response)
 		}
 
 		module_status->key = snapshot->key;
-		module_status->endpoint_value = snapshot->endpoint.value;
+		module_status->endpoint_value = 0U;
+		if (snapshot->endpoint.value_size > 0U) {
+			const size_t copy_size = MIN(
+				snapshot->endpoint.value_size,
+				sizeof(module_status->endpoint_value));
+
+			memcpy(&module_status->endpoint_value,
+			       snapshot->endpoint.value, copy_size);
+		}
 		module_status->runtime_id = snapshot->id;
 		module_status->port_id = snapshot->port_id;
 		module_status->state = (uint8_t)snapshot->state;

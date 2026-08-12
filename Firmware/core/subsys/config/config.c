@@ -69,11 +69,20 @@ static bool endpoint_is_valid(const struct spaghetti_module_endpoint *endpoint)
 {
 	switch (endpoint->kind) {
 	case SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE:
-		return endpoint->value == 0U;
+	case SPAGHETTI_ENDPOINT_UART_EXCLUSIVE:
+		return endpoint->value_size == 0U;
 	case SPAGHETTI_ENDPOINT_I2C_ADDRESS:
-		return endpoint->value <= 0x7FU;
+		return (endpoint->value_size == 1U) &&
+		       (endpoint->value[0] <= 0x7FU);
 	case SPAGHETTI_ENDPOINT_SPI_CHIP_SELECT:
-		return true;
+		return (endpoint->value_size == 1U) &&
+		       (endpoint->value[0] <= 4U);
+	case SPAGHETTI_ENDPOINT_GPIO_LINE:
+	case SPAGHETTI_ENDPOINT_ADC_CHANNEL:
+		return (endpoint->value_size == 1U) &&
+		       (endpoint->value[0] <= 4U);
+	case SPAGHETTI_ENDPOINT_W1_ROM:
+		return endpoint->value_size == SPAGHETTI_ENDPOINT_VALUE_MAX;
 	default:
 		return false;
 	}
@@ -84,11 +93,15 @@ static bool endpoints_conflict(
 	const struct spaghetti_module_endpoint *second)
 {
 	if ((first->kind == SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE) ||
-	    (second->kind == SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE)) {
+	    (second->kind == SPAGHETTI_ENDPOINT_PORT_EXCLUSIVE) ||
+	    (first->kind == SPAGHETTI_ENDPOINT_UART_EXCLUSIVE) ||
+	    (second->kind == SPAGHETTI_ENDPOINT_UART_EXCLUSIVE)) {
 		return true;
 	}
 
-	return (first->kind == second->kind) && (first->value == second->value);
+	return (first->kind == second->kind) &&
+	       (first->value_size == second->value_size) &&
+	       (memcmp(first->value, second->value, first->value_size) == 0);
 }
 
 static int describe_module(

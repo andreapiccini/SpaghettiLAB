@@ -37,7 +37,7 @@ LOG_MODULE_REGISTER(spaghetti_ina219, CONFIG_SPAGHETTI_INA219_LOG_LEVEL);
 #define SPAGHETTI_INA219_CONVERSION_ATTEMPTS 10U
 
 struct spaghetti_ina219_context {
-	const struct device *i2c;
+	const struct spaghetti_port *port;
 	struct spaghetti_ina219_config config;
 	uint16_t calibration;
 	bool initialized;
@@ -52,24 +52,49 @@ static int ina219_write_register(const struct spaghetti_ina219_context *context,
 				 uint8_t reg, uint16_t value)
 {
 	uint8_t buffer[3] = {reg, 0U, 0U};
+	struct i2c_msg message = {
+		.buf = buffer,
+		.len = sizeof(buffer),
+		.flags = I2C_MSG_WRITE | I2C_MSG_STOP,
+	};
+	const struct spaghetti_port_i2c_request request = {
+		.address = context->config.i2c_address,
+		.messages = &message,
+		.message_count = 1U,
+	};
 
 	sys_put_be16(value, &buffer[1]);
-	return i2c_write(context->i2c, buffer, sizeof(buffer),
-			 context->config.i2c_address);
+	return spaghetti_port_i2c_transfer(context->port, &request, K_MSEC(100));
 }
 
 static int ina219_read_register(const struct spaghetti_ina219_context *context,
 				uint8_t reg, uint16_t *out)
 {
 	uint8_t buffer[2];
+	struct i2c_msg messages[2] = {
+		{
+			.buf = &reg,
+			.len = sizeof(reg),
+			.flags = I2C_MSG_WRITE,
+		},
+		{
+			.buf = buffer,
+			.len = sizeof(buffer),
+			.flags = I2C_MSG_READ | I2C_MSG_STOP,
+		},
+	};
+	const struct spaghetti_port_i2c_request request = {
+		.address = context->config.i2c_address,
+		.messages = messages,
+		.message_count = 2U,
+	};
 	int err;
 
 	if (out == NULL) {
 		return -EINVAL;
 	}
 
-	err = i2c_write_read(context->i2c, context->config.i2c_address, &reg,
-			     sizeof(reg), buffer, sizeof(buffer));
+	err = spaghetti_port_i2c_transfer(context->port, &request, K_MSEC(100));
 	if (err < 0) {
 		return err;
 	}
@@ -116,7 +141,8 @@ static int ina219_describe_endpoint(const void *config, size_t config_size,
 
 	const struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-		.value = ina219_config.i2c_address,
+		.value_size = 1U,
+		.value = {ina219_config.i2c_address},
 	};
 
 	*out = endpoint;
@@ -134,7 +160,6 @@ static int ina219_init(struct spaghetti_module *module, const void *config,
 {
 	struct spaghetti_ina219_config ina219_config;
 	struct spaghetti_ina219_context *context;
-	const struct device *i2c;
 	void *context_block;
 	uint64_t denominator;
 	uint64_t calibration;
@@ -157,14 +182,8 @@ static int ina219_init(struct spaghetti_module *module, const void *config,
 
 	context = context_block;
 	memset(context, 0, sizeof(*context));
-	i2c = spaghetti_port_i2c_device(module->port);
-	if (i2c == NULL) {
+	if (!spaghetti_port_has_capability(module->port, SPAGHETTI_PORT_CAP_I2C)) {
 		err = -ENOTSUP;
-		goto free_context;
-	}
-
-	if (!device_is_ready(i2c)) {
-		err = -ENODEV;
 		goto free_context;
 	}
 
@@ -176,7 +195,7 @@ static int ina219_init(struct spaghetti_module *module, const void *config,
 		goto free_context;
 	}
 
-	context->i2c = i2c;
+	context->port = module->port;
 	context->config = ina219_config;
 	context->calibration = (uint16_t)calibration;
 

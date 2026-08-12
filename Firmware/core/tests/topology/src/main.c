@@ -31,6 +31,11 @@ const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)
 	return NULL;
 }
 
+size_t spaghetti_port_count(void)
+{
+	return ARRAY_SIZE(ports);
+}
+
 static void topology_before(void *fixture)
 {
 	ARG_UNUSED(fixture);

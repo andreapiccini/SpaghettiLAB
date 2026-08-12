@@ -276,7 +276,8 @@ static int fake_describe_endpoint(const void *config, size_t config_size,
 	memcpy(&fake_config, config, sizeof(fake_config));
 	const struct spaghetti_module_endpoint endpoint = {
 		.kind = SPAGHETTI_ENDPOINT_I2C_ADDRESS,
-		.value = fake_config.i2c_address,
+		.value_size = 1U,
+		.value = {fake_config.i2c_address},
 	};
 
 	*out = endpoint;
@@ -369,6 +370,22 @@ bool spaghetti_port_has_capability(const struct spaghetti_port *port,
 	       ((port->capabilities & capabilities) == capabilities);
 }
 
+int spaghetti_port_acquire(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner,
+	enum spaghetti_port_transport transport)
+{
+	ARG_UNUSED(transport);
+	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
+}
+
+int spaghetti_port_release(
+	const struct spaghetti_port *port,
+	spaghetti_port_owner_t owner)
+{
+	return ((port != NULL) && (owner != 0U)) ? 0 : -EINVAL;
+}
+
 const struct spaghetti_module_driver *spaghetti_driver_registry_find(
 	const char *type_id)
 {
@@ -420,7 +437,8 @@ static void assert_live_endpoint(spaghetti_module_key_t key, uint32_t endpoint)
 
 	zassert_ok(spaghetti_module_manager_get_by_key(key, &live));
 	zassert_equal(live.endpoint.kind, SPAGHETTI_ENDPOINT_I2C_ADDRESS);
-	zassert_equal(live.endpoint.value, endpoint);
+	zassert_equal(live.endpoint.value_size, 1U);
+	zassert_equal(live.endpoint.value[0], endpoint);
 }
 
 ZTEST(config, test_validation_reconcile_and_rollback)
