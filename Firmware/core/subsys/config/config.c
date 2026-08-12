@@ -210,11 +210,26 @@ static bool mqtt_config_is_valid(const struct spaghetti_mqtt_config *mqtt)
 
 	if (!mqtt->enabled) {
 		return (mqtt->host[0] == '\0') && (mqtt->port == 0U) &&
-		       (mqtt->base_topic[0] == '\0');
+		       (mqtt->base_topic[0] == '\0') &&
+		       (mqtt->security == SPAGHETTI_MQTT_SECURITY_TLS_SERVER) &&
+		       (mqtt->credential_id == 0U);
 	}
 	if ((host_end == NULL) || (host_end == mqtt->host) ||
 	    (topic_end == NULL) || (topic_end == mqtt->base_topic) ||
-	    (mqtt->port == 0U)) {
+	    (mqtt->port == 0U) || (mqtt->credential_id == 0U)) {
+		return false;
+	}
+	switch (mqtt->security) {
+	case SPAGHETTI_MQTT_SECURITY_TLS_SERVER:
+	case SPAGHETTI_MQTT_SECURITY_TLS_MUTUAL:
+		break;
+	case SPAGHETTI_MQTT_SECURITY_PLAINTEXT_DEVELOPMENT:
+		if (!IS_ENABLED(
+			    CONFIG_SPAGHETTI_MQTT_ALLOW_PLAINTEXT_DEVELOPMENT)) {
+			return false;
+		}
+		break;
+	default:
 		return false;
 	}
 
@@ -556,6 +571,8 @@ static bool mqtt_configs_are_equal(
 {
 	return (first->enabled == second->enabled) &&
 	       (first->port == second->port) &&
+	       (first->security == second->security) &&
+	       (first->credential_id == second->credential_id) &&
 	       (strcmp(first->host, second->host) == 0) &&
 	       (strcmp(first->base_topic, second->base_topic) == 0);
 }

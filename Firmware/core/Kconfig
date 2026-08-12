@@ -494,8 +494,17 @@ config SPAGHETTI_MQTT_QUEUE_DEPTH
 	range 1 16
 	default 4
 	help
-	  Fixed number of copied publications retained while the network or broker
-	  is unavailable. A full queue drops the newest publication.
+	  Fixed number of copied best-effort record publications retained while the
+	  network or broker is unavailable. A full queue drops the newest record.
+	  Priority state/response publications use a separate pool.
+
+config SPAGHETTI_MQTT_PRIORITY_QUEUE_DEPTH
+	int "MQTT priority (state/response) queue depth"
+	range 1 16
+	default 4
+	help
+	  Fixed number of QoS 1 state and response publications. A full priority
+	  queue returns -ENOMSG without silently dropping config/command work.
 
 config SPAGHETTI_MQTT_WORKER_STACK_SIZE
 	int "MQTT network worker stack size"
@@ -507,10 +516,10 @@ config SPAGHETTI_MQTT_WORKER_STACK_SIZE
 config SPAGHETTI_MQTT_ADAPTER_STACK_SIZE
 	int "MQTT Data adapter stack size"
 	range 1024 4096
-	default 1536
+	default 2048
 	help
-	  Static stack bytes reserved for receiving zbus electrical samples and
-	  formatting bounded JSON publications.
+	  Static stack bytes reserved for Record Delivery peek/ack and Protocol V1
+	  event encoding into the outbound publication queues.
 
 config SPAGHETTI_MQTT_PRIORITY
 	int "MQTT worker and adapter priority"
@@ -526,6 +535,50 @@ config SPAGHETTI_MQTT_STOP_TIMEOUT_MS
 	help
 	  Maximum time Config waits for the worker to stop before rejecting a new
 	  MQTT configuration.
+
+config SPAGHETTI_MQTT_ALLOW_PLAINTEXT_DEVELOPMENT
+	bool "Allow MQTT plaintext development transport"
+	default n
+	help
+	  When disabled (production default), Config cannot select
+	  SPAGHETTI_MQTT_SECURITY_PLAINTEXT_DEVELOPMENT. Enable only on
+	  development boards that intentionally talk to a cleartext broker.
+
+config SPAGHETTI_MQTT_CREDENTIAL_SLOTS
+	int "MQTT credential vault slots"
+	range 1 8
+	default 4
+	help
+	  Number of PSA ITS credential records addressable by credential_id 1..N.
+
+config SPAGHETTI_MQTT_CREDENTIAL_CA_MAX_SIZE
+	int "Maximum MQTT CA certificate bytes"
+	range 32 2048
+	default 512
+	help
+	  Upper bound for borrowed CA material stored in one credential record.
+
+config SPAGHETTI_MQTT_CREDENTIAL_CERT_MAX_SIZE
+	int "Maximum MQTT client certificate bytes"
+	range 32 2048
+	default 512
+	help
+	  Upper bound for borrowed client certificate material.
+
+config SPAGHETTI_MQTT_CREDENTIAL_KEY_MAX_SIZE
+	int "Maximum MQTT private key bytes"
+	range 32 2048
+	default 512
+	help
+	  Upper bound for borrowed private key material.
+
+config SPAGHETTI_MQTT_TEST_HOOKS
+	bool "Expose MQTT transport test hooks"
+	depends on ZTEST
+	default y if ZTEST
+	help
+	  Allows native tests to inject a stub broker transport and request
+	  payloads without opening real sockets.
 
 config SPAGHETTI_WIFI_PROFILE_MAX_COUNT
 	int "Maximum number of persistent Wi-Fi profiles"

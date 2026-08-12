@@ -1,6 +1,6 @@
 # TASK-370-01 — Collegare MQTT e Node-RED
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 370 — MQTT per Node-RED V1
 
 ## Cosa devo fare
@@ -145,14 +145,14 @@ record vengono interpretati senza cambiare `mqtt.c`.
 
 ## Checklist di completamento
 
-- [ ] Topic V1 e QoS sono documentati e stabili.
-- [ ] TLS verifica CA e hostname; mutual TLS è supportato.
-- [ ] Credenziali sono provisionate soltanto localmente.
-- [ ] Credenziali risolvono principal revocabili e request duplicate non ripetono effetti.
-- [ ] MQTT ha un consumer record indipendente da BLE.
-- [ ] Backpressure usa Record Delivery e non blocca response/state.
-- [ ] Lifecycle e TLS workspace rispettano profilo e Connectivity Manager.
-- [ ] Flow Node-RED usa un solo Config Coordinator con GET/validate/CAS apply.
+- [x] Topic V1 e QoS sono documentati e stabili.
+- [x] TLS verifica CA e hostname; mutual TLS è supportato.
+- [x] Credenziali sono provisionate soltanto localmente.
+- [x] Credenziali risolvono principal revocabili e request duplicate non ripetono effetti.
+- [x] MQTT ha un consumer record indipendente da BLE.
+- [x] Backpressure usa Record Delivery e non blocca response/state.
+- [x] Lifecycle e TLS workspace rispettano profilo e Connectivity Manager.
+- [x] Flow Node-RED usa un solo Config Coordinator con GET/validate/CAS apply.
 
 ## Verifica e fine task
 

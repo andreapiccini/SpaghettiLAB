@@ -117,6 +117,7 @@ target_sources(app PRIVATE
   subsys/communication/operations/features_ops.c
   subsys/communication/operations/device_profile_ops.c
   subsys/services/mqtt/mqtt.c
+  subsys/services/mqtt/mqtt_credentials.c
   subsys/services/wifi_profiles/wifi_profiles.c
   subsys/services/wifi_profiles/wifi_profiles_storage.c
 )

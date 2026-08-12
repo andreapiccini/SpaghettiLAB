@@ -54,6 +54,8 @@
 #define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_HOST 1U
 #define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_PORT 2U
 #define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_BASE_TOPIC 3U
+#define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_SECURITY 4U
+#define SPAGHETTI_CONFIG_CBOR_MQTT_KEY_CREDENTIAL_ID 5U
 #define SPAGHETTI_CONFIG_CBOR_ENERGY_KEY_AVAILABILITY 0U
 #define SPAGHETTI_CONFIG_CBOR_ENERGY_KEY_WINDOW 1U
 #define SPAGHETTI_CONFIG_CBOR_ENERGY_KEY_PERIOD 2U
@@ -822,6 +824,8 @@ static int decode_mqtt(zcbor_state_t *state, struct spaghetti_mqtt_config *mqtt)
 	struct zcbor_string host;
 	struct zcbor_string base_topic;
 	uint32_t port;
+	uint32_t security = (uint32_t)SPAGHETTI_MQTT_SECURITY_TLS_SERVER;
+	uint32_t credential_id = 0U;
 	bool enabled;
 	int err;
 
@@ -846,9 +850,22 @@ static int decode_mqtt(zcbor_state_t *state, struct spaghetti_mqtt_config *mqtt)
 		return -EBADMSG;
 	}
 	if (!zcbor_map_end_decode(state)) {
-		return -EBADMSG;
+		err = expect_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_SECURITY);
+		if ((err < 0) || !zcbor_uint32_decode(state, &security)) {
+			return -EBADMSG;
+		}
+		err = expect_key(state,
+				 SPAGHETTI_CONFIG_CBOR_MQTT_KEY_CREDENTIAL_ID);
+		if ((err < 0) ||
+		    !zcbor_uint32_decode(state, &credential_id)) {
+			return -EBADMSG;
+		}
+		if (!zcbor_map_end_decode(state)) {
+			return -EBADMSG;
+		}
 	}
-	if (port > UINT16_MAX) {
+	if ((port > UINT16_MAX) || (credential_id > UINT16_MAX) ||
+	    (security > (uint32_t)SPAGHETTI_MQTT_SECURITY_PLAINTEXT_DEVELOPMENT)) {
 		return -EINVAL;
 	}
 
@@ -863,6 +880,8 @@ static int decode_mqtt(zcbor_state_t *state, struct spaghetti_mqtt_config *mqtt)
 
 	mqtt->enabled = enabled;
 	mqtt->port = (uint16_t)port;
+	mqtt->security = (enum spaghetti_mqtt_security)security;
+	mqtt->credential_id = (uint16_t)credential_id;
 	return 0;
 }
 
@@ -871,7 +890,7 @@ static int encode_mqtt(zcbor_state_t *state,
 {
 	int err;
 
-	if (!zcbor_map_start_encode(state, 4U)) {
+	if (!zcbor_map_start_encode(state, 6U)) {
 		return -EMSGSIZE;
 	}
 	err = put_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_ENABLED);
@@ -893,8 +912,18 @@ static int encode_mqtt(zcbor_state_t *state,
 				 sizeof(mqtt->base_topic))) {
 		return -EMSGSIZE;
 	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_SECURITY);
+	if ((err < 0) ||
+	    !zcbor_uint32_put(state, (uint32_t)mqtt->security)) {
+		return -EMSGSIZE;
+	}
+	err = put_key(state, SPAGHETTI_CONFIG_CBOR_MQTT_KEY_CREDENTIAL_ID);
+	if ((err < 0) ||
+	    !zcbor_uint32_put(state, mqtt->credential_id)) {
+		return -EMSGSIZE;
+	}
 
-	return zcbor_map_end_encode(state, 4U) ? 0 : -EMSGSIZE;
+	return zcbor_map_end_encode(state, 6U) ? 0 : -EMSGSIZE;
 }
 
 static int decode_energy(zcbor_state_t *state,
