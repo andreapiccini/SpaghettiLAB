@@ -23,6 +23,7 @@
 #include <spaghetti/communication.h>
 #include <spaghetti/core.h>
 #include <spaghetti/remote_console.h>
+#include <spaghetti/secure_workspace.h>
 #include <spaghetti/storage.h>
 
 #include "communication_internal.h"
@@ -55,6 +56,7 @@ struct spaghetti_remote_console_backend_context {
 	int client_socket;
 	bool initialized;
 	bool credentials_registered;
+	bool workspace_acquired;
 };
 
 static struct spaghetti_remote_console_backend_context context = {
@@ -374,6 +376,11 @@ static void close_client(void)
 		(void)zsock_close(context.client_socket);
 		context.client_socket = -1;
 	}
+	if (context.workspace_acquired) {
+		(void)spaghetti_secure_workspace_release(
+			SPAGHETTI_SECURE_OWNER_REMOTE_CONSOLE);
+		context.workspace_acquired = false;
+	}
 	k_msgq_purge(&remote_log_queue);
 }
 
@@ -381,15 +388,29 @@ static int accept_client(void)
 {
 	struct net_sockaddr address;
 	net_socklen_t address_size = sizeof(address);
-	const int client = zsock_accept(
-		context.server_socket, &address, &address_size);
+	int client;
 	int err;
 
+	err = spaghetti_secure_workspace_acquire(
+		SPAGHETTI_SECURE_OWNER_REMOTE_CONSOLE, K_NO_WAIT);
+	if (err < 0) {
+		return err;
+	}
+	context.workspace_acquired = true;
+	client = zsock_accept(
+		context.server_socket, &address, &address_size);
 	if (client < 0) {
-		return -errno;
+		err = -errno;
+		(void)spaghetti_secure_workspace_release(
+			SPAGHETTI_SECURE_OWNER_REMOTE_CONSOLE);
+		context.workspace_acquired = false;
+		return err;
 	}
 	if (context.client_socket >= 0) {
 		(void)zsock_close(client);
+		(void)spaghetti_secure_workspace_release(
+			SPAGHETTI_SECURE_OWNER_REMOTE_CONSOLE);
+		context.workspace_acquired = false;
 		return 0;
 	}
 	context.client_socket = client;

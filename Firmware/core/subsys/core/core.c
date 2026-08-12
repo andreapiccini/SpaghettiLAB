@@ -23,6 +23,7 @@
 #include <spaghetti/power.h>
 #include <spaghetti/runtime.h>
 #include <spaghetti/remote_console.h>
+#include <spaghetti/secure_workspace.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/update.h>
 #include <spaghetti/wifi_profiles.h>
@@ -223,6 +224,10 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto connectivity_failed;
 	}
+	err = spaghetti_secure_workspace_init();
+	if (err < 0) {
+		goto secure_workspace_failed;
+	}
 
 	err = spaghetti_storage_init();
 	if (err < 0) {
@@ -394,6 +399,9 @@ port_failed:
 	goto unlock;
 connectivity_failed:
 	(void)fail_initialization("Connectivity", err);
+	goto unlock;
+secure_workspace_failed:
+	(void)fail_initialization("Secure Workspace", err);
 	goto unlock;
 capabilities_failed:
 	(void)fail_initialization("Capabilities", err);

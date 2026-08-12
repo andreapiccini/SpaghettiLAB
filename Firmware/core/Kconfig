@@ -80,6 +80,7 @@ source "subsys/logging/Kconfig.template.log_config"
 
 rsource "Kconfig.resources"
 rsource "subsys/connectivity/Kconfig"
+rsource "subsys/services/secure_workspace/Kconfig"
 
 config SPAGHETTI_DISCOVERY_MAX_RESULTS
 	int "Maximum number of accepted Discovery results"

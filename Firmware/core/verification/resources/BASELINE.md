@@ -14,13 +14,15 @@ project's normal pristine build.
 
 | Variant | Application binary | Signed application | MCUboot | Linked SRAM | SRAM region | Headroom |
 |---|---:|---:|---:|---:|---:|---:|
-| `core-v1-esp32c3` | 817,164 B | 817,315 B | 43,040 B | 298,224 B | 365,328 B | 67,104 B |
+| `core-v1-esp32c3` | 817,512 B | 817,663 B | 43,040 B | 238,816 B | 365,328 B | 126,512 B |
 | `core-v2-build-only` | 817,180 B | 817,330 B | 43,040 B | 298,224 B | 365,328 B | 67,104 B |
 
 The linked SRAM value comes from `_image_ram_size` in `zephyr.map`; it is not a
 runtime free-heap sample. Standard and Extended are verified on `native_sim` so that
 their contracts and distinct snapshots compile, but no ESP32 hardware-memory claim
-is made for those profiles yet.
+is made for those profiles yet. The Core v1 row includes task 293; Core v2 has not
+yet been remeasured with the shared allocator and intentionally retains its previous
+baseline.
 
 ## Profile limits
 
@@ -43,8 +45,8 @@ is made for those profiles yet.
 | BLE peers | 1 | 2 | 4 |
 | Principals | 4 | 8 | 16 |
 | In-flight requests | 4 | 8 | 16 |
-| Secure sessions | 1 | 2 | 4 |
-| Shared secure workspace | 32,768 B | 49,152 B | 65,536 B |
+| Secure sessions | 1 | 1 | 1 |
+| Shared secure workspace | 60,000 B | 60,000 B | 65,536 B |
 | Flows | 2 | 4 | 8 |
 | Function Bays per Flow | 3 | 5 | 8 |
 | Power rails | 3 | 4 | 8 |
@@ -69,8 +71,8 @@ codecs, tests, and future protocol schemas must consume the corresponding
 | Update stack | 1,024 B | Update state machine worker. |
 | Electrical logger stack | 1,024 B | Power diagnostics worker. |
 | Logging stack | 768 B | Zephyr deferred logging. |
-| mbedTLS heap | 60,000 B | Existing shared TLS allocation; task 293 will replace/profile it. |
-| Minimal secure-workspace contract | 32,768 B | A declared upper budget for later shared secure workspace work, not an additional allocation today. |
+| Private mbedTLS heap | 0 B | Removed by task 293; mbedTLS now uses the flexible common-libc heap. |
+| Minimal secure-workspace contract | 60,000 B | Admission budget and metric threshold; it is not a static allocation. |
 | Production remote-console stack | 0 B | Its TLS backend and worker are not compiled in Minimal. |
 
 Subsystem pools are bounded by the profile macros. For example, Config and Module
@@ -103,3 +105,6 @@ BOARD=spaghettilab_core_v2_build_only/esp32c3 make pristine
 After each hardware build, read `_image_ram_size` and the SRAM memory-region length
 from `build/app/zephyr/zephyr.map`, and measure artifacts with `wc -c`. Record new
 numbers here only after a pristine build.
+
+See [TLS allocator verification](TLS_ALLOCATOR.md) for the allocator source audit,
+before/after map symbols and the remaining hardware peak-qualification boundary.

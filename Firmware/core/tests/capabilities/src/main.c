@@ -123,12 +123,12 @@ ZTEST(capabilities, test_profiles_have_distinct_bounded_limits)
 	} else if (snapshot.resource_profile ==
 		   SPAGHETTI_RESOURCE_PROFILE_STANDARD) {
 		zassert_equal(snapshot.max_modules, 16U);
-		zassert_equal(snapshot.max_secure_sessions, 2U);
+		zassert_equal(snapshot.max_secure_sessions, 1U);
 		zassert_true(spaghetti_capabilities_support(
 			SPAGHETTI_BUILD_CAP_REMOTE_CONSOLE));
 	} else {
 		zassert_equal(snapshot.max_modules, 32U);
-		zassert_equal(snapshot.max_secure_sessions, 4U);
+		zassert_equal(snapshot.max_secure_sessions, 1U);
 		zassert_true(spaghetti_capabilities_support(
 			SPAGHETTI_BUILD_CAP_REMOTE_CONSOLE));
 	}

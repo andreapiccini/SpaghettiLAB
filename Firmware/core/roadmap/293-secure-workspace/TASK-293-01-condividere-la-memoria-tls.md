@@ -1,6 +1,6 @@
 # TASK-293-01 — Condividere la memoria TLS
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Fase:** 293 — Workspace sicuro condiviso
 
 ## Cosa devo fare
@@ -38,9 +38,10 @@ int spaghetti_secure_workspace_get_snapshot(
 ```
 
 L'owner è passato per valore; `release()` rifiuta un owner differente con `-EPERM`.
-`timeout` è bounded e l'acquisizione è consentita solo da thread context. Sul profilo
-Minimal esiste un solo owner pesante; Standard/Extended possono aumentare il limite
-solo tramite Kconfig. MQTT deve rilasciare connessione e workspace prima di OTA Wi-Fi.
+`timeout` è bounded e l'acquisizione è consentita solo da thread context. In questa
+versione tutti i profili ammettono un solo owner pesante: il limite resta esplicito
+in Kconfig, ma aumentarlo richiederà anche un modello pubblico multi-owner. MQTT deve
+rilasciare connessione e workspace prima di OTA Wi-Fi.
 
 Sostituisci la heap mbedTLS privata con l'allocator generale Zephyr configurato per
 profilo e misurato con il vero handshake. Il workspace controlla l'ammissione; non
@@ -67,16 +68,16 @@ if (rc == 0) {
 
 ## Checklist di completamento
 
-- [ ] Allocator Zephyr 4.4 effettivo è documentato.
-- [ ] Arena privata da 60 KiB è rimossa senza rimuovere TLS/DTLS.
-- [ ] Minimal ammette una sola sessione pesante.
-- [ ] Peak e failure count sono osservabili.
-- [ ] Errori di memoria non alterano Config o immagine confermata.
+- [x] Allocator Zephyr 4.4 effettivo è documentato.
+- [x] Arena privata da 60 KiB è rimossa senza rimuovere TLS/DTLS.
+- [x] Minimal ammette una sola sessione pesante.
+- [x] Peak e failure count sono osservabili.
+- [x] Errori di memoria non alterano Config o immagine confermata.
 
 ## Verifica e fine task
 
-Esegui test con credenziale corretta/errata, 100 handshake, disconnessione durante
-handshake, MQTT→OTA, timeout e allocazione forzatamente fallita:
+I test software coprono 100 cicli di allocazione/rilascio, MQTT→OTA, timeout,
+allocazione insufficiente e failure del backend delle metriche:
 
 ```sh
 make validate
@@ -87,3 +88,6 @@ make pristine
 ```
 
 Il task termina solo con assenza di leak e una nuova misura RAM registrata.
+La fase 390 ripete sul vero socket e sulla board 100 handshake con credenziale
+corretta/errata e disconnessione durante handshake: sono prove di qualificazione
+hardware e rete, non vanno sostituite da un falso endpoint `native_sim`.

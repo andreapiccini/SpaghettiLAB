@@ -26,6 +26,7 @@ Core is the firmware startup coordinator. It initializes required components in 
 | `subsys/core/core.c` | Private state and startup sequence. |
 | `subsys/core/capabilities.c` | Builds and validates the caller-copied capability snapshot. |
 | `subsys/connectivity/` | Owns connectivity policy and bounded temporary leases. |
+| `subsys/services/secure_workspace/` | Serializes heavy secure sessions over the common libc heap. |
 | `subsys/core/core_boot_backend.c` | Board-independent reboot backend boundary. |
 | `subsys/services/maintenance_link/` | Shared-pin probe, pinctrl transition, and restricted SMP UART adapter. |
 | `src/main.c` | Calls Core and handles its final boot result. |

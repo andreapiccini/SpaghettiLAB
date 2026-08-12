@@ -1,0 +1,25 @@
+module = SPAGHETTI_SECURE_WORKSPACE
+module-str = spaghetti_secure_workspace
+source "subsys/logging/Kconfig.template.log_config"
+
+config SPAGHETTI_SECURE_WORKSPACE_ACQUIRE_MAX_MS
+	int "Maximum secure-workspace admission wait in milliseconds"
+	range 1 30000
+	default 5000
+	help
+	  Upper bound accepted by the workspace API. K_FOREVER is never allowed.
+
+config SPAGHETTI_SECURE_WORKSPACE_OTA_WAIT_MS
+	int "OTA secure-workspace wait in milliseconds"
+	range 1 SPAGHETTI_SECURE_WORKSPACE_ACQUIRE_MAX_MS
+	default 5000
+	help
+	  Maximum time Wi-Fi OTA waits for MQTT or another secure owner to stop.
+
+config SPAGHETTI_SECURE_WORKSPACE
+	bool
+	default y
+	select SYS_HEAP_RUNTIME_STATS
+	depends on COMMON_LIBC_MALLOC
+	help
+	  Enable deterministic admission and common-libc heap high-water metrics.

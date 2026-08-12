@@ -10,6 +10,7 @@
 #include <spaghetti/config.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/ota.h>
+#include <spaghetti/secure_workspace.h>
 
 #include "ota_internal.h"
 
@@ -24,6 +25,25 @@ static int update_arm_calls;
 static int update_cancel_calls;
 static int backend_open_calls;
 static int backend_close_calls;
+static int workspace_acquire_calls;
+static int workspace_release_calls;
+
+int spaghetti_secure_workspace_acquire(
+	enum spaghetti_secure_workspace_owner owner, k_timeout_t timeout)
+{
+	zassert_equal(owner, SPAGHETTI_SECURE_OWNER_WIFI_OTA);
+	zassert_false(K_TIMEOUT_EQ(timeout, K_FOREVER));
+	++workspace_acquire_calls;
+	return 0;
+}
+
+int spaghetti_secure_workspace_release(
+	enum spaghetti_secure_workspace_owner owner)
+{
+	zassert_equal(owner, SPAGHETTI_SECURE_OWNER_WIFI_OTA);
+	++workspace_release_calls;
+	return 0;
+}
 
 int spaghetti_ota_backend_init(void)
 {
@@ -176,12 +196,14 @@ ZTEST(ota, test_local_provisioning_one_shot_and_network_loss)
 	zassert_false(pending_request);
 	zassert_equal(update_arm_calls, 1);
 	zassert_equal(backend_open_calls, 1);
+	zassert_equal(workspace_acquire_calls, 1);
 	zassert_true(spaghetti_ota_is_transport(&fake_transport));
 	expect_status(SPAGHETTI_OTA_ARMED, true);
 
 	spaghetti_ota_network_lost();
 	k_sleep(K_MSEC(30));
 	zassert_equal(backend_close_calls, 1);
+	zassert_equal(workspace_release_calls, 1);
 	zassert_equal(update_cancel_calls, 1);
 	zassert_false(spaghetti_ota_is_transport(&fake_transport));
 	expect_status(SPAGHETTI_OTA_CLOSED, true);

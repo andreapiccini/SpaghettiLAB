@@ -1,0 +1,6 @@
+mainmenu "Spaghetti Secure Workspace tests"
+
+rsource "../../Kconfig.resources"
+rsource "../../subsys/services/secure_workspace/Kconfig"
+
+source "Kconfig.zephyr"

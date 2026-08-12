@@ -9,6 +9,7 @@
 
 #include <spaghetti/config.h>
 #include <spaghetti/maintenance_link.h>
+#include <spaghetti/secure_workspace.h>
 #include <spaghetti/storage.h>
 #include <spaghetti/update.h>
 
@@ -21,6 +22,7 @@ struct spaghetti_ota_context {
 	struct k_work_delayable timeout_work;
 	struct k_work_delayable deferred_cancel_work;
 	bool initialized;
+	bool workspace_acquired;
 	int last_error;
 };
 
@@ -42,6 +44,15 @@ static int close_locked(bool discard_candidate)
 		if ((update_error < 0) && (update_error != -EALREADY) &&
 		    (first_error == 0)) {
 			first_error = update_error;
+		}
+	}
+	if (context.workspace_acquired) {
+		const int release_error = spaghetti_secure_workspace_release(
+			SPAGHETTI_SECURE_OWNER_WIFI_OTA);
+
+		context.workspace_acquired = false;
+		if ((release_error < 0) && (first_error == 0)) {
+			first_error = release_error;
 		}
 	}
 
@@ -89,13 +100,26 @@ static int arm_locked(uint32_t timeout_ms)
 		return -ENOENT;
 	}
 
+	err = spaghetti_secure_workspace_acquire(
+		SPAGHETTI_SECURE_OWNER_WIFI_OTA,
+		K_MSEC(CONFIG_SPAGHETTI_SECURE_WORKSPACE_OTA_WAIT_MS));
+	if (err < 0) {
+		return err;
+	}
+	context.workspace_acquired = true;
 	err = spaghetti_update_arm(timeout_ms);
 	if (err < 0) {
+		(void)spaghetti_secure_workspace_release(
+			SPAGHETTI_SECURE_OWNER_WIFI_OTA);
+		context.workspace_acquired = false;
 		return err;
 	}
 	err = spaghetti_ota_backend_open();
 	if (err < 0) {
 		(void)spaghetti_update_cancel();
+		(void)spaghetti_secure_workspace_release(
+			SPAGHETTI_SECURE_OWNER_WIFI_OTA);
+		context.workspace_acquired = false;
 		context.state = SPAGHETTI_OTA_ERROR;
 		context.last_error = err;
 		return err;

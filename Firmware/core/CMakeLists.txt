@@ -8,6 +8,7 @@ project(esp32c3_app)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_subdirectory(subsys/connectivity)
+add_subdirectory(subsys/services/secure_workspace)
 
 add_custom_target(spaghetti_validator
   COMMAND

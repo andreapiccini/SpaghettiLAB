@@ -26,4 +26,8 @@ config SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS
 	int
 	default 10
 
+config SPAGHETTI_SECURE_WORKSPACE_OTA_WAIT_MS
+	int
+	default 20
+
 source "Kconfig.zephyr"
