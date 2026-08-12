@@ -62,6 +62,9 @@ packages/
   project-store/         ProjectV1 persistence: repository + transactional
                          autosave/history/concurrency (S014, S122).
   react-flow-adapter/     bidirectional Domain <-> React Flow adapter (S043)
+  physical-composition-model/ Backbone/Power/Bay/Connector/external-device/Module
+                           node data, topology-backed validation, Module-discovery
+                           preview/diff (S050).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

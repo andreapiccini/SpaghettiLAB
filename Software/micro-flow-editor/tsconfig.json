@@ -7,6 +7,7 @@
     { "path": "packages/core-session" },
     { "path": "packages/catalog-model" },
     { "path": "packages/editor-model" },
+    { "path": "packages/physical-composition-model" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

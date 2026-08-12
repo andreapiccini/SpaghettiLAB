@@ -33,7 +33,7 @@ finale end-to-end).
 | ✅ | [S041 — Normalizzazione catalogo e topologia](tasks/S041-catalog-topology-normalization.md) | Catalog e topologia diventano indici immutabili indipendenti dall'ordine di lettura. |
 | ✅ | [S042 — EditorModel, form e compatibility engine](tasks/S042-editor-model-compatibility.md) | Nodi, handle, form e vincoli di collegamento derivano dal catalogo, mai hardcoded. |
 | ✅ | [S043 — Adapter React Flow](tasks/S043-react-flow-adapter.md) | React Flow è pura rappresentazione; il dominio resta l'unica fonte autorevole. |
-| ⬜ | [S050 — Composizione fisica e configurazione Module](tasks/S050-physical-composition-modules.md) | Backbone, Bay, Connector, sensori esterni e Module diventano Config validabile. |
+| ✅ | [S050 — Composizione fisica e configurazione Module](tasks/S050-physical-composition-modules.md) | Backbone, Bay, Connector, sensori esterni e Module diventano Config validabile. |
 | | **S060 — Device Profile Studio** | |
 | ⬜ | [S061 — Modello authoring ed editor istruzioni](tasks/S061-profile-authoring-instructions.md) | Un profilo si descrive interamente con le istruzioni catalogate disponibili. |
 | ⬜ | [S062 — Budget locale, import/export e resolver](tasks/S062-profile-budget-export-resolver.md) | Il profilo è verificato localmente, scambiabile e risolto in uno dei sei esiti previsti. |
