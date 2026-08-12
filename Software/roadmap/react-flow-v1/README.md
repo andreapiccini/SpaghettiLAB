@@ -22,7 +22,7 @@ finale end-to-end).
 | ✅ | [S011 — Workspace, tooling e porte infrastrutturali](tasks/S011-workspace-tooling-ports.md) | Workspace multi-pacchetto, quality gate e porte astratte sono pronti. |
 | ✅ | [S012 — Tipi di dominio, ID ed errori strutturati](tasks/S012-domain-types-errors.md) | Ogni entità ha ID stabile; gli errori di dominio sono strutturati, non stringhe. |
 | ✅ | [S013 — I tre grafi e i confini fra layer](tasks/S013-graph-boundaries.md) | Physical, Device Processing e System Automation Graph hanno ownership separata. |
-| ⬜ | [S014 — ProjectV1, persistenza e comandi con undo/redo](tasks/S014-project-persistence-commands.md) | Project è persistibile, versionato e modificabile con undo/redo deterministico. |
+| ✅ | [S014 — ProjectV1, persistenza e comandi con undo/redo](tasks/S014-project-persistence-commands.md) | Project è persistibile, versionato e modificabile con undo/redo deterministico. |
 | | **S020 — Protocol SDK e trasporti** | |
 | ⬜ | [S021 — Codec e tipi Protocol V1](tasks/S021-codec-protocol-types.md) | Ogni tipo Protocol V1 ha codec CBOR lossless testato su golden vector. |
 | ⬜ | [S022 — SpaghettiClient e operazioni firmware](tasks/S022-spaghetti-client-operations.md) | Ogni operazione firmware è raggiungibile da un client con retry/correlation/paginazione corretti. |

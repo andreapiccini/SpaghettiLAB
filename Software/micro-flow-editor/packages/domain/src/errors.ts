@@ -28,10 +28,16 @@ export function domainError(input: DomainErrorInput): DomainError {
   return { severity: "error", ...input };
 }
 
-// Error codes used by this package (S012). Later packages define their own
-// codes in their own module — this is not meant to become a global enum.
+// Error codes used by this package. Later packages define their own codes in
+// their own module — this is not meant to become a global enum.
 export const DomainErrorCode = {
+  // S012
   INVALID_ID: "domain.id.invalid",
   DUPLICATE_ID: "domain.id.duplicate",
   DANGLING_REFERENCE: "domain.id.dangling_reference",
+  // S014
+  INVALID_SCHEMA: "domain.schema.invalid",
+  MIGRATION_NOT_FOUND: "domain.schema.migration_not_found",
+  NOTHING_TO_UNDO: "domain.command.nothing_to_undo",
+  NOTHING_TO_REDO: "domain.command.nothing_to_redo",
 } as const;

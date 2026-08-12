@@ -73,6 +73,43 @@ its output round-trips through the branded ID constructors below.
   any of this, so there is no path for it to reach a firmware Config — enforced
   structurally, not by convention.
 
+### ProjectV1, migrations, and undo/redo commands (S014)
+
+- `canonicalJson(value)` / `contentHash(value)` (`hash.ts`) — a dependency-free,
+  non-cryptographic, deterministic fingerprint (sorted object keys, FNV-1a). Not
+  the real Config CBOR hash (that's S072's job, over the compiled Config with the
+  protocol's actual algorithm) — this is a domain-level content-identity check.
+- `ProjectV1` (`project.ts`) — the persisted authoring model:
+  `schemaVersion`/`projectId`/`name`/`coreBindings`/`physicalGraphs`/
+  `deviceGraphs`/`systemAutomationGraph`/`requiredArtifacts`/`deploymentRecords`/
+  `authoringMetadata`, matching REACT_FLOW_ARCHITECTURE.md § Modello dati
+  principale. Graph node/edge `data` is `unknown` for now — S050/S070/S110 own the
+  concrete Physical Composition / Device Processing / System Automation payload
+  shapes, not yet defined.
+  - `validateProjectV1(raw)` — runtime validator for data of unknown origin;
+    collects every problem instead of stopping at the first.
+  - `exportProjectV1` / `importProjectV1` — JSON round-trip through the validator.
+  - `canonicalProjectHash(project)` — fingerprint of *deployable* content only:
+    stable regardless of array insertion order, and `authoringMetadata` is never
+    part of the input.
+  - `createEmptyProject(projectId, name)` — the starting point for a new project.
+- `MigrationRegistry` / `migrateProjectToLatest` (`project-migrations.ts`) — the
+  extensibility point for future schema bumps. `defaultProjectMigrations` (what
+  the app actually uses) starts empty: `ProjectV1` is the first version, so there
+  is nothing to migrate from yet. The mechanism itself is proven in tests with a
+  synthetic registry and synthetic migrations.
+- `ProjectCommand` / `CommandStack` (`commands.ts`) — the *only* sanctioned way to
+  change a `ProjectV1`; nothing else should mutate one directly. `CommandStack` is
+  snapshot-based (pushes the whole previous `ProjectV1` on `execute`, pops it back
+  on `undo`) — simple and correct by construction, not an approximation from
+  replaying inverse operations. Ships three commands: `renameProject`,
+  `addCoreBinding`, `removeCoreBinding`.
+
+Concrete storage I/O (using the `Storage` port to actually save/load a `ProjectV1`)
+is deliberately **not** here — see `@spaghettilab/project-store`'s
+`ProjectRepository`. This package stays pure: types, validation, hashing, and
+commands, no I/O orchestration.
+
 ## Commands
 
 ```sh

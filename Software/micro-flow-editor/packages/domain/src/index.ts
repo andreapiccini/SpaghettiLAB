@@ -5,4 +5,8 @@ export * from "./id-registry.js";
 export * from "./graph-layer.js";
 export * from "./graph.js";
 export * from "./authoring-metadata.js";
+export * from "./hash.js";
+export * from "./project.js";
+export * from "./project-migrations.js";
+export * from "./commands.js";
 export * from "./ports/index.js";

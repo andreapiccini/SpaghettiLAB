@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "projectId": "aaaaaaaa-0000-4000-8000-000000000001",
+  "name": "Greenhouse demo",
+  "coreBindings": [
+    {
+      "bindingId": "aaaaaaaa-0000-4000-8000-000000000002",
+      "expectedDeviceId": "core-greenhouse-01",
+      "connectionProfileId": "profile-mqtt-local",
+      "lastKnownVariant": "esp32c3",
+      "lastKnownProfile": "minimal",
+      "lastKnownFeatureSet": ["ble", "mqtt"]
+    }
+  ],
+  "physicalGraphs": [
+    {
+      "layer": "physical-composition",
+      "nodes": [
+        { "layer": "physical-composition", "id": "node-core-1", "data": { "kind": "core" } }
+      ],
+      "edges": []
+    }
+  ],
+  "deviceGraphs": [
+    {
+      "layer": "device-processing",
+      "nodes": [],
+      "edges": []
+    }
+  ],
+  "systemAutomationGraph": {
+    "layer": "system-automation",
+    "nodes": [],
+    "edges": []
+  },
+  "requiredArtifacts": [
+    { "profileId": "profile-ina219", "version": "1.0.0", "hash": "8f14e45f" }
+  ],
+  "deploymentRecords": [
+    {
+      "deploymentId": "aaaaaaaa-0000-4000-8000-000000000003",
+      "target": "core-greenhouse-01",
+      "timestamp": "2026-01-01T00:00:00.000Z",
+      "sourceProjectHash": "deadbeef",
+      "configGeneration": 3,
+      "configHash": "cafef00d",
+      "outcome": "success"
+    }
+  ],
+  "authoringMetadata": {
+    "node-core-1": { "position": { "x": 120, "y": 80 }, "selected": false }
+  }
+}
