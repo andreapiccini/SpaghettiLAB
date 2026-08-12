@@ -61,7 +61,7 @@ packages/
                          compatibility checks, unknown-type placeholders (S042).
   project-store/         ProjectV1 persistence: repository + transactional
                          autosave/history/concurrency (S014, S122).
-  react-flow-adapter/     placeholder — Domain <-> React Flow bridge (S043)
+  react-flow-adapter/     bidirectional Domain <-> React Flow adapter (S043)
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

@@ -1,4 +1,15 @@
-// Placeholder — implemented by S043 (bidirectional Domain <-> React Flow adapter).
-// Deliberately empty until then; see roadmap/react-flow-v1. Unlike @spaghettilab/domain,
-// this package IS allowed to depend on React and @xyflow/react — that is its job.
-export {};
+export { toReactFlowNodes, toReactFlowEdges, isPlaceholderDiagnostic, type DomainNodeData } from "./to-react-flow.js";
+export {
+  systemAutomationGraphLens,
+  deviceGraphLens,
+  physicalGraphLens,
+  type GraphLens,
+} from "./graph-lens.js";
+export {
+  addGraphNodeCommand,
+  addGraphEdgeCommand,
+  removeGraphNodeCommand,
+  removeGraphEdgeCommand,
+  updateAuthoringMetadataCommand,
+} from "./graph-commands.js";
+export { nodeChangesToCommands, edgeChangesToCommands, connectionToCommand } from "./react-flow-events.js";

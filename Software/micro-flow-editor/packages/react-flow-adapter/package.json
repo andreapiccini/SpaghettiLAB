@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@spaghettilab/domain": "*",
+    "@spaghettilab/editor-model": "*",
     "@xyflow/react": "^12.11.2",
     "react": "^19.2.8"
   },

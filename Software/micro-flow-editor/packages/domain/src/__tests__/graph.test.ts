@@ -123,6 +123,76 @@ describe("Graph", () => {
     expect(edge.ok).toBe(true);
   });
 
+  describe("removeNode / removeNodeCascade / removeEdge", () => {
+    it("removeNode deletes a node with no dependent edges", () => {
+      const graph = createDeviceProcessingGraph<string, string, { kind: string }>();
+      must(graph.addNode({ layer: "device-processing", id: "n1", data: { kind: "read" } }));
+      const result = graph.removeNode("n1");
+      expect(result.ok).toBe(true);
+      expect(graph.getNode("n1")).toBeUndefined();
+    });
+
+    it("removeNode fails on an unknown node ID with a structured error", () => {
+      const graph = createDeviceProcessingGraph<string, string, unknown>();
+      const result = graph.removeNode("missing");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe(GraphErrorCode.NODE_NOT_FOUND);
+    });
+
+    it("removeNode refuses to remove a node that still has a dependent edge", () => {
+      const graph = createDeviceProcessingGraph<string, string, { kind: string }>();
+      must(graph.addNode({ layer: "device-processing", id: "n1", data: { kind: "read" } }));
+      must(graph.addNode({ layer: "device-processing", id: "n2", data: { kind: "rule" } }));
+      must(graph.addEdge({ layer: "device-processing", id: "e1", source: "n1", target: "n2" }));
+
+      const result = graph.removeNode("n1");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe(GraphErrorCode.NODE_HAS_DEPENDENT_EDGES);
+      // Nothing was removed on failure.
+      expect(graph.getNode("n1")).toBeDefined();
+      expect(graph.getEdges()).toHaveLength(1);
+    });
+
+    it("removeNodeCascade removes the node and every edge referencing it, reporting which ones", () => {
+      const graph = createDeviceProcessingGraph<string, string, { kind: string }>();
+      must(graph.addNode({ layer: "device-processing", id: "n1", data: { kind: "read" } }));
+      must(graph.addNode({ layer: "device-processing", id: "n2", data: { kind: "rule" } }));
+      must(graph.addNode({ layer: "device-processing", id: "n3", data: { kind: "publish" } }));
+      must(graph.addEdge({ layer: "device-processing", id: "e1", source: "n1", target: "n2" }));
+      must(graph.addEdge({ layer: "device-processing", id: "e2", source: "n2", target: "n3" }));
+
+      const result = graph.removeNodeCascade("n2");
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(new Set(result.value.removedEdgeIds)).toEqual(new Set(["e1", "e2"]));
+      }
+      expect(graph.getNode("n2")).toBeUndefined();
+      expect(graph.getEdges()).toHaveLength(0);
+      expect(graph.getNode("n1")).toBeDefined();
+      expect(graph.getNode("n3")).toBeDefined();
+    });
+
+    it("removeEdge deletes only the targeted edge", () => {
+      const graph = createDeviceProcessingGraph<string, string, { kind: string }>();
+      must(graph.addNode({ layer: "device-processing", id: "n1", data: { kind: "read" } }));
+      must(graph.addNode({ layer: "device-processing", id: "n2", data: { kind: "rule" } }));
+      must(graph.addEdge({ layer: "device-processing", id: "e1", source: "n1", target: "n2" }));
+
+      const result = graph.removeEdge("e1");
+      expect(result.ok).toBe(true);
+      expect(graph.getEdges()).toHaveLength(0);
+      // Nodes are untouched by edge removal.
+      expect(graph.getNode("n1")).toBeDefined();
+    });
+
+    it("removeEdge fails on an unknown edge ID with a structured error", () => {
+      const graph = createDeviceProcessingGraph<string, string, unknown>();
+      const result = graph.removeEdge("missing");
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe(GraphErrorCode.EDGE_NOT_FOUND);
+    });
+  });
+
   describe("deployableSnapshot", () => {
     it("is independent of node insertion order", () => {
       const a = createDeviceProcessingGraph<string, string, { v: number }>();

@@ -6,6 +6,9 @@ export const GraphErrorCode = {
   CROSS_LAYER_REFERENCE: "domain.graph.cross_layer_reference",
   DUPLICATE_NODE: "domain.graph.duplicate_node",
   DANGLING_EDGE_ENDPOINT: "domain.graph.dangling_edge_endpoint",
+  NODE_NOT_FOUND: "domain.graph.node_not_found",
+  EDGE_NOT_FOUND: "domain.graph.edge_not_found",
+  NODE_HAS_DEPENDENT_EDGES: "domain.graph.node_has_dependent_edges",
 } as const;
 
 export type GraphNode<Layer extends GraphLayer, Id extends string, Data> = {
@@ -101,6 +104,78 @@ export class Graph<Layer extends GraphLayer, Id extends string, EdgeId extends s
 
   getEdges(): readonly GraphEdge<Layer, Id, EdgeId>[] {
     return [...this.edgeList];
+  }
+
+  /**
+   * Removes a node, but only if no edge still references it — a caller must
+   * remove those edges first (or use `removeNodeCascade`). This mirrors
+   * `addEdge`'s own dangling-endpoint check: the graph never ends up with an
+   * edge pointing at a node that no longer exists.
+   */
+  removeNode(id: Id): Result<void, DomainError> {
+    if (!this.nodeMap.has(id)) {
+      return err(
+        domainError({
+          code: GraphErrorCode.NODE_NOT_FOUND,
+          path: [this.layer, "nodes", id],
+          target: id,
+          remediation: `No node with ID "${id}" exists in this graph.`,
+        }),
+      );
+    }
+    const dependentEdges = this.edgeList.filter((e) => e.source === id || e.target === id);
+    if (dependentEdges.length > 0) {
+      return err(
+        domainError({
+          code: GraphErrorCode.NODE_HAS_DEPENDENT_EDGES,
+          path: [this.layer, "nodes", id],
+          target: id,
+          remediation: `Remove the ${dependentEdges.length} edge(s) referencing node "${id}" first, or use removeNodeCascade().`,
+        }),
+      );
+    }
+    this.nodeMap.delete(id);
+    return ok(undefined);
+  }
+
+  /** Removes a node and every edge that referenced it, returning which edges were removed so a caller (e.g. the React Flow adapter) can update its own view accordingly. */
+  removeNodeCascade(id: Id): Result<{ removedEdgeIds: readonly EdgeId[] }, DomainError> {
+    if (!this.nodeMap.has(id)) {
+      return err(
+        domainError({
+          code: GraphErrorCode.NODE_NOT_FOUND,
+          path: [this.layer, "nodes", id],
+          target: id,
+          remediation: `No node with ID "${id}" exists in this graph.`,
+        }),
+      );
+    }
+    const removedEdgeIds: EdgeId[] = [];
+    for (let i = this.edgeList.length - 1; i >= 0; i--) {
+      const edge = this.edgeList[i]!;
+      if (edge.source === id || edge.target === id) {
+        removedEdgeIds.push(edge.id);
+        this.edgeList.splice(i, 1);
+      }
+    }
+    this.nodeMap.delete(id);
+    return ok({ removedEdgeIds });
+  }
+
+  removeEdge(id: EdgeId): Result<void, DomainError> {
+    const index = this.edgeList.findIndex((e) => e.id === id);
+    if (index === -1) {
+      return err(
+        domainError({
+          code: GraphErrorCode.EDGE_NOT_FOUND,
+          path: [this.layer, "edges", id],
+          target: id,
+          remediation: `No edge with ID "${id}" exists in this graph.`,
+        }),
+      );
+    }
+    this.edgeList.splice(index, 1);
+    return ok(undefined);
   }
 }
 

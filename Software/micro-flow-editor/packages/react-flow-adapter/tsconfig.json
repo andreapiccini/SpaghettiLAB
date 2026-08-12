@@ -6,7 +6,7 @@
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "references": [{ "path": "../domain" }],
+  "references": [{ "path": "../domain" }, { "path": "../editor-model" }],
   "include": ["src"],
   "exclude": ["src/**/__tests__/**"]
 }
