@@ -110,6 +110,32 @@ export class Graph<Layer extends GraphLayer, Id extends string, EdgeId extends s
     return this.nodeMap.get(id);
   }
 
+  /** Replaces an existing node's `data` in place — the edit counterpart to `addNode`, keeping every edge that referenced this ID (an add-then-remove round trip would otherwise cascade-delete them for no domain reason). */
+  updateNode(node: GraphNode<Layer, Id, Data>): Result<GraphNode<Layer, Id, Data>, DomainError> {
+    if (node.layer !== this.layer) {
+      return err(
+        domainError({
+          code: GraphErrorCode.CROSS_LAYER_REFERENCE,
+          path: [this.layer, "nodes", node.id],
+          target: node.id,
+          remediation: `A "${node.layer}" node cannot be updated in the "${this.layer}" graph — build it in the graph matching its own layer instead.`,
+        }),
+      );
+    }
+    if (!this.nodeMap.has(node.id)) {
+      return err(
+        domainError({
+          code: GraphErrorCode.NODE_NOT_FOUND,
+          path: [this.layer, "nodes", node.id],
+          target: node.id,
+          remediation: `No node with ID "${node.id}" exists in this graph — use addNode() to create it first.`,
+        }),
+      );
+    }
+    this.nodeMap.set(node.id, node);
+    return ok(node);
+  }
+
   getNodes(): readonly GraphNode<Layer, Id, Data>[] {
     return [...this.nodeMap.values()];
   }

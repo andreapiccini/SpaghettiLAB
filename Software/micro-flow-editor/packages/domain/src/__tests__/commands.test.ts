@@ -121,4 +121,21 @@ describe("CommandStack", () => {
     stack.undo();
     expect(stack.canUndo()).toBe(false);
   });
+
+  it("addCoreBinding/removeCoreBinding keep physicalGraphs/deviceGraphs index-aligned with coreBindings (react-flow-adapter's physicalGraphLens/deviceGraphLens match by array index)", () => {
+    const stack = new CommandStack(fixtureProject());
+    const c1 = mustOk(coreBindingId("cccccccc-0000-4000-8000-0000000000c1"));
+    const c2 = mustOk(coreBindingId("cccccccc-0000-4000-8000-0000000000c2"));
+
+    stack.execute(addCoreBinding({ bindingId: c1, expectedDeviceId: "d1", connectionProfileId: "p1" }));
+    stack.execute(addCoreBinding({ bindingId: c2, expectedDeviceId: "d2", connectionProfileId: "p2" }));
+    expect(stack.current.physicalGraphs).toHaveLength(2);
+    expect(stack.current.deviceGraphs).toHaveLength(2);
+    expect(stack.current.physicalGraphs.every((g) => g.layer === "physical-composition" && g.nodes.length === 0)).toBe(true);
+
+    stack.execute(removeCoreBinding(c1));
+    expect(stack.current.coreBindings.map((b) => b.bindingId)).toEqual([c2]);
+    expect(stack.current.physicalGraphs).toHaveLength(1);
+    expect(stack.current.deviceGraphs).toHaveLength(1);
+  });
 });

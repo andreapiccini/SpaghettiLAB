@@ -14,6 +14,7 @@
     { "path": "../catalog-model" },
     { "path": "../core-session" },
     { "path": "../editor-model" },
+    { "path": "../physical-composition-model" },
     { "path": "../protocol-sdk" },
     { "path": "../project-store" },
     { "path": "../react-flow-adapter" }

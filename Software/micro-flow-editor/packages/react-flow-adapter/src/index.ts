@@ -10,6 +10,7 @@ export {
   addGraphEdgeCommand,
   removeGraphNodeCommand,
   removeGraphEdgeCommand,
+  updateGraphNodeCommand,
   updateAuthoringMetadataCommand,
 } from "./graph-commands.js";
 export { nodeChangesToCommands, edgeChangesToCommands, connectionToCommand } from "./react-flow-events.js";

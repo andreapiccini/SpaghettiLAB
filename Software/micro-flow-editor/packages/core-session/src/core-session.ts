@@ -1,6 +1,9 @@
 import { canonicalProjectHash, type CoreBindingRecord, type DeploymentRecordV1, type ProjectV1 } from "@spaghettilab/domain";
 import type {
+  AcceptDiscoveryRequest,
+  AcceptDiscoveryResponse,
   DeviceProfileSummary,
+  DiscoveryCandidate,
   EventStream,
   GetCapabilitiesResponse,
   GetCatalogResponse,
@@ -199,6 +202,16 @@ export class CoreSession {
    */
   async listDeviceProfiles(): Promise<readonly DeviceProfileSummary[]> {
     return this.client.getFullDeviceProfileList();
+  }
+
+  /** Reads the full discovery candidate list — same "explicit, not part of connect()'s sync sequence" reasoning as `listDeviceProfiles()`. Used by the Physical Composition Editor's "Candidati rilevati" tray (S050). */
+  async listDiscoveryCandidates(): Promise<readonly DiscoveryCandidate[]> {
+    return this.client.getFullDiscoveryList();
+  }
+
+  /** Explicit action: accepts one discovery candidate on the Core, returning the firmware-assigned Module key. Never called without a prior, human-reviewed diff — see `@spaghettilab/physical-composition-model`'s `previewDiscoveryAcceptDiff()`. */
+  async acceptDiscovery(req: AcceptDiscoveryRequest): Promise<AcceptDiscoveryResponse> {
+    return this.client.acceptDiscovery(req);
   }
 
   /** Explicit action: adopt the device's live Config as-is. Never called automatically. */

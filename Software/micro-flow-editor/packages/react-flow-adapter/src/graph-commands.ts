@@ -66,6 +66,29 @@ export function addGraphEdgeCommand<Layer extends GraphLayer>(
   };
 }
 
+/**
+ * Turns "the user saved the Inspector form for an existing node" into a
+ * `ProjectCommand` — the edit counterpart to `addGraphNodeCommand`. Uses
+ * `Graph.updateNode()`, not a remove-then-add, so edges referencing this node
+ * survive the edit (S050's Physical Composition Editor is the first real
+ * caller: saving a Module's Port/Bay/Rail/endpoint must not silently drop
+ * unrelated cabling).
+ */
+export function updateGraphNodeCommand<Layer extends GraphLayer>(
+  lens: GraphLens<Layer>,
+  node: GraphNode<Layer, string, unknown>,
+): ProjectCommand {
+  return {
+    kind: "UpdateGraphNode",
+    apply: (project) => {
+      const mutable = toMutableGraph(lens.get(project));
+      const result = mutable.updateNode(node);
+      if (!result.ok) return result;
+      return ok(lens.set(project, toGraphState(mutable)));
+    },
+  };
+}
+
 /** Cascades to remove dependent edges too — matches the "delete node" action already specified in `UX-S070`'s Inspector, never leaving a dangling edge behind. */
 export function removeGraphNodeCommand<Layer extends GraphLayer>(
   lens: GraphLens<Layer>,

@@ -136,6 +136,27 @@ describe("Graph", () => {
     expect(edge.ok).toBe(true);
   });
 
+  describe("updateNode", () => {
+    it("replaces a node's data in place, keeping edges that reference it", () => {
+      const graph = createDeviceProcessingGraph<string, string, { kind: string; value?: number }>();
+      must(graph.addNode({ layer: "device-processing", id: "n1", data: { kind: "read" } }));
+      must(graph.addNode({ layer: "device-processing", id: "n2", data: { kind: "rule" } }));
+      must(graph.addEdge({ layer: "device-processing", id: "e1", source: "n1", target: "n2" }));
+
+      const result = graph.updateNode({ layer: "device-processing", id: "n1", data: { kind: "read", value: 42 } });
+      expect(result.ok).toBe(true);
+      expect(graph.getNode("n1")?.data).toEqual({ kind: "read", value: 42 });
+      expect(graph.getEdges()).toHaveLength(1);
+    });
+
+    it("fails on an unknown node ID instead of silently creating one", () => {
+      const graph = createDeviceProcessingGraph<string, string, { kind: string }>();
+      const result = graph.updateNode({ layer: "device-processing", id: "missing", data: { kind: "read" } });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe(GraphErrorCode.NODE_NOT_FOUND);
+    });
+  });
+
   describe("removeNode / removeNodeCascade / removeEdge", () => {
     it("removeNode deletes a node with no dependent edges", () => {
       const graph = createDeviceProcessingGraph<string, string, { kind: string }>();

@@ -31,7 +31,7 @@ browser quando possibile, non solo per tipo.
 | ✅ | [UI-S010](tasks/UI-S010-workspace-shell.md) | Shell applicativa, Project Picker, undo/redo, command palette | [UX-S010](../ux-v1/tasks/UX-S010-workspace-shell.md) | `domain`, `project-store` |
 | ✅ | [UI-S030](tasks/UI-S030-core-connections.md) | Core Connections | [UX-S030](../ux-v1/tasks/UX-S030-core-connections.md) | `core-session`, `protocol-sdk` |
 | ✅ | [UI-S040](tasks/UI-S040-catalog-topology.md) | Catalog & Topology Explorer | [UX-S040](../ux-v1/tasks/UX-S040-catalog-topology.md) | `catalog-model`, `editor-model` |
-| ⬜ | [UI-S050](tasks/UI-S050-physical-composition.md) | Physical Composition Editor | [UX-S050](../ux-v1/tasks/UX-S050-physical-composition.md) | `physical-composition-model`, `react-flow-adapter` |
+| ✅ | [UI-S050](tasks/UI-S050-physical-composition.md) | Physical Composition Editor | [UX-S050](../ux-v1/tasks/UX-S050-physical-composition.md) | `physical-composition-model`, `react-flow-adapter` |
 | ⬜ | [UI-S060](tasks/UI-S060-device-profile-studio.md) | Device Profile Studio | [UX-S060](../ux-v1/tasks/UX-S060-device-profile-studio.md) | `device-profile-authoring-model`, `device-profile-package`, `device-profile-install` |
 | ⬜ | UI-S070 | Processing Graph Editor | (già "as-built", solo da ricollegare ai pacchetti reali) | `device-processing-graph-model`, `config-compiler`, `config-decompiler` |
 | ⬜ | [UI-S080](tasks/UI-S080-deploy-diff.md) | Deploy & Diff | [UX-S080](../ux-v1/tasks/UX-S080-deploy-diff.md) | `config-deployment` |

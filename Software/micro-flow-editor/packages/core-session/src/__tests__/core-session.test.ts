@@ -10,6 +10,7 @@ import {
 } from "@spaghettilab/domain";
 import {
   decodeRequest,
+  encodeAcceptDiscoveryResponse,
   encodeGetCapabilitiesResponse,
   encodeGetCatalogResponse,
   encodeGetConfigResponse,
@@ -18,6 +19,7 @@ import {
   encodeGetStatusResponse,
   encodeGetTopologyResponse,
   encodeListDeviceProfilesResponse,
+  encodeListDiscoveryResponse,
   encodeResponse,
   EventStream,
   FakeTransport,
@@ -26,6 +28,7 @@ import {
   SpaghettiClient,
   fakeStatusEvent,
   type DeviceProfileSummary,
+  type DiscoveryCandidate,
   type GetCapabilitiesResponse,
   type GetCatalogResponse,
   type GetConfigResponse,
@@ -327,5 +330,38 @@ describe("CoreSession — listDeviceProfiles()", () => {
     }, profileResponder);
 
     expect(result).toEqual(profiles);
+  });
+});
+
+describe("CoreSession — discovery", () => {
+  it("listDiscoveryCandidates() reads the full candidate list on demand", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+
+    const candidates: DiscoveryCandidate[] = [{ id: 1, portId: 2, generation: 3, confidence: 80, suggestedTypeId: "driver-a" }];
+    const discoveryResponder = new FakeCoreResponder(transport, {
+      [Operation.LIST_DISCOVERY]: () => encodeListDiscoveryResponse({ candidates, nextCursor: 0 }),
+    });
+    let result: readonly DiscoveryCandidate[] | undefined;
+    await runToCompletion(async () => {
+      result = await session.listDiscoveryCandidates();
+    }, discoveryResponder);
+
+    expect(result).toEqual(candidates);
+  });
+
+  it("acceptDiscovery() sends the request and returns the firmware-assigned key", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+
+    const acceptResponder = new FakeCoreResponder(transport, {
+      [Operation.ACCEPT_DISCOVERY]: () => encodeAcceptDiscoveryResponse({ generation: 4, moduleKey: 7 }),
+    });
+    let result: { generation: number; moduleKey: number } | undefined;
+    await runToCompletion(async () => {
+      result = await session.acceptDiscovery({ candidateId: 1, key: 7, generation: 3 });
+    }, acceptResponder);
+
+    expect(result).toEqual({ generation: 4, moduleKey: 7 });
   });
 });

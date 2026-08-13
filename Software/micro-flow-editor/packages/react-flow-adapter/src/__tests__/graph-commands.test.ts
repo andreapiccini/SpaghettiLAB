@@ -6,6 +6,7 @@ import {
   removeGraphEdgeCommand,
   removeGraphNodeCommand,
   updateAuthoringMetadataCommand,
+  updateGraphNodeCommand,
 } from "../graph-commands.js";
 import { systemAutomationGraphLens } from "../graph-lens.js";
 
@@ -34,6 +35,31 @@ describe("graph-commands — S043 point 1 (React Flow events become domain comma
     const once = mustOk(cmd.apply(project));
     const twice = cmd.apply(once);
     expect(twice.ok).toBe(false);
+  });
+
+  it("updateGraphNodeCommand replaces an existing node's data without touching its edges", () => {
+    const project = baseProject();
+    const withNodes = mustOk(
+      addGraphNodeCommand(systemAutomationGraphLens, { layer: "system-automation", id: "a", data: { count: 1 } }).apply(project),
+    );
+    const withNodes2 = mustOk(
+      addGraphNodeCommand(systemAutomationGraphLens, { layer: "system-automation", id: "b", data: {} }).apply(withNodes),
+    );
+    const withEdge = mustOk(
+      addGraphEdgeCommand(systemAutomationGraphLens, { id: "e1", source: "a", target: "b" }).apply(withNodes2),
+    );
+
+    const updated = updateGraphNodeCommand(systemAutomationGraphLens, { layer: "system-automation", id: "a", data: { count: 2 } }).apply(withEdge);
+    expect(updated.ok).toBe(true);
+    const project2 = mustOk(updated);
+    expect(project2.systemAutomationGraph.nodes.find((n) => n.id === "a")?.data).toEqual({ count: 2 });
+    expect(project2.systemAutomationGraph.edges).toHaveLength(1);
+  });
+
+  it("updateGraphNodeCommand rejects an unknown node id instead of creating one", () => {
+    const project = baseProject();
+    const result = updateGraphNodeCommand(systemAutomationGraphLens, { layer: "system-automation", id: "missing", data: {} }).apply(project);
+    expect(result.ok).toBe(false);
   });
 
   it("addGraphEdgeCommand derives `layer` from the lensed graph state — callers never supply it", () => {

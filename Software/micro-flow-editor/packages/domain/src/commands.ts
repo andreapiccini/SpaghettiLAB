@@ -1,7 +1,12 @@
 import { domainError, DomainErrorCode, type DomainError } from "./errors.js";
 import type { CoreBindingId } from "./ids.js";
-import type { CoreBindingRecord, ProjectV1 } from "./project.js";
+import type { CoreBindingRecord, GraphState, ProjectV1 } from "./project.js";
 import { err, ok, type Result } from "./result.js";
+
+/** A fresh, empty graph for a newly bound Core — `physicalGraphLens`/`deviceGraphLens` (S043) match `ProjectV1.physicalGraphs`/`deviceGraphs` to `coreBindings` by array index, so every `addCoreBinding` must append one of each to keep that alignment true from the start. */
+function emptyGraph<Layer extends "physical-composition" | "device-processing">(layer: Layer): GraphState<Layer> {
+  return { layer, nodes: [], edges: [] };
+}
 
 /**
  * A `ProjectCommand` is the *only* sanctioned way to change a `ProjectV1` —
@@ -37,7 +42,12 @@ export function addCoreBinding(binding: CoreBindingRecord): ProjectCommand {
           }),
         );
       }
-      return ok({ ...project, coreBindings: [...project.coreBindings, binding] });
+      return ok({
+        ...project,
+        coreBindings: [...project.coreBindings, binding],
+        physicalGraphs: [...project.physicalGraphs, emptyGraph("physical-composition")],
+        deviceGraphs: [...project.deviceGraphs, emptyGraph("device-processing")],
+      });
     },
   };
 }
@@ -46,7 +56,8 @@ export function removeCoreBinding(bindingId: CoreBindingId): ProjectCommand {
   return {
     kind: "RemoveCoreBinding",
     apply: (project) => {
-      if (!project.coreBindings.some((b) => b.bindingId === bindingId)) {
+      const index = project.coreBindings.findIndex((b) => b.bindingId === bindingId);
+      if (index === -1) {
         return err(
           domainError({
             code: DomainErrorCode.DANGLING_REFERENCE,
@@ -58,7 +69,10 @@ export function removeCoreBinding(bindingId: CoreBindingId): ProjectCommand {
       }
       return ok({
         ...project,
-        coreBindings: project.coreBindings.filter((b) => b.bindingId !== bindingId),
+        coreBindings: project.coreBindings.filter((_, i) => i !== index),
+        // Kept index-aligned with coreBindings — see addCoreBinding's own comment.
+        physicalGraphs: project.physicalGraphs.filter((_, i) => i !== index),
+        deviceGraphs: project.deviceGraphs.filter((_, i) => i !== index),
       });
     },
   };

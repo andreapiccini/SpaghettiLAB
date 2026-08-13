@@ -1,6 +1,6 @@
 import { CatalogCache, CoreSession, type CoreSessionSnapshot, type SessionState, type SyncRelationship } from "@spaghettilab/core-session";
 import type { CoreBindingId, CoreBindingRecord, DomainError } from "@spaghettilab/domain";
-import { EventStream, SpaghettiClient, WebSocketProtocolTransport, type DeviceProfileSummary } from "@spaghettilab/protocol-sdk";
+import { EventStream, SpaghettiClient, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type DeviceProfileSummary, type DiscoveryCandidate } from "@spaghettilab/protocol-sdk";
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { connectBrowserWebSocket } from "../lib/browser-websocket-connection.js";
 import { useSession } from "./session-context.js";
@@ -28,6 +28,8 @@ type CoreSessionsContextValue = {
   getSnapshot(bindingId: CoreBindingId): CoreSessionSnapshot | undefined;
   /** `undefined` if no session has ever been created for this binding this app session. */
   listDeviceProfiles(bindingId: CoreBindingId): Promise<readonly DeviceProfileSummary[]> | undefined;
+  listDiscoveryCandidates(bindingId: CoreBindingId): Promise<readonly DiscoveryCandidate[]> | undefined;
+  acceptDiscovery(bindingId: CoreBindingId, req: AcceptDiscoveryRequest): Promise<AcceptDiscoveryResponse> | undefined;
 };
 
 const CoreSessionsContext = createContext<CoreSessionsContextValue | undefined>(undefined);
@@ -103,8 +105,10 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
 
   const getSnapshot = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.lastKnownSnapshot, []);
   const listDeviceProfiles = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.listDeviceProfiles(), []);
+  const listDiscoveryCandidates = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.listDiscoveryCandidates(), []);
+  const acceptDiscovery = useCallback((bindingId: CoreBindingId, req: AcceptDiscoveryRequest) => sessionsRef.current.get(bindingId)?.acceptDiscovery(req), []);
 
-  const value: CoreSessionsContextValue = { rows, connect, cancel, getSnapshot, listDeviceProfiles };
+  const value: CoreSessionsContextValue = { rows, connect, cancel, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery };
   return <CoreSessionsContext.Provider value={value}>{children}</CoreSessionsContext.Provider>;
 }
 

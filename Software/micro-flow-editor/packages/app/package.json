@@ -17,6 +17,7 @@
     "@spaghettilab/core-session": "*",
     "@spaghettilab/domain": "*",
     "@spaghettilab/editor-model": "*",
+    "@spaghettilab/physical-composition-model": "*",
     "@spaghettilab/project-store": "*",
     "@spaghettilab/protocol-sdk": "*",
     "@spaghettilab/react-flow-adapter": "*",
