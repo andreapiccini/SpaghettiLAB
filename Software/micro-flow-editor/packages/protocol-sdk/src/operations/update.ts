@@ -7,10 +7,20 @@ export function decodeGetUpdateStatusRequest(bytes: Uint8Array): void {
   decodeEmptyPayload(bytes, "GetUpdateStatusRequest");
 }
 
+/**
+ * `OPEN_WIFI_UPDATE` (op 14)'s response is a handover acknowledgment
+ * (`address`/`port`/`leaseExpiresAtMs`/`reachedStateRaw`, `reachedStateRaw`
+ * being OTA state here), not a job id — this operation is
+ * `SERIALIZED_MUTATION` on the firmware side, not `ASYNC_JOB`. See
+ * `HandoverAckResponse` in `../fields.js` for the correction and citation
+ * (`connectivity_ops.c`'s `execute_open_wifi_update` also routes through
+ * `run_wifi_handover()`/`encode_handover_ack()`, despite this operation's own
+ * handler living in `connectivity_ops.c`, not `update_ops.c`).
+ */
 export {
-  encodeJobIdResponse as encodeOpenWifiUpdateResponse,
-  decodeJobIdResponse as decodeOpenWifiUpdateResponse,
-  type JobIdResponse as OpenWifiUpdateResponse,
+  encodeHandoverAckResponse as encodeOpenWifiUpdateResponse,
+  decodeHandoverAckResponse as decodeOpenWifiUpdateResponse,
+  type HandoverAckResponse as OpenWifiUpdateResponse,
 } from "../fields.js";
 
 /** `GET_UPDATE_STATUS` (op 8) response — `update_ops.c`. Request payload is empty. */

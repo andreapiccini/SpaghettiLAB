@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [{ "path": "../domain" }, { "path": "../protocol-sdk" }, { "path": "../core-status" }],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

@@ -200,11 +200,10 @@ describe("connectivity operations", () => {
     expect(() => ops.decodeConnectivityLeaseResponse(ops.encodeConnectivityLeaseResponse())).not.toThrow();
   });
 
-  it("round-trips OPEN_NETWORK_MAINTENANCE (async job)", () => {
+  it("round-trips OPEN_NETWORK_MAINTENANCE (a handover ack, not a job id)", () => {
     expect(() => ops.decodeOpenNetworkMaintenanceRequest(ops.encodeOpenNetworkMaintenanceRequest())).not.toThrow();
-    expect(ops.decodeOpenNetworkMaintenanceResponse(ops.encodeOpenNetworkMaintenanceResponse({ jobId: 5 }))).toEqual({
-      jobId: 5,
-    });
+    const response: ops.OpenNetworkMaintenanceResponse = { address: "192.0.2.1", port: 4433, leaseExpiresAtMs: 12345n, reachedStateRaw: 2 };
+    expect(ops.decodeOpenNetworkMaintenanceResponse(ops.encodeOpenNetworkMaintenanceResponse(response))).toEqual(response);
   });
 });
 
@@ -301,9 +300,10 @@ describe("update operations", () => {
     expect(ops.decodeGetUpdateStatusResponse(ops.encodeGetUpdateStatusResponse(response))).toEqual(response);
   });
 
-  it("round-trips OPEN_WIFI_UPDATE (async job), defaulting timeoutMs", () => {
+  it("round-trips OPEN_WIFI_UPDATE (a handover ack, not a job id), defaulting timeoutMs", () => {
     expect(ops.decodeOpenWifiUpdateRequest(ops.encodeOpenWifiUpdateRequest({}))).toEqual({ timeoutMs: 60000 });
-    expect(ops.decodeOpenWifiUpdateResponse(ops.encodeOpenWifiUpdateResponse({ jobId: 11 }))).toEqual({ jobId: 11 });
+    const response: ops.OpenWifiUpdateResponse = { address: "192.0.2.2", port: 8443, leaseExpiresAtMs: 99999n, reachedStateRaw: 1 };
+    expect(ops.decodeOpenWifiUpdateResponse(ops.encodeOpenWifiUpdateResponse(response))).toEqual(response);
   });
 });
 

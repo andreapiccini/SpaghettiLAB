@@ -5,7 +5,7 @@ import { SECRET_LIKE_KEY_PATTERN } from "./project-import-export.js";
 /**
  * The fixed catalog of operations S123 requires auditing — connect,
  * validate/apply, sensitive command, profile install/remove, OTA, reset,
- * Node-RED deploy. A closed union instead of a free-form `string` (the raw
+ * admin maintenance/lease, Node-RED deploy. A closed union instead of a free-form `string` (the raw
  * `AuditLog` port's `operation` field, S011) so a caller can't accidentally
  * invent an ad hoc category that then can't be filtered/reported on
  * consistently — same rationale as `PERMISSION_SCOPES` (S121).
@@ -18,6 +18,8 @@ export const AUDIT_OPERATIONS = [
   "profile.remove",
   "core.ota",
   "core.reset",
+  "core.admin.maintenance",
+  "core.admin.lease",
   "nodered.deploy",
 ] as const;
 

@@ -120,7 +120,16 @@ export function decodeEmptyPayload(bytes: Uint8Array, context: string): void {
   }
 }
 
-/** Shared `{0: job_id}` shape returned by every `SPAGHETTI_OPERATION_ASYNC_JOB` handler (SCAN_DISCOVERY, OPEN_NETWORK_MAINTENANCE, OPEN_WIFI_UPDATE). */
+/**
+ * Shared `{0: job_id}` shape returned by an actual `SPAGHETTI_OPERATION_ASYNC_JOB`
+ * handler. `SCAN_DISCOVERY` (op 5) is the only one of the 27 Protocol V1
+ * operations that is genuinely `ASYNC_JOB`
+ * (`Firmware/core/subsys/communication/operations/discovery_ops.c`) —
+ * confirmed by grep across every `operations/*.c` file. `OPEN_NETWORK_MAINTENANCE`
+ * and `OPEN_WIFI_UPDATE` were previously (and incorrectly) documented here
+ * too; both are actually `SERIALIZED_MUTATION` and return a handover
+ * acknowledgment, not a job id — see `HandoverAckResponse` below.
+ */
 export type JobIdResponse = { readonly jobId: number };
 
 export function encodeJobIdResponse(r: JobIdResponse): Uint8Array {
@@ -130,4 +139,39 @@ export function encodeJobIdResponse(r: JobIdResponse): Uint8Array {
 export function decodeJobIdResponse(bytes: Uint8Array): JobIdResponse {
   const map = requireMap(decodeOne(bytes), "JobIdResponse");
   return { jobId: requireU32(map, 0, "JobIdResponse") };
+}
+
+/**
+ * Shared response shape for `OPEN_NETWORK_MAINTENANCE` (op 13) and
+ * `OPEN_WIFI_UPDATE` (op 14) — both route through `run_wifi_handover()`
+ * (`connectivity_ops.c`), which always finishes with `encode_handover_ack()`
+ * (`connectivity_ops.c:88-113`): a 4-key map, `{0: address(tstr), 1:
+ * port(uint), 2: lease_expires_at_ms(int64), 3: reached_state(uint32)}`.
+ * Corrects a prior mistake in this SDK, which decoded both as the unrelated
+ * `{0: job_id}` shape (see `JobIdResponse` above) — neither operation is
+ * actually `ASYNC_JOB` on the firmware side. `reachedState` means a
+ * different enum depending on which operation produced it: OTA state for
+ * `OPEN_WIFI_UPDATE`, remote-console state for `OPEN_NETWORK_MAINTENANCE` —
+ * this SDK does not decode either enum's labels, same "leave it a raw
+ * number, don't guess a label table" policy as `GetStatusResponse.lastResetCause`.
+ */
+export type HandoverAckResponse = {
+  readonly address: string;
+  readonly port: number;
+  readonly leaseExpiresAtMs: bigint;
+  readonly reachedStateRaw: number;
+};
+
+export function encodeHandoverAckResponse(r: HandoverAckResponse): Uint8Array {
+  return encodeMap([textField(0, r.address), u32Field(1, r.port), int64Field(2, r.leaseExpiresAtMs), u32Field(3, r.reachedStateRaw)]);
+}
+
+export function decodeHandoverAckResponse(bytes: Uint8Array): HandoverAckResponse {
+  const map = requireMap(decodeOne(bytes), "HandoverAckResponse");
+  return {
+    address: requireText(map, 0, "HandoverAckResponse"),
+    port: requireU32(map, 1, "HandoverAckResponse"),
+    leaseExpiresAtMs: requireInt64(map, 2, "HandoverAckResponse"),
+    reachedStateRaw: requireU32(map, 3, "HandoverAckResponse"),
+  };
 }

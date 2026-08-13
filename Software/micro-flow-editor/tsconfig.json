@@ -18,6 +18,7 @@
     { "path": "packages/telemetry-buffer" },
     { "path": "packages/core-actions" },
     { "path": "packages/core-status" },
+    { "path": "packages/core-admin" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

@@ -104,6 +104,11 @@ packages/
                            connectivity/health/reset-cause/watchdog/audit/job
                            status and a resource monitor with flash/RAM/pool
                            figures kept distinct, never summed (S093).
+  core-admin/             Connectivity lease, network maintenance and
+                           factory-reset scope, each gated by a local
+                           permission check and (for destructive ones) an
+                           explicit target-matching confirmation before any
+                           wire call (S094).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

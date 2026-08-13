@@ -54,7 +54,7 @@ describe("recordSensitiveOperation", () => {
     });
   });
 
-  it("covers connect, validate/apply, sensitive command, profile install/remove, OTA, reset and Node-RED deploy", () => {
+  it("covers connect, validate/apply, sensitive command, profile install/remove, OTA, reset, admin maintenance/lease and Node-RED deploy", () => {
     expect(new Set(AUDIT_OPERATIONS)).toEqual(
       new Set([
         "core.connect",
@@ -64,6 +64,8 @@ describe("recordSensitiveOperation", () => {
         "profile.remove",
         "core.ota",
         "core.reset",
+        "core.admin.maintenance",
+        "core.admin.lease",
         "nodered.deploy",
       ]),
     );

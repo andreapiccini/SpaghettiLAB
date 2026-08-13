@@ -7,16 +7,20 @@ export function decodeGetConnectivityStatusRequest(bytes: Uint8Array): void {
   decodeEmptyPayload(bytes, "GetConnectivityStatusRequest");
 }
 
-/** `OPEN_NETWORK_MAINTENANCE` (op 13) has an empty request payload; response is the shared `{0: job_id}` shape (re-exported above). */
+/**
+ * `OPEN_NETWORK_MAINTENANCE` (op 13) has an empty request payload. Its
+ * response is a handover acknowledgment, not a job id — see
+ * `HandoverAckResponse` in `../fields.js` for the correction and citation.
+ */
 export const encodeOpenNetworkMaintenanceRequest = encodeEmptyPayload;
 export function decodeOpenNetworkMaintenanceRequest(bytes: Uint8Array): void {
   decodeEmptyPayload(bytes, "OpenNetworkMaintenanceRequest");
 }
 
 export {
-  encodeJobIdResponse as encodeOpenNetworkMaintenanceResponse,
-  decodeJobIdResponse as decodeOpenNetworkMaintenanceResponse,
-  type JobIdResponse as OpenNetworkMaintenanceResponse,
+  encodeHandoverAckResponse as encodeOpenNetworkMaintenanceResponse,
+  decodeHandoverAckResponse as decodeOpenNetworkMaintenanceResponse,
+  type HandoverAckResponse as OpenNetworkMaintenanceResponse,
 } from "../fields.js";
 
 /**
