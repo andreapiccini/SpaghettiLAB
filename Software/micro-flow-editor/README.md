@@ -81,6 +81,10 @@ packages/
                            model and graph validation (cycles, dangling
                            references, type/unit checks, cross-Core rejection)
                            for one Core's local processing behavior (S071).
+  config-compiler/        Deterministic Config compiler — stable key
+                           assignment, real wire-V3 CBOR encoding, canonical
+                           JSON, reproducible SHA-256 hash, budget checks with
+                           node-level ownership attribution (S072).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

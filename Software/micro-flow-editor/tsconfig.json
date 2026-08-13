@@ -12,6 +12,7 @@
     { "path": "packages/device-profile-package" },
     { "path": "packages/device-profile-install" },
     { "path": "packages/device-processing-graph-model" },
+    { "path": "packages/config-compiler" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

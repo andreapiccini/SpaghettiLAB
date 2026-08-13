@@ -20,10 +20,17 @@ export function decodeGetConfigRequest(bytes: Uint8Array): void {
 
 /**
  * `GET_CONFIG` (op 16) response — `config_ops.c`. The Config CBOR itself is
- * kept opaque (`Uint8Array`): the firmware's own Config CDDL only goes up to
- * v3 while the runtime `SPAGHETTI_CONFIG_VERSION` is 5 (see the S021
- * research note) — decoding its contents is not yet specified, only its
- * placement inside this envelope's payload is.
+ * kept opaque (`Uint8Array`) *in this package* — decoding it is not this
+ * package's job, only its placement inside this envelope's payload is.
+ * Correction (S072): a real, complete decoder for these bytes does exist —
+ * `Firmware/core/subsys/config/config_cbor.c`'s `spaghetti_config_encode_cbor`/
+ * `decode_wire_v3` — targeting wire version 4
+ * (`SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V3`), distinct from the in-memory
+ * `SPAGHETTI_CONFIG_VERSION` (5). See `@spaghettilab/config-compiler`, which
+ * produces these exact bytes from the authoring graph (encode direction);
+ * S073 is the task that will add the decode direction. The earlier note here
+ * ("CDDL only goes up to v3... not yet specified") predated reading that
+ * file and was wrong.
  */
 export type GetConfigResponse = {
   readonly generation: number;

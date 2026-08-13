@@ -40,7 +40,7 @@ finale end-to-end).
 | ✅ | [S063 — Installazione, catalogo e sorgenti profilo](tasks/S063-profile-install-catalog-sources.md) | Un sensore compatibile viene installato e istanziato come Module senza OTA. |
 | | **S070 — Processing graph e compilatore Config** | |
 | ✅ | [S071 — Authoring e validazione del processing graph](tasks/S071-processing-graph-authoring.md) | Il grafo locale rifiuta cicli, riferimenti dangling ed edge cross-Core. |
-| ⬜ | [S072 — Compilatore Config deterministico](tasks/S072-config-compiler.md) | Il grafo validato compila in Config canonico, deterministico, senza dettagli React Flow. |
+| ✅ | [S072 — Compilatore Config deterministico](tasks/S072-config-compiler.md) | Il grafo validato compila in Config canonico, deterministico, senza dettagli React Flow. |
 | ⬜ | [S073 — Decompilatore e dry-run](tasks/S073-decompiler-dry-run.md) | Config live → grafo funzionale e verifica dry-run completa prima del deploy. |
 | ⬜ | [S080 — Deploy transazionale](tasks/S080-config-deployment.md) | Diff, validate, CAS, conflict resolution e verifica post-apply sono completi. |
 | | **S090 — Runtime, discovery e diagnostica** | |
