@@ -133,6 +133,12 @@ packages/
                            coordinator — reusing core-actions/core-status/
                            telemetry-buffer/system-automation-graph directly
                            rather than a parallel implementation (S112).
+  node-red-deploy/        Compiles the System Automation Graph into a real
+                           Node-RED flow, deploys it via the real Admin API
+                           with compare-and-swap and ownership-scoped
+                           reconciliation, classifies IN_SYNC/DIVERGED like
+                           Config, and dedupes retried records so a command
+                           never fires twice (S113).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```
