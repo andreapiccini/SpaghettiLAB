@@ -49,9 +49,9 @@ static int execute_get_resources(
 	}
 	{
 		ZCBOR_STATE_E(state, SPAGHETTI_OPS_CBOR_BACKUP, response->bytes,
-			       sizeof(response->bytes), 1U);
+			       sizeof(response->bytes), 16U);
 
-		if (!zcbor_map_start_encode(state, 8U) ||
+		if (!zcbor_map_start_encode(state, 12U) ||
 		    !zcbor_uint32_put(state, 0U) ||
 		    !zcbor_bstr_encode_ptr(state, snap.feature_set_hash,
 					   sizeof(snap.feature_set_hash)) ||
@@ -63,7 +63,15 @@ static int execute_get_resources(
 		    !encode_pool(state, 6U, &snap.workspace) ||
 		    !zcbor_uint32_put(state, 7U) ||
 		    !zcbor_uint32_put(state, snap.allocation_failures) ||
-		    !zcbor_map_end_encode(state, 8U)) {
+		    !zcbor_uint32_put(state, 8U) ||
+		    !zcbor_uint32_put(state, snap.flash_slot_bytes) ||
+		    !zcbor_uint32_put(state, 9U) ||
+		    !zcbor_uint32_put(state, snap.flash_image_budget_bytes) ||
+		    !zcbor_uint32_put(state, 10U) ||
+		    !zcbor_uint32_put(state, snap.flash_headroom_bytes) ||
+		    !zcbor_uint32_put(state, 11U) ||
+		    !zcbor_uint32_put(state, snap.static_ram_budget_bytes) ||
+		    !zcbor_map_end_encode(state, 12U)) {
 			return -EMSGSIZE;
 		}
 		response->size = (size_t)(state->payload - response->bytes);

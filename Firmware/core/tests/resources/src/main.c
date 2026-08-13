@@ -43,6 +43,9 @@ ZTEST(resources, test_snapshot_coherence_and_no_free_ram_field)
 	zassert_equal(snapshot.profiles.used, 2U);
 	zassert_true(snapshot.pack_count >= 2U);
 	zassert_true(snapshot.flash_slot_bytes > 0U);
+	zassert_true(snapshot.flash_image_budget_bytes > 0U);
+	zassert_true(snapshot.flash_headroom_bytes > 0U);
+	zassert_true(snapshot.static_ram_budget_bytes > 0U);
 	zassert_true(snapshot.heap_metrics_available);
 	zassert_false(snapshot.stack_metrics_available);
 	/* Snapshot must not advertise installability via free RAM. */

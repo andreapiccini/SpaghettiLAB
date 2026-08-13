@@ -135,6 +135,29 @@ manifest. `GET_FEATURES` / `GET_RESOURCES` expose headroom and high-water.
 Updates that remove a capability required by active/persisted Config are
 rejected (`SPAGHETTI_CONFIG_MIGRATION_REJECT_REMOVAL` default).
 
+`GET_RESOURCES` response map (uint keys; pools are nested `{0=capacity,1=used,2=peak}`):
+
+| Key | Field |
+|---:|---|
+| 0 | `feature_set_hash` (bstr, 32 bytes) |
+| 1–6 | Resource pools: modules, rules, blocks, profiles, records, workspace |
+| 7 | `allocation_failures` (uint32, sticky since boot) |
+| 8 | `flash_slot_bytes` (uint32) |
+| 9 | `flash_image_budget_bytes` (uint32) |
+| 10 | `flash_headroom_bytes` (uint32) |
+| 11 | `static_ram_budget_bytes` (uint32) |
+
+Keys 8–11 are additive V1 (append-only). They are **not** summed into the pools
+and must not be presented as instantaneous free RAM.
+
+`VALIDATE_DEVICE_PROFILE` request map: `0=bstr` (profile CBOR). Response map
+matches `VALIDATE_CONFIG`: `0=bool valid`; if false, `1=failureField`,
+`2=failureIndex`, `3=failureReason` (uint32; see
+`spaghetti_device_profile_failure` in `device_profile.h`). Empty/missing bstr
+is protocol `INVALID_ARGUMENT`, not `valid=false`. Decode+validate do not
+install. Invalid profiles that fail `INSTALL_DEVICE_PROFILE` fail this call
+with the same errno from `spaghetti_device_profile_validate_cbor()`.
+
 ## 10. Topology Flow / Port / Bay, five signals, transport, power
 
 - Each Flow terminates on one Port, exposes five signals, ordered Function Bays.

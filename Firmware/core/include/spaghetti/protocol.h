@@ -51,7 +51,13 @@ enum spaghetti_protocol_operation {
 	SPAGHETTI_PROTOCOL_GET_AUDIT_LOG = 18, /**< Page audit metadata. */
 	SPAGHETTI_PROTOCOL_GET_JOB_STATUS = 19, /**< Poll an async job. */
 	SPAGHETTI_PROTOCOL_GET_TOPOLOGY = 20, /**< Page Flow/Port/Bay topology. */
-	SPAGHETTI_PROTOCOL_GET_RESOURCES = 21, /**< Resource capacity and high-water. */
+	SPAGHETTI_PROTOCOL_GET_RESOURCES = 21, /**< Resource capacity, high-water, flash/RAM. */
+	/**
+	 * GET_RESOURCES response keys (append-only V1):
+	 * 0 feature_set_hash, 1-6 pools, 7 allocation_failures,
+	 * 8 flash_slot_bytes, 9 flash_image_budget_bytes,
+	 * 10 flash_headroom_bytes, 11 static_ram_budget_bytes.
+	 */
 	SPAGHETTI_PROTOCOL_LIST_DEVICE_PROFILES = 22, /**< Page Device Profiles. */
 	SPAGHETTI_PROTOCOL_GET_DEVICE_PROFILE = 23, /**< Read one Device Profile. */
 	SPAGHETTI_PROTOCOL_VALIDATE_DEVICE_PROFILE = 24, /**< Validate profile CBOR. */

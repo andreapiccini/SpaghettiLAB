@@ -149,6 +149,31 @@ struct spaghetti_device_profile_budget {
 	uint32_t operations; /**< Total opcode executions across all plans. */
 };
 
+/** Device Profile section associated with one validation failure. */
+enum spaghetti_device_profile_failure_field {
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE = 0, /**< CBOR decode or wire version. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_IDENTITY = 1, /**< id, version, transport, caps. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN = 2, /**< Acquisition opcodes or operands. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_SCHEMA = 3, /**< Sample schema vs EMIT ops. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_BUDGET = 4, /**< Time, transactions, or bytes. */
+};
+
+/** Stable reason associated with one Device Profile validation failure. */
+enum spaghetti_device_profile_failure_reason {
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_MALFORMED = 0, /**< CBOR shape is invalid. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_UNSUPPORTED = 1, /**< Wire version or opcode. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_RANGE = 2, /**< Bound exceeded. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_INCONSISTENT = 3, /**< Schema vs plan disagree. */
+	SPAGHETTI_DEVICE_PROFILE_FAILURE_REQUIRED = 4, /**< Mandatory value absent. */
+};
+
+/** Optional caller-owned Device Profile validation diagnostic. */
+struct spaghetti_device_profile_failure {
+	enum spaghetti_device_profile_failure_field field; /**< Section with the error. */
+	size_t index; /**< Opcode/field index, or zero when not applicable. */
+	enum spaghetti_device_profile_failure_reason reason; /**< Transport-independent. */
+};
+
 /**
  * @brief Instance binding supplied by the declarative Module driver.
  *
@@ -239,6 +264,31 @@ const struct spaghetti_device_profile *spaghetti_device_profile_find(
 int spaghetti_device_profile_validate(
 	const struct spaghetti_device_profile *profile,
 	struct spaghetti_device_profile_budget *out_budget);
+
+/**
+ * @brief Decode CBOR and validate without installing.
+ *
+ * Does not mutate the catalog or persist bytes. @p failure is written only when
+ * non-NULL and the profile is rejected.
+ *
+ * @param[in] cbor Borrowed complete CBOR image.
+ * @param[in] size Exact byte count of @p cbor.
+ * @param[out] failure Optional diagnostic; unchanged on success.
+ *
+ * @retval 0 Profile would be accepted by @ref spaghetti_device_profile_install
+ *           aside from slot/hash uniqueness checks that require commit.
+ * @retval -EINVAL Null pointer or zero size.
+ * @retval -EMSGSIZE Image exceeds the configured byte budget.
+ * @retval -EBADMSG CBOR shape is invalid or contains floats.
+ * @retval -ENOTSUP Unsupported wire version or opcode.
+ * @retval -E2BIG Decoded plan exceeds operation limits.
+ * @retval -EFBIG Budget validation failed.
+ * @retval -EPROTONOSUPPORT Sample schema fields are incoherent with EMIT ops.
+ */
+int spaghetti_device_profile_validate_cbor(
+	const uint8_t *cbor,
+	size_t size,
+	struct spaghetti_device_profile_failure *failure);
 
 /**
  * @brief Decode, validate, hash, and atomically publish one CBOR profile.

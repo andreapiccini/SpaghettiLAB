@@ -9,6 +9,7 @@
 #include <zephyr/ztest.h>
 
 #include <zcbor_common.h>
+#include <zcbor_decode.h>
 #include <zcbor_encode.h>
 
 #include <spaghetti/access_control.h>
@@ -474,6 +475,10 @@ int spaghetti_resources_get_snapshot(struct spaghetti_resources_snapshot *out)
 	}
 	memset(out, 0, sizeof(*out));
 	out->modules.capacity = 8U;
+	out->flash_slot_bytes = 0x100000U;
+	out->flash_image_budget_bytes = 0x0C0000U;
+	out->flash_headroom_bytes = 0x040000U;
+	out->static_ram_budget_bytes = 0x50000U;
 	return 0;
 }
 
@@ -515,6 +520,23 @@ const struct spaghetti_device_profile *spaghetti_device_profile_get(size_t idx)
 int spaghetti_device_profile_install(const uint8_t *cbor, size_t size)
 {
 	return ((cbor != NULL) && (size > 0U)) ? 0 : -EINVAL;
+}
+
+static int validate_cbor_error;
+static struct spaghetti_device_profile_failure validate_cbor_failure;
+
+int spaghetti_device_profile_validate_cbor(
+	const uint8_t *cbor,
+	size_t size,
+	struct spaghetti_device_profile_failure *failure)
+{
+	if ((cbor == NULL) || (size == 0U)) {
+		return -EINVAL;
+	}
+	if (failure != NULL) {
+		*failure = validate_cbor_failure;
+	}
+	return validate_cbor_error;
 }
 
 int spaghetti_device_profile_remove(const char *id, uint16_t version)
@@ -942,6 +964,159 @@ ZTEST(communication, test_shell_hex_decode)
 	oversized[sizeof(oversized) - 1U] = '\0';
 	zassert_equal(spaghetti_communication_shell_decode_hex(
 		oversized, out, sizeof(out), &size), -EMSGSIZE);
+}
+
+ZTEST(communication, test_get_resources_exposes_flash_and_static_ram)
+{
+	struct spaghetti_request_context context = make_context(all_permissions);
+	struct spaghetti_protocol_request request = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
+		.correlation_id = 210U,
+		.operation = SPAGHETTI_PROTOCOL_GET_RESOURCES,
+	};
+	struct spaghetti_protocol_response response;
+	uint32_t key = 0U;
+	uint32_t value = 0U;
+	struct zcbor_string hash;
+	uint32_t flash_slot = 0U;
+	uint32_t flash_budget = 0U;
+	uint32_t flash_headroom = 0U;
+	uint32_t static_ram = 0U;
+
+	{
+		const int init_err = spaghetti_communication_init();
+		zassert_true((init_err == 0) || (init_err == -EALREADY));
+	}
+	zassert_ok(spaghetti_communication_handle_request(
+		&context, &request, &response));
+	zassert_equal(response.status, SPAGHETTI_PROTOCOL_STATUS_OK,
+		      "status=%u payload=%u", (unsigned int)response.status,
+		      (unsigned int)response.payload.size);
+
+	{
+		ZCBOR_STATE_D(state, 4U, response.payload.bytes,
+			       response.payload.size, 1U, 0U);
+
+		zassert_true(zcbor_map_start_decode(state));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 0U);
+		zassert_true(zcbor_bstr_decode(state, &hash));
+		for (uint32_t pool_key = 1U; pool_key <= 6U; ++pool_key) {
+			uint32_t inner_key = 0U;
+			uint32_t inner_value = 0U;
+
+			zassert_true(zcbor_uint32_decode(state, &key));
+			zassert_equal(key, pool_key);
+			zassert_true(zcbor_map_start_decode(state));
+			for (uint32_t n = 0U; n < 3U; ++n) {
+				zassert_true(zcbor_uint32_decode(state, &inner_key));
+				zassert_true(zcbor_uint32_decode(state, &inner_value));
+			}
+			zassert_true(zcbor_map_end_decode(state));
+		}
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 7U);
+		zassert_true(zcbor_uint32_decode(state, &value));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 8U);
+		zassert_true(zcbor_uint32_decode(state, &flash_slot));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 9U);
+		zassert_true(zcbor_uint32_decode(state, &flash_budget));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 10U);
+		zassert_true(zcbor_uint32_decode(state, &flash_headroom));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 11U);
+		zassert_true(zcbor_uint32_decode(state, &static_ram));
+		zassert_true(zcbor_map_end_decode(state));
+	}
+	zassert_equal(flash_slot, 0x100000U);
+	zassert_equal(flash_budget, 0x0C0000U);
+	zassert_equal(flash_headroom, 0x040000U);
+	zassert_equal(static_ram, 0x50000U);
+}
+
+ZTEST(communication, test_validate_device_profile_payload_shape)
+{
+	struct spaghetti_request_context context = make_context(all_permissions);
+	struct spaghetti_protocol_request request = {
+		.version = SPAGHETTI_PROTOCOL_VERSION,
+		.correlation_id = 24U,
+		.operation = SPAGHETTI_PROTOCOL_VALIDATE_DEVICE_PROFILE,
+	};
+	struct spaghetti_protocol_response response;
+	const uint8_t profile_bytes[] = {0xA0U};
+	bool valid = true;
+	uint32_t key = 0U;
+	uint32_t field = 0U;
+	uint32_t index = 0U;
+	uint32_t reason = 0U;
+
+	{
+		const int init_err = spaghetti_communication_init();
+		zassert_true((init_err == 0) || (init_err == -EALREADY));
+	}
+
+	{
+		ZCBOR_STATE_E(state, 4U, request.payload.bytes,
+			       sizeof(request.payload.bytes), 1U);
+
+		zassert_true(zcbor_map_start_encode(state, 1U));
+		zassert_true(zcbor_uint32_put(state, 0U));
+		zassert_true(zcbor_bstr_encode_ptr(state, profile_bytes,
+						   sizeof(profile_bytes)));
+		zassert_true(zcbor_map_end_encode(state, 1U));
+		request.payload.size =
+			(size_t)(state->payload - request.payload.bytes);
+	}
+
+	validate_cbor_error = 0;
+	zassert_ok(spaghetti_communication_handle_request(
+		&context, &request, &response));
+	zassert_equal(response.status, SPAGHETTI_PROTOCOL_STATUS_OK);
+	{
+		ZCBOR_STATE_D(state, 4U, response.payload.bytes,
+			       response.payload.size, 1U, 0U);
+
+		zassert_true(zcbor_map_start_decode(state));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 0U);
+		zassert_true(zcbor_bool_decode(state, &valid));
+		zassert_true(valid);
+		zassert_true(zcbor_map_end_decode(state));
+	}
+
+	validate_cbor_error = -ENOTSUP;
+	validate_cbor_failure.field = SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN;
+	validate_cbor_failure.index = 0U;
+	validate_cbor_failure.reason = SPAGHETTI_DEVICE_PROFILE_FAILURE_UNSUPPORTED;
+	request.correlation_id = 25U;
+	zassert_ok(spaghetti_communication_handle_request(
+		&context, &request, &response));
+	zassert_equal(response.status, SPAGHETTI_PROTOCOL_STATUS_OK);
+	{
+		ZCBOR_STATE_D(state, 4U, response.payload.bytes,
+			       response.payload.size, 1U, 0U);
+
+		zassert_true(zcbor_map_start_decode(state));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 0U);
+		zassert_true(zcbor_bool_decode(state, &valid));
+		zassert_false(valid);
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 1U);
+		zassert_true(zcbor_uint32_decode(state, &field));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 2U);
+		zassert_true(zcbor_uint32_decode(state, &index));
+		zassert_true(zcbor_uint32_decode(state, &key));
+		zassert_equal(key, 3U);
+		zassert_true(zcbor_uint32_decode(state, &reason));
+		zassert_true(zcbor_map_end_decode(state));
+	}
+	zassert_equal(field, (uint32_t)SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN);
+	zassert_equal(reason, (uint32_t)SPAGHETTI_DEVICE_PROFILE_FAILURE_UNSUPPORTED);
 }
 
 ZTEST_SUITE(communication, NULL, NULL, NULL, NULL, NULL);

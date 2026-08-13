@@ -516,11 +516,12 @@ static void make_config(
 	}
 }
 
-static int encode_simple_cbor(
+static int encode_simple_cbor_opcode(
 	uint8_t *out,
 	size_t capacity,
 	size_t *out_size,
-	const char *profile_id)
+	const char *profile_id,
+	uint8_t first_sample_opcode)
 {
 	zcbor_state_t states[8];
 	struct zcbor_string id = {
@@ -545,7 +546,7 @@ static int encode_simple_cbor(
 	     zcbor_list_end_encode(states, 0) &&
 	     zcbor_uint32_put(states, 9U) && zcbor_list_start_encode(states, 4) &&
 	     zcbor_list_start_encode(states, 8) &&
-	     zcbor_uint32_put(states, SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST) &&
+	     zcbor_uint32_put(states, first_sample_opcode) &&
 	     zcbor_uint32_put(states, 0U) && zcbor_uint32_put(states, 0U) &&
 	     zcbor_uint32_put(states, 0U) && zcbor_uint32_put(states, 1U) &&
 	     zcbor_uint32_put(states, 0U) && zcbor_uint32_put(states, REG_DATA_BE) &&
@@ -589,6 +590,17 @@ static int encode_simple_cbor(
 
 	*out_size = (size_t)(states[0].payload - out);
 	return 0;
+}
+
+static int encode_simple_cbor(
+	uint8_t *out,
+	size_t capacity,
+	size_t *out_size,
+	const char *profile_id)
+{
+	return encode_simple_cbor_opcode(
+		out, capacity, out_size, profile_id,
+		SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST);
 }
 
 static int configure_module(
@@ -760,6 +772,43 @@ ZTEST(device_profiles, test_negatives_persist_and_caps)
 	zassert_not_null(found);
 	zassert_false(hash_is_zero(found->hash));
 	install_runtime_profiles();
+}
+
+ZTEST(device_profiles, test_validate_cbor_does_not_install)
+{
+	uint8_t cbor[CONFIG_SPAGHETTI_MAX_DEVICE_PROFILE_BYTES];
+	size_t cbor_size = 0U;
+	size_t before;
+	struct spaghetti_device_profile_failure failure = {
+		.field = SPAGHETTI_DEVICE_PROFILE_FAILURE_BUDGET,
+		.reason = SPAGHETTI_DEVICE_PROFILE_FAILURE_RANGE,
+	};
+
+	zassert_ok(encode_simple_cbor(cbor, sizeof(cbor), &cbor_size, "sensor-validate"));
+	before = spaghetti_device_profile_count();
+	zassert_ok(spaghetti_device_profile_validate_cbor(cbor, cbor_size, &failure));
+	zassert_equal(spaghetti_device_profile_count(), before);
+
+	zassert_equal(spaghetti_device_profile_validate_cbor(NULL, 1U, &failure),
+		      -EINVAL);
+	zassert_equal(failure.field, SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE);
+	zassert_equal(failure.reason, SPAGHETTI_DEVICE_PROFILE_FAILURE_REQUIRED);
+
+	zassert_equal(spaghetti_device_profile_validate_cbor(cbor, cbor_size / 2U,
+							     &failure),
+		      -EBADMSG);
+	zassert_equal(failure.field, SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE);
+	zassert_equal(failure.reason, SPAGHETTI_DEVICE_PROFILE_FAILURE_MALFORMED);
+	zassert_equal(spaghetti_device_profile_count(), before);
+
+	zassert_ok(encode_simple_cbor_opcode(cbor, sizeof(cbor), &cbor_size,
+					    "sensor-bad-op", 0xFEU));
+	zassert_equal(spaghetti_device_profile_validate_cbor(cbor, cbor_size, &failure),
+		      -ENOTSUP);
+	zassert_equal(spaghetti_device_profile_install(cbor, cbor_size), -ENOTSUP);
+	zassert_equal(failure.field, SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN);
+	zassert_equal(failure.reason, SPAGHETTI_DEVICE_PROFILE_FAILURE_UNSUPPORTED);
+	zassert_equal(spaghetti_device_profile_count(), before);
 }
 
 ZTEST_SUITE(device_profiles, NULL, device_profiles_setup, NULL, NULL, NULL);

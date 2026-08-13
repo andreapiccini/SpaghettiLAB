@@ -139,6 +139,7 @@ static int execute_validate_device_profile(
 {
 	const uint8_t *cbor = NULL;
 	size_t size = 0U;
+	struct spaghetti_device_profile_failure failure = {0};
 	int err;
 
 	ARG_UNUSED(context);
@@ -149,12 +150,33 @@ static int execute_validate_device_profile(
 	if ((cbor == NULL) || (size == 0U)) {
 		return -EINVAL;
 	}
+	err = spaghetti_device_profile_validate_cbor(cbor, size, &failure);
 	{
-		uint32_t keys[1] = {0U};
-		uint32_t values[1] = {1U};
+		ZCBOR_STATE_E(state, SPAGHETTI_OPS_CBOR_BACKUP, response->bytes,
+			       sizeof(response->bytes), 1U);
+		const bool valid = (err == 0);
 
-		return spaghetti_ops_encode_u32_map(response, keys, values, 1U);
+		if (!zcbor_map_start_encode(state, valid ? 1U : 4U) ||
+		    !zcbor_uint32_put(state, 0U) ||
+		    !zcbor_bool_put(state, valid)) {
+			return -EMSGSIZE;
+		}
+		if (!valid) {
+			if (!zcbor_uint32_put(state, 1U) ||
+			    !zcbor_uint32_put(state, (uint32_t)failure.field) ||
+			    !zcbor_uint32_put(state, 2U) ||
+			    !zcbor_uint32_put(state, (uint32_t)failure.index) ||
+			    !zcbor_uint32_put(state, 3U) ||
+			    !zcbor_uint32_put(state, (uint32_t)failure.reason)) {
+				return -EMSGSIZE;
+			}
+		}
+		if (!zcbor_map_end_encode(state, valid ? 1U : 4U)) {
+			return -EMSGSIZE;
+		}
+		response->size = (size_t)(state->payload - response->bytes);
 	}
+	return 0;
 }
 
 static int execute_install_device_profile(

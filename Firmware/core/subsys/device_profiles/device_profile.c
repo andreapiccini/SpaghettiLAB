@@ -804,6 +804,109 @@ static int decode_profile_cbor(
 	return 0;
 }
 
+static void fill_profile_failure(
+	struct spaghetti_device_profile_failure *failure,
+	enum spaghetti_device_profile_failure_field field,
+	enum spaghetti_device_profile_failure_reason reason)
+{
+	if (failure == NULL) {
+		return;
+	}
+	failure->field = field;
+	failure->index = 0U;
+	failure->reason = reason;
+}
+
+static void fill_decode_failure(
+	int err,
+	struct spaghetti_device_profile_failure *failure)
+{
+	switch (err) {
+	case -ENOTSUP:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_UNSUPPORTED);
+		break;
+	case -EMSGSIZE:
+	case -E2BIG:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_RANGE);
+		break;
+	case -EINVAL:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_IDENTITY,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_REQUIRED);
+		break;
+	default:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_MALFORMED);
+		break;
+	}
+}
+
+static void fill_validate_failure(
+	int err,
+	struct spaghetti_device_profile_failure *failure)
+{
+	switch (err) {
+	case -ENOTSUP:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_UNSUPPORTED);
+		break;
+	case -EPROTONOSUPPORT:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_SCHEMA,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_INCONSISTENT);
+		break;
+	case -EFBIG:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_BUDGET,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_RANGE);
+		break;
+	case -E2BIG:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_RANGE);
+		break;
+	case -EINVAL:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_IDENTITY,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_REQUIRED);
+		break;
+	default:
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_MALFORMED);
+		break;
+	}
+}
+
+int spaghetti_device_profile_validate_cbor(
+	const uint8_t *cbor,
+	size_t size,
+	struct spaghetti_device_profile_failure *failure)
+{
+	struct spaghetti_device_profile staging;
+	int err;
+
+	if ((cbor == NULL) || (size == 0U)) {
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_REQUIRED);
+		return -EINVAL;
+	}
+	if (size > CONFIG_SPAGHETTI_MAX_DEVICE_PROFILE_BYTES) {
+		fill_profile_failure(failure, SPAGHETTI_DEVICE_PROFILE_FAILURE_WIRE,
+				     SPAGHETTI_DEVICE_PROFILE_FAILURE_RANGE);
+		return -EMSGSIZE;
+	}
+
+	err = decode_profile_cbor(cbor, size, &staging);
+	if (err < 0) {
+		fill_decode_failure(err, failure);
+		return err;
+	}
+
+	err = spaghetti_device_profile_validate(&staging, NULL);
+	if (err < 0) {
+		fill_validate_failure(err, failure);
+		return err;
+	}
+	return 0;
+}
+
 static const struct spaghetti_device_profile *find_locked(
 	const char *id,
 	uint16_t version,
