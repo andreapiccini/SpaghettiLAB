@@ -91,7 +91,9 @@ describe("connectionToCommand — S042 compatibility gate before an edge is ever
       let p = mustOk(addGraphNodeCommand(systemAutomationGraphLens, { layer: "system-automation", id: "a", data: {} }).apply(project));
       p = mustOk(addGraphNodeCommand(systemAutomationGraphLens, { layer: "system-automation", id: "b", data: {} }).apply(p));
       const applied = mustOk(result.value.apply(p));
-      expect(applied.systemAutomationGraph.edges).toEqual([{ layer: "system-automation", id: "e1", source: "a", target: "b" }]);
+      expect(applied.systemAutomationGraph.edges).toEqual([
+        { layer: "system-automation", id: "e1", source: "a", target: "b", sourceHandle: "out", targetHandle: "in" },
+      ]);
     }
   });
 });

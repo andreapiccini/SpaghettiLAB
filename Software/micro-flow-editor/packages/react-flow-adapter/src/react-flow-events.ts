@@ -85,6 +85,12 @@ export function connectionToCommand<Layer extends GraphLayer>(
 
   return {
     ok: true,
-    value: addGraphEdgeCommand(lens, { id: edgeId, source: connection.source, target: connection.target }),
+    value: addGraphEdgeCommand(lens, {
+      id: edgeId,
+      source: connection.source,
+      target: connection.target,
+      sourceHandle: connection.sourceHandle ?? undefined,
+      targetHandle: connection.targetHandle ?? undefined,
+    }),
   };
 }

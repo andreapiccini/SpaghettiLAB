@@ -77,6 +77,10 @@ packages/
                            install/remove workflow with post-install hash
                            verification, catalog source merge, Module
                            instantiation (S063).
+  device-processing-graph-model/ Schedule/Event source/Block/Rule authoring
+                           model and graph validation (cycles, dangling
+                           references, type/unit checks, cross-Core rejection)
+                           for one Core's local processing behavior (S071).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

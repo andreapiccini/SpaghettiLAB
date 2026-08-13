@@ -25,6 +25,19 @@ describe("Graph", () => {
     expect(graph.getEdges()).toHaveLength(1);
   });
 
+  it("carries optional sourceHandle/targetHandle for multi-port nodes (S071) and includes them in deployableSnapshot", () => {
+    const graph = createDeviceProcessingGraph<string, string, { kind: string }>();
+    must(graph.addNode({ layer: "device-processing", id: "n1", data: { kind: "block" } }));
+    must(graph.addNode({ layer: "device-processing", id: "n2", data: { kind: "block" } }));
+    const edge = must(
+      graph.addEdge({ layer: "device-processing", id: "e1", source: "n1", target: "n2", sourceHandle: "out-0", targetHandle: "in-1" }),
+    );
+    expect(edge.sourceHandle).toBe("out-0");
+    expect(edge.targetHandle).toBe("in-1");
+    expect(deployableSnapshot(graph)).toContain("out-0");
+    expect(deployableSnapshot(graph)).toContain("in-1");
+  });
+
   it("rejects a node from a different layer with a structured error", () => {
     const graph = createDeviceProcessingGraph<string, string, { kind: string }>();
     // A node built for System Automation, mistakenly added to Device Processing.

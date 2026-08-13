@@ -44,6 +44,8 @@ export function toReactFlowEdges<Layer extends GraphLayer>(graphState: GraphStat
     id: edge.id,
     source: edge.source,
     target: edge.target,
+    sourceHandle: edge.sourceHandle,
+    targetHandle: edge.targetHandle,
   }));
 }
 

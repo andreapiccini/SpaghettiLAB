@@ -23,6 +23,18 @@ export type GraphEdge<Layer extends GraphLayer, Id extends string, EdgeId extend
   readonly id: EdgeId;
   readonly source: Id;
   readonly target: Id;
+  /**
+   * Which named port on `source`/`target` this edge connects — undefined
+   * means "the node's only port" (true for every layer that only ever wires
+   * whole nodes together). A multi-port node (e.g. a Device Processing Block
+   * with several typed input/output ports, S071) needs these to disambiguate;
+   * mirrors `struct spaghetti_edge_config`'s real
+   * `source_port_or_field`/`target_input` fields (`Firmware/core/include/spaghetti/config.h`),
+   * which is why this lives on the generic `GraphEdge` rather than being
+   * bolted onto one layer's node `data`.
+   */
+  readonly sourceHandle?: string;
+  readonly targetHandle?: string;
 };
 
 /**
@@ -223,6 +235,6 @@ export function deployableSnapshot<
     .map((n) => ({ id: n.id, data: n.data }));
   const edges = [...graph.getEdges()]
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
-    .map((e) => ({ id: e.id, source: e.source, target: e.target }));
+    .map((e) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle }));
   return JSON.stringify({ layer: graph.layer, nodes, edges });
 }

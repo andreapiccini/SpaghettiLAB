@@ -11,6 +11,7 @@
     { "path": "packages/device-profile-authoring-model" },
     { "path": "packages/device-profile-package" },
     { "path": "packages/device-profile-install" },
+    { "path": "packages/device-processing-graph-model" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]
