@@ -109,6 +109,10 @@ packages/
                            permission check and (for destructive ones) an
                            explicit target-matching confirmation before any
                            wire call (S094).
+  capability-marketplace/ Capability Pack marketplace catalog, installed-vs-
+                           required-vs-available distinction, and a
+                           deterministic dependency resolver with an explicit
+                           reason for every selection/conflict (S101).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

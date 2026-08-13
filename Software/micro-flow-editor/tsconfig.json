@@ -19,6 +19,7 @@
     { "path": "packages/core-actions" },
     { "path": "packages/core-status" },
     { "path": "packages/core-admin" },
+    { "path": "packages/capability-marketplace" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

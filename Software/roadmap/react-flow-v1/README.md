@@ -50,7 +50,7 @@ finale end-to-end).
 | ✅ | [S093 — Stato, health e resource monitor](tasks/S093-status-health-resources.md) | Stato e risorse del Core sono leggibili col significato dato dal firmware. |
 | ✅ | [S094 — Operazioni amministrative autorizzate](tasks/S094-admin-operations.md) | Connectivity, lease, maintenance e reset scope hanno permessi e conferme adeguati. |
 | | **S100 — Capability Pack e OTA** | |
-| ⬜ | [S101 — Marketplace catalog e dependency resolver](tasks/S101-marketplace-dependency-resolver.md) | Pack disponibili, installati e richiesti restano distinti; il resolver motiva ogni esito. |
+| ✅ | [S101 — Marketplace catalog e dependency resolver](tasks/S101-marketplace-dependency-resolver.md) | Pack disponibili, installati e richiesti restano distinti; il resolver motiva ogni esito. |
 | ⬜ | [S102 — Preflight e budget risorse](tasks/S102-ota-preflight-resources.md) | Un candidato è verificato per compatibilità e risorse prima di trasferire byte. |
 | ⬜ | [S103 — State machine OTA, postflight e audit](tasks/S103-ota-state-machine-postflight.md) | L'aggiornamento non lascia mai un Core in stato "installato" falso. |
 | | **S110 — Automazioni cross-Core con Node-RED** | |
