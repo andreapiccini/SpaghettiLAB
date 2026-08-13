@@ -93,6 +93,9 @@ packages/
                            remote validate, compare-and-swap apply, read-back
                            verify, semantic diff, structured conflict
                            handling, independent multi-Core results (S080).
+  telemetry-buffer/       Bounded per-(Core, schema) telemetry buffers from
+                           EventStream traffic, with explicit boot-epoch/gap
+                           tracking and unknown-schema preservation (S091).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

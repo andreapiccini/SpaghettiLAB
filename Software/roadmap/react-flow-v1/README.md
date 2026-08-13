@@ -44,7 +44,7 @@ finale end-to-end).
 | ✅ | [S073 — Decompilatore e dry-run](tasks/S073-decompiler-dry-run.md) | Config live → grafo funzionale e verifica dry-run completa prima del deploy. |
 | ✅ | [S080 — Deploy transazionale](tasks/S080-config-deployment.md) | Diff, validate, CAS, conflict resolution e verifica post-apply sono completi. |
 | | **S090 — Runtime, discovery e diagnostica** | |
-| ⬜ | [S091 — Subscription telemetria, decodifica e buffering](tasks/S091-telemetry-subscription-buffering.md) | Record ed eventi sono ricevuti con provenienza e gap sempre espliciti. |
+| ✅ | [S091 — Subscription telemetria, decodifica e buffering](tasks/S091-telemetry-subscription-buffering.md) | Record ed eventi sono ricevuti con provenienza e gap sempre espliciti. |
 | ⬜ | [S092 — Command runner e discovery](tasks/S092-command-runner-discovery.md) | Comandi manuali e discovery restano nettamente distinti dal Config. |
 | ⬜ | [S093 — Stato, health e resource monitor](tasks/S093-status-health-resources.md) | Stato e risorse del Core sono leggibili col significato dato dal firmware. |
 | ⬜ | [S094 — Operazioni amministrative autorizzate](tasks/S094-admin-operations.md) | Connectivity, lease, maintenance e reset scope hanno permessi e conferme adeguati. |
