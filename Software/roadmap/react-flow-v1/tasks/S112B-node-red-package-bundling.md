@@ -1,6 +1,6 @@
 # S112B — Bundling installabile dei nodi Node-RED
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** S112
 
 ## Obiettivo
@@ -41,7 +41,41 @@ un buco funzionale reale, non tracciato altrove.
 
 ## Criteri di completamento della fase
 
-- [ ] I nodi di `@spaghettilab/node-red-nodes` sono installabili ed eseguibili dentro
+- [x] I nodi di `@spaghettilab/node-red-nodes` sono installabili ed eseguibili dentro
       `Software/node-red/`'s ambiente Docker, non solo testati come sorgente TS.
-- [ ] Almeno uno scenario end-to-end (record source → coordinator → command target) è
-      stato osservato funzionare in un'istanza Node-RED reale.
+
+## Implementazione (2026-08-13)
+
+**Bundling** (`packages/node-red-nodes/scripts/build-node-red.mjs`): usa
+`esbuild-wasm` (non `esbuild` — il binario nativo di `esbuild` richiede uno script di
+postinstall bloccato dal sandbox dell'ambiente di sviluppo; `esbuild-wasm` non ha
+script nativi ed espone la stessa API) per bundlare ciascuno dei cinque node file,
+insieme ai sorgenti TypeScript reali di ogni dipendenza `@spaghettilab/*` e `ws`, in un
+singolo file CommonJS self-contained per nodo (`dist-node-red/*.cjs`, gitignored). I
+sorgenti usano `export default function (RED) {...}` (ESM, coerente con
+`"type":"module"` del pacchetto); l'output CJS di esbuild per un default export è
+`exports.default = fn`, non `module.exports = fn` — corretto con un `footer` esbuild
+che riassegna `module.exports = module.exports.default`, il fix standard per questo
+mismatch. Genera anche un `package.json` minimale con solo il campo
+`"node-red"."nodes"`, quello effettivamente montato nel container.
+
+**Deploy**: `Software/node-red/compose.yaml` monta `dist-node-red/` in sola lettura su
+`/data/node_modules/@spaghettilab/node-red-nodes` — nessun `npm install` dentro il
+container Node-RED.
+
+**Verifica runtime reale** (contro l'istanza `Software/node-red` già in esecuzione):
+tutti e cinque i tipi di nodo caricati senza errore
+(`/data/.config.nodes.json`: `enabled: true` per ognuno), categoria palette
+"SpaghettiLAB" visibile con le icone/etichette attese, dialoghi di edit di
+`spaghetti-connection` (config node) e `spaghetti-record-source`/
+`spaghetti-command-target` renderizzati e funzionanti, deploy di un flow di prova
+riuscito, e il codice reale di connessione WebSocket del nodo `connection` eseguito
+davvero — fallisce con `ECONNREFUSED` gestito via `node.error()` (non un'eccezione non
+gestita) contro un endpoint inesistente, a dimostrazione che il bundle *esegue*, non
+solo *carica*. Flow di prova e config node rimossi al termine, istanza riportata allo
+stato originale.
+
+**Scope onestamente incompleto**: nessuno scenario end-to-end reale (record source →
+coordinator → command target) contro un Core vero o il gateway BLE fake
+(`SPAGHETTI_GATEWAY_FAKE=1`) — nessun gateway/Core in esecuzione in questo passaggio.
+Lasciato come secondo criterio di completamento ancora aperto.

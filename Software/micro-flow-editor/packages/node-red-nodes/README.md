@@ -47,25 +47,44 @@ a mock socket (no live network in the test suite).
 Five real node definitions (`.js` + `.html`) following Node-RED's documented ESM node
 API (`export default function (RED) { ... }`, matching this package's `"type":
 "module"`): `spaghetti-connection` (config node), `spaghetti-record-source`,
-`spaghetti-command-target`, `spaghetti-status`, `spaghetti-coordinator`. Registered via
-this package's `package.json`'s `"node-red"."nodes"` manifest.
+`spaghetti-command-target`, `spaghetti-status`, `spaghetti-coordinator`.
+
+## Bundling and real runtime install (S112B)
+
+Every `@spaghettilab/*` package in this workspace resolves via `package.json`'s
+`"main": "./src/index.ts"` — fine for this workspace's own TypeScript tooling, but a
+plain Node.js runtime (Node-RED's container) cannot `import` a `.ts` file directly.
+`npm run build:node-red -w @spaghettilab/node-red-nodes` (`scripts/build-node-red.mjs`,
+using `esbuild-wasm` — no native postinstall binary, unlike plain `esbuild`) bundles
+each of the five node files, together with the real TypeScript sources of every
+`@spaghettilab/*` dependency and `ws`, into one self-contained CommonJS file per node
+in `dist-node-red/` (gitignored — regenerate it, don't commit it), plus a minimal
+`package.json` with just the `"node-red"."nodes"` manifest — this is what actually gets
+mounted into a Node-RED instance, not the workspace `package.json`.
+
+`Software/node-red/compose.yaml` bind-mounts `dist-node-red/` straight into
+`/data/node_modules/@spaghettilab/node-red-nodes` (read-only) — Node-RED's own startup
+scan picks it up, no `npm install` needed inside that container at all.
+
+**Runtime-verified for real** against the already-running `Software/node-red`
+container (`docker compose up -d` there after building): all five node types load with
+no error (`/data/.config.nodes.json` reports `enabled: true` for every one), appear
+under a "SpaghettiLAB" palette category with the expected labels/icons, the
+`spaghetti-connection` config node's edit dialog and the `record source`/
+`command target` edit dialogs render and accept input correctly, a flow using them
+deploys successfully, and the connection node's real WebSocket-connecting code runs and
+logs a graceful `ECONNREFUSED` (via `node.error()`, not an uncaught exception) against a
+nonexistent endpoint — proving the bundle executes, not just loads. "Produce/consume
+correct messages" against a real Core or the fake BLE gateway was not exercised (no
+gateway/Core running in this pass) — see honest scope gaps below.
 
 ## Honest scope gaps
 
-- **Not runtime-verified inside a live Node-RED editor.** The `.js`/`.html` files are
-  written correctly against Node-RED's documented node API, but this pass had no way to
-  boot a real Node-RED instance and confirm the palette/edit dialogs/flow wiring behave
-  as expected. The underlying logic they call (`connection.ts`/`record-source.ts`/
-  `command-target.ts`/`status-node.ts`/`coordinator-node.ts`) is real and tested; the
-  thin RED-facing wrapper is not.
-- **Not yet loadable by `Software/node-red/`'s Docker environment as-is.** Every
-  `@spaghettilab/*` package in this workspace resolves via `package.json`'s
-  `"main": "./src/index.ts"` — fine for this workspace's own TypeScript tooling (Vite,
-  Vitest, `tsc -b`), but a plain Node.js runtime (Node-RED's container) cannot `import`
-  a `.ts` file directly. Making these nodes actually installable in the separate
-  Node-RED Docker environment needs a bundling step (e.g. `esbuild`/`tsup` producing
-  self-contained output) that does not exist yet — real follow-up work, not done in
-  this pass.
+- **End-to-end message flow against a real Core or the fake BLE gateway
+  (`Software/node-red/BLE_GATEWAY.md`'s `SPAGHETTI_GATEWAY_FAKE=1`) was not
+  exercised** — runtime verification confirmed the nodes load, render, deploy, and run
+  their real connection code without crashing, not a full record→coordinator→command
+  round trip against live data.
 - **Only WebSocket is wired** (`ws-connection.ts`) — `ConnectionProfile`'s `mqtt`
   transport kind exists in `@spaghettilab/domain` but has no Node-RED-side adapter
   here yet; `MqttProtocolTransport` (`protocol-sdk`) still needs a real `MqttConnection`

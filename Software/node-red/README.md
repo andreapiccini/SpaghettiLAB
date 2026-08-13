@@ -207,6 +207,26 @@ Quick path:
 
 Binary WebSocket payloads are Protocol V1 CBOR envelopes (same as MQTT).
 
+## Custom SpaghettiLAB nodes (S112/S112B)
+
+`compose.yaml` bind-mounts `../micro-flow-editor/packages/node-red-nodes/dist-node-red`
+into `/data/node_modules/@spaghettilab/node-red-nodes` — five real nodes (connection,
+record source, command target, status, coordinator) built on the same Protocol V1 SDK
+the React Flow app uses, not a separate implementation. They appear under the
+"SpaghettiLAB" palette category once built.
+
+Build them before starting (or after pulling changes to that package):
+
+```sh
+cd Software/micro-flow-editor
+docker compose run --rm micro-flow-editor npm run build:node-red -w @spaghettilab/node-red-nodes
+```
+
+Then `docker compose up -d` from this directory (or `docker compose restart node-red`
+if it's already running) to pick up the bundle. See
+[`../micro-flow-editor/packages/node-red-nodes/README.md`](../micro-flow-editor/packages/node-red-nodes/README.md)
+for what each node does and what was/wasn't runtime-verified.
+
 ## Scope of this version
 
 Included: a persistent, local-only Node-RED editor with basic Spaghetti LAB

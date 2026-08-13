@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "build:node-red": "node scripts/build-node-red.mjs"
   },
   "dependencies": {
     "@spaghettilab/domain": "*",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@types/ws": "^8.5.13",
     "@vitest/coverage-v8": "^4.1.10",
+    "esbuild-wasm": "^0.24.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   },

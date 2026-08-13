@@ -11,6 +11,12 @@ services:
       - node-red-data:/data
       - ./theme/${NODE_RED_THEME:-safe}:/data/theme:ro
       - ./theme/${NODE_RED_THEME:-safe}/settings.js:/data/settings.js:ro
+      # Real SpaghettiLAB nodes (S112), bundled by S112B — run
+      # `npm run build:node-red -w @spaghettilab/node-red-nodes` from
+      # Software/micro-flow-editor first (see that package's README). Mounted
+      # straight into node_modules so Node-RED's own startup scan (no palette
+      # install, no npm inside this container) picks it up.
+      - ../micro-flow-editor/packages/node-red-nodes/dist-node-red:/data/node_modules/@spaghettilab/node-red-nodes:ro
 
 volumes:
   node-red-data:

@@ -16,6 +16,10 @@ export default tseslint.config(
       // is the documented pattern, not a lint violation), not part of the typed
       // src/ codebase these rules are tuned for.
       "packages/node-red-nodes/node-red/**",
+      // Generated bundle output (S112B) — build artifact, not source.
+      "packages/node-red-nodes/dist-node-red/**",
+      // Node.js build script (S112B) — plain JS, not part of the typed src/ codebase.
+      "packages/node-red-nodes/scripts/**",
     ],
   },
   js.configs.recommended,

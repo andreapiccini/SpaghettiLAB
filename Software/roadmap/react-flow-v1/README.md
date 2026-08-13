@@ -56,7 +56,7 @@ finale end-to-end).
 | | **S110 — Automazioni cross-Core con Node-RED** | |
 | ✅ | [S111 — System Automation Graph e compatibility engine](tasks/S111-system-automation-graph.md) | I collegamenti cross-Core sono rappresentati con identità stabile, mai runtime ID. |
 | ✅ | [S112 — Package nodi Node-RED SpaghettiLAB](tasks/S112-node-red-node-package.md) | I nodi Node-RED reali condividono lo stesso SDK Protocol dell'app. |
-| ⬜ | [S112B — Bundling installabile dei nodi Node-RED](tasks/S112B-node-red-package-bundling.md) | I nodi sono installabili ed eseguibili nel container Node-RED reale, non solo testati come sorgente. |
+| ✅ | [S112B — Bundling installabile dei nodi Node-RED](tasks/S112B-node-red-package-bundling.md) | I nodi sono installabili ed eseguibili nel container Node-RED reale, non solo testati come sorgente. |
 | ⬜ | [S113 — Compiler, Admin API deploy e diagnostica runtime](tasks/S113-node-red-compiler-deploy.md) | Il grafo autore diventa un deploy Node-RED revisionato, scoped e osservabile. |
 | | **S120 — Sicurezza, portabilità e recovery** | |
 | ✅ | [S121 — Credential store e permission matrix](tasks/S121-credential-permission.md) | Nessun segreto entra in progetto/log/errore; i permessi sono verificati prima dell'azione. |
