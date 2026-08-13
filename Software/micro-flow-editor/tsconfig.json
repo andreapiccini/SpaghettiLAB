@@ -25,6 +25,7 @@
     { "path": "packages/system-automation-graph" },
     { "path": "packages/node-red-nodes" },
     { "path": "packages/node-red-deploy" },
+    { "path": "packages/security-recovery" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

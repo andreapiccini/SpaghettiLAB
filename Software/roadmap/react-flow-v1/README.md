@@ -62,7 +62,7 @@ finale end-to-end).
 | ✅ | [S121 — Credential store e permission matrix](tasks/S121-credential-permission.md) | Nessun segreto entra in progetto/log/errore; i permessi sono verificati prima dell'azione. |
 | ✅ | [S122 — Persistenza robusta: autosave, backup e concorrenza](tasks/S122-persistence-recovery.md) | Crash, migration fallita e tab concorrenti non perdono mai lavoro. |
 | ✅ | [S123 — Import/export sicuri, redaction e audit](tasks/S123-import-export-audit.md) | Import/export non eseguono codice non trusted; ogni operazione sensibile è auditata. |
-| ⬜ | [S124 — Conferme distruttive, recovery guidato e threat test](tasks/S124-destructive-confirm-recovery-threats.md) | Ogni azione irreversibile è confermata; ogni scenario di guasto ha un recovery testato. |
+| ✅ | [S124 — Conferme distruttive, recovery guidato e threat test](tasks/S124-destructive-confirm-recovery-threats.md) | Ogni azione irreversibile è confermata; ogni scenario di guasto ha un recovery testato. |
 | ⬜ | [S130 — Chiusura V1 end-to-end](tasks/S130-v1-finalization.md) | Tutti i percorsi funzionano con dispositivi/servizi fake e almeno un Core reale. |
 
 ## Dipendenze

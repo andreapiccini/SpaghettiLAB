@@ -139,6 +139,12 @@ packages/
                            reconciliation, classifies IN_SYNC/DIVERGED like
                            Config, and dedupes retried records so a command
                            never fires twice (S113).
+  security-recovery/      Target-specific destructive confirmation (device
+                           ID/scope/consequence), guided recovery plans for
+                           six failure scenarios, retention/purge policy, and
+                           an automated threat-test suite covering XSS,
+                           malicious profiles, oversized imports, forged
+                           marketplace metadata and secret leakage (S124).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

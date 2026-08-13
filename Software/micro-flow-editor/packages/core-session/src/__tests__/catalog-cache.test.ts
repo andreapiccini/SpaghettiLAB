@@ -52,4 +52,16 @@ describe("CatalogCache", () => {
     expect(cache.get(DEVICE_A, second.fingerprint)).toBeUndefined();
     expect(cache.get(DEVICE_B, catalog(1).fingerprint)).toBeDefined();
   });
+
+  it("clear drops every cached entry for every device — the logout case (S124)", () => {
+    const cache = new CatalogCache();
+    cache.set(DEVICE_A, catalog(1));
+    cache.set(DEVICE_B, catalog(2));
+
+    cache.clear();
+
+    expect(cache.size).toBe(0);
+    expect(cache.get(DEVICE_A, catalog(1).fingerprint)).toBeUndefined();
+    expect(cache.get(DEVICE_B, catalog(2).fingerprint)).toBeUndefined();
+  });
 });

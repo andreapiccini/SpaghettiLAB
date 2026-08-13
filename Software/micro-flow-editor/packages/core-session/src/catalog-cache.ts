@@ -39,6 +39,16 @@ export class CatalogCache {
     }
   }
 
+  /**
+   * Drops every cached entry for every device — the logout case: a new
+   * session must never inherit a previous session's cached catalog reads,
+   * even for devices `invalidateDevice()` was never called for (S124 point
+   * 3, "definisci retention/cache purge/logout").
+   */
+  clear(): void {
+    this.entries.clear();
+  }
+
   get size(): number {
     return this.entries.size;
   }
