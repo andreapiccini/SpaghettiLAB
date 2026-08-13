@@ -14,6 +14,7 @@
     { "path": "packages/device-processing-graph-model" },
     { "path": "packages/config-compiler" },
     { "path": "packages/config-decompiler" },
+    { "path": "packages/config-deployment" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

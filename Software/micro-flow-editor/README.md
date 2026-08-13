@@ -89,6 +89,10 @@ packages/
                            decompiler (never inventing unrecoverable
                            metadata), and a full local dry-run with
                            errors/warnings collected, never fail-fast (S073).
+  config-deployment/      Transactional Config deploy — compile, dry-run,
+                           remote validate, compare-and-swap apply, read-back
+                           verify, semantic diff, structured conflict
+                           handling, independent multi-Core results (S080).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```
