@@ -6,7 +6,18 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import prettier from "eslint-config-prettier";
 
 export default tseslint.config(
-  { ignores: ["**/dist", "**/coverage", "**/node_modules"] },
+  {
+    ignores: [
+      "**/dist",
+      "**/coverage",
+      "**/node_modules",
+      // Real Node-RED node registration files (S112) — plain JS following Node-RED's
+      // own runtime conventions (e.g. `const node = this;` inside a node constructor
+      // is the documented pattern, not a lint violation), not part of the typed
+      // src/ codebase these rules are tuned for.
+      "packages/node-red-nodes/node-red/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

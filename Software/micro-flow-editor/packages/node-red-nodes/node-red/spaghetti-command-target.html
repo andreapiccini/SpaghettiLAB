@@ -1,0 +1,50 @@
+<script type="text/javascript">
+  RED.nodes.registerType("spaghetti-command-target", {
+    category: "SpaghettiLAB",
+    color: "#e76f51",
+    defaults: {
+      name: { value: "" },
+      connection: { type: "spaghetti-connection", required: true },
+      moduleKey: { value: "" },
+      commandId: { value: "" },
+      permissionScope: { value: "" },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "font-awesome/fa-bolt",
+    label: function () {
+      return this.name || "command target";
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="spaghetti-command-target">
+  <div class="form-row">
+    <label for="node-input-connection">Connection</label>
+    <input type="text" id="node-input-connection" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-moduleKey">Module key</label>
+    <input type="text" id="node-input-moduleKey" placeholder="msg.moduleKey overrides this" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-commandId">Command ID</label>
+    <input type="text" id="node-input-commandId" placeholder="msg.commandId overrides this" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-name">Name</label>
+    <input type="text" id="node-input-name" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="spaghetti-command-target">
+  <p>
+    Sends a <code>MODULE_COMMAND</code> using
+    <code>@spaghettilab/core-actions</code>'s real command runner — never a
+    parallel implementation. <code>msg.moduleKey</code>/<code>msg.commandId</code>
+    override this node's configured defaults. Outputs the same
+    <code>CommandOutcome</code> (<code>SUCCESS</code>/<code>PERMISSION_DENIED</code>/
+    <code>QUEUE_FULL</code>/<code>TIMEOUT</code>/<code>UNSUPPORTED_ARGUMENTS</code>/
+    <code>REMOTE_ERROR</code>) the React Flow app would show.
+  </p>
+</script>

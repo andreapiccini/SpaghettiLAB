@@ -1,0 +1,48 @@
+<script type="text/javascript">
+  RED.nodes.registerType("spaghetti-record-source", {
+    category: "SpaghettiLAB",
+    color: "#f4a261",
+    defaults: {
+      name: { value: "" },
+      connection: { type: "spaghetti-connection", required: true },
+      coreId: { value: "" },
+      sourceKey: { value: "" },
+      schemaId: { value: "" },
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: "font-awesome/fa-thermometer-half",
+    label: function () {
+      return this.name || "record source";
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="spaghetti-record-source">
+  <div class="form-row">
+    <label for="node-input-connection">Connection</label>
+    <input type="text" id="node-input-connection" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-sourceKey">Source key</label>
+    <input type="text" id="node-input-sourceKey" placeholder="(any)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-schemaId">Schema ID</label>
+    <input type="text" id="node-input-schemaId" placeholder="(any)" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-name">Name</label>
+    <input type="text" id="node-input-name" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="spaghetti-record-source">
+  <p>
+    Emits one <code>msg.payload</code> per matching Protocol V1
+    <code>RECORD</code> event — <code>{sourceKey, sequence, schemaId,
+    schemaVersion, fields}</code>. Filter by <code>sourceKey</code>/
+    <code>schemaId</code>, or leave blank to receive every record on this
+    connection.
+  </p>
+</script>

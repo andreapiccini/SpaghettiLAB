@@ -128,6 +128,11 @@ packages/
                            requires an explicit transformation instead of
                            converting implicitly, and fingerprint-based
                            staleness (S111).
+  node-red-nodes/         Real SpaghettiLAB Node-RED nodes — connection,
+                           record source, command target, status,
+                           coordinator — reusing core-actions/core-status/
+                           telemetry-buffer/system-automation-graph directly
+                           rather than a parallel implementation (S112).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

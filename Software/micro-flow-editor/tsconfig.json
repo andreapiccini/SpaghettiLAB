@@ -23,6 +23,7 @@
     { "path": "packages/ota-preflight" },
     { "path": "packages/ota-lifecycle" },
     { "path": "packages/system-automation-graph" },
+    { "path": "packages/node-red-nodes" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]
