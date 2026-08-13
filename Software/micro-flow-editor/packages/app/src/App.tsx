@@ -1,10 +1,11 @@
 import { AppShell } from "./components/shell/AppShell.js";
 import { ScreenStub } from "./components/shell/ScreenStub.js";
 import { ProjectPicker } from "./components/project-picker/ProjectPicker.js";
+import { CoreConnectionsScreen } from "./components/core-connections/CoreConnectionsScreen.js";
+import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
-  "core-connections": { title: "Core Connections", task: "UI-S030" },
   "catalog-topology": { title: "Catalog & Topology Explorer", task: "UI-S040" },
   "physical-composition": { title: "Physical Composition Editor", task: "UI-S050" },
   "device-profile-studio": { title: "Device Profile Studio", task: "UI-S060" },
@@ -21,6 +22,14 @@ function AppContent() {
 
   if (!session) return <ProjectPicker />;
 
+  if (activeScreen === "core-connections") {
+    return (
+      <AppShell>
+        <CoreConnectionsScreen />
+      </AppShell>
+    );
+  }
+
   const stub = SCREEN_TITLES[activeScreen];
   return <AppShell>{stub ? <ScreenStub title={stub.title} task={stub.task} /> : <ScreenStub title={activeScreen} task="?" />}</AppShell>;
 }
@@ -28,7 +37,9 @@ function AppContent() {
 export default function App() {
   return (
     <SessionProvider>
-      <AppContent />
+      <CoreSessionsProvider>
+        <AppContent />
+      </CoreSessionsProvider>
     </SessionProvider>
   );
 }

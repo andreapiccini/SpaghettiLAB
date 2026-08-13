@@ -45,6 +45,16 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
+/* `type.body-strong` (UX_ARCHITECTURE.md § Tipografia) is body text at weight
+   600 — Tailwind v4 has no built-in `font-body-strong` utility, so components
+   across the app (S010 onward) reference this class expecting it to exist.
+   Without this it silently no-ops and every "primary button" label renders at
+   the default weight instead of semibold — a real, if subtle, bug. */
+@utility font-body-strong {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
 html,
 body,
 #root {

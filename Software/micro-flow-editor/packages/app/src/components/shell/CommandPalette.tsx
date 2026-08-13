@@ -1,17 +1,27 @@
-import { Activity, Boxes, Cable, FileCode, GitCompareArrows, Network, Redo2, Search, Settings, Share2, Store, Undo2, Workflow, type LucideIcon } from "lucide-react";
+import { Activity, Boxes, Cable, FileCode, GitCompareArrows, Network, Redo2, Save, Search, Settings, Share2, Store, Undo2, Workflow, type LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
-import { useSession, type ScreenId } from "../../state/session-context.js";
+import { saveOpenProject, useSession, type ScreenId } from "../../state/session-context.js";
 
 type PaletteEntry = { readonly id: string; readonly label: string; readonly icon: LucideIcon; readonly shortcut?: string; readonly run: () => void };
 
-/** `ux/screens/S010-workspace-shell/visual.md` § 3 + `ui-behavior.md` § Command palette — `⌘K` overlay, keyboard-only navigable. */
+/**
+ * `ux/screens/S010-workspace-shell/visual.md` § 3 + `ui-behavior.md` § Command palette — `⌘K` overlay, keyboard-only navigable.
+ * "Salva progetto" (`⌘S`) is not in that spec, but `backend-behavior.md` explicitly says
+ * `ProjectRepository` persistence "resta un'azione esplicita separata" from every edit —
+ * without a UI trigger for it, nothing ever reaches storage and every edit is lost on
+ * reload. This surfaced live while wiring `UI-S030`: a `CoreBinding` added via
+ * `addCoreBinding` survived in the in-memory `CommandStack` but vanished on refresh.
+ * The command palette is the natural home (same place "Annulla ultima modifica" lives),
+ * so it is fixed here rather than deferred.
+ */
 export function CommandPalette() {
   const { session, navigate, undo, redo } = useSession();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -20,13 +30,29 @@ export function CommandPalette() {
         setOpen((o) => !o);
         setQuery("");
         setHighlighted(0);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void save();
       } else if (e.key === "Escape") {
         setOpen(false);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  async function save() {
+    if (!session) return;
+    setSaveState("saving");
+    try {
+      await saveOpenProject(session);
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    }
+    setTimeout(() => setSaveState("idle"), 2000);
+  }
 
   const entries = useMemo<PaletteEntry[]>(() => {
     const navEntries: PaletteEntry[] = (
@@ -50,6 +76,9 @@ export function CommandPalette() {
     }));
 
     const actionEntries: PaletteEntry[] = [];
+    if (session) {
+      actionEntries.push({ id: "save", label: "Salva progetto", icon: Save, shortcut: "⌘S", run: () => void save() });
+    }
     if (session?.stack.canUndo()) {
       actionEntries.push({ id: "undo", label: "Annulla ultima modifica", icon: Undo2, shortcut: "⌘Z", run: undo });
     }
@@ -58,6 +87,7 @@ export function CommandPalette() {
     }
 
     return [...actionEntries, ...navEntries];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, navigate, undo, redo]);
 
   const filtered = entries.filter((e) => e.label.toLowerCase().includes(query.toLowerCase()));
@@ -71,6 +101,24 @@ export function CommandPalette() {
   }
 
   return (
+    <>
+    <AnimatePresence>
+      {saveState !== "idle" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={motionTokens.duration.base}
+          className="fixed bottom-4 right-4 z-50 rounded-slsm px-3 py-2 font-body text-sm shadow-e2"
+          style={{
+            backgroundColor: saveState === "error" ? "var(--color-error)" : "var(--color-ink)",
+            color: "white",
+          }}
+        >
+          {saveState === "saving" ? "Salvataggio..." : saveState === "saved" ? "Progetto salvato" : "Salvataggio non riuscito"}
+        </motion.div>
+      )}
+    </AnimatePresence>
     <AnimatePresence>
       {open && (
         <motion.div className="fixed inset-0 z-50 flex justify-center bg-[rgba(20,23,31,.35)] pt-24" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={motionTokens.duration.fast} onClick={() => setOpen(false)}>
@@ -131,5 +179,6 @@ export function CommandPalette() {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 }
