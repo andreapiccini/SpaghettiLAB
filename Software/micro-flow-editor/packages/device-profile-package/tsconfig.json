@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [{ "path": "../domain" }, { "path": "../device-profile-authoring-model" }, { "path": "../protocol-sdk" }],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

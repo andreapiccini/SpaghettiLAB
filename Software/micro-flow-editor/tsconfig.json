@@ -9,6 +9,7 @@
     { "path": "packages/editor-model" },
     { "path": "packages/physical-composition-model" },
     { "path": "packages/device-profile-authoring-model" },
+    { "path": "packages/device-profile-package" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

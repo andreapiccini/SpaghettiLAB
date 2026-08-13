@@ -69,6 +69,10 @@ packages/
                            typed acquisition-plan instructions, budget validation,
                            sourced from the firmware's own opcode/struct
                            definitions (S061).
+  device-profile-package/ Canonical Device Profile package import/export and an
+                           install-feasibility resolver (READY/PROFILE_INSTALL_
+                           REQUIRED/FIRMWARE_UPDATE_REQUIRED/HARDWARE_INCOMPATIBLE/
+                           RESOURCE_INCOMPATIBLE/VERSION_CONFLICT) (S062).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```
