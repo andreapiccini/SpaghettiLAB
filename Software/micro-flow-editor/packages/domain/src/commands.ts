@@ -73,9 +73,12 @@ export function removeCoreBinding(bindingId: CoreBindingId): ProjectCommand {
  * `ProjectV1` objects are small, immutable, and structurally shared where
  * unchanged, so this is cheap in practice, not just correct in principle.
  */
+/** One undo/redo history entry — the snapshot to restore *and* the command that produced it, so a caller (e.g. the top bar's undo/redo tooltip, `UX-S010`) can describe what would be undone/redone without re-deriving it from a diff. */
+type HistoryEntry = { readonly snapshot: ProjectV1; readonly kind: string };
+
 export class CommandStack {
-  private readonly past: ProjectV1[] = [];
-  private readonly future: ProjectV1[] = [];
+  private readonly past: HistoryEntry[] = [];
+  private readonly future: HistoryEntry[] = [];
 
   constructor(private state: ProjectV1) {}
 
@@ -91,12 +94,22 @@ export class CommandStack {
     return this.future.length > 0;
   }
 
+  /** `command.kind` of whatever `undo()` would revert, or `undefined` when `canUndo()` is false. */
+  peekUndoKind(): string | undefined {
+    return this.past.at(-1)?.kind;
+  }
+
+  /** `command.kind` of whatever `redo()` would reapply, or `undefined` when `canRedo()` is false. */
+  peekRedoKind(): string | undefined {
+    return this.future.at(-1)?.kind;
+  }
+
   execute(command: ProjectCommand): Result<ProjectV1, DomainError> {
     const result = command.apply(this.state);
     if (!result.ok) {
       return result;
     }
-    this.past.push(this.state);
+    this.past.push({ snapshot: this.state, kind: command.kind });
     this.state = result.value;
     this.future.length = 0; // a new command invalidates the redo history
     return ok(this.state);
@@ -114,8 +127,8 @@ export class CommandStack {
         }),
       );
     }
-    this.future.push(this.state);
-    this.state = previous;
+    this.future.push({ snapshot: this.state, kind: previous.kind });
+    this.state = previous.snapshot;
     return ok(this.state);
   }
 
@@ -131,8 +144,8 @@ export class CommandStack {
         }),
       );
     }
-    this.past.push(this.state);
-    this.state = next;
+    this.past.push({ snapshot: this.state, kind: next.kind });
+    this.state = next.snapshot;
     return ok(this.state);
   }
 }

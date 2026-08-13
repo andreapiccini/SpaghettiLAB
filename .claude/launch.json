@@ -1,0 +1,9 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "micro-flow-editor",
+      "url": "http://127.0.0.1:5173"
+    }
+  ]
+}

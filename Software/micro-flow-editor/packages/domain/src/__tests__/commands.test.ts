@@ -83,6 +83,20 @@ describe("CommandStack", () => {
     expect(stack.current.name).toBe("B");
   });
 
+  it("peekUndoKind/peekRedoKind describe what undo/redo would do, for a tooltip (UX-S010)", () => {
+    const stack = new CommandStack(fixtureProject());
+    expect(stack.peekUndoKind()).toBeUndefined();
+    expect(stack.peekRedoKind()).toBeUndefined();
+
+    stack.execute(renameProject("Renamed"));
+    expect(stack.peekUndoKind()).toBe("RenameProject");
+    expect(stack.peekRedoKind()).toBeUndefined();
+
+    stack.undo();
+    expect(stack.peekUndoKind()).toBeUndefined();
+    expect(stack.peekRedoKind()).toBe("RenameProject");
+  });
+
   it("undo/redo fail with a structured error instead of throwing when there is nothing to do", () => {
     const stack = new CommandStack(fixtureProject());
     expect(stack.undo().ok).toBe(false);

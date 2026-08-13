@@ -1,68 +1,34 @@
-import { useCallback } from "react";
-import {
-  Background,
-  Controls,
-  MiniMap,
-  ReactFlow,
-  addEdge,
-  useNodesState,
-  useEdgesState,
-  type Connection,
-  type Edge,
-  type Node,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+import { AppShell } from "./components/shell/AppShell.js";
+import { ScreenStub } from "./components/shell/ScreenStub.js";
+import { ProjectPicker } from "./components/project-picker/ProjectPicker.js";
+import { SessionProvider, useSession } from "./state/session-context.js";
 
-// Placeholder nodes only, to prove the stack runs end to end. The real
-// SpaghettiLAB block types (Read Sensor, Wait, Publish MQTT, ...) and the
-// compiler that turns this graph into a device config are future work —
-// see Software/micro-flow-editor/README.md.
-const initialNodes: Node[] = [
-  {
-    id: "1",
-    position: { x: 0, y: 80 },
-    data: { label: "Read Sensor (placeholder)" },
-  },
-  {
-    id: "2",
-    position: { x: 260, y: 80 },
-    data: { label: "Wait (placeholder)" },
-  },
-  {
-    id: "3",
-    position: { x: 520, y: 80 },
-    data: { label: "Publish MQTT (placeholder)" },
-  },
-];
+const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
+  "core-connections": { title: "Core Connections", task: "UI-S030" },
+  "catalog-topology": { title: "Catalog & Topology Explorer", task: "UI-S040" },
+  "physical-composition": { title: "Physical Composition Editor", task: "UI-S050" },
+  "device-profile-studio": { title: "Device Profile Studio", task: "UI-S060" },
+  "processing-graph": { title: "Processing Graph Editor", task: "UI-S070" },
+  "deploy-diff": { title: "Deploy & Diff", task: "UI-S080" },
+  "runtime-diagnostics": { title: "Runtime & Diagnostics", task: "UI-S090" },
+  "capability-marketplace": { title: "Capability Marketplace & OTA", task: "UI-S100" },
+  "cross-core-automation": { title: "Cross-Core Automation", task: "UI-S110" },
+  "settings-security": { title: "Settings, Security & Recovery", task: "UI-S120" },
+};
 
-const initialEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2" },
-  { id: "e2-3", source: "2", target: "3" },
-];
+function AppContent() {
+  const { session, activeScreen } = useSession();
+
+  if (!session) return <ProjectPicker />;
+
+  const stub = SCREEN_TITLES[activeScreen];
+  return <AppShell>{stub ? <ScreenStub title={stub.title} task={stub.task} /> : <ScreenStub title={activeScreen} task="?" />}</AppShell>;
+}
 
 export default function App() {
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges],
-  );
-
   return (
-    <div style={{ width: "100vw", height: "100vh" }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-      </ReactFlow>
-    </div>
+    <SessionProvider>
+      <AppContent />
+    </SessionProvider>
   );
 }

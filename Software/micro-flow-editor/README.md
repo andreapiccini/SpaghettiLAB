@@ -2,16 +2,20 @@
 
 A Docker Compose environment running a [React](https://react.dev/) +
 [Vite](https://vite.dev/) app with [React Flow](https://reactflow.dev/)
-(`@xyflow/react`) wired up, on a placeholder three-node canvas — plus, since
-S011, the npm workspace and quality tooling the rest of the React Flow V1
-roadmap builds on.
+(`@xyflow/react`) wired up — plus the npm workspace of ~25 backend packages
+(`packages/*`, S011 onward) the app itself is now being built on top of
+(`roadmap/app-v1`, starting with `UI-S010`).
 
-The canvas itself is still a proof that the stack (Node 24, Vite, React 19,
-React Flow) builds and runs in Docker with hot reload. It is **not yet** the
-SpaghettiLAB "microcontroller rules" editor — no custom block types (Read
-Sensor, Wait, Publish MQTT, ...), no compiler that turns the graph into a
-device config, no AppBlocks-inspired visual design, no connection to the
-firmware. Those arrive with S012 onward.
+`packages/app` today has a real, working Project/Workspace shell (create/open/
+import a Project, undo/redo, `⌘K` command palette — all backed by real
+`@spaghettilab/domain`/`@spaghettilab/project-store` code, not mocked data) and
+honest placeholder screens for everything `roadmap/app-v1` hasn't implemented yet
+(Core Connections, Physical Composition, Device Profile Studio, Processing Graph
+Editor, Deploy & Diff, Runtime & Diagnostics, Capability Marketplace, Cross-Core
+Automation, Settings) — each one names the task (`UI-S0NN`) that will replace it,
+never fake data pretending to be real. See `roadmap/app-v1/README.md` for the
+implementation order and `UX_ARCHITECTURE.md`/`ux/screens/` for the design
+specification each screen is built against.
 
 ## Why this exists
 
@@ -260,12 +264,15 @@ Then `docker compose up -d`.
 
 ## Scope of this version
 
-Included: a working React + React Flow canvas in Docker, with placeholder nodes,
-proving the stack runs end to end (task S011: npm workspace, TypeScript strict,
-ESLint, Prettier, Vitest + coverage, abstract infrastructure ports with fakes,
-reproducible containerized CI).
+**Backend** (`roadmap/react-flow-v1`, S011–S124): all ~25 packages listed above are
+implemented and tested — domain types, the three graphs, Protocol V1 SDK, Core
+sessions, catalog/topology, physical composition, Device Profile authoring/install,
+the processing graph and Config compiler/decompiler/deployment, telemetry, admin
+operations, the Capability Pack marketplace and OTA lifecycle, the System Automation
+Graph, real Node-RED nodes and Admin API deploy, and security/recovery. S130 (the
+final end-to-end gate) is not yet closed — it requires the UI work below.
 
-Not included yet in code: domain types (S012), the three graphs (S013), Project
-persistence and undo/redo (S014), and everything from S021 onward. This README
-describes the existing executable prototype; architecture and task documents
-describe the complete target without claiming it is implemented.
+**UI** (`roadmap/app-v1`, new): `packages/app` is being rebuilt against
+`UX_ARCHITECTURE.md`'s design specification, screen by screen, on top of the backend
+above. `UI-S010` (Project/Workspace shell) is done; the other ten screens are honest
+placeholders naming the task that will implement them — see `roadmap/app-v1/README.md`.
