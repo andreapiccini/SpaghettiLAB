@@ -100,6 +100,10 @@ packages/
                            orchestration, kept structurally separate from
                            Config, with permission-denied/queue-full/timeout
                            as distinct outcomes (S092).
+  core-status/            Readable Module/schedule/Rule/Block/service/
+                           connectivity/health/reset-cause/watchdog/audit/job
+                           status and a resource monitor with flash/RAM/pool
+                           figures kept distinct, never summed (S093).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

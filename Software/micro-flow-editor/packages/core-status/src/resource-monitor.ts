@@ -1,0 +1,89 @@
+import type { GetCapabilitiesResponse, GetResourcesResponse, ResourcePool } from "@spaghettilab/protocol-sdk";
+
+/** One resource pool's capacity/used/peak, kept distinct — never summed with any other pool or with flash/RAM (S093 § Verifiche). */
+export type ResourcePoolView = ResourcePool;
+
+/**
+ * `allocationFailures` is a monotonic, sticky counter
+ * (`Firmware/core/subsys/resources/resources.c`'s `spaghetti_resources_note_failure`
+ * only ever increments it; `spaghetti_resources_reset_high_water` explicitly
+ * leaves it untouched, per `resources.h:96`'s own doc comment). It is
+ * cleared only by a full reboot (`spaghetti_resources_init()`, which itself
+ * refuses to run twice). So "a past allocation failure remains visible even
+ * after the condition has cleared" (S093 § Verifiche) holds by construction —
+ * this view exposes the raw sticky value with that behavior documented,
+ * rather than trying to "clear" it client-side, which firmware has no
+ * operation for either.
+ */
+export type ResourceMonitorView = {
+  readonly featureSetHash: Uint8Array;
+  readonly pools: {
+    readonly modules: ResourcePoolView;
+    readonly rules: ResourcePoolView;
+    readonly blocks: ResourcePoolView;
+    readonly profiles: ResourcePoolView;
+    readonly records: ResourcePoolView;
+    readonly workspace: ResourcePoolView;
+  };
+  readonly allocationFailures: {
+    readonly count: number;
+    readonly hasEverFailed: boolean;
+    readonly note: string;
+  };
+  /**
+   * `flash_slot_bytes`/`flash_image_budget_bytes`/`flash_headroom_bytes`/
+   * `static_ram_budget_bytes` exist in `struct spaghetti_resources_snapshot`
+   * (`resources.h:45-70`) but `execute_get_resources`
+   * (`resources_ops.c:36-72`) never serializes them onto the `GET_RESOURCES`
+   * wire — confirmed against firmware source while implementing this
+   * package. Tracked as Firmware roadmap phase 392
+   * (`Firmware/core/roadmap/392-resources-flash-ram-wire-exposure/README.md`).
+   * Until that phase closes, this field stays `undefined` with a reason,
+   * never a fabricated number and never silently omitted.
+   */
+  readonly flashAndStaticRam: { readonly available: false; readonly reason: string };
+  readonly configLimits: {
+    readonly maxModules: number;
+    readonly maxPrincipals: number;
+  };
+};
+
+const FLASH_RAM_UNAVAILABLE_REASON =
+  "GET_RESOURCES does not carry flash_slot_bytes/flash_image_budget_bytes/flash_headroom_bytes/static_ram_budget_bytes on the wire yet — see Firmware roadmap phase 392.";
+
+export function describeResourceMonitor(resources: GetResourcesResponse, capabilities: GetCapabilitiesResponse): ResourceMonitorView {
+  return {
+    featureSetHash: resources.featureSetHash,
+    pools: {
+      modules: resources.modules,
+      rules: resources.rules,
+      blocks: resources.blocks,
+      profiles: resources.profiles,
+      records: resources.records,
+      workspace: resources.workspace,
+    },
+    allocationFailures: {
+      count: resources.allocationFailures,
+      hasEverFailed: resources.allocationFailures > 0,
+      note: "Monotonic since boot — only a reboot clears this counter, not the condition that caused it recovering.",
+    },
+    flashAndStaticRam: { available: false, reason: FLASH_RAM_UNAVAILABLE_REASON },
+    configLimits: {
+      maxModules: capabilities.maxModules,
+      maxPrincipals: capabilities.maxPrincipals,
+    },
+  };
+}
+
+/**
+ * True when a pool's `peak` is not the maximum a caller has ever observed —
+ * i.e. the high-water mark went backwards, which should never happen since
+ * firmware only raises `peak`, never lowers it except via an explicit
+ * `spaghetti_resources_reset_high_water()` (a distinct operation this
+ * package does not call). Exposed so a caller can assert "resource
+ * high-water increases correctly" (S093 § Verifiche) across successive
+ * observations.
+ */
+export function highWaterRegressed(previousPeak: number, currentPeak: number): boolean {
+  return currentPeak < previousPeak;
+}

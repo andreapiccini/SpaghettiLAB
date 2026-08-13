@@ -142,6 +142,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [385 — Manuale developer](385-developer-handbook/README.md) | Guide e template V1 coprono Module, Core, rule, provider e transport. |
 | ✅ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti, SDK, watchdog, fuzz ed estensioni fake superano il gate Node-RED. |
 | ⬜ | [391 — Validazione remota reale dei Device Profile](391-device-profile-remote-validation/README.md) | `VALIDATE_DEVICE_PROFILE` esegue il validatore reale invece di rispondere sempre `valid: 1`. |
+| ⬜ | [392 — Flash headroom e RAM statica su GET_RESOURCES](392-resources-flash-ram-wire-exposure/README.md) | `GET_RESOURCES` espone flash headroom e RAM statica come campi distinti, non solo i pool. |
 
 ## Da dove iniziare
 
