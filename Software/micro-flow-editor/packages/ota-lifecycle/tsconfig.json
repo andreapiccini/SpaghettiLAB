@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [{ "path": "../domain" }, { "path": "../protocol-sdk" }, { "path": "../ota-preflight" }, { "path": "../core-session" }],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

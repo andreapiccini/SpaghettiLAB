@@ -21,6 +21,7 @@
     { "path": "packages/core-admin" },
     { "path": "packages/capability-marketplace" },
     { "path": "packages/ota-preflight" },
+    { "path": "packages/ota-lifecycle" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

@@ -117,6 +117,11 @@ packages/
                            hash, compatibility, budget with explicit deltas)
                            and deterministic all-supported/composed build
                            selection among already-signed images (S102).
+  ota-lifecycle/          BLE OTA state machine, postflight verification
+                           (device ID/version/feature-set/Config/profile),
+                           S030 catalog-cache invalidation and audit — never
+                           marks "installed" without every check passing
+                           (S103).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```
