@@ -16,6 +16,7 @@
     { "path": "packages/config-decompiler" },
     { "path": "packages/config-deployment" },
     { "path": "packages/telemetry-buffer" },
+    { "path": "packages/core-actions" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

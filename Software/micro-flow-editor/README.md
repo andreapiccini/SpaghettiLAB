@@ -96,6 +96,10 @@ packages/
   telemetry-buffer/       Bounded per-(Core, schema) telemetry buffers from
                            EventStream traffic, with explicit boot-epoch/gap
                            tracking and unknown-schema preservation (S091).
+  core-actions/           Immediate Module commands and discovery scan/job
+                           orchestration, kept structurally separate from
+                           Config, with permission-denied/queue-full/timeout
+                           as distinct outcomes (S092).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

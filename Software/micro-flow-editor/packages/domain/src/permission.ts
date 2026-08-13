@@ -11,6 +11,7 @@ import { err, ok, type Result } from "./result.js";
 export const PERMISSION_SCOPES = [
   "core.connect",
   "core.command.execute",
+  "core.discovery.invasive-scan",
   "core.ota.install",
   "core.admin.factory-reset",
   "core.admin.maintenance",
