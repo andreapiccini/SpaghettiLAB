@@ -54,7 +54,7 @@ finale end-to-end).
 | ✅ | [S102 — Preflight e budget risorse](tasks/S102-ota-preflight-resources.md) | Un candidato è verificato per compatibilità e risorse prima di trasferire byte. |
 | ✅ | [S103 — State machine OTA, postflight e audit](tasks/S103-ota-state-machine-postflight.md) | L'aggiornamento non lascia mai un Core in stato "installato" falso. |
 | | **S110 — Automazioni cross-Core con Node-RED** | |
-| ⬜ | [S111 — System Automation Graph e compatibility engine](tasks/S111-system-automation-graph.md) | I collegamenti cross-Core sono rappresentati con identità stabile, mai runtime ID. |
+| ✅ | [S111 — System Automation Graph e compatibility engine](tasks/S111-system-automation-graph.md) | I collegamenti cross-Core sono rappresentati con identità stabile, mai runtime ID. |
 | ⬜ | [S112 — Package nodi Node-RED SpaghettiLAB](tasks/S112-node-red-node-package.md) | I nodi Node-RED reali condividono lo stesso SDK Protocol dell'app. |
 | ⬜ | [S113 — Compiler, Admin API deploy e diagnostica runtime](tasks/S113-node-red-compiler-deploy.md) | Il grafo autore diventa un deploy Node-RED revisionato, scoped e osservabile. |
 | | **S120 — Sicurezza, portabilità e recovery** | |

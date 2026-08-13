@@ -122,6 +122,12 @@ packages/
                            S030 catalog-cache invalidation and audit — never
                            marks "installed" without every check passing
                            (S103).
+  system-automation-graph/ Cross-Core link representation — device ID +
+                           stable key endpoints (never a runtime session
+                           id), a type/unit compatibility engine that
+                           requires an explicit transformation instead of
+                           converting implicitly, and fingerprint-based
+                           staleness (S111).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```
