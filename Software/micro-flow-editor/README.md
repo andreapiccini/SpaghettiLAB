@@ -113,6 +113,10 @@ packages/
                            required-vs-available distinction, and a
                            deterministic dependency resolver with an explicit
                            reason for every selection/conflict (S101).
+  ota-preflight/          Local, pre-transfer OTA candidate preflight (trust,
+                           hash, compatibility, budget with explicit deltas)
+                           and deterministic all-supported/composed build
+                           selection among already-signed images (S102).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

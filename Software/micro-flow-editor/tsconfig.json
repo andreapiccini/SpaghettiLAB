@@ -20,6 +20,7 @@
     { "path": "packages/core-status" },
     { "path": "packages/core-admin" },
     { "path": "packages/capability-marketplace" },
+    { "path": "packages/ota-preflight" },
     { "path": "packages/react-flow-adapter" },
     { "path": "packages/app" }
   ]

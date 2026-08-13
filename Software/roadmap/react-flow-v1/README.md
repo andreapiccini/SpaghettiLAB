@@ -51,7 +51,7 @@ finale end-to-end).
 | ✅ | [S094 — Operazioni amministrative autorizzate](tasks/S094-admin-operations.md) | Connectivity, lease, maintenance e reset scope hanno permessi e conferme adeguati. |
 | | **S100 — Capability Pack e OTA** | |
 | ✅ | [S101 — Marketplace catalog e dependency resolver](tasks/S101-marketplace-dependency-resolver.md) | Pack disponibili, installati e richiesti restano distinti; il resolver motiva ogni esito. |
-| ⬜ | [S102 — Preflight e budget risorse](tasks/S102-ota-preflight-resources.md) | Un candidato è verificato per compatibilità e risorse prima di trasferire byte. |
+| ✅ | [S102 — Preflight e budget risorse](tasks/S102-ota-preflight-resources.md) | Un candidato è verificato per compatibilità e risorse prima di trasferire byte. |
 | ⬜ | [S103 — State machine OTA, postflight e audit](tasks/S103-ota-state-machine-postflight.md) | L'aggiornamento non lascia mai un Core in stato "installato" falso. |
 | | **S110 — Automazioni cross-Core con Node-RED** | |
 | ⬜ | [S111 — System Automation Graph e compatibility engine](tasks/S111-system-automation-graph.md) | I collegamenti cross-Core sono rappresentati con identità stabile, mai runtime ID. |
