@@ -11,7 +11,9 @@
   },
   "references": [
     { "path": "../domain" },
+    { "path": "../catalog-model" },
     { "path": "../core-session" },
+    { "path": "../editor-model" },
     { "path": "../protocol-sdk" },
     { "path": "../project-store" },
     { "path": "../react-flow-adapter" }

@@ -1,7 +1,6 @@
-import type { CoreBindingRecord } from "@spaghettilab/domain";
 import { Network, Plus } from "lucide-react";
 import { useState } from "react";
-import { getConnectionProfile } from "../../lib/connection-profile-store.js";
+import { reconnectCoreBinding } from "../../lib/reconnect-binding.js";
 import { useSession } from "../../state/session-context.js";
 import { useCoreSessions } from "../../state/core-sessions-context.js";
 import { ConnectCoreDialog } from "./ConnectCoreDialog.js";
@@ -12,13 +11,6 @@ export function CoreConnectionsScreen() {
   const { session } = useSession();
   const { rows, connect } = useCoreSessions();
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  async function reconnect(binding: CoreBindingRecord) {
-    const profile = await getConnectionProfile(binding.connectionProfileId);
-    if (!profile) return;
-    const wsUrl = `${profile.transport === "websocket" ? "ws" : profile.transport}://${profile.host}:${profile.port}`;
-    connect(binding, wsUrl);
-  }
 
   const total = session?.stack.current.coreBindings.length ?? 0;
   const outOfSync = rows.filter((r) => r.sessionState === "READY" && r.syncRelationship && r.syncRelationship !== "IN_SYNC").length;
@@ -51,7 +43,7 @@ export function CoreConnectionsScreen() {
         <div className="flex-1 overflow-auto p-6">
           <div className="flex flex-col gap-3">
             {rows.map((row) => (
-              <CoreRow key={row.binding.bindingId} row={row} onConnect={() => void reconnect(row.binding)} />
+              <CoreRow key={row.binding.bindingId} row={row} onConnect={() => void reconnectCoreBinding(row.binding, connect)} />
             ))}
           </div>
         </div>

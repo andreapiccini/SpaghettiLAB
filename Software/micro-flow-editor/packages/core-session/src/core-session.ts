@@ -1,5 +1,6 @@
 import { canonicalProjectHash, type CoreBindingRecord, type DeploymentRecordV1, type ProjectV1 } from "@spaghettilab/domain";
 import type {
+  DeviceProfileSummary,
   EventStream,
   GetCapabilitiesResponse,
   GetCatalogResponse,
@@ -188,6 +189,16 @@ export class CoreSession {
       this._stale = true;
     }
     this._state = "DISCONNECTED";
+  }
+
+  /**
+   * Reads the full installed Device Profile list — not part of `connect()`'s own
+   * sync sequence (S030 point 3 doesn't include it) because it is a separate,
+   * potentially large paginated read that not every caller needs; screens that do
+   * (Catalog & Topology Explorer, Device Profile Studio) call it explicitly.
+   */
+  async listDeviceProfiles(): Promise<readonly DeviceProfileSummary[]> {
+    return this.client.getFullDeviceProfileList();
   }
 
   /** Explicit action: adopt the device's live Config as-is. Never called automatically. */

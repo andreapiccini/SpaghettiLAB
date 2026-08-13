@@ -17,6 +17,7 @@ import {
   encodeGetResourcesResponse,
   encodeGetStatusResponse,
   encodeGetTopologyResponse,
+  encodeListDeviceProfilesResponse,
   encodeResponse,
   EventStream,
   FakeTransport,
@@ -24,6 +25,7 @@ import {
   ProtocolStatus,
   SpaghettiClient,
   fakeStatusEvent,
+  type DeviceProfileSummary,
   type GetCapabilitiesResponse,
   type GetCatalogResponse,
   type GetConfigResponse,
@@ -305,5 +307,25 @@ describe("CoreSession — sync classification integration", () => {
     const relationship = session.syncWithProject(project, true);
     expect(relationship).toBe("PROJECT_DIRTY");
     expect(session.syncRelationship).toBe("PROJECT_DIRTY");
+  });
+});
+
+describe("CoreSession — listDeviceProfiles()", () => {
+  it("reads the full paginated Device Profile list on demand, not as part of connect()", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+    expect(transport.sent.some((b) => decodeRequest(b).operation === Operation.LIST_DEVICE_PROFILES)).toBe(false);
+
+    const profiles: DeviceProfileSummary[] = [{ profileId: "greenhouse-sensor", version: 1, hash: new Uint8Array(4).fill(7) }];
+    const profileResponder = new FakeCoreResponder(transport, {
+      [Operation.LIST_DEVICE_PROFILES]: () => encodeListDeviceProfilesResponse({ profiles, nextCursor: 0 }),
+    });
+
+    let result: readonly DeviceProfileSummary[] | undefined;
+    await runToCompletion(async () => {
+      result = await session.listDeviceProfiles();
+    }, profileResponder);
+
+    expect(result).toEqual(profiles);
   });
 });

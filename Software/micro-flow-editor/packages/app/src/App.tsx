@@ -2,11 +2,11 @@ import { AppShell } from "./components/shell/AppShell.js";
 import { ScreenStub } from "./components/shell/ScreenStub.js";
 import { ProjectPicker } from "./components/project-picker/ProjectPicker.js";
 import { CoreConnectionsScreen } from "./components/core-connections/CoreConnectionsScreen.js";
+import { CatalogTopologyScreen } from "./components/catalog-topology/CatalogTopologyScreen.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
-  "catalog-topology": { title: "Catalog & Topology Explorer", task: "UI-S040" },
   "physical-composition": { title: "Physical Composition Editor", task: "UI-S050" },
   "device-profile-studio": { title: "Device Profile Studio", task: "UI-S060" },
   "processing-graph": { title: "Processing Graph Editor", task: "UI-S070" },
@@ -26,6 +26,14 @@ function AppContent() {
     return (
       <AppShell>
         <CoreConnectionsScreen />
+      </AppShell>
+    );
+  }
+
+  if (activeScreen === "catalog-topology") {
+    return (
+      <AppShell>
+        <CatalogTopologyScreen />
       </AppShell>
     );
   }
