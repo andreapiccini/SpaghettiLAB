@@ -73,6 +73,10 @@ packages/
                            install-feasibility resolver (READY/PROFILE_INSTALL_
                            REQUIRED/FIRMWARE_UPDATE_REQUIRED/HARDWARE_INCOMPATIBLE/
                            RESOURCE_INCOMPATIBLE/VERSION_CONFLICT) (S062).
+  device-profile-install/ Real Device Profile wire CBOR encoder/decoder, remote
+                           install/remove workflow with post-install hash
+                           verification, catalog source merge, Module
+                           instantiation (S063).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

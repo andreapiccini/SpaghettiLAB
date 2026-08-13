@@ -27,7 +27,7 @@ export {
   type UartWriteInstruction,
   type WaitFieldMaskInstruction,
 } from "./instruction.js";
-export { toRawOp, type RawDeviceProfileOp } from "./raw-op.js";
+export { fromRawOp, toRawOp, type RawDeviceProfileOp } from "./raw-op.js";
 export { FIELD_NAME_MAX_LENGTH, UNIT_NAME_MAX_LENGTH, type SampleField, type SampleFieldType } from "./sample-field.js";
 export { PROFILE_ID_MAX_LENGTH, SCHEMA_ID_MAX_LENGTH, type DeviceProfileDraft } from "./profile.js";
 export { DeviceProfileErrorCode } from "./errors.js";

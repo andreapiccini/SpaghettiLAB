@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { Instruction } from "../instruction.js";
 import { DeviceProfileOpcode } from "../opcodes.js";
-import { toRawOp } from "../raw-op.js";
+import { fromRawOp, toRawOp } from "../raw-op.js";
 
 describe("toRawOp — fixed per-opcode compile, S061 point 3", () => {
   it("compiles I2C_READ using imm0 for length and imm1 for timeoutMs, per device_profile_exec.c's exec_i2c_read", () => {
@@ -100,5 +101,50 @@ describe("toRawOp — fixed per-opcode compile, S061 point 3", () => {
       imm2: 0,
       imm3: 0,
     });
+  });
+});
+
+describe("fromRawOp — the inverse of toRawOp, used by device-profile-install's CBOR decoder", () => {
+  const samples: Instruction[] = [
+    { op: "I2C_WRITE", src: 0, length: 2, timeoutMs: 10 },
+    { op: "I2C_READ", dst: 1, length: 4, timeoutMs: 10 },
+    { op: "I2C_WRITE_READ", src: 0, dst: 1, readLength: 4, writeLength: 1, timeoutMs: 20 },
+    { op: "SPI_TRANSCEIVE", src: 0, dst: 1, length: 3, timeoutMs: 5, frequencyHz: 1_000_000 },
+    { op: "UART_WRITE", src: 0, length: 2, timeoutMs: 10 },
+    { op: "UART_READ_UNTIL", dst: 1, maxLength: 16, timeoutMs: 100, stopByte: 0x0a },
+    { op: "GPIO_GET", dst: 0 },
+    { op: "GPIO_SET", value: true },
+    { op: "ADC_READ", dst: 0, timeoutMs: 5 },
+    { op: "DELAY_BOUNDED", milliseconds: 15 },
+    { op: "WAIT_FIELD_MASK", dst: 0, src: 1, mask: 0xff, expected: 0x01, attempts: 3, intervalMs: 10 },
+    { op: "LOAD_CONST", dst: 0, length: 4, low: 100, high: 0 },
+    { op: "COPY_BYTES", src: 0, dst: 1, length: 2 },
+    { op: "CONCAT", srcA: 0, srcB: 1, dst: 2 },
+    { op: "BYTE_SWAP", src: 0, dst: 1, width: 2 },
+    { op: "MASK", src: 0, dst: 1, mask: 0xff },
+    { op: "SHIFT", src: 0, dst: 1, amount: 4, direction: "left" },
+    { op: "SHIFT", src: 0, dst: 1, amount: 4, direction: "right" },
+    { op: "SIGN_EXTEND", src: 0, dst: 1, bits: 16 },
+    { op: "CRC8", src: 0, dst: 1 },
+    { op: "CRC16", src: 0, dst: 1 },
+    { op: "EMIT_FIELD", src: 0, fieldId: 7 },
+    { op: "EMIT_RECORD" },
+  ];
+
+  it.each(samples)("round-trips %j through toRawOp -> fromRawOp", (instruction) => {
+    const result = fromRawOp(toRawOp(instruction));
+    expect(result).toEqual({ ok: true, value: instruction });
+  });
+
+  it("rejects an opcode outside the known vocabulary rather than guessing", () => {
+    const result = fromRawOp({ opcode: 999, dst: 0, srcA: 0, srcB: 0, imm0: 0, imm1: 0, imm2: 0, imm3: 0 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("device-profile.unknown_opcode");
+  });
+
+  it("rejects a BYTE_SWAP width that isn't 2 or 4", () => {
+    const result = fromRawOp({ opcode: DeviceProfileOpcode.BYTE_SWAP, dst: 1, srcA: 0, srcB: 0, imm0: 3, imm1: 0, imm2: 0, imm3: 0 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("device-profile.invalid_raw_operand");
   });
 });

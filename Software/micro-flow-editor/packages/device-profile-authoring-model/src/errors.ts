@@ -13,4 +13,7 @@ export const DeviceProfileErrorCode = {
   TRANSACTION_BUDGET_EXCEEDED: "device-profile.transaction_budget_exceeded",
   BYTE_BUDGET_EXCEEDED: "device-profile.byte_budget_exceeded",
   OPERATION_COUNT_EXCEEDED: "device-profile.operation_count_exceeded",
+  // fromRawOp (S063)
+  UNKNOWN_OPCODE: "device-profile.unknown_opcode",
+  INVALID_RAW_OPERAND: "device-profile.invalid_raw_operand",
 } as const;
