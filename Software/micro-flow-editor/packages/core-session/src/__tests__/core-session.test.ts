@@ -73,6 +73,10 @@ const RESOURCES: GetResourcesResponse = {
   records: { capacity: 10, used: 0, peak: 0 },
   workspace: { capacity: 10, used: 0, peak: 0 },
   allocationFailures: 0,
+  flashSlotBytes: 1048576,
+  flashImageBudgetBytes: 786432,
+  flashHeadroomBytes: 262144,
+  staticRamBudgetBytes: 65536,
 };
 
 function fakeCatalog(fingerprintByte: number): GetCatalogResponse {

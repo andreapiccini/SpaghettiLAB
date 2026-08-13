@@ -37,6 +37,10 @@ const emptyResources: GetResourcesResponse = {
   records: { capacity: 8, used: 0, peak: 0 },
   workspace: { capacity: 8, used: 0, peak: 0 },
   allocationFailures: 0,
+  flashSlotBytes: 1048576,
+  flashImageBudgetBytes: 786432,
+  flashHeadroomBytes: 262144,
+  staticRamBudgetBytes: 65536,
 };
 
 const baseContext: CoreInstallContext = { installedProfiles: [], availableCapabilities: PortCapability.I2C, resources: emptyResources };

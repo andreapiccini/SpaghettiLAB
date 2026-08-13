@@ -13,6 +13,10 @@ function resourcesFixture(overrides: Partial<GetResourcesResponse> = {}): GetRes
     records: pool,
     workspace: pool,
     allocationFailures: 0,
+    flashSlotBytes: 1048576,
+    flashImageBudgetBytes: 786432,
+    flashHeadroomBytes: 262144,
+    staticRamBudgetBytes: 65536,
     ...overrides,
   };
 }
@@ -36,10 +40,14 @@ describe("describeResourceMonitor — S093 § Verifiche", () => {
     expect(Object.keys(view.pools)).toEqual(["modules", "rules", "blocks", "profiles", "records", "workspace"]);
   });
 
-  it("marks flash/static RAM as explicitly unavailable, never fabricated or silently dropped", () => {
+  it("surfaces flash/static RAM as distinct real numbers, never summed with the pools", () => {
     const view = describeResourceMonitor(resourcesFixture(), capabilities);
-    expect(view.flashAndStaticRam.available).toBe(false);
-    expect(view.flashAndStaticRam.reason).toContain("GET_RESOURCES");
+    expect(view.flashAndStaticRam).toEqual({
+      flashSlotBytes: 1048576,
+      flashImageBudgetBytes: 786432,
+      flashHeadroomBytes: 262144,
+      staticRamBudgetBytes: 65536,
+    });
   });
 
   it("a past allocation failure stays visible (hasEverFailed true) even with allocationFailures representing a sticky count", () => {

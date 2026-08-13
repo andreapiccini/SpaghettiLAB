@@ -83,16 +83,16 @@ only ever increases across observations (S093 § Verifiche), matching that `peak
 only raised by firmware, never lowered except by an explicit
 `spaghetti_resources_reset_high_water()` this package does not call.
 
-## Flash headroom and static RAM — a firmware gap, not a client omission
+## Flash headroom and static RAM (`resource-monitor.ts`)
 
-`struct spaghetti_resources_snapshot` (`resources.h:45-70`) has real
 `flash_slot_bytes`/`flash_image_budget_bytes`/`flash_headroom_bytes`/
-`static_ram_budget_bytes` fields, but `execute_get_resources`
-(`resources_ops.c:36-72`) never serializes them onto the `GET_RESOURCES` wire — checked
-directly against the C source while implementing this package. Until that's fixed,
-`ResourceMonitorView.flashAndStaticRam` is `{ available: false, reason: "..." }`,
-never a fabricated number and never silently dropped. Tracked as Firmware roadmap
-[phase 392](../../../../Firmware/core/roadmap/392-resources-flash-ram-wire-exposure/README.md).
+`static_ram_budget_bytes` are real `GET_RESOURCES` wire fields (keys 8-11) as of
+Firmware roadmap [phase 392](../../../../Firmware/core/roadmap/392-resources-flash-ram-wire-exposure/README.md)
+— previously a documented firmware gap (S093's original implementation note), now
+closed. `ResourceMonitorView.flashAndStaticRam` exposes all four as distinct numbers,
+same "never summed" rule as the six pools above — flash headroom and static RAM budget
+answer different questions and must stay legible as such, never folded into the pool
+totals or into each other.
 
 ## Reset authorization (`reset-authorization.ts`)
 
@@ -114,8 +114,6 @@ a wire value that doesn't exist.
   vendored Zephyr source tree in this checkout to confirm `hwinfo` reset-cause bit
   values, and no confirmed service-bit table for `GET_CONNECTIVITY_STATUS` distinct from
   the MQTT=1/BLE=2 record-delivery consumer IDs used elsewhere.
-- **Flash headroom and static RAM are unavailable today** — firmware gap, tracked as
-  roadmap phase 392 above.
 - **Schedule/Rule/Block have no real runtime status** — only a Module-state proxy
   (Schedule) or deployed-presence (Rule/Block), documented in `processing-status.ts`.
 - **Watchdog state is inferred from `healthState`**, not a direct wire field.

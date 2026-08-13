@@ -126,6 +126,10 @@ describe("GET_RESOURCES", () => {
       records: pool,
       workspace: pool,
       allocationFailures: 0,
+      flashSlotBytes: 1048576,
+      flashImageBudgetBytes: 786432,
+      flashHeadroomBytes: 262144,
+      staticRamBudgetBytes: 65536,
     };
     expect(ops.decodeGetResourcesResponse(ops.encodeGetResourcesResponse(response))).toEqual(response);
   });

@@ -32,24 +32,25 @@ export type ResourceMonitorView = {
   };
   /**
    * `flash_slot_bytes`/`flash_image_budget_bytes`/`flash_headroom_bytes`/
-   * `static_ram_budget_bytes` exist in `struct spaghetti_resources_snapshot`
-   * (`resources.h:45-70`) but `execute_get_resources`
-   * (`resources_ops.c:36-72`) never serializes them onto the `GET_RESOURCES`
-   * wire — confirmed against firmware source while implementing this
-   * package. Tracked as Firmware roadmap phase 392
-   * (`Firmware/core/roadmap/392-resources-flash-ram-wire-exposure/README.md`).
-   * Until that phase closes, this field stays `undefined` with a reason,
-   * never a fabricated number and never silently omitted.
+   * `static_ram_budget_bytes` — real wire fields as of Firmware roadmap
+   * phase 392 (`resources_ops.c`'s `execute_get_resources` now serializes
+   * `struct spaghetti_resources_snapshot`'s flash/RAM fields onto keys 8-11
+   * of `GET_RESOURCES`'s response map). Kept as four distinct numbers here
+   * too, matching the same "never summed into one number" rule as the
+   * `pools` above — flash headroom and static RAM budget answer different
+   * questions and must stay legible as such.
    */
-  readonly flashAndStaticRam: { readonly available: false; readonly reason: string };
+  readonly flashAndStaticRam: {
+    readonly flashSlotBytes: number;
+    readonly flashImageBudgetBytes: number;
+    readonly flashHeadroomBytes: number;
+    readonly staticRamBudgetBytes: number;
+  };
   readonly configLimits: {
     readonly maxModules: number;
     readonly maxPrincipals: number;
   };
 };
-
-const FLASH_RAM_UNAVAILABLE_REASON =
-  "GET_RESOURCES does not carry flash_slot_bytes/flash_image_budget_bytes/flash_headroom_bytes/static_ram_budget_bytes on the wire yet — see Firmware roadmap phase 392.";
 
 export function describeResourceMonitor(resources: GetResourcesResponse, capabilities: GetCapabilitiesResponse): ResourceMonitorView {
   return {
@@ -67,7 +68,12 @@ export function describeResourceMonitor(resources: GetResourcesResponse, capabil
       hasEverFailed: resources.allocationFailures > 0,
       note: "Monotonic since boot — only a reboot clears this counter, not the condition that caused it recovering.",
     },
-    flashAndStaticRam: { available: false, reason: FLASH_RAM_UNAVAILABLE_REASON },
+    flashAndStaticRam: {
+      flashSlotBytes: resources.flashSlotBytes,
+      flashImageBudgetBytes: resources.flashImageBudgetBytes,
+      flashHeadroomBytes: resources.flashHeadroomBytes,
+      staticRamBudgetBytes: resources.staticRamBudgetBytes,
+    },
     configLimits: {
       maxModules: capabilities.maxModules,
       maxPrincipals: capabilities.maxPrincipals,

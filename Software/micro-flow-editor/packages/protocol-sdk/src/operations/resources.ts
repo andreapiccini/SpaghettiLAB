@@ -23,7 +23,15 @@ function decodePool(map: FieldMap, key: number, context: string): ResourcePool {
   };
 }
 
-/** `GET_RESOURCES` (op 21) response — `resources_ops.c`. */
+/**
+ * `GET_RESOURCES` (op 21) response — `resources_ops.c`. Keys 8-11
+ * (`flash_slot_bytes`/`flash_image_budget_bytes`/`flash_headroom_bytes`/
+ * `static_ram_budget_bytes`) were added by Firmware roadmap phase 392,
+ * closing the gap `@spaghettilab/core-status` (S093) previously documented
+ * as "not exposed by firmware" — the 12-key map is unconditional on the
+ * firmware side (`resources_ops.c`'s `zcbor_map_start_encode(state, 12U)`),
+ * so these are required fields, not optional ones.
+ */
 export type GetResourcesResponse = {
   readonly featureSetHash: Uint8Array;
   readonly modules: ResourcePool;
@@ -33,6 +41,10 @@ export type GetResourcesResponse = {
   readonly records: ResourcePool;
   readonly workspace: ResourcePool;
   readonly allocationFailures: number;
+  readonly flashSlotBytes: number;
+  readonly flashImageBudgetBytes: number;
+  readonly flashHeadroomBytes: number;
+  readonly staticRamBudgetBytes: number;
 };
 
 export function encodeGetResourcesResponse(r: GetResourcesResponse): Uint8Array {
@@ -45,6 +57,10 @@ export function encodeGetResourcesResponse(r: GetResourcesResponse): Uint8Array 
     [5, encodePool(r.records)],
     [6, encodePool(r.workspace)],
     u32Field(7, r.allocationFailures),
+    u32Field(8, r.flashSlotBytes),
+    u32Field(9, r.flashImageBudgetBytes),
+    u32Field(10, r.flashHeadroomBytes),
+    u32Field(11, r.staticRamBudgetBytes),
   ]);
 }
 
@@ -59,5 +75,9 @@ export function decodeGetResourcesResponse(bytes: Uint8Array): GetResourcesRespo
     records: decodePool(map, 5, "GetResourcesResponse.records"),
     workspace: decodePool(map, 6, "GetResourcesResponse.workspace"),
     allocationFailures: requireU32(map, 7, "GetResourcesResponse"),
+    flashSlotBytes: requireU32(map, 8, "GetResourcesResponse"),
+    flashImageBudgetBytes: requireU32(map, 9, "GetResourcesResponse"),
+    flashHeadroomBytes: requireU32(map, 10, "GetResourcesResponse"),
+    staticRamBudgetBytes: requireU32(map, 11, "GetResourcesResponse"),
   };
 }
