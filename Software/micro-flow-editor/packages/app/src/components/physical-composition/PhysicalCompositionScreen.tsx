@@ -5,7 +5,7 @@ import type { AcceptDiscoveryRequest, DiscoveryCandidate } from "@spaghettilab/p
 import { addGraphNodeCommand, nodeChangesToCommands, physicalGraphLens, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
 import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Node, type NodeChange } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { CircleAlert, Cpu, Plug, Radar, Rows3, Thermometer, Zap } from "lucide-react";
+import { CircleAlert, Cpu, Library, Plug, Radar, Rows3, Thermometer, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useCoreSessions } from "../../state/core-sessions-context.js";
 import { useSession } from "../../state/session-context.js";
@@ -14,6 +14,7 @@ import { DiscoveryTray } from "./DiscoveryTray.js";
 import { NodeInspector, type InspectorMode } from "./NodeInspector.js";
 import { NODE_KIND_CONFIG } from "./node-kinds.js";
 import { PHYSICAL_NODE_TYPES } from "./PhysicalNode.js";
+import { BlockLibraryPanel } from "./BlockLibraryPanel.js";
 import { toPhysicalNodes, type PhysicalNodeData } from "./to-nodes.js";
 
 const EMPTY_GRAPH: GraphState<"physical-composition"> = { layer: "physical-composition", nodes: [], edges: [] };
@@ -55,6 +56,7 @@ function PhysicalCompositionScreenInner() {
 
   const [inspector, setInspector] = useState<InspectorMode | null>(null);
   const [discoveryOpen, setDiscoveryOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [candidates, setCandidates] = useState<readonly DiscoveryCandidate[]>([]);
   const [acknowledged, setAcknowledged] = useState<ReadonlySet<string>>(new Set());
   const [profileIndex, setProfileIndex] = useState<ProfileIndex | null>(null);
@@ -234,6 +236,10 @@ function PhysicalCompositionScreenInner() {
                 </button>
               );
             })}
+            <div className="mx-auto h-px w-6 bg-border" />
+            <button type="button" title="Libreria blocchi" onClick={() => setLibraryOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
+              <Library size={18} />
+            </button>
           </div>
 
           <div className="relative flex-1">
@@ -274,6 +280,15 @@ function PhysicalCompositionScreenInner() {
           )}
 
           <DiscoveryTray open={discoveryOpen} candidates={visibleCandidates} topology={topologyIndex} existingNodes={domainNodes} onAccept={(c, choice) => void handleAcceptDiscovery(c, choice)} onReject={(id) => setCandidates((prev) => prev.filter((c) => c.id !== id))} onClose={() => setDiscoveryOpen(false)} />
+
+          <BlockLibraryPanel
+            open={libraryOpen}
+            onPick={(preset) => {
+              setLibraryOpen(false);
+              setInspector({ kind: "create", nodeKind: "external-device", prefillComment: preset.name, prefillData: { kind: "external-device", description: preset.description } });
+            }}
+            onClose={() => setLibraryOpen(false)}
+          />
         </div>
       )}
     </div>

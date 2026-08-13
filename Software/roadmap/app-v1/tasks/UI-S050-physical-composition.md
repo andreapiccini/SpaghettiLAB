@@ -36,6 +36,14 @@ backend fosse costruito).
 - `PhysicalCompositionScreen.tsx` — header (selettore Core, badge candidati/
   collisioni, "Invia a Deploy" → naviga a `deploy-diff`), toolbar "+ tipo", canvas,
   status bar con content hash (vedi gap "hash compilato").
+- `block-presets.ts`/`BlockLibraryPanel.tsx` — libreria di riferimento con punti
+  di partenza generici per "+ Dispositivo esterno" (categorie comuni: I/O
+  digitale, relè, ingressi isolati, seriale, alimentazione, analogico, sensori,
+  connettori, connettività) — contenuto interamente autorale del progetto (nome,
+  categoria, descrizione), nessuna specifica elettrica, nessun riferimento a
+  produttori/marchi/part number esterni: ogni voce scelta apre l'Inspector già
+  precompilato ma resta un `external-device` da rifinire a mano con un
+  componente reale, mai presentata come dato verificato dal Core.
 - `core-session`: aggiunti `CoreSession.listDiscoveryCandidates()` e
   `.acceptDiscovery()` (stesso pattern di `listDeviceProfiles()` da UI-S040).
 - `core-sessions-context.tsx`: esposti `listDiscoveryCandidates`/`acceptDiscovery`.

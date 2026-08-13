@@ -6,7 +6,9 @@ import { useMemo, useState } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import { NODE_KIND_CONFIG } from "./node-kinds.js";
 
-export type InspectorMode = { readonly kind: "create"; readonly nodeKind: PhysicalCompositionNodeData["kind"] } | { readonly kind: "edit"; readonly nodeId: string; readonly data: PhysicalCompositionNodeData; readonly comment: string };
+export type InspectorMode =
+  | { readonly kind: "create"; readonly nodeKind: PhysicalCompositionNodeData["kind"]; readonly prefillComment?: string; readonly prefillData?: Partial<PhysicalCompositionNodeData> }
+  | { readonly kind: "edit"; readonly nodeId: string; readonly data: PhysicalCompositionNodeData; readonly comment: string };
 
 const ELECTRICAL_MODES: readonly ElectricalMode[] = ["input-only", "output-only", "input-output"];
 
@@ -52,8 +54,8 @@ export function NodeInspector({
   readonly onAcknowledge: () => void;
   readonly onClose: () => void;
 }) {
-  const [comment, setComment] = useState(mode.kind === "edit" ? mode.comment : "");
-  const [data, setData] = useState<PhysicalCompositionNodeData>(mode.kind === "edit" ? mode.data : defaultDataFor(mode.nodeKind));
+  const [comment, setComment] = useState(mode.kind === "edit" ? mode.comment : (mode.prefillComment ?? ""));
+  const [data, setData] = useState<PhysicalCompositionNodeData>(mode.kind === "edit" ? mode.data : ({ ...defaultDataFor(mode.nodeKind), ...mode.prefillData } as PhysicalCompositionNodeData));
   const nodeId = mode.kind === "edit" ? mode.nodeId : "__draft__";
   const config = NODE_KIND_CONFIG[data.kind];
 
