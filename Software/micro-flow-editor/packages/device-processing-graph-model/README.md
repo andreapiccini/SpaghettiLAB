@@ -11,6 +11,15 @@ where the UX's 5-category taxonomy (Trigger/Read/Processing/Logic/Output) is ric
 what firmware actually has, this package follows firmware (see Honest scope notes
 below).
 
+> **Correction (2026-08-13, made while building S072's Config compiler):** the first
+> revision let an edge target a Rule node. Building the compiler against
+> `struct spaghetti_edge_config` confirmed `target_key` is always a Block key on the
+> wire — a Rule has no input port to receive an edge on at all; it reads its source the
+> same way it declares its action, by field reference in its own `properties`
+> (`on_record` dispatch). `RuleNodeData` gained `sourceReference` (mirroring
+> `commandTarget`'s shape) and the validator now rejects any edge whose target is a
+> Rule (`RULE_AS_EDGE_TARGET`).
+
 ## Node data (`entities.ts`)
 
 - `ScheduleNodeData` / `EventSourceNodeData` mirror `struct

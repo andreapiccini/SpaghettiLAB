@@ -47,16 +47,22 @@ a value that could accidentally serialize as a float.
   `EventSourceNodeData` compiles to **nothing** — `spaghetti_runtime_schedule_config`
   is specifically periodic; async-publish Modules have no Schedule-shaped wire
   representation at all, so this compiler doesn't invent one.
-- **Rule command target**: `RuleNodeData.commandTarget` (`{moduleNodeId, commandId}`)
-  is embedded as two property fields on the compiled Rule itself, matching how firmware
-  embeds `spaghetti_rule_action` in the rule's own behavior rather than a separate
-  struct — which two field IDs depends on the Rule type's schema, so
-  `resolveRuleActionFieldIds` is caller-supplied, same "caller-supplied, not invented"
-  pattern used throughout this codebase for schema data that isn't on the wire yet.
+- **Rule command target / source reference**: `RuleNodeData.commandTarget`
+  (`{moduleNodeId, commandId}`) and `.sourceReference` (`{moduleNodeId, fieldId}`) are
+  each embedded as two property fields on the compiled Rule itself, matching how
+  firmware embeds `spaghetti_rule_action` (and the `on_record` field-match dispatch
+  that feeds a Rule) in the rule's own behavior rather than a separate struct or an
+  edge — which field IDs depends on the Rule type's schema, so
+  `resolveRuleActionFieldIds`/`resolveRuleSourceFieldIds` are caller-supplied, same
+  "caller-supplied, not invented" pattern used throughout this codebase for schema
+  data that isn't on the wire yet.
 - **Edges**: `source_port_or_field`/`target_input` are numeric firmware IDs; this
   compiler tries a caller-supplied resolver first, then falls back to parsing the
   edge's `sourceHandle`/`targetHandle` string as a literal integer (the S071
   `GraphEdge` extension) — an edge with neither fails explicitly rather than guessing.
+  `target_key` on the wire is always a Block key — an edge whose target is a Rule
+  never compiles (`device-processing-graph-model`'s own validator already rejects
+  this shape before it reaches the compiler).
 - This function assumes `input.processingGraph` already passed
   `validateDeviceProcessingGraph` (S071) — it does not re-check cycles, dangling
   references, or duplicates itself; it focuses on compilation and budget checks.

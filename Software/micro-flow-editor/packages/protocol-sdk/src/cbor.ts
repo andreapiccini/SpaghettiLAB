@@ -115,6 +115,11 @@ export function encodeBool(value: boolean): Uint8Array {
   return Uint8Array.of(value ? 0xf5 : 0xf4);
 }
 
+/** CBOR simple value 22 (`0xF6`) — the wire `null`. Used by `config_cbor.c`'s `encode_optional_u8` for an unspecified `bay_id`/`power_rail_id`. */
+export function encodeNull(): Uint8Array {
+  return Uint8Array.of(0xf6);
+}
+
 /** Concatenates an ordered sequence of already-encoded CBOR items into one buffer. */
 export function encodeSequence(...items: readonly Uint8Array[]): Uint8Array {
   return concatBytes(items);
@@ -146,7 +151,8 @@ export type CborValue =
   | { readonly kind: "text"; readonly value: string }
   | { readonly kind: "array"; readonly value: readonly CborValue[] }
   | { readonly kind: "map"; readonly value: ReadonlyMap<number, CborValue> }
-  | { readonly kind: "bool"; readonly value: boolean };
+  | { readonly kind: "bool"; readonly value: boolean }
+  | { readonly kind: "null" };
 
 /** Cursor-based decoder for one CBOR value at a time, tracking consumed bytes. */
 export class CborReader {
@@ -250,6 +256,7 @@ export class CborReader {
       case MAJOR_SIMPLE:
         if (additionalInfo === 20) return { kind: "bool", value: false };
         if (additionalInfo === 21) return { kind: "bool", value: true };
+        if (additionalInfo === 22) return { kind: "null" };
         throw new ProtocolCodecError(`unsupported CBOR simple value ${additionalInfo}`);
       default:
         throw new ProtocolCodecError(`unsupported CBOR major type ${majorType}`);

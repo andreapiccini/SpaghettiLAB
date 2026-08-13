@@ -17,6 +17,7 @@ export {
   encodeMapHeader,
   encodeBreak,
   encodeBool,
+  encodeNull,
   encodeSequence,
   encodeArray,
   type CborValue,

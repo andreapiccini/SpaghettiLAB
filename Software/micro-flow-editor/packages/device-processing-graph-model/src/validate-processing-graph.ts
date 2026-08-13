@@ -128,17 +128,32 @@ export function validateDeviceProcessingGraph(
   }
 
   for (const node of nodes) {
-    if (!isRuleNodeData(node.data) || node.data.commandTarget === undefined) continue;
-    const target = node.data.commandTarget.moduleNodeId;
-    if (!options.knownModuleNodeIds.has(target)) {
-      errors.push(
-        failure(
-          DeviceProcessingGraphErrorCode.DANGLING_MODULE_REFERENCE,
-          ["nodes", node.id, "commandTarget"],
-          target,
-          `Rule "${node.id}"'s command target references Module "${target}", which is not in this Core's physical-composition graph`,
-        ),
-      );
+    if (!isRuleNodeData(node.data)) continue;
+    if (node.data.commandTarget !== undefined) {
+      const target = node.data.commandTarget.moduleNodeId;
+      if (!options.knownModuleNodeIds.has(target)) {
+        errors.push(
+          failure(
+            DeviceProcessingGraphErrorCode.DANGLING_MODULE_REFERENCE,
+            ["nodes", node.id, "commandTarget"],
+            target,
+            `Rule "${node.id}"'s command target references Module "${target}", which is not in this Core's physical-composition graph`,
+          ),
+        );
+      }
+    }
+    if (node.data.sourceReference !== undefined) {
+      const source = node.data.sourceReference.moduleNodeId;
+      if (!options.knownModuleNodeIds.has(source)) {
+        errors.push(
+          failure(
+            DeviceProcessingGraphErrorCode.DANGLING_MODULE_REFERENCE,
+            ["nodes", node.id, "sourceReference"],
+            source,
+            `Rule "${node.id}"'s source reference references Module "${source}", which is not in this Core's physical-composition graph`,
+          ),
+        );
+      }
     }
   }
 
@@ -153,6 +168,18 @@ export function validateDeviceProcessingGraph(
           ["edges", edge.id],
           edge.source,
           `Rule "${edge.source}" has no output ports — it can never be an edge source`,
+        ),
+      );
+      continue;
+    }
+    const targetNodeForRuleCheck = nodesById.get(edge.target);
+    if (targetNodeForRuleCheck && isRuleNodeData(targetNodeForRuleCheck.data)) {
+      errors.push(
+        failure(
+          DeviceProcessingGraphErrorCode.RULE_AS_EDGE_TARGET,
+          ["edges", edge.id],
+          edge.target,
+          `Rule "${edge.target}" has no input port — on the wire, target_key is always a Block key; a Rule reads its source via "sourceReference", not an edge`,
         ),
       );
       continue;

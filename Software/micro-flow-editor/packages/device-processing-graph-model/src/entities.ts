@@ -66,10 +66,19 @@ export type BlockNodeData = {
  * `struct spaghetti_rule_action { target_key, command }` (`rule_driver.h`) —
  * a Rule's command target is embedded on the rule itself, exactly like
  * firmware embeds the action in the rule's own behavior, not as a separate
- * graph node. `spaghetti_rule_driver` declares no ports at all (`rule_driver.h`):
- * a Rule can never be a valid edge source, structurally, regardless of any
- * injected descriptor (S071's "Un nodo Uscita non può mai essere sorgente di
- * un collegamento" applies to every Rule, unconditionally).
+ * graph node. `spaghetti_rule_driver` declares no ports at all
+ * (`rule_driver.h`): a Rule can never be a valid edge **source**,
+ * structurally, regardless of any injected descriptor (S071's "Un nodo
+ * Uscita non può mai essere sorgente di un collegamento" applies to every
+ * Rule, unconditionally) — and, confirmed while building S072's compiler
+ * against `struct spaghetti_edge_config`, a Rule can never be a valid edge
+ * **target** either: `target_key` on the wire is always a Block key. A Rule
+ * consumes its input the same way it declares its action — by field
+ * reference embedded in its own `properties` (`on_record` dispatch matches a
+ * record by field ID, not by a declared input port) — hence
+ * `sourceReference` below, mirroring `commandTarget`'s shape for the other
+ * direction. Earlier revisions of this package and of S072's compiler
+ * allowed edges to target a Rule; that was wrong and has been corrected.
  */
 export type RuleNodeData = {
   readonly kind: "rule";
@@ -78,6 +87,11 @@ export type RuleNodeData = {
   readonly commandTarget?: {
     readonly moduleNodeId: string;
     readonly commandId: number;
+  };
+  /** Which Module's record field this Rule reads — a Rule has no input port/edge, matching the real `on_record` field-match dispatch. Block-sourced Rule inputs are not modeled: no confirmed example of that shape exists yet (see this package's README). */
+  readonly sourceReference?: {
+    readonly moduleNodeId: string;
+    readonly fieldId: number;
   };
 };
 

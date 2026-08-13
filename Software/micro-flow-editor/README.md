@@ -85,6 +85,10 @@ packages/
                            assignment, real wire-V3 CBOR encoding, canonical
                            JSON, reproducible SHA-256 hash, budget checks with
                            node-level ownership attribution (S072).
+  config-decompiler/      Config CBOR decoder, Config -> authoring graph
+                           decompiler (never inventing unrecoverable
+                           metadata), and a full local dry-run with
+                           errors/warnings collected, never fail-fast (S073).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```

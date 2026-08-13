@@ -39,6 +39,8 @@ export type CompileConfigOptions = {
   readonly resolveBlockCost?: (node: ProcessingNode) => number | undefined;
   /** A Rule's `target_key`/`command` action is embedded as two property fields inside its own `properties` (S071's `RuleNodeData.commandTarget`, firmware's `spaghetti_rule_action`) — which two field IDs depends on the Rule type's schema, not on the wire yet. */
   readonly resolveRuleActionFieldIds?: (ruleTypeId: string) => { readonly targetKeyFieldId: number; readonly commandIdFieldId: number } | undefined;
+  /** The other direction of the same gap: a Rule's `sourceReference` (which Module/field it reads — `on_record` dispatch, no input port) is embedded as two more property fields, again schema-dependent. */
+  readonly resolveRuleSourceFieldIds?: (ruleTypeId: string) => { readonly sourceKeyFieldId: number; readonly sourceFieldIdFieldId: number } | undefined;
   /** `SPAGHETTI_PROCESSING_COST_BUDGET` — Kconfig-tunable (256/512/1024 by resource profile), not wire data. */
   readonly maxTotalCost?: number;
   /** `SPAGHETTI_PROCESSING_FANOUT_MAX` — hardcoded to 4 in firmware today, still exposed here as caller-supplied rather than hardcoded, since it's a build-time constant this compiler cannot query live. */
@@ -183,6 +185,21 @@ export function compileConfig(input: CompileConfigInput, options: CompileConfigO
       }
     }
 
+    if (data.sourceReference) {
+      const fieldIds = options.resolveRuleSourceFieldIds?.(data.ruleTypeId);
+      if (!fieldIds) {
+        errors.push(failure(ConfigCompilerErrorCode.UNRESOLVED_RULE_ACTION, ["nodes", node.id], data.ruleTypeId, `no resolveRuleSourceFieldIds mapping supplied for Rule type "${data.ruleTypeId}"`));
+      } else {
+        const sourceKey = moduleKeyOf.get(data.sourceReference.moduleNodeId);
+        if (sourceKey === undefined) {
+          errors.push(failure(ConfigCompilerErrorCode.DANGLING_MODULE_REFERENCE, ["nodes", node.id, "sourceReference"], data.sourceReference.moduleNodeId, `Rule "${node.id}"'s source reference references a Module not present in physicalGraph`));
+        } else {
+          properties[fieldIds.sourceKeyFieldId] = BigInt(sourceKey);
+          properties[fieldIds.sourceFieldIdFieldId] = BigInt(data.sourceReference.fieldId);
+        }
+      }
+    }
+
     return { key: ruleKeyOf.get(node.id)!, typeId: data.ruleTypeId, properties };
   });
 
@@ -225,9 +242,12 @@ export function compileConfig(input: CompileConfigInput, options: CompileConfigO
       errors.push(failure(ConfigCompilerErrorCode.DANGLING_MODULE_REFERENCE, ["edges", edge.id], edge.source, `edge "${edge.id}"'s source could not be resolved to a compiled Module/Block key`));
       continue;
     }
-    const targetKey = targetNode.data.kind === "block" ? blockKeyOf.get(edge.target) : targetNode.data.kind === "rule" ? ruleKeyOf.get(edge.target) : undefined;
+    // struct spaghetti_edge_config's target_key is always a Block key on the wire — a
+    // Rule has no input port to be an edge target for (see device-processing-graph-model's
+    // README correction); RuleNodeData.sourceReference is compiled separately, below.
+    const targetKey = targetNode.data.kind === "block" ? blockKeyOf.get(edge.target) : undefined;
     if (targetKey === undefined) {
-      errors.push(failure(ConfigCompilerErrorCode.DANGLING_MODULE_REFERENCE, ["edges", edge.id], edge.target, `edge "${edge.id}"'s target is not a compiled Block/Rule`));
+      errors.push(failure(ConfigCompilerErrorCode.DANGLING_MODULE_REFERENCE, ["edges", edge.id], edge.target, `edge "${edge.id}"'s target is not a compiled Block`));
       continue;
     }
 

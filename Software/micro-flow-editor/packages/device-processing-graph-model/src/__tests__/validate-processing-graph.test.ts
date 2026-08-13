@@ -110,6 +110,26 @@ describe("validateDeviceProcessingGraph — S071 § Verifiche", () => {
     if (!result.ok) expect(result.error[0]!.code).toBe("device-processing-graph.output_node_as_source");
   });
 
+  it("rejects a Rule used as an edge target — on the wire target_key is always a Block key, a Rule reads via sourceReference", () => {
+    const s = state(
+      [block("b", "clamp"), rule("r1")],
+      [{ layer: "device-processing", id: "e1", source: "b", target: "r1" }],
+    );
+    const result = validateDeviceProcessingGraph(s, { knownModuleNodeIds });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error[0]!.code).toBe("device-processing-graph.rule_as_edge_target");
+  });
+
+  it("rejects a Rule's dangling sourceReference", () => {
+    const s = state(
+      [{ layer: "device-processing", id: "r1", data: { kind: "rule", ruleTypeId: "threshold", properties: {}, sourceReference: { moduleNodeId: "module-unknown", fieldId: 1 } } }],
+      [],
+    );
+    const result = validateDeviceProcessingGraph(s, { knownModuleNodeIds });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error[0]!.code).toBe("device-processing-graph.dangling_module_reference");
+  });
+
   it("rejects a Block with zero declared output ports used as an edge source (e.g. publish_field)", () => {
     const s = state(
       [block("pub", "publish_field"), block("b", "clamp")],

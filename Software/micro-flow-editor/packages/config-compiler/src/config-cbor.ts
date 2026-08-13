@@ -1,4 +1,4 @@
-import { encodeArray, encodeBool, encodeInt, encodeMap, encodeText, encodeUint, type FieldPair } from "@spaghettilab/protocol-sdk";
+import { encodeArray, encodeBool, encodeInt, encodeMap, encodeNull, encodeText, encodeUint, type FieldPair } from "@spaghettilab/protocol-sdk";
 import type {
   CanonicalBlock,
   CanonicalConfig,
@@ -30,7 +30,7 @@ function optionalU8(value: number | undefined): Uint8Array {
   // compiler always has a real bayId/powerRailId from ModuleNodeData
   // (S050), so `undefined` here is a defensive fallback, not the common
   // case — CBOR simple value 22 (`0xF6`) is the wire `null`.
-  return value === undefined ? new Uint8Array([0xf6]) : u32(value);
+  return value === undefined ? encodeNull() : u32(value);
 }
 
 /** `encode_properties` insertion-sorts by `field_id` ascending before emitting — this is the canonicalization step S072's hash-reproducibility guarantee depends on. */
