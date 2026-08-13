@@ -101,6 +101,15 @@ import {
   encodeGetFeaturesRequest,
   decodeGetFeaturesResponse,
   type GetFeaturesResponse,
+  encodeOpenBleUpdateRequest,
+  decodeOpenBleUpdateResponse,
+  type OpenBleUpdateRequest,
+  type OpenBleUpdateResponse,
+  encodeWriteBleUpdateRequest,
+  decodeBleUpdateEmptyResponse,
+  type WriteBleUpdateRequest,
+  encodeBleUpdateSessionRequest,
+  type BleUpdateSessionRequest,
 } from "../operations/index.js";
 
 export type SpaghettiClientOptions = {
@@ -515,6 +524,26 @@ export class SpaghettiClient {
   async openWifiUpdate(req: OpenWifiUpdateRequest = {}, signal?: AbortSignal): Promise<OpenWifiUpdateResponse> {
     const bytes = await this.request(Operation.OPEN_WIFI_UPDATE, encodeOpenWifiUpdateRequest(req), signal);
     return decodeOpenWifiUpdateResponse(bytes);
+  }
+
+  async openBleUpdate(req: OpenBleUpdateRequest, signal?: AbortSignal): Promise<OpenBleUpdateResponse> {
+    const bytes = await this.request(Operation.OPEN_BLE_UPDATE, encodeOpenBleUpdateRequest(req), signal);
+    return decodeOpenBleUpdateResponse(bytes);
+  }
+
+  async writeBleUpdate(req: WriteBleUpdateRequest, signal?: AbortSignal): Promise<void> {
+    const bytes = await this.request(Operation.WRITE_BLE_UPDATE, encodeWriteBleUpdateRequest(req), signal);
+    decodeBleUpdateEmptyResponse(bytes);
+  }
+
+  async finishBleUpdate(req: BleUpdateSessionRequest, signal?: AbortSignal): Promise<void> {
+    const bytes = await this.request(Operation.FINISH_BLE_UPDATE, encodeBleUpdateSessionRequest(req), signal);
+    decodeBleUpdateEmptyResponse(bytes);
+  }
+
+  async cancelBleUpdate(req: BleUpdateSessionRequest, signal?: AbortSignal): Promise<void> {
+    const bytes = await this.request(Operation.CANCEL_BLE_UPDATE, encodeBleUpdateSessionRequest(req), signal);
+    decodeBleUpdateEmptyResponse(bytes);
   }
 
   private async paginate<T>(

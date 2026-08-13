@@ -321,3 +321,23 @@ describe("GET_FEATURES", () => {
     expect(ops.decodeGetFeaturesResponse(ops.encodeGetFeaturesResponse(response))).toEqual(response);
   });
 });
+
+describe("BLE OTA (ops 28-31)", () => {
+  it("round-trips OPEN_BLE_UPDATE — session id, not a job id", () => {
+    const request: ops.OpenBleUpdateRequest = { imageSize: 65536, imageSha256: new Uint8Array(32).fill(7), version: "2.0.0" };
+    expect(ops.decodeOpenBleUpdateRequest(ops.encodeOpenBleUpdateRequest(request))).toEqual(request);
+    const response: ops.OpenBleUpdateResponse = { sessionId: 3 };
+    expect(ops.decodeOpenBleUpdateResponse(ops.encodeOpenBleUpdateResponse(response))).toEqual(response);
+  });
+
+  it("round-trips WRITE_BLE_UPDATE with an explicit byte offset", () => {
+    const request: ops.WriteBleUpdateRequest = { sessionId: 3, offset: 4096, bytes: new Uint8Array([1, 2, 3]) };
+    expect(ops.decodeWriteBleUpdateRequest(ops.encodeWriteBleUpdateRequest(request))).toEqual(request);
+    expect(() => ops.decodeBleUpdateEmptyResponse(ops.encodeBleUpdateEmptyResponse())).not.toThrow();
+  });
+
+  it("round-trips FINISH_BLE_UPDATE and CANCEL_BLE_UPDATE — both just {sessionId}", () => {
+    const request: ops.BleUpdateSessionRequest = { sessionId: 3 };
+    expect(ops.decodeBleUpdateSessionRequest(ops.encodeBleUpdateSessionRequest(request))).toEqual(request);
+  });
+});

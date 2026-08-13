@@ -19,7 +19,7 @@ const KEY_FIELD1 = 1;
 const KEY_FIELD2 = 2;
 const KEY_PAYLOAD = 3;
 
-/** `enum spaghetti_protocol_operation`, `protocol.h` — stable numeric IDs 1..27. */
+/** `enum spaghetti_protocol_operation`, `protocol.h` — stable numeric IDs 1..31 (28-31 added for BLE OTA, Firmware commit 875c115). */
 export enum Operation {
   GET_CATALOG = 1,
   GET_STATUS = 2,
@@ -48,6 +48,10 @@ export enum Operation {
   INSTALL_DEVICE_PROFILE = 25,
   REMOVE_DEVICE_PROFILE = 26,
   GET_FEATURES = 27,
+  OPEN_BLE_UPDATE = 28,
+  WRITE_BLE_UPDATE = 29,
+  FINISH_BLE_UPDATE = 30,
+  CANCEL_BLE_UPDATE = 31,
 }
 
 /** `enum spaghetti_protocol_status`, `protocol.h` — 0..10. */

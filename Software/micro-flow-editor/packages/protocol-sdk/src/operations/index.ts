@@ -13,3 +13,4 @@ export * from "./job.js";
 export * from "./device-profile.js";
 export * from "./update.js";
 export * from "./features.js";
+export * from "./ble-update.js";
