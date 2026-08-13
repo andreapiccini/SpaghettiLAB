@@ -65,6 +65,10 @@ packages/
   physical-composition-model/ Backbone/Power/Bay/Connector/external-device/Module
                            node data, topology-backed validation, Module-discovery
                            preview/diff (S050).
+  device-profile-authoring-model/ Declarative Device Profile authoring model —
+                           typed acquisition-plan instructions, budget validation,
+                           sourced from the firmware's own opcode/struct
+                           definitions (S061).
   app/                    the React Flow canvas prototype (this is what you see
                            at http://127.0.0.1:5173)
 ```
