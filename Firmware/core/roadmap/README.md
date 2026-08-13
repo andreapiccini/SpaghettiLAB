@@ -141,6 +141,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [380 — Tool sviluppatore V1](380-developer-tools-v1/README.md) | Un CLI JSON nasconde CBOR, trasporti e aggiornamenti. |
 | ✅ | [385 — Manuale developer](385-developer-handbook/README.md) | Guide e template V1 coprono Module, Core, rule, provider e transport. |
 | ✅ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti, SDK, watchdog, fuzz ed estensioni fake superano il gate Node-RED. |
+| ⬜ | [391 — Validazione remota reale dei Device Profile](391-device-profile-remote-validation/README.md) | `VALIDATE_DEVICE_PROFILE` esegue il validatore reale invece di rispondere sempre `valid: 1`. |
 
 ## Da dove iniziare
 
