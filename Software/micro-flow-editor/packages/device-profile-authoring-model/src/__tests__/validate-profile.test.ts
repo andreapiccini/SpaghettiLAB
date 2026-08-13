@@ -25,10 +25,10 @@ function baseDraft(overrides: Partial<DeviceProfileDraft> = {}): DeviceProfileDr
 describe("validateDeviceProfile — S061 § Verifiche", () => {
   it("accepts two sensors with different register maps under the same generic driver (nothing here hardcodes a driver)", () => {
     const sensorA = baseDraft({
-      initOps: [{ op: "I2C_WRITE", src: 0 }],
+      initOps: [{ op: "I2C_WRITE", src: 0, length: 1, timeoutMs: 20 }],
       sampleOps: [
-        { op: "LOAD_CONST", dst: 0, low: 0x02, high: 0 },
-        { op: "I2C_WRITE_READ", src: 0, dst: 1, readLength: 2 },
+        { op: "LOAD_CONST", dst: 0, length: 1, low: 0x02, high: 0 },
+        { op: "I2C_WRITE_READ", src: 0, dst: 1, readLength: 2, writeLength: 1, timeoutMs: 20 },
         { op: "BYTE_SWAP", src: 1, dst: 1, width: 2 },
         { op: "SIGN_EXTEND", src: 1, dst: 2, bits: 16 },
         { op: "EMIT_FIELD", src: 2, fieldId: 1 },
@@ -39,10 +39,10 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
     });
     const sensorB = baseDraft({
       profileId: "sensor.other",
-      initOps: [{ op: "I2C_WRITE", src: 0 }],
+      initOps: [{ op: "I2C_WRITE", src: 0, length: 1, timeoutMs: 20 }],
       sampleOps: [
-        { op: "LOAD_CONST", dst: 0, low: 0x09, high: 0 },
-        { op: "I2C_WRITE_READ", src: 0, dst: 1, readLength: 4 },
+        { op: "LOAD_CONST", dst: 0, length: 1, low: 0x09, high: 0 },
+        { op: "I2C_WRITE_READ", src: 0, dst: 1, readLength: 4, writeLength: 1, timeoutMs: 20 },
         { op: "EMIT_FIELD", src: 1, fieldId: 5 },
         { op: "EMIT_RECORD" },
       ],
@@ -59,10 +59,10 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
       maxTransactions: 10,
       maxBytes: 16,
       maxTotalTimeMs: 100,
-      initOps: [{ op: "I2C_WRITE", src: 0 }],
+      initOps: [{ op: "I2C_WRITE", src: 0, length: 1, timeoutMs: 5 }],
       sampleOps: [
-        { op: "WAIT_FIELD_MASK", src: 0, mask: 0x01, expected: 0x01, attempts: 3, intervalMs: 10 },
-        { op: "I2C_READ", dst: 1, length: 3 },
+        { op: "WAIT_FIELD_MASK", dst: 0, src: 0, mask: 0x01, expected: 0x01, attempts: 3, intervalMs: 10 },
+        { op: "I2C_READ", dst: 1, length: 3, timeoutMs: 5 },
         { op: "CRC8", src: 1, dst: 2 },
         { op: "MASK", src: 1, dst: 3, mask: 0xff },
         { op: "EMIT_FIELD", src: 3, fieldId: 10 },
@@ -80,15 +80,15 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.transactions).toBe(1 /* init I2C_WRITE */ + 3 /* WAIT attempts */ + 1 /* I2C_READ */);
-      expect(result.value.bytes).toBe(3);
-      expect(result.value.totalTimeMs).toBe(30);
+      expect(result.value.bytes).toBe(1 /* I2C_WRITE length */ + 6 /* WAIT attempts*2 */ + 3 /* I2C_READ length */);
+      expect(result.value.totalTimeMs).toBe(5 /* I2C_WRITE timeout */ + 30 /* WAIT attempts*interval */ + 5 /* I2C_READ timeout */);
       expect(result.value.operations).toBe(8);
     }
   });
 
   it("rejects a WAIT_FIELD_MASK with zero attempts as an unbounded wait, with a precise path", () => {
     const draft = baseDraft({
-      sampleOps: [{ op: "WAIT_FIELD_MASK", src: 0, mask: 1, expected: 1, attempts: 0, intervalMs: 10 }],
+      sampleOps: [{ op: "WAIT_FIELD_MASK", dst: 0, src: 0, mask: 1, expected: 1, attempts: 0, intervalMs: 10 }],
     });
     const result = validateDeviceProfile(draft);
     expect(result.ok).toBe(false);
@@ -102,7 +102,7 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
   it("rejects a computed time budget that exceeds the declared maxTotalTimeMs", () => {
     const draft = baseDraft({
       maxTotalTimeMs: 10,
-      sampleOps: [{ op: "WAIT_FIELD_MASK", src: 0, mask: 1, expected: 1, attempts: 3, intervalMs: 10 }],
+      sampleOps: [{ op: "WAIT_FIELD_MASK", dst: 0, src: 0, mask: 1, expected: 1, attempts: 3, intervalMs: 10 }],
     });
     const result = validateDeviceProfile(draft);
     expect(result.ok).toBe(false);
@@ -112,7 +112,7 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
   it("rejects a computed byte budget that exceeds the declared maxBytes (buffer)", () => {
     const draft = baseDraft({
       maxBytes: 1,
-      sampleOps: [{ op: "I2C_READ", dst: 0, length: 100 }],
+      sampleOps: [{ op: "I2C_READ", dst: 0, length: 100, timeoutMs: 5 }],
     });
     const result = validateDeviceProfile(draft);
     expect(result.ok).toBe(false);
@@ -123,8 +123,8 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
     const draft = baseDraft({
       maxTransactions: 1,
       sampleOps: [
-        { op: "I2C_READ", dst: 0, length: 1 },
-        { op: "I2C_READ", dst: 1, length: 1 },
+        { op: "I2C_READ", dst: 0, length: 1, timeoutMs: 5 },
+        { op: "I2C_READ", dst: 1, length: 1, timeoutMs: 5 },
       ],
     });
     const result = validateDeviceProfile(draft);
@@ -169,17 +169,29 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
   });
 
   it("rejects a temp slot out of the firmware's 0-7 range", () => {
-    const draft = baseDraft({ initOps: [{ op: "I2C_WRITE", src: 8 }] });
+    const draft = baseDraft({ initOps: [{ op: "I2C_WRITE", src: 8, length: 1, timeoutMs: 5 }] });
     const result = validateDeviceProfile(draft);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.some((e) => e.code === "device-profile.temp_slot_out_of_range")).toBe(true);
   });
 
+  it("rejects GPIO_SET modeled correctly as an immediate boolean (no temp slot to bounds-check)", () => {
+    const draft = baseDraft({ initOps: [{ op: "GPIO_SET", value: true }] });
+    const result = validateDeviceProfile(draft);
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects LOAD_CONST with a length outside 1-8 bytes", () => {
+    const draft = baseDraft({ initOps: [{ op: "LOAD_CONST", dst: 0, length: 9, low: 0, high: 0 }] });
+    const result = validateDeviceProfile(draft);
+    expect(result.ok).toBe(false);
+  });
+
   it("collects every problem instead of stopping at the first", () => {
     const draft = baseDraft({
       profileId: "",
-      initOps: [{ op: "I2C_WRITE", src: 9 }],
-      sampleOps: [{ op: "WAIT_FIELD_MASK", src: 0, mask: 1, expected: 1, attempts: 0, intervalMs: 1 }],
+      initOps: [{ op: "I2C_WRITE", src: 9, length: 1, timeoutMs: 5 }],
+      sampleOps: [{ op: "WAIT_FIELD_MASK", dst: 0, src: 0, mask: 1, expected: 1, attempts: 0, intervalMs: 1 }],
     });
     const result = validateDeviceProfile(draft);
     expect(result.ok).toBe(false);

@@ -8,7 +8,8 @@ import { FIELD_NAME_MAX_LENGTH, UNIT_NAME_MAX_LENGTH } from "./sample-field.js";
 
 /**
  * Mirrors `struct spaghetti_device_profile_budget` (`device_profile.h`) —
- * the same four counters the firmware's own validator computes.
+ * the same four counters `accumulate_op_budget`
+ * (`Firmware/core/subsys/device_profiles/device_profile.c`) computes.
  */
 export type DeviceProfileBudget = {
   readonly totalTimeMs: number;
@@ -21,11 +22,11 @@ function failure(code: string, path: string[], target: string, remediation: stri
   return domainError({ code, path: ["device-profile", ...path], target, remediation });
 }
 
+/** Every temp slot an instruction reads or writes — for bounds checking only; not every opcode that touches a slot is checked by the firmware's own validator (e.g. `GPIO_SET` reads no slot at all), but any slot reference this package emits must still be in range. */
 function tempSlots(instruction: Instruction): number[] {
   switch (instruction.op) {
     case "I2C_WRITE":
     case "UART_WRITE":
-    case "GPIO_SET":
       return [instruction.src];
     case "I2C_READ":
     case "GPIO_GET":
@@ -43,20 +44,21 @@ function tempSlots(instruction: Instruction): number[] {
     case "CRC16":
       return [instruction.src, instruction.dst];
     case "WAIT_FIELD_MASK":
-      return [instruction.src];
+      return [instruction.dst, instruction.src];
     case "LOAD_CONST":
       return [instruction.dst];
     case "CONCAT":
       return [instruction.srcA, instruction.srcB, instruction.dst];
     case "EMIT_FIELD":
       return [instruction.src];
+    case "GPIO_SET":
     case "DELAY_BOUNDED":
     case "EMIT_RECORD":
       return [];
   }
 }
 
-/** "Count of Port bus operations including wait polls" per `spaghetti_device_profile_budget`'s own doc comment. */
+/** "Count of Port bus operations including wait polls" per `spaghetti_device_profile_budget`'s own doc comment — mirrors `accumulate_op_budget` exactly. */
 function transactionsFor(instruction: Instruction): number {
   switch (instruction.op) {
     case "I2C_WRITE":
@@ -76,27 +78,20 @@ function transactionsFor(instruction: Instruction): number {
   }
 }
 
-/**
- * Only opcodes with an explicit length operand are counted — `I2C_WRITE`/
- * `UART_WRITE`/`GPIO_SET` write whatever is already in a temp slot, and this
- * package does not track per-slot content length (that would require
- * simulating the whole plan, not a fixed per-opcode formula — S061 point 3
- * rules that out). `LOAD_CONST`'s 8 bytes come from its fixed `imm2`/`imm3`
- * width. Documented in this package's README as a deliberate
- * approximation, not silently claimed exact.
- */
+/** Mirrors `accumulate_op_budget`'s `bytes` computation exactly, opcode by opcode — no simulation of temp-slot contents, just the same fixed formula the firmware itself uses. */
 function bytesFor(instruction: Instruction): number {
   switch (instruction.op) {
+    case "I2C_WRITE":
     case "I2C_READ":
+    case "SPI_TRANSCEIVE":
+    case "UART_WRITE":
       return instruction.length;
     case "I2C_WRITE_READ":
-      return instruction.readLength;
-    case "SPI_TRANSCEIVE":
-      return instruction.length;
+      return instruction.readLength + (instruction.writeLength !== 0 ? instruction.writeLength : 1);
     case "UART_READ_UNTIL":
       return instruction.maxLength;
-    case "LOAD_CONST":
-      return 8;
+    case "WAIT_FIELD_MASK":
+      return instruction.attempts * 2;
     default:
       return 0;
   }
@@ -104,6 +99,16 @@ function bytesFor(instruction: Instruction): number {
 
 function timeFor(instruction: Instruction): number {
   switch (instruction.op) {
+    case "I2C_WRITE":
+    case "I2C_READ":
+    case "SPI_TRANSCEIVE":
+    case "UART_WRITE":
+    case "UART_READ_UNTIL":
+      return instruction.timeoutMs;
+    case "I2C_WRITE_READ":
+      return Math.min(instruction.timeoutMs, 0xffff);
+    case "ADC_READ":
+      return instruction.timeoutMs;
     case "DELAY_BOUNDED":
       return instruction.milliseconds;
     case "WAIT_FIELD_MASK":
@@ -113,7 +118,7 @@ function timeFor(instruction: Instruction): number {
   }
 }
 
-/** Computes the same four counters as `spaghetti_device_profile_validate`'s `out_budget`, via a fixed per-opcode formula — never an arbitrary one (S061 point 3). */
+/** Computes the same four counters as `spaghetti_device_profile_validate`'s `out_budget`, via the same fixed per-opcode formula `accumulate_op_budget` uses — never an arbitrary one (S061 point 3). */
 export function computeBudget(draft: DeviceProfileDraft): DeviceProfileBudget {
   const allOps = [...draft.initOps, ...draft.sampleOps, ...draft.safeStopOps];
   let totalTimeMs = 0;
@@ -127,14 +132,39 @@ export function computeBudget(draft: DeviceProfileDraft): DeviceProfileBudget {
   return { totalTimeMs, transactions, bytes, operations: allOps.length };
 }
 
+/** Opcode-specific structural checks `accumulate_op_budget` performs beyond temp-slot bounds (e.g. a required length must be nonzero, `LOAD_CONST`'s length must be 1-8, `BYTE_SWAP`'s width must be 2 or 4 — the last already enforced at the type level by `ByteSwapInstruction.width`). Returns `undefined` when the instruction has nothing extra to check. */
+function structuralError(instruction: Instruction): { target: string; remediation: string } | undefined {
+  switch (instruction.op) {
+    case "I2C_READ":
+    case "SPI_TRANSCEIVE":
+    case "UART_READ_UNTIL":
+      return instruction.op === "UART_READ_UNTIL"
+        ? instruction.maxLength === 0
+          ? { target: "maxLength", remediation: "maxLength must be greater than zero" }
+          : undefined
+        : instruction.length === 0
+          ? { target: "length", remediation: "length must be greater than zero" }
+          : undefined;
+    case "I2C_WRITE_READ":
+      return instruction.readLength === 0 ? { target: "readLength", remediation: "readLength must be greater than zero" } : undefined;
+    case "LOAD_CONST":
+      return instruction.length < 1 || instruction.length > 8
+        ? { target: "length", remediation: "LOAD_CONST length must be 1-8 bytes" }
+        : undefined;
+    default:
+      return undefined;
+  }
+}
+
 /**
  * Validates a `DeviceProfileDraft` the way the firmware's own
  * `spaghetti_device_profile_validate` would (temp-slot bounds, unbounded
- * `WAIT_FIELD_MASK`, schema/EMIT coherence, declared budget), collecting
- * every problem instead of stopping at the first (matching
- * `@spaghettilab/domain`'s `validateProjectV1` precedent). Returns the
- * computed `DeviceProfileBudget` on success, mirroring the firmware
- * function's own `out_budget` — written only when validation passes.
+ * `WAIT_FIELD_MASK`, per-opcode structural checks, schema/EMIT coherence,
+ * declared budget), collecting every problem instead of stopping at the
+ * first (matching `@spaghettilab/domain`'s `validateProjectV1` precedent).
+ * Returns the computed `DeviceProfileBudget` on success, mirroring the
+ * firmware function's own `out_budget` — written only when validation
+ * passes.
  *
  * `maxOperationCount` is caller-supplied and optional: the firmware's own
  * `CONFIG_SPAGHETTI_MAX_PROFILE_OPERATIONS`/`..._ACQUISITION_OPERATIONS` are
@@ -163,17 +193,20 @@ export function validateDeviceProfile(
   const emittedFieldIds = new Set<number>();
   for (const [planName, ops] of plans) {
     ops.forEach((instruction, index) => {
+      const path = [planName, String(index)];
       for (const slot of tempSlots(instruction)) {
         if (slot < 0 || slot >= MAX_TEMP_SLOTS) {
-          errors.push(
-            failure(DeviceProfileErrorCode.TEMP_SLOT_OUT_OF_RANGE, [planName, String(index)], String(slot), `temp slot must be 0-${MAX_TEMP_SLOTS - 1}`),
-          );
+          errors.push(failure(DeviceProfileErrorCode.TEMP_SLOT_OUT_OF_RANGE, path, String(slot), `temp slot must be 0-${MAX_TEMP_SLOTS - 1}`));
         }
       }
       if (instruction.op === "WAIT_FIELD_MASK" && instruction.attempts <= 0) {
         errors.push(
-          failure(DeviceProfileErrorCode.UNBOUNDED_WAIT, [planName, String(index)], "attempts", "WAIT_FIELD_MASK.attempts must be greater than zero — zero attempts is an unbounded wait"),
+          failure(DeviceProfileErrorCode.UNBOUNDED_WAIT, path, "attempts", "WAIT_FIELD_MASK.attempts must be greater than zero — zero attempts is an unbounded wait"),
         );
+      }
+      const structural = structuralError(instruction);
+      if (structural) {
+        errors.push(failure(DeviceProfileErrorCode.TEMP_SLOT_OUT_OF_RANGE, path, structural.target, structural.remediation));
       }
       if (instruction.op === "EMIT_FIELD") {
         emittedFieldIds.add(instruction.fieldId);

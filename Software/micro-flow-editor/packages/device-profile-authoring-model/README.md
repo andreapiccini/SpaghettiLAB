@@ -13,6 +13,18 @@ Every type here is sourced directly from
 than the task text or the phase-325 design doc, this package follows the struct, and
 says so (see Honest scope gaps below).
 
+> **Correction (2026-08-13, made while starting S063):** the first revision of this
+> package grounded operand meaning only in `enum spaghetti_device_profile_opcode`'s
+> one-line comments, and got several operands wrong as a result — e.g. `GPIO_SET` was
+> modeled as reading a temp slot when the firmware actually treats `imm0` as an immediate
+> boolean and never reads one; `UART_READ_UNTIL`'s stop byte was placed at `imm0` instead
+> of the real `imm2`; several opcodes (`I2C_WRITE`, `I2C_READ`, `SPI_TRANSCEIVE`,
+> `UART_WRITE`, `ADC_READ`) were missing a `timeoutMs` operand entirely. Fixed by actually
+> reading `device_profile_exec.c`'s executor and `device_profile.c`'s
+> `accumulate_op_budget` — the real ground truth for operand semantics — not just the
+> opcode enum. `instruction.ts` now cites the exact exec/validate function backing each
+> operand.
+
 ## Instructions (`instruction.ts`, `opcodes.ts`, `raw-op.ts`)
 
 `Instruction` is a discriminated union with one typed, named-field variant per opcode in
@@ -58,15 +70,13 @@ precedent. On success it returns the computed `DeviceProfileBudget`
 (`totalTimeMs`/`transactions`/`bytes`/`operations`), mirroring
 `spaghetti_device_profile_validate`'s own `out_budget`, written only on success.
 
-`computeBudget()` uses a **fixed per-opcode formula**, not a simulation: `WAIT_FIELD_MASK`
-contributes `attempts` transactions and `attempts * intervalMs` time; only opcodes with
-an explicit length operand (`I2C_READ`, `I2C_WRITE_READ`, `SPI_TRANSCEIVE`,
-`UART_READ_UNTIL`, plus `LOAD_CONST`'s fixed 8 bytes) contribute to the byte count — a
-write-only opcode (`I2C_WRITE`/`UART_WRITE`/`GPIO_SET`) writes whatever a prior opcode
-already put in a temp slot, and this package does not simulate per-slot content length to
-avoid it (S061 point 3 explicitly rules out "formule JavaScript arbitrarie" —
-tracking dynamic slot contents would be exactly that). This is a deliberate,
-documented approximation, not a claim of byte-exact accuracy.
+`computeBudget()` mirrors `accumulate_op_budget` (`device_profile.c`) exactly, opcode by
+opcode — the same fixed formula the firmware itself uses, not a simulation of temp-slot
+contents (S061 point 3 explicitly rules out "formule JavaScript arbitrarie", and tracking
+dynamic slot contents would be exactly that). Every opcode's contribution to
+`totalTimeMs`/`transactions`/`bytes` in `validate-profile.ts` is the same expression the
+firmware's own validator computes, verified against that C source directly, not
+approximated.
 
 `maxOperationCount` is an optional caller-supplied cap:
 `CONFIG_SPAGHETTI_MAX_PROFILE_OPERATIONS`/`..._ACQUISITION_OPERATIONS` are Kconfig-tunable

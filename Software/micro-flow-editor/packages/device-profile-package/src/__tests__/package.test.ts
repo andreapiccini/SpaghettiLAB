@@ -12,9 +12,9 @@ function draft(): DeviceProfileDraft {
     maxTotalTimeMs: 100,
     maxTransactions: 5,
     maxBytes: 16,
-    initOps: [{ op: "I2C_WRITE", src: 0 }],
+    initOps: [{ op: "I2C_WRITE", src: 0, length: 1, timeoutMs: 20 }],
     sampleOps: [
-      { op: "I2C_READ", dst: 1, length: 2 },
+      { op: "I2C_READ", dst: 1, length: 2, timeoutMs: 20 },
       { op: "EMIT_FIELD", src: 1, fieldId: 1 },
       { op: "EMIT_RECORD" },
     ],

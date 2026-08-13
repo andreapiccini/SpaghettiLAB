@@ -80,6 +80,19 @@ firmware realmente spedita ha solo tre array di operazioni (`init_ops`/`sample_o
 `safe_stop_ops`) — niente array `event`/`command` separati, nonostante il testo del
 task e il design doc della fase 325 li menzionino come obiettivo; nessun campo
 fixed-point/scale dichiarativo (la conversione avviene nella sequenza di istruzioni
-stessa); il budget byte è un'approssimazione documentata, non esatta; questo pacchetto
-non produce mai il CBOR wire che `INSTALL_DEVICE_PROFILE` si aspetta — import/export/
-installazione restano volutamente fuori scope (S062/S063).
+stessa); questo pacchetto non produce mai il CBOR wire che `INSTALL_DEVICE_PROFILE` si
+aspetta — import/export/installazione restano volutamente fuori scope (S062/S063).
+
+## Correzione (2026-08-13, durante l'avvio di S063)
+
+La prima revisione di questo pacchetto aveva fondato il significato degli operandi solo
+sui commenti a riga singola di `enum spaghetti_device_profile_opcode`, senza leggere
+l'eseguitore reale — risultato: diversi operandi erano sbagliati (`GPIO_SET` modellato
+come lettura di un temp slot invece di un booleano immediato in `imm0`; lo stop byte di
+`UART_READ_UNTIL` posizionato su `imm0` invece del vero `imm2`; `I2C_WRITE`/`I2C_READ`/
+`SPI_TRANSCEIVE`/`UART_WRITE`/`ADC_READ` senza l'operando `timeoutMs` che hanno
+davvero). Corretto leggendo `Firmware/core/subsys/device_profiles/device_profile_exec.c`
+(l'eseguitore) e `device_profile.c`'s `accumulate_op_budget` (il validatore reale) —
+non più solo l'enum degli opcode. `computeBudget()` ora rispecchia `accumulate_op_budget`
+esattamente, byte per byte, non più un'approssimazione. 21 test (5 nuovi) verificano la
+correzione, CI Docker verde.
