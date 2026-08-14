@@ -3,17 +3,21 @@ import { ChevronDown, Cpu } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
+import { useCoreSessions } from "../../state/core-sessions-context.js";
 
 /** `ux/screens/S040-catalog-topology/visual.md` § Header — "stesso pattern di S070" (S070 non è ancora costruito: pattern minimo coerente col resto della shell, non copiato da nulla di esistente). */
 export function CoreSelector({ bindings, selected, onSelect }: { readonly bindings: readonly CoreBindingRecord[]; readonly selected: CoreBindingRecord | null; readonly onSelect: (binding: CoreBindingRecord) => void }) {
+  const { rows } = useCoreSessions();
   const [open, setOpen] = useState(false);
+  const labelOf = (binding: CoreBindingRecord) =>
+    rows.find((row) => row.binding.bindingId === binding.bindingId)?.displayName ?? binding.expectedDeviceId;
 
   return (
     <div className="relative">
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex h-9 items-center gap-2 rounded-slsm border border-border-strong px-3 font-body text-sm text-ink hover:bg-surface-raised">
         <Cpu size={14} className="text-ink-faint" />
         <span className="text-ink-faint">Core</span>
-        <span className="font-semibold">{selected ? selected.expectedDeviceId : "—"}</span>
+        <span className="font-semibold">{selected ? labelOf(selected) : "—"}</span>
         <ChevronDown size={14} className="text-ink-faint" />
       </button>
       <AnimatePresence>
@@ -32,7 +36,7 @@ export function CoreSelector({ bindings, selected, onSelect }: { readonly bindin
                   }}
                   className={`flex w-full items-center gap-2 px-3 py-2 text-left font-body text-sm hover:bg-surface-raised ${selected?.bindingId === b.bindingId ? "bg-surface-raised font-semibold" : ""}`}
                 >
-                  {b.expectedDeviceId}
+                  {labelOf(b)}
                 </button>
               ))
             )}

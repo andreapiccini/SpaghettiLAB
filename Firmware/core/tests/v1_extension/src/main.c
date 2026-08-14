@@ -110,7 +110,7 @@ static struct spaghetti_config make_platform_config(void)
 		},
 		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+			.ble_availability = SPAGHETTI_BLE_OFF,
 		},
 	};
 
@@ -165,7 +165,7 @@ static void *v1_setup(void)
 		.version = SPAGHETTI_CONFIG_VERSION,
 		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+			.ble_availability = SPAGHETTI_BLE_OFF,
 		},
 	};
 
@@ -193,7 +193,7 @@ static void v1_before(void *fixture)
 		.version = SPAGHETTI_CONFIG_VERSION,
 		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+			.ble_availability = SPAGHETTI_BLE_OFF,
 		},
 	};
 	struct spaghetti_config snapshot;
@@ -298,7 +298,7 @@ ZTEST(v1_extension, test_config_apply_schedules_rule_graph_rollback)
 			.version = SPAGHETTI_CONFIG_VERSION,
 			.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 			.energy_policy = {
-				.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+				.ble_availability = SPAGHETTI_BLE_OFF,
 			},
 		};
 
@@ -386,7 +386,7 @@ ZTEST(v1_extension, test_button_event_and_i2c_owners_transport_reject)
 		.module_count = 2U,
 		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+			.ble_availability = SPAGHETTI_BLE_OFF,
 		},
 	};
 	struct spaghetti_config_revision revision;
@@ -423,7 +423,7 @@ ZTEST(v1_extension, test_button_event_and_i2c_owners_transport_reject)
 			.module_count = 1U,
 			.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 			.energy_policy = {
-				.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+				.ble_availability = SPAGHETTI_BLE_OFF,
 			},
 		};
 

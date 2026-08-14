@@ -37,6 +37,9 @@ byte stream has no message boundaries of its own) — all implement the same
 `ProtocolTransport` interface `SpaghettiClient` already uses, verified to produce
 identical decoded domain objects from the same golden envelope regardless of which
 one carries it (`transports/__tests__/cross-transport-parity.test.ts`).
+Safari has no Web Serial: React Flow keeps using `WebSocketProtocolTransport`
+against `make usb-bridge` (`ws://127.0.0.1:8766`), which adds the USB length
+prefix on the host. Do not send USB stream frames from the browser.
 
 Event streaming (S024) is `client/event-stream.ts`'s `EventStream`: an async-iterable
 stream of record/status/discovery/connectivity events over a `ProtocolTransport`,

@@ -59,8 +59,8 @@ distrarrebbe).
 
 1. Click su "+ Connetti un Core" → dialogo entra con `motion.spring.smooth`
    (`opacity 0→1`, `scale 0.97→1`), overlay fade `motion.duration.base`.
-2. Selettore metodo: cambiare da "Rilevamento automatico" a "Indirizzo manuale"
-   fa comparire il campo aggiuntivo con `motion.duration.fast` (fade, l'altezza
+2. Selettore metodo: cambiare fra "Auto", "Core in rete" e "Core via cavo"
+   fa comparire il campo o la lista con `motion.duration.fast` (fade, l'altezza
    del dialogo si adatta senza spring — stessa motivazione della riga categoria in
    S070: l'altezza "auto" con spring produce jank).
 3. Lista risultati scansione: ogni riga trovata entra con

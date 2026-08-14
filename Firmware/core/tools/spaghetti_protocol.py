@@ -926,6 +926,8 @@ class CoreStatus:
     health_state: int = 0
     modules: list[ModuleStatus] = field(default_factory=list)
     boot_id: int | None = None
+    device_id: bytes | None = None
+    device_name: str = ""
 
 
 @dataclass
@@ -991,8 +993,12 @@ def encode_get_status_response(status: CoreStatus) -> bytes:
         8: status.health_state,
         9: modules,
     }
-    if status.boot_id is not None:
+    if status.device_id:
+        document[10] = status.device_id
+    elif status.boot_id is not None:
         document[10] = status.boot_id
+    if status.device_name:
+        document[11] = status.device_name
     return cbor2.dumps(document, canonical=True)
 
 
@@ -1012,6 +1018,15 @@ def decode_get_status_response(payload: bytes) -> CoreStatus:
         )
         for m in document.get(9, [])
     ]
+    raw_identity = document.get(10)
+    device_id = raw_identity if isinstance(raw_identity, (bytes, bytearray)) else None
+    boot_id: int | None
+    if isinstance(raw_identity, int):
+        boot_id = int(raw_identity)
+    else:
+        boot_id = None
+    raw_name = document.get(11)
+    device_name = str(raw_name) if isinstance(raw_name, str) else ""
     return CoreStatus(
         state=int(document.get(0, 0)),
         mode=int(document.get(1, 0)),
@@ -1023,7 +1038,9 @@ def decode_get_status_response(payload: bytes) -> CoreStatus:
         last_reset_cause=int(document.get(7, 0)),
         health_state=int(document.get(8, 0)),
         modules=modules,
-        boot_id=int(document[10]) if 10 in document else None,
+        boot_id=boot_id,
+        device_id=bytes(device_id) if device_id is not None else None,
+        device_name=device_name,
     )
 
 

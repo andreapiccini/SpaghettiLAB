@@ -16,7 +16,7 @@ config SPAGHETTI_CONNECTIVITY_BOOT_LOW_ENERGY
 config SPAGHETTI_CONNECTIVITY_BOOT_ONLINE
 	bool "Online"
 	help
-	  Permit every compiled normal connectivity service.
+	  Permit compiled Wi-Fi and MQTT. BLE stays outside this policy.
 
 endchoice
 

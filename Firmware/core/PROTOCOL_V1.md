@@ -114,8 +114,9 @@ slot, and Record Delivery consumer ID `SPAGHETTI_RECORD_CONSUMER_ID_BLE` (2).
 Profiles Minimal / Standard / Extended are declared in `Kconfig.resources` and
 summarized in `verification/resources/BASELINE.md` and
 `verification/v1/RESOURCE_BUDGET.md`. Capability bits are compile-time
-(`GET_CAPABILITIES`). Connectivity policies: `LOW_ENERGY`, `ONLINE`, plus bounded
-leases. Minimal admits **one** heavy secure session and does **not** compile the
+(`GET_CAPABILITIES`). Connectivity policies: `LOW_ENERGY` (BLE) and `ONLINE`
+(Wi-Fi + MQTT), plus bounded leases that switch radios rather than run BLE and
+Wi-Fi together. Minimal admits **one** heavy secure session and does **not** compile the
 production Remote Console TLS worker.
 
 ## 8. Device Profile, acquisition, Block Driver, processing graph
@@ -222,7 +223,37 @@ in TypeScript/Python with lossless helpers (see SDK and golden vectors
 5. New Core boards add DTS/bindings/backends without application branches on
    board name.
 
-## 19. Conformance assets
+## 19. USB serial framing
+
+USB Serial/JTAG is a raw byte stream. Host and firmware use the same framing as
+the TypeScript `StreamFrameDecoder`:
+
+| Offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | Kind: `0x02` request, `0x00` response, `0x01` event |
+| 1 | 4 | Envelope length, big-endian uint32 |
+| 5 | N | Protocol V1 CBOR envelope |
+
+Core V1 Minimal keeps one in-flight reassembly bounded by payload 512 plus 64
+bytes of CBOR overhead. The Zephyr Shell remains on the same UART for
+`make monitor`. The host opens the port exclusively: React Flow or the CLI
+sends framed requests; a terminal sends text. The first valid request frame
+silences shell TX (prompts and logs) so they cannot desynchronize the decoder.
+`Ctrl-C` (`0x03`) or 30 s idle returns the UART to the Shell. Do not enable
+`CONFIG_USB_DEVICE_STACK`; Serial/JTAG is already the console.
+
+`GET_STATUS` may include identity so a host does not have to guess a name:
+key 10 `device_id` (32-byte bstr) and key 11 `device_name` (tstr). Older
+images omit both keys.
+
+Browsers without Web Serial (Safari) use `make usb-bridge`: the host opens
+Serial/JTAG and React Flow talks `WebSocketProtocolTransport` on
+`ws://127.0.0.1:8766/core/<device_id>`. Outgoing WebSocket messages are raw
+request envelopes; incoming messages are kind + envelope (`0x00` / `0x01`).
+The bridge adds the USB length prefix. Do not reuse the BLE gateway wire
+shape here.
+
+## 20. Conformance assets
 
 | Asset | Location |
 |---|---|

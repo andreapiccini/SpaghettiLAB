@@ -80,6 +80,20 @@ export type ProjectV1 = {
    * deliberately excluded from `canonicalProjectHash` — see that function.
    */
   readonly authoringMetadata: Readonly<Record<string, AuthoringMetadata>>;
+  /**
+   * Canonical JSON strings of authored `@spaghettilab/device-profile-package`
+   * packages (Device Profile Studio, S061-S063) — kept opaque here the same
+   * way `GraphState.data` is: `domain` has no dependency on that package, so
+   * this stores whatever it already serializes to, re-validated by
+   * `importProfilePackageJson()` wherever it's read. A personal authoring
+   * library, not deployable content by itself (only instantiating one as a
+   * Module — already tracked in `physicalGraphs` — changes what's deployed),
+   * so this is excluded from `canonicalProjectHash` for the same reason
+   * `authoringMetadata` is. Optional on read for projects saved before this
+   * field existed — `validateProjectV1` defaults a missing value to `[]`
+   * rather than rejecting old data.
+   */
+  readonly deviceProfilePackages: readonly string[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -150,11 +164,15 @@ export function validateProjectV1(raw: unknown): Result<ProjectV1, DomainError[]
   if (!isRecord(raw.authoringMetadata)) {
     errors.push(invalid(["authoringMetadata"], raw.authoringMetadata, "authoringMetadata must be an object."));
   }
+  if (raw.deviceProfilePackages !== undefined && !Array.isArray(raw.deviceProfilePackages)) {
+    errors.push(invalid(["deviceProfilePackages"], raw.deviceProfilePackages, "deviceProfilePackages must be an array."));
+  }
 
   if (errors.length > 0) {
     return err(errors);
   }
-  return ok(raw as unknown as ProjectV1);
+  // Backward-compatible default for projects saved before this field existed.
+  return ok({ ...(raw as unknown as ProjectV1), deviceProfilePackages: Array.isArray(raw.deviceProfilePackages) ? raw.deviceProfilePackages : [] });
 }
 
 /** Creates an empty, valid ProjectV1 — the starting point for a new project. */
@@ -170,6 +188,7 @@ export function createEmptyProject(projectId: ProjectId, name: string): ProjectV
     requiredArtifacts: [],
     deploymentRecords: [],
     authoringMetadata: {},
+    deviceProfilePackages: [],
   };
 }
 

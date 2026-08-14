@@ -115,6 +115,38 @@ Software/fake searches re-run: no active TEMPORARY harnesses in production paths
 Hardware matrix items (INA219/Relay/fault/PCB) left **OPEN** — see below. They
 are not marked PASS via simulation.
 
+## Hardware session 2026-08-14 (Core V1 ESP32-C3)
+
+Board `spaghettilab_core_v1/esp32c3`, USB `/dev/cu.usbmodem2101`, MAC
+`90:70:69:ad:75:48`. DRAM after Config workspace: **97.42%**
+(`355904 / 365328`). `CONFIG_BT` remains off.
+
+V1 without Modules stays in **unprovisioned** (reduced): UART Maintenance on
+GPIO3/4, Runtime / Wi-Fi STA / OTA listener off. Do not use
+`spaghetti maintenance finish` on this setup — that persists empty Config and
+boots **normal**.
+
+| 210 step | Result |
+|---|---|
+| 1 Boot empty, no Storage record | **PASS** — `core=3 mode=unprovisioned`, engine running, Shell live |
+| 2 Malformed CBOR apply | **PASS** — `status=9` MALFORMED, snapshot/mode unchanged, Shell live |
+| 3–8 INA219 / two keys / disconnect | **N/A** — no INA219 on Port 0 |
+| 9 MQTT absent | **N/A** — unprovisioned does not start MQTT |
+| 10 Second Core variant | **PASS** build-only (`spaghettilab_core_v2_build_only/esp32c3`) |
+
+290: Q-B01 **PASS** (unprovisioned + Maintenance, no operational services). Q-S01
+host secret scan **PASS**. Remaining Q-* UART/Wi-Fi/power-fixture cases **NOT RUN**.
+365 physical BLE smoke **N/A** until `make build-ble` is flashed. `VERSION` stays `0.1.0+0`.
+
+## Radio split decision 2026-08-14
+
+Core V1 keeps **two artifacts**: default Wi-Fi (`make build`), BLE-only
+(`make build-ble`). Wi-Fi+BLE in one image overflows `dram0_0_seg` by ~13–16 KiB.
+Trimming logs/shell/TLS/`%f` saved ~2 KiB and was reverted on the default image.
+~97% DRAM is reserved SRAM (including the 51 KiB Wi-Fi heap), not a runtime
+emergency. Lessons:
+[Diary — ESP32-C3 SRAM](../../DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md).
+
 ## Explicit OPEN gates (not software contract bugs)
 
 1. **Hardware release 1.0** — do not set `VERSION=1.0.0` until complete.

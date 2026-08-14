@@ -126,6 +126,8 @@ ZTEST(wifi_profiles, test_persistence_contract_and_selection_policy)
 		make_wpa2_profile("Lab", "lab-password");
 
 	zassert_equal(spaghetti_wifi_profiles_set(&office), -EACCES);
+	zassert_equal(spaghetti_wifi_profiles_scan(NULL, 0U, NULL), -EINVAL);
+	zassert_equal(spaghetti_wifi_profiles_scan(NULL, 0U, &count), -EACCES);
 	if (IS_ENABLED(CONFIG_SPAGHETTI_WIFI_PROFILES_TEST_OFFLINE)) {
 		zassert_ok(spaghetti_wifi_profiles_init_offline());
 	} else {
@@ -141,6 +143,7 @@ ZTEST(wifi_profiles, test_persistence_contract_and_selection_policy)
 	zassert_true(summaries[0].preferred);
 	zassert_false(summaries[1].preferred);
 	zassert_equal(spaghetti_wifi_profiles_request_connect(), -ENOTSUP);
+	zassert_equal(spaghetti_wifi_profiles_scan(NULL, 0U, &count), -ENOTSUP);
 	zassert_equal(stored_profiles[0].passphrase_size,
 		strlen("office-password"));
 

@@ -6,7 +6,7 @@ reminder](PROMEMORIA_HARDWARE_E_FINALIZZAZIONE.md)
 
 This document preserves the technical incidents encountered during the development of
 the Spaghetti LAB firmware, the actual cause, the solution adopted and the architectural
-decision derived from it. It is an operational record updated through 11 August 2026, not
+decision derived from it. It is an operational record updated through 14 August 2026, not
 a substitute for testing or documentation of components.
 
 ## How to read this record
@@ -53,6 +53,7 @@ Shell commands on the device:
 
 ```text
 spaghetti status
+spaghetti wifi scan
 spaghetti wifi list
 wifi status
 spaghetti remote status
@@ -261,7 +262,25 @@ completing the boot.
 
 **Result and permanent rule:** do not interpret an isolated numeric errno without the
 status of the service. In `UNPROVISIONED` and `MAINTENANCE` the profiles are editable
-but the network remains intentionally offline.
+but the network remains intentionally offline. Nearby networks are listed with
+`spaghetti wifi scan`; that command does not connect.
+
+### `spaghetti wifi` had no catalog scan
+
+**State:** Fixed.
+
+**Problem:** `spaghetti wifi list` showed only saved profiles. Nearby access points were
+visible only through Zephyr `wifi scan`, so the product shell could not provision a
+network by itself.
+
+**Solution:** `spaghetti wifi scan` runs a station scan, including in unprovisioned
+mode, and prints SSID, RSSI, security (`open`/`wpa2`/`other`), and whether a profile
+is already saved. At most eight strongest SSIDs are kept. The radio may power for the
+scan duration and is taken down afterwards when no worker is running. `wifi connect`
+still returns `-ENOTSUP` until Normal mode.
+
+**Permanent rule:** discover with `spaghetti wifi scan`, save with `wifi add`, connect
+only after the device is in Normal mode.
 
 ## Serial console and host tools
 
@@ -275,6 +294,40 @@ program, even if they read the same UART. Only one process can open the port at 
 
 **Permanent rule:** use `screen` as a minimal fallback and `monitor` for normal
 development. Close the monitor before flashing when the runner requires the same port.
+
+### USB Shell and Protocol V1 share one Serial/JTAG pipe
+
+**State:** Fixed.
+
+**Problem:** React Flow needs framed Protocol V1 on USB. The Core already exposes
+USB Serial/JTAG as the Zephyr Shell. Two host programs cannot open the port, and
+binary frames would be eaten by the Shell ASCII filter.
+
+**Solution:** the firmware intercepts UART IRQ after Shell init. A `0x02` length
+prefix is a Protocol request; other bytes go to the Shell. While a protocol
+session is active, Shell TX (prompt and logs) is dropped so the host decoder
+stays aligned. `Ctrl-C` or 30 s idle restores the Shell. No USB Device stack and
+no BLE-sized 2048 B reassembly. After buffer reuse (decoder doubles as TX
+scratch) the default image is 362368 B DRAM (99.19%), slack 2960 B.
+
+**Permanent rule:** `make monitor` and `spaghetti --transport serial` / React Flow
+are exclusive on the same cable by choice, not a second USB gadget.
+
+### Safari cannot open USB (no Web Serial)
+
+**State:** Fixed.
+
+**Problem:** React Flow on Safari (and Tauri WKWebView) has no `navigator.serial`.
+Waiting for a native app is not required for local USB on this Mac.
+
+**Solution:** `make usb-bridge` opens Serial/JTAG with Protocol V1 stream framing
+and exposes `ws://127.0.0.1:8766`. `/list` returns JSON cores; `/core/<id>` uses
+the existing React Flow WebSocket shape (raw request envelope in, kind + envelope
+out). Chrome can keep using Web Serial. Close `make monitor` first.
+
+**Permanent rule:** do not teach Safari to speak USB length-prefixed frames; the
+bridge is a host adapter. Do not reuse the BLE gateway JSON/token control plane
+for this path.
 
 ### Missing Rich/pyserial dependencies
 
@@ -571,29 +624,92 @@ The complete contract is in
 
 ### BLE-first and Wi-Fi on-demand
 
-**State:** Planned.
+**State:** Mitigated on Core V1 (compile-time radio split); runtime XOR remains the
+policy inside each image.
 
 For a low consumption Core, the result is:
 
 ```text
 NORMAL + LOW_ENERGY
     Runtime active
-    BLE off, advertising, or connected according to policy
-    Wi-Fi, MQTT, OTA, and TLS off
+    BLE according to policy, and only if this image compiled CONFIG_BT
+    Wi-Fi, MQTT, OTA IP, and TLS off
 
 NORMAL + ONLINE
     Runtime active
-    BLE connected to one peer
-    Wi-Fi/MQTT connected to another peer
+    Wi-Fi/MQTT if this image compiled CONFIG_WIFI
+    BLE off
 ```
 
-An authenticated BLE peer can request a temporary Wi-Fi lease, network maintenance
-session or update. Enable Wi-Fi does not automatically open OTA or remote console.
+On ESP32-C3 these two policies cannot share one binary: Wi-Fi and BLE both fit
+separately, not together. Default `make build` is Wi-Fi. `make build-ble` is BLE.
+React Flow talks to the radio that the flashed artifact advertises in capabilities.
+Switching medium is a reflash, not a Config field. USB Shell stays on both images.
+
+An authenticated peer can still request a temporary Wi-Fi lease **only on a Wi-Fi
+image**. Enable Wi-Fi does not automatically open OTA or remote console.
 Maintenance and Update have timeout and do not become persistent Config.
 
 **Result and permanent rule:** BLE is a common CBOR protocol adapter, not a second
 Config model. Node-RED can communicate directly via BLE on a local host or through a
-base; MQTT on Core is not mandatory.
+base; MQTT on Core is not mandatory. Do not compile both radios into one Core V1
+image. Do not treat linker `dram0_0_seg` ~97% as a runtime crash warning: almost all
+of that SRAM is reserved tables and the ~51 KiB Wi-Fi heap. The runtime risk is that
+shared heap at Wi-Fi+MQTT(+OTA) peak, not the unused linker slack.
+
+See the 2026-08-14 RAM entry below.
+
+### ESP32-C3 SRAM: Wi-Fi and BLE do not fit in one image
+
+**State:** Fixed (product decision). Measured 14 August 2026 on
+`spaghettilab_core_v1/esp32c3`, Zephyr 4.4.0, region `dram0_0_seg` 365328 B.
+
+**Observed symptoms:**
+
+```text
+region `dram0_0_seg' overflowed by 15952 bytes   # CONFIG_BT on top of Wi-Fi, heap 51480
+region `dram0_0_seg' overflowed by 13552 bytes   # same after ~2 KiB field cuts
+```
+
+Wi-Fi-only and BLE-only both link:
+
+| Image | Command | DRAM used | Free | Kernel heap |
+|---|---|---:|---:|---:|
+| Wi-Fi + MQTT (default) | `make build` | 362368 B (99.19%) | 2960 B | 51480 |
+| BLE only | `make build-ble` | 288528 B (78.98%) | 76800 B | 25600 |
+
+Wi-Fi is about 65 KiB more DRAM than BLE (Espressif heap add 51200 vs 25600, plus
+IP/MQTT/OTA DTLS). Cutting Zephyr `wifi` shell, TLS contexts 4→1, INF logs, and
+printf `%f` saved ~2.4 KiB and did **not** make room for BLE beside Wi‑Fi. Those
+lab conveniences are restored on the default image.
+
+**Cause:** ESP32-C3 shares one 2.4 GHz radio *and* one internal SRAM pool. The Wi-Fi
+blobs and `CONFIG_HEAP_MEM_POOL_ADD_SIZE_ESP_WIFI` already fill the board. BLE
+controller BSS plus `ADD_SIZE_ESP_BT` (25600) does not fit on top. Linker occupancy
+is not “free RAM for malloc”: the 51 KiB system heap is already inside the used
+region.
+`current_config` and `config_workspace` (18 KiB each) and `live_plan` /
+`work_plan` (10 KiB each) are live-plus-scratch copies so apply/validate do not
+corrupt the running graph or overflow the 5 KiB Shell stack.
+
+**Solution adopted:**
+
+- Default artifact: Wi-Fi, `CONFIG_BT` off (`prj.conf`).
+- BLE artifact: `overlay-ble.conf`, `make build-ble`, Wi-Fi/IP/MQTT off.
+- Stubs: `wifi_profiles_disabled.c`, `mqtt_disabled.c`, `ota_dtls_disabled.c`.
+- Capability bits follow `CONFIG_WIFI` / `CONFIG_BT` / `CONFIG_MQTT_LIB`.
+- ESP-NOW is Wi-Fi, not a low-energy BLE substitute, and was not added.
+
+**Result and permanent rule:**
+
+1. Measure `dram0_0_seg` and heap add-size before enabling a second radio.
+2. Do not use runtime free-heap as an installability gate.
+3. Do not shrink Shell below 5120 B (measured ~4 KiB used).
+4. Do not persist empty Config with `spaghetti maintenance finish` on an
+   unprovisioned Core (boots Normal with radios).
+5. Future Cores with more SRAM (S3/C6) may revisit a single image; V1 C3 does not.
+6. Dual Config and dual processing plan stay: they are commit/scratch, not two
+   live systems.
 
 ### ESP32-C3, S3, C6, Matter and Zigbee
 
@@ -620,7 +736,7 @@ These items do not yet have an implemented solution:
 | Update qualification | Phase 290 is ready, but physical evidence and `Q-*` results are still pending. |
 | Root of trust | Development-only device-ID provider; eFuse, Secure Boot, Flash Encryption, and debug policy remain to be designed. |
 | Production MQTT | Current transport is insecure; TLS, broker authentication, and the bidirectional protocol are future work. |
-| BLE | Architecture frozen; GATT adapter, authentication, framing, and OTA are not yet implemented. |
+| BLE | Two Core V1 images (Wi-Fi default, `make build-ble`); physical radio smoke still OPEN. |
 | Dynamic TLS memory | Static arena still present; replacement and stress tests are not yet implemented. |
 | Low power | No final statement until consumption and timing are measured on the final PCB. |
 | Matter/Zigbee | Outside V1; evaluate ESP32-C6 or a later gateway. |

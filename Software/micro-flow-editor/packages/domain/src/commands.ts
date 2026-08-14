@@ -79,6 +79,22 @@ export function removeCoreBinding(bindingId: CoreBindingId): ProjectCommand {
 }
 
 /**
+ * Replaces the whole `deviceProfilePackages` list (Device Profile Studio,
+ * S061-S063) — `domain` has no dependency on `@spaghettilab/device-profile-
+ * package`, so it can't parse an entry to find/replace one by identity
+ * itself; the caller (which already has that package) resolves the new full
+ * array (add/update/remove) and passes it whole, the same "caller resolves,
+ * domain just stores" split `GraphState.data` already uses for opaque
+ * per-layer payloads.
+ */
+export function setDeviceProfilePackages(packages: readonly string[]): ProjectCommand {
+  return {
+    kind: "SetDeviceProfilePackages",
+    apply: (project) => ok({ ...project, deviceProfilePackages: packages }),
+  };
+}
+
+/**
  * Snapshot-based undo/redo over `ProjectV1`. Each successful `execute` pushes
  * the *previous* whole-project state onto the undo stack — simple and
  * trivially correct (undo/redo reproduce an exact prior state by

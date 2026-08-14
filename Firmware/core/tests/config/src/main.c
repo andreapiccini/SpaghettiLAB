@@ -472,7 +472,7 @@ static struct spaghetti_config make_config(uint8_t first_address,
 		},
 		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+			.ble_availability = SPAGHETTI_BLE_OFF,
 		},
 	};
 
@@ -498,7 +498,7 @@ ZTEST(config, test_transaction_snapshot_cas_and_rules)
 		.version = SPAGHETTI_CONFIG_VERSION,
 		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+			.ble_availability = SPAGHETTI_BLE_OFF,
 		},
 	};
 	struct spaghetti_config baseline = make_config(0x40U, 0x41U);
@@ -571,6 +571,47 @@ ZTEST(config, test_transaction_snapshot_cas_and_rules)
 		      -ENOSPC);
 	zassert_ok(spaghetti_config_get_snapshot(&snapshot, &revision));
 	zassert_equal(snapshot.schedules[0].period_ms, 1000U);
+}
+
+ZTEST(config, test_radio_mutex_rejects_inconsistent_policies)
+{
+	struct spaghetti_config_failure failure;
+	const struct spaghetti_config wifi_and_ble = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
+		.energy_policy = {
+			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+		},
+	};
+	const struct spaghetti_config ble_and_mqtt = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+		.connectivity_policy = SPAGHETTI_CONNECTIVITY_LOW_ENERGY,
+		.energy_policy = {
+			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+		},
+		.mqtt = {
+			.enabled = true,
+			.host = "broker.local",
+			.port = 1883U,
+			.base_topic = "spaghetti",
+			.credential_id = 1U,
+		},
+	};
+	const struct spaghetti_config wifi_only = {
+		.version = SPAGHETTI_CONFIG_VERSION,
+		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
+		.energy_policy = {
+			.ble_availability = SPAGHETTI_BLE_OFF,
+		},
+	};
+
+	zassert_equal(spaghetti_config_validate(&wifi_and_ble, &failure),
+		      -EINVAL);
+	zassert_equal(failure.field, SPAGHETTI_CONFIG_FAILURE_ENERGY);
+	zassert_equal(spaghetti_config_validate(&ble_and_mqtt, &failure),
+		      -EINVAL);
+	zassert_equal(failure.field, SPAGHETTI_CONFIG_FAILURE_MQTT);
+	zassert_ok(spaghetti_config_validate(&wifi_only, NULL));
 }
 
 ZTEST_SUITE(config, NULL, config_setup, NULL, NULL, NULL);

@@ -134,14 +134,81 @@ def build_client(args: argparse.Namespace) -> SpaghettiClient:
 
 
 def _serial_protocol_client(args: argparse.Namespace, timeout_ms: int) -> SpaghettiClient:
-    """Serial Protocol V1 uses the same envelope bytes over a framed link.
+    """Protocol V1 over USB Serial/JTAG: kind + BE uint32 length + envelope."""
+    import time
 
-    Live framing is provided by the firmware adapter; for host development the
-    CLI expects an explicit --fake Core or a future SMP/Protocol bridge.
-    """
-    raise CliError(
-        "serial Protocol transport requires a live adapter; use "
-        "--fake for host tests or --transport network|mqtt|ble"
+    try:
+        import serial as serial_mod
+    except ImportError as exc:
+        raise CliError("pyserial required; run 'make host-tools'") from exc
+
+    from tools.device import open_serial_without_reset
+    from tools.spaghetti_protocol import ProtocolTimeoutError
+
+    port = getattr(args, "port", None)
+    if not port:
+        raise CliError("--port is required for serial transport")
+
+    kind_response = 0x00
+    kind_event = 0x01
+    kind_request = 0x02
+    max_envelope = 512 + 64
+
+    def frame_stream(kind: int, envelope: bytes) -> bytes:
+        return bytes([kind]) + len(envelope).to_bytes(4, "big") + envelope
+
+    class SerialProtocolTransport:
+        name = "serial"
+
+        def __init__(self) -> None:
+            self._conn = open_serial_without_reset(serial_mod, port, 115200)
+            self._conn.timeout = 0.05
+            self._buf = bytearray()
+            try:
+                self._conn.reset_input_buffer()
+            except Exception:  # noqa: BLE001
+                pass
+
+        def _pop_frame(self) -> tuple[int, bytes] | None:
+            while len(self._buf) >= 5:
+                kind = self._buf[0]
+                if kind not in (kind_response, kind_event):
+                    del self._buf[0]
+                    continue
+                length = int.from_bytes(self._buf[1:5], "big")
+                if length > max_envelope:
+                    del self._buf[0]
+                    continue
+                if len(self._buf) < 5 + length:
+                    return None
+                envelope = bytes(self._buf[5 : 5 + length])
+                del self._buf[: 5 + length]
+                return kind, envelope
+            return None
+
+        def send(self, request: bytes, timeout_ms: int) -> bytes:
+            self._conn.write(frame_stream(kind_request, request))
+            self._conn.flush()
+            deadline = time.monotonic() + (timeout_ms / 1000.0)
+            while time.monotonic() < deadline:
+                waiting = self._conn.in_waiting
+                chunk = self._conn.read(waiting if waiting else 1)
+                if chunk:
+                    self._buf.extend(chunk)
+                while True:
+                    parsed = self._pop_frame()
+                    if parsed is None:
+                        break
+                    kind, envelope = parsed
+                    if kind == kind_response:
+                        return envelope
+            raise ProtocolTimeoutError()
+
+        def close(self) -> None:
+            self._conn.close()
+
+    return SpaghettiClient(
+        SerialProtocolTransport(), default_timeout_ms=timeout_ms
     )
 
 
@@ -297,6 +364,10 @@ def cmd_status(client: SpaghettiClient, args: argparse.Namespace) -> int:
     }
     if status.boot_id is not None:
         document["boot_id"] = status.boot_id
+    if status.device_id:
+        document["device_id"] = status.device_id.hex()
+    if status.device_name:
+        document["device_name"] = status.device_name
     if args.json:
         _emit_json(document, args.quiet)
     else:

@@ -1,31 +1,73 @@
 # SpaghettiLAB Software
 
+**Indice master (revisione globale):** [`SOFTWARE_MASTER_INDEX.md`](SOFTWARE_MASTER_INDEX.md) —
+visione prodotto, confini, stato di tutte le roadmap, checklist task mancanti.
+
+## Catena prodotto
+
+```text
+Firmware → React Flow (ingegneria) → Node-RED (automazioni)
+                ↓                           ↓
+         Dashboard Host (edge/cloud) ← exposure + auth
+                ↓
+         Dashboard Flutter (presentazione grafica)
+```
+
+Due modelli: **ecosistema** (progettista implementa) e **turnkey Site Package**
+(cliente usa dashboard già configurata on-prem). Vedi
+[`DEPLOYMENT_ACCESS_MODEL.md`](DEPLOYMENT_ACCESS_MODEL.md).
+
 ## Componenti
 
-- [`micro-flow-editor`](micro-flow-editor/) — applicazione React Flow per configurare,
-  aggiornare, osservare e diagnosticare i Core e per costruire automazioni deployate
-  verso Node-RED.
-- [`node-red`](node-red/) — runtime host per collegamenti fra Core, integrazioni e
-  automazioni che non appartengono al runtime locale firmware.
+| Componente | Path | Roadmap |
+|---|---|---|
+| **React Flow** — configura Core, deploy, profili | [`micro-flow-editor/`](micro-flow-editor/) | [react-flow-v1](roadmap/react-flow-v1/README.md) |
+| **Node-RED** — integrazioni, Telegram, logiche always-on | [`node-red/`](node-red/) | S112–S113 · [E060](roadmap/ecosystem-access-v1/tasks/E060-nodered-auth-scoped-access.md) |
+| **Dashboard** — UI Flutter, temi, viste, marketplace grafico | [`dashboard/`](dashboard/) | [dashboard-v1](dashboard/roadmap/dashboard-v1/README.md) |
+| **Access & turnkey** — ruoli, Site Package, Support Grant | — | [ecosystem-access-v1](roadmap/ecosystem-access-v1/README.md) |
 
-## Specifica React Flow V1
+## Documentazione chiave
+
+### Ingegneria (React Flow)
 
 - [Architettura funzionale](REACT_FLOW_ARCHITECTURE.md)
-- [Roadmap completa](roadmap/react-flow-v1/README.md)
+- [Architettura UI/UX](UX_ARCHITECTURE.md) · [`ux/screens/`](ux/screens/)
+- [Roadmap UX (doc schermate)](roadmap/ux-v1/README.md) — ✅ completa
 
-La specifica non impone design grafico. Congela funzioni, modelli, protocolli, flussi,
-errori, sicurezza e criteri di verifica necessari a ottenere la prima versione
-completa; la UI viene derivata da tali necessità.
+### Dashboard (presentazione)
 
-## Architettura UI/UX
+- [Architettura dashboard](dashboard/DASHBOARD_ARCHITECTURE.md)
+- [View modes & Visual Pack](dashboard/design/VIEW_MODES.md)
+- [Theming](dashboard/design/THEMING.md)
+- [HOST_API](dashboard/HOST_API.md) · [Ambiente Docker/FVM](dashboard/ENVIRONMENT.md)
+- [Spec UX dashboard](dashboard/ux/README.md) — ⬜ da scrivere (task D020–D029)
 
-- [Architettura UI/UX](UX_ARCHITECTURE.md) — shell applicativa, elenco schermate,
-  design token e convenzioni condivise.
-- [`ux/screens/`](ux/screens/) — una cartella per schermata, ciascuna divisa in
-  `visual.md` (aspetto), `ui-behavior.md` (comportamento d'interfaccia prima del
-  backend) e `backend-behavior.md` (quale comando/operazione SDK parte davvero). La
-  separazione permette di modificare una feature senza toccare le altre, e un layer
-  senza rischiare gli altri due.
-- [Roadmap UX](roadmap/ux-v1/README.md) — un task per schermata ancora da scrivere,
-  indipendente dalla roadmap backend (nessuna dipendenza dal protocollo firmware).
+### Deployment e accessi
 
+- [Modello deployment, ruoli, turnkey](DEPLOYMENT_ACCESS_MODEL.md)
+
+## Stato sintetico (2026-08-13)
+
+| Roadmap | Implementazione |
+|---|---|
+| React Flow S010–S080 | ✅ |
+| React Flow S092–S130 | ⬜ 11 task |
+| UX React Flow | ✅ doc |
+| Dashboard D010–D080 | ⬜ 19 task (doc architettura scritta) |
+| Ecosystem E010 | ✅ doc |
+| Ecosystem E020–E090 | ⬜ 9 task |
+
+Dettaglio e checklist completa: [**SOFTWARE_MASTER_INDEX.md § 6**](SOFTWARE_MASTER_INDEX.md#6-elenco-task-mancanti-checklist-revisione).
+
+## Avvio rapido (componenti esistenti)
+
+```sh
+# React Flow dev (Docker)
+cd Software/micro-flow-editor && docker compose up
+
+# Node-RED locale
+cd Software/node-red && docker compose up -d
+
+# Dashboard (dopo D011)
+cd Software/dashboard && make ci    # documentato in ENVIRONMENT.md
+```

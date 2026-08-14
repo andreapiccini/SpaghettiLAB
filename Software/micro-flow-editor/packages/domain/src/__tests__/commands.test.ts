@@ -138,4 +138,18 @@ describe("CommandStack", () => {
     expect(stack.current.physicalGraphs).toHaveLength(1);
     expect(stack.current.deviceGraphs).toHaveLength(1);
   });
+
+  it("setDeviceProfilePackages replaces the whole list, undo/redo restore it exactly", () => {
+    const stack = new CommandStack(fixtureProject());
+    expect(stack.current.deviceProfilePackages).toEqual([]);
+
+    stack.execute(setDeviceProfilePackages(["pkg-json-1"]));
+    expect(stack.current.deviceProfilePackages).toEqual(["pkg-json-1"]);
+
+    stack.execute(setDeviceProfilePackages(["pkg-json-1", "pkg-json-2"]));
+    expect(stack.current.deviceProfilePackages).toEqual(["pkg-json-1", "pkg-json-2"]);
+
+    stack.undo();
+    expect(stack.current.deviceProfilePackages).toEqual(["pkg-json-1"]);
+  });
 });

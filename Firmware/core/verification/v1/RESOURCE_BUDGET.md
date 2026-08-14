@@ -31,6 +31,23 @@ From `verification/resources/BASELINE.md` (MCUboot sysbuild):
 
 Slot free space and OTA dual-slot margins: **TBD (hardware remeasure on final PCB)**.
 
+## Core V1 radio images (measured 2026-08-14)
+
+Linker region `dram0_0_seg` is 365328 B. These figures are static occupancy, not
+free-heap. The Wi-Fi kernel heap (51480 B) is already inside the used column.
+
+| Image | Build | DRAM used | % | Heap | Notes |
+|---|---|---:|---:|---:|---|
+| Wi-Fi default | `make build` | 362368 B | 99.19% | 51480 | `CONFIG_BT` off; USB Protocol V1 adapter included |
+| BLE only | `make build-ble` | 288528 B | 78.98% | 25600 | No IP/MQTT; Protocol V1 over GATT |
+| Wi-Fi + `CONFIG_BT` | does not link | overflow 13–16 KiB | — | 51480 | Do not ship |
+
+Largest app BSS (Wi-Fi image): two Config snapshots 18 KiB each, two processing
+plans 10 KiB each, device-profile slots 16 KiB. Those doubles are live+scratch.
+Runtime peak risk is the shared heap (Wi-Fi driver + MQTT/TLS), not the ~3 KiB
+linker slack. Full write-up:
+[Diary — ESP32-C3 SRAM](../../DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md).
+
 ## Static stacks / pools (Minimal)
 
 | Allocation | Size | Notes |
@@ -82,7 +99,7 @@ Hardware apply/rollback/scan under load: **OPEN / phase 290**.
 |---|---|
 | Boot LOW_ENERGY | Covered by connectivity unit tests |
 | BLE advertising / connected | Unit + BLE protocol tests; radio hardware OPEN |
-| BLE + Wi-Fi/MQTT | Handover tests (fake); hardware OPEN |
+| BLE + Wi-Fi/MQTT | Not one Core V1 binary; handover is reflash or a larger SoC |
 | MQTT TLS | Host smoke fake; broker TLS hardware OPEN |
 | OTA Wi-Fi / OTA BLE | Update qualification docs; production gate OPEN |
 | Stop all optional services | Service manager / MQTT stop tests |

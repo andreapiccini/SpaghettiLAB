@@ -44,6 +44,10 @@ static void connectivity_health_keepalive_handler(struct k_work *work)
 	 SPAGHETTI_CONNECTIVITY_SERVICE_MQTT | \
 	 SPAGHETTI_CONNECTIVITY_SERVICE_REMOTE_CONSOLE)
 
+#define SPAGHETTI_CONNECTIVITY_RADIO_MASK \
+	(SPAGHETTI_CONNECTIVITY_SERVICE_BLE | \
+	 SPAGHETTI_CONNECTIVITY_SERVICE_WIFI)
+
 struct spaghetti_connectivity_context {
 	struct spaghetti_connectivity_backend backend;
 	enum spaghetti_connectivity_policy policy;
@@ -106,6 +110,41 @@ static uint32_t supported_services(void)
 	return services;
 }
 
+static uint32_t radio_bits(uint32_t services)
+{
+	uint32_t radios = services & SPAGHETTI_CONNECTIVITY_RADIO_MASK;
+
+	if ((services & SPAGHETTI_CONNECTIVITY_SERVICE_MQTT) != 0U) {
+		radios |= SPAGHETTI_CONNECTIVITY_SERVICE_WIFI;
+	}
+	return radios;
+}
+
+static uint32_t with_exclusive_radios(uint32_t persistent, uint32_t extra)
+{
+	const uint32_t extra_radios = radio_bits(extra);
+	uint32_t desired = persistent | extra;
+
+	if ((extra_radios & SPAGHETTI_CONNECTIVITY_RADIO_MASK) ==
+	    SPAGHETTI_CONNECTIVITY_RADIO_MASK) {
+		return desired;
+	}
+	if (((desired & SPAGHETTI_CONNECTIVITY_SERVICE_BLE) == 0U) ||
+	    ((desired & SPAGHETTI_CONNECTIVITY_SERVICE_WIFI) == 0U)) {
+		return desired;
+	}
+
+	if ((extra_radios & SPAGHETTI_CONNECTIVITY_SERVICE_WIFI) != 0U) {
+		desired &= ~SPAGHETTI_CONNECTIVITY_SERVICE_BLE;
+	} else if ((extra_radios & SPAGHETTI_CONNECTIVITY_SERVICE_BLE) != 0U) {
+		desired &= ~(SPAGHETTI_CONNECTIVITY_SERVICE_WIFI |
+			     SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
+	} else {
+		desired &= ~SPAGHETTI_CONNECTIVITY_SERVICE_BLE;
+	}
+	return desired;
+}
+
 static uint32_t services_for_policy(
 	enum spaghetti_connectivity_policy policy)
 {
@@ -115,8 +154,7 @@ static uint32_t services_for_policy(
 		return available & SPAGHETTI_CONNECTIVITY_SERVICE_BLE;
 	}
 
-	return available & (SPAGHETTI_CONNECTIVITY_SERVICE_BLE |
-			    SPAGHETTI_CONNECTIVITY_SERVICE_WIFI |
+	return available & (SPAGHETTI_CONNECTIVITY_SERVICE_WIFI |
 			    SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
 }
 
@@ -271,8 +309,8 @@ int spaghetti_connectivity_set_policy(
 		k_mutex_unlock(&connectivity_lock);
 		return -EACCES;
 	}
-	desired_services = services_for_policy(policy) |
-		context.leased_services;
+	desired_services = with_exclusive_radios(
+		services_for_policy(policy), context.leased_services);
 	err = transition_locked(desired_services);
 	if (err == 0) {
 		context.policy = policy;
@@ -298,6 +336,9 @@ int spaghetti_connectivity_acquire_lease(
 	if ((request->services & ~supported_services()) != 0U) {
 		return -ENOTSUP;
 	}
+	if (radio_bits(request->services) == SPAGHETTI_CONNECTIVITY_RADIO_MASK) {
+		return -EINVAL;
+	}
 
 	(void)k_mutex_lock(&connectivity_lock, K_FOREVER);
 	if (!context.initialized) {
@@ -309,8 +350,8 @@ int spaghetti_connectivity_acquire_lease(
 		return -EBUSY;
 	}
 
-	desired_services = services_for_policy(context.policy) |
-		request->services;
+	desired_services = with_exclusive_radios(
+		services_for_policy(context.policy), request->services);
 	err = transition_locked(desired_services);
 	if (err < 0) {
 		context.last_error = err;

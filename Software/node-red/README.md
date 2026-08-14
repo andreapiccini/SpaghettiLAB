@@ -237,3 +237,8 @@ Not included yet: MQTT broker, custom Spaghetti LAB nodes, dashboard UI, Home
 Assistant integration, Telegram integration, Tauri/Flutter clients, cloud
 services, remote/authenticated access. These will be introduced in later,
 separate phases.
+
+**Pianificato (formalizzato):** deployment turnkey on-prem, ruoli utente, Site
+Package, auth Node-RED dietro host — vedi
+[`../DEPLOYMENT_ACCESS_MODEL.md`](../DEPLOYMENT_ACCESS_MODEL.md) e task
+[`E060`](../roadmap/ecosystem-access-v1/tasks/E060-nodered-auth-scoped-access.md).

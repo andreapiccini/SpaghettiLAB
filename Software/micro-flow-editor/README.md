@@ -6,16 +6,14 @@ A Docker Compose environment running a [React](https://react.dev/) +
 (`packages/*`, S011 onward) the app itself is now being built on top of
 (`roadmap/app-v1`, starting with `UI-S010`).
 
-`packages/app` today has a real, working Project/Workspace shell (create/open/
-import a Project, undo/redo, `⌘K` command palette — all backed by real
-`@spaghettilab/domain`/`@spaghettilab/project-store` code, not mocked data) and
-honest placeholder screens for everything `roadmap/app-v1` hasn't implemented yet
-(Core Connections, Physical Composition, Device Profile Studio, Processing Graph
-Editor, Deploy & Diff, Runtime & Diagnostics, Capability Marketplace, Cross-Core
-Automation, Settings) — each one names the task (`UI-S0NN`) that will replace it,
-never fake data pretending to be real. See `roadmap/app-v1/README.md` for the
-implementation order and `UX_ARCHITECTURE.md`/`ux/screens/` for the design
-specification each screen is built against.
+`packages/app` today has a real Project/Workspace shell (create/open/import a
+Project, undo/redo, `⌘K` command palette) and live Core Connections: Auto /
+rete / via cavo, identity from Protocol V1 `GET_STATUS`, Web Serial on
+Chrome/Edge, and Safari via `make usb-bridge` in `Firmware/core`. Remaining
+`roadmap/app-v1` screens that are not implemented yet stay honest placeholders
+(Device Profile Studio, Processing Graph Editor, Deploy & Diff, Runtime &
+Diagnostics, Capability Marketplace, Cross-Core Automation, Settings). See
+`roadmap/app-v1/README.md` and `UX_ARCHITECTURE.md`/`ux/screens/`.
 
 ## Why this exists
 

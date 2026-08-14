@@ -138,7 +138,7 @@ static int execute_accept_discovery(
 	uint32_t key = 0U;
 	uint32_t generation = 0U;
 	struct spaghetti_module_config module;
-	struct spaghetti_config config;
+	struct spaghetti_config *config;
 	struct spaghetti_config_revision revision;
 	struct spaghetti_config_commit_result commit = {0};
 	int err;
@@ -160,15 +160,22 @@ static int execute_accept_discovery(
 	if (err < 0) {
 		return err;
 	}
-	err = spaghetti_config_get_snapshot(&config, &revision);
+	config = spaghetti_ops_alloc_config();
+	if (config == NULL) {
+		return -ENOMEM;
+	}
+	err = spaghetti_config_get_snapshot(config, &revision);
 	if (err < 0) {
+		spaghetti_ops_free_config(config);
 		return err;
 	}
-	if (config.module_count >= SPAGHETTI_CONFIG_MAX_MODULES) {
+	if (config->module_count >= SPAGHETTI_CONFIG_MAX_MODULES) {
+		spaghetti_ops_free_config(config);
 		return -ENOSPC;
 	}
-	config.modules[config.module_count++] = module;
-	err = spaghetti_config_apply(&config, revision.generation, &commit);
+	config->modules[config->module_count++] = module;
+	err = spaghetti_config_apply(config, revision.generation, &commit);
+	spaghetti_ops_free_config(config);
 	if (err < 0) {
 		return err;
 	}

@@ -701,14 +701,17 @@ static int validation_failure(struct spaghetti_config_failure *failure,
 int spaghetti_config_init(const struct spaghetti_config *defaults)
 {
 	uint8_t hash[SPAGHETTI_CONFIG_HASH_SIZE];
-	int err = spaghetti_config_validate(defaults, NULL);
+	int err;
 
-	if (err < 0) {
-		return err;
-	}
-	err = compute_config_hash(defaults, hash);
-	if (err < 0) {
-		return err;
+	if (defaults != NULL) {
+		err = spaghetti_config_validate(defaults, NULL);
+		if (err < 0) {
+			return err;
+		}
+		err = compute_config_hash(defaults, hash);
+		if (err < 0) {
+			return err;
+		}
 	}
 
 	err = k_mutex_lock(&config_lock, K_FOREVER);
@@ -720,7 +723,34 @@ int spaghetti_config_init(const struct spaghetti_config *defaults)
 		return -EALREADY;
 	}
 
-	current_config = *defaults;
+	if (defaults == NULL) {
+		memset(&current_config, 0, sizeof(current_config));
+		current_config.version = SPAGHETTI_CONFIG_VERSION;
+#if defined(CONFIG_SPAGHETTI_CONNECTIVITY_BOOT_LOW_ENERGY)
+		current_config.connectivity_policy =
+			SPAGHETTI_CONNECTIVITY_LOW_ENERGY;
+#else
+		current_config.connectivity_policy =
+			SPAGHETTI_CONNECTIVITY_ONLINE;
+#endif
+		current_config.energy_policy.ble_availability =
+			(current_config.connectivity_policy ==
+			 SPAGHETTI_CONNECTIVITY_ONLINE) ?
+				SPAGHETTI_BLE_OFF :
+				SPAGHETTI_BLE_ADVERTISING;
+		err = spaghetti_config_validate(&current_config, NULL);
+		if (err == 0) {
+			err = compute_config_hash(&current_config, hash);
+		}
+		if (err < 0) {
+			memset(&current_config, 0, sizeof(current_config));
+			k_mutex_unlock(&config_lock);
+			return err;
+		}
+	} else {
+		current_config = *defaults;
+	}
+
 	current_revision.generation = 1U;
 	memcpy(current_revision.sha256, hash, sizeof(hash));
 	last_persistent_write_ms = 0;
@@ -759,6 +789,18 @@ int spaghetti_config_validate(const struct spaghetti_config *candidate,
 	}
 	if (!energy_policy_is_valid(&candidate->energy_policy)) {
 		return validation_failure(failure, SPAGHETTI_CONFIG_FAILURE_ENERGY,
+			0U, SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -EINVAL);
+	}
+	if ((candidate->connectivity_policy ==
+	     SPAGHETTI_CONNECTIVITY_ONLINE) &&
+	    (candidate->energy_policy.ble_availability != SPAGHETTI_BLE_OFF)) {
+		return validation_failure(failure, SPAGHETTI_CONFIG_FAILURE_ENERGY,
+			0U, SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -EINVAL);
+	}
+	if ((candidate->connectivity_policy ==
+	     SPAGHETTI_CONNECTIVITY_LOW_ENERGY) &&
+	    candidate->mqtt.enabled) {
+		return validation_failure(failure, SPAGHETTI_CONFIG_FAILURE_MQTT,
 			0U, SPAGHETTI_CONFIG_FAILURE_INCONSISTENT, -EINVAL);
 	}
 
@@ -913,7 +955,6 @@ int spaghetti_config_apply(
 	struct spaghetti_config_commit_result *out_result)
 {
 	struct spaghetti_config_transaction transaction = {0};
-	struct spaghetti_config old_config = {0};
 	struct spaghetti_config_revision old_revision = {0};
 	uint8_t candidate_hash[SPAGHETTI_CONFIG_HASH_SIZE];
 	bool mqtt_changed;
@@ -974,15 +1015,14 @@ int spaghetti_config_apply(
 		}
 	}
 
-	old_config = current_config;
 	old_revision = current_revision;
 	next_generation = current_revision.generation + 1U;
-	mqtt_changed = !mqtt_configs_are_equal(&old_config.mqtt,
+	mqtt_changed = !mqtt_configs_are_equal(&current_config.mqtt,
 					       &candidate->mqtt);
 	connectivity_changed =
-		old_config.connectivity_policy != candidate->connectivity_policy;
+		current_config.connectivity_policy != candidate->connectivity_policy;
 
-	if (config_needs_runtime(&old_config)) {
+	if (config_needs_runtime(&current_config)) {
 		err = spaghetti_runtime_stop(
 			K_MSEC(CONFIG_SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS));
 		if ((err < 0) && (err != -EALREADY)) {
@@ -991,9 +1031,9 @@ int spaghetti_config_apply(
 		}
 	}
 
-	for (size_t old_idx = 0U; old_idx < old_config.module_count; ++old_idx) {
+	for (size_t old_idx = 0U; old_idx < current_config.module_count; ++old_idx) {
 		err = spaghetti_module_manager_get_by_key(
-			old_config.modules[old_idx].key,
+			current_config.modules[old_idx].key,
 			&transaction.old_live[old_idx]);
 		if (err < 0) {
 			apply_error = err;
@@ -1001,13 +1041,13 @@ int spaghetti_config_apply(
 		}
 	}
 
-	for (size_t old_idx = 0U; old_idx < old_config.module_count; ++old_idx) {
+	for (size_t old_idx = 0U; old_idx < current_config.module_count; ++old_idx) {
 		const int candidate_idx = find_module_index(
-			candidate, old_config.modules[old_idx].key);
+			candidate, current_config.modules[old_idx].key);
 		const bool unchanged =
 			(candidate_idx >= 0) &&
 			module_configs_are_equal(
-				&old_config.modules[old_idx],
+				&current_config.modules[old_idx],
 				&candidate->modules[candidate_idx]);
 
 		if (unchanged) {
@@ -1016,7 +1056,7 @@ int spaghetti_config_apply(
 
 		err = remove_module(&transaction.old_live[old_idx]);
 		if ((err == 0) ||
-		    module_is_absent(old_config.modules[old_idx].key)) {
+		    module_is_absent(current_config.modules[old_idx].key)) {
 			transaction.old_removed[old_idx] = true;
 		}
 		if (err < 0) {
@@ -1028,11 +1068,11 @@ int spaghetti_config_apply(
 	for (size_t candidate_idx = 0U;
 	     candidate_idx < candidate->module_count; ++candidate_idx) {
 		const int old_idx = find_module_index(
-			&old_config, candidate->modules[candidate_idx].key);
+			&current_config, candidate->modules[candidate_idx].key);
 		const bool unchanged =
 			(old_idx >= 0) &&
 			module_configs_are_equal(
-				&old_config.modules[old_idx],
+				&current_config.modules[old_idx],
 				&candidate->modules[candidate_idx]);
 
 		if (unchanged) {
@@ -1102,12 +1142,12 @@ int spaghetti_config_apply(
 	return 0;
 
 rollback:
-	err = rollback_transaction(&old_config, &transaction);
+	err = rollback_transaction(&current_config, &transaction);
 	if (err == 0) {
-		err = restore_runtime(&old_config);
+		err = restore_runtime(&current_config);
 	}
 	if (mqtt_reconfigured) {
-		const int mqtt_error = configure_mqtt(&old_config.mqtt);
+		const int mqtt_error = configure_mqtt(&current_config.mqtt);
 
 		if ((err == 0) && (mqtt_error < 0)) {
 			err = mqtt_error;
@@ -1115,7 +1155,7 @@ rollback:
 	}
 	if (connectivity_reconfigured) {
 		const int policy_error =
-			apply_connectivity_policy(old_config.connectivity_policy);
+			apply_connectivity_policy(current_config.connectivity_policy);
 
 		if ((err == 0) && (policy_error < 0)) {
 			err = policy_error;
@@ -1123,13 +1163,12 @@ rollback:
 	}
 	if (candidate_persisted) {
 		const int storage_error =
-			spaghetti_storage_write_config(&old_config);
+			spaghetti_storage_write_config(&current_config);
 
 		if ((err == 0) && (storage_error < 0)) {
 			err = storage_error;
 		}
 	}
-	current_config = old_config;
 	current_revision = old_revision;
 	k_mutex_unlock(&config_lock);
 	if (err < 0) {
@@ -1170,4 +1209,46 @@ int spaghetti_config_get_snapshot(
 	*out_revision = current_revision;
 	k_mutex_unlock(&config_lock);
 	return 0;
+}
+
+int spaghetti_config_get_revision(struct spaghetti_config_revision *out_revision)
+{
+	int err;
+
+	if (out_revision == NULL) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&config_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+
+	if (!is_initialized) {
+		k_mutex_unlock(&config_lock);
+		return -EACCES;
+	}
+
+	*out_revision = current_revision;
+	k_mutex_unlock(&config_lock);
+	return 0;
+}
+
+K_MUTEX_DEFINE(config_workspace_lock);
+static struct spaghetti_config config_workspace;
+
+struct spaghetti_config *spaghetti_config_acquire_workspace(void)
+{
+	if (k_mutex_lock(&config_workspace_lock, K_FOREVER) != 0) {
+		return NULL;
+	}
+
+	return &config_workspace;
+}
+
+void spaghetti_config_release_workspace(struct spaghetti_config *config)
+{
+	if (config == &config_workspace) {
+		k_mutex_unlock(&config_workspace_lock);
+	}
 }

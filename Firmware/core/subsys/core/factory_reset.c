@@ -67,9 +67,7 @@ static int delete_config_scope(void)
 	int err = spaghetti_storage_delete_config();
 
 	if ((err == 0) || (err == -ENOENT)) {
-		struct spaghetti_config config;
-
-		err = spaghetti_storage_read_config(&config);
+		err = spaghetti_storage_probe_config();
 		return (err == -ENOENT) ? 0 : -EIO;
 	}
 	return err;

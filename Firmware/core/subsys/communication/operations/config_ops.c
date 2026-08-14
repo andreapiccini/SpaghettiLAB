@@ -27,7 +27,7 @@ static int execute_get_config(
 	const struct spaghetti_protocol_payload *request,
 	struct spaghetti_protocol_payload *response)
 {
-	struct spaghetti_config config;
+	struct spaghetti_config *config;
 	struct spaghetti_config_revision revision;
 	uint8_t encoded[SPAGHETTI_CONFIG_CBOR_MAX_SIZE];
 	size_t encoded_size = 0U;
@@ -36,12 +36,18 @@ static int execute_get_config(
 	ARG_UNUSED(context);
 	ARG_UNUSED(request);
 
-	err = spaghetti_config_get_snapshot(&config, &revision);
+	config = spaghetti_ops_alloc_config();
+	if (config == NULL) {
+		return -ENOMEM;
+	}
+	err = spaghetti_config_get_snapshot(config, &revision);
 	if (err < 0) {
+		spaghetti_ops_free_config(config);
 		return err;
 	}
-	err = spaghetti_config_encode_cbor(&config, encoded, sizeof(encoded),
+	err = spaghetti_config_encode_cbor(config, encoded, sizeof(encoded),
 					   &encoded_size);
+	spaghetti_ops_free_config(config);
 	if (err < 0) {
 		return err;
 	}
@@ -73,7 +79,7 @@ static int execute_validate_config(
 {
 	const uint8_t *config_bytes = NULL;
 	size_t config_size = 0U;
-	struct spaghetti_config candidate;
+	struct spaghetti_config *candidate;
 	struct spaghetti_config_failure failure = {0};
 	int err;
 
@@ -82,11 +88,17 @@ static int execute_validate_config(
 	if (err < 0) {
 		return err;
 	}
-	err = spaghetti_config_decode_cbor(config_bytes, config_size, &candidate);
+	candidate = spaghetti_ops_alloc_config();
+	if (candidate == NULL) {
+		return -ENOMEM;
+	}
+	err = spaghetti_config_decode_cbor(config_bytes, config_size, candidate);
 	if (err < 0) {
+		spaghetti_ops_free_config(candidate);
 		return err;
 	}
-	err = spaghetti_config_validate(&candidate, &failure);
+	err = spaghetti_config_validate(candidate, &failure);
+	spaghetti_ops_free_config(candidate);
 	{
 		ZCBOR_STATE_E(state, SPAGHETTI_OPS_CBOR_BACKUP, response->bytes,
 			       sizeof(response->bytes), 1U);
@@ -123,7 +135,7 @@ static int execute_apply_config(
 	uint32_t expected_generation = 0U;
 	const uint8_t *config_bytes = NULL;
 	size_t config_size = 0U;
-	struct spaghetti_config candidate;
+	struct spaghetti_config *candidate;
 	struct spaghetti_config_commit_result commit = {0};
 	int err;
 
@@ -136,11 +148,17 @@ static int execute_apply_config(
 	if (err < 0) {
 		return err;
 	}
-	err = spaghetti_config_decode_cbor(config_bytes, config_size, &candidate);
+	candidate = spaghetti_ops_alloc_config();
+	if (candidate == NULL) {
+		return -ENOMEM;
+	}
+	err = spaghetti_config_decode_cbor(config_bytes, config_size, candidate);
 	if (err < 0) {
+		spaghetti_ops_free_config(candidate);
 		return err;
 	}
-	err = spaghetti_config_apply(&candidate, expected_generation, &commit);
+	err = spaghetti_config_apply(candidate, expected_generation, &commit);
+	spaghetti_ops_free_config(candidate);
 	if (err < 0) {
 		return err;
 	}

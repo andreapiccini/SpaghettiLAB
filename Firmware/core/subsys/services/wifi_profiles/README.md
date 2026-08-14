@@ -24,7 +24,7 @@ Selection is deterministic:
 
 | File | Role |
 |---|---|
-| `include/spaghetti/wifi_profiles.h` | Public profile, summary, state, and lifecycle contract. |
+| `include/spaghetti/wifi_profiles.h` | Public profile, summary, scan, state, and lifecycle contract. |
 | `subsys/services/wifi_profiles/wifi_profiles.c` | Cache, scan callbacks, selection policy, and worker. |
 | `subsys/services/wifi_profiles/wifi_profiles_storage.c` | Private PSA ITS record encoding. |
 | `subsys/communication/communication_shell.c` | Serial provisioning commands. |
@@ -39,6 +39,7 @@ bounded storage only for a synchronous Zephyr connection request and is then wip
 Commands remain under the existing `spaghetti` shell root:
 
 ```text
+spaghetti wifi scan
 spaghetti wifi add "Office" wpa2
 Password (input is hidden):
 spaghetti wifi add "Guest" open
@@ -48,6 +49,12 @@ spaghetti wifi list
 spaghetti wifi connect
 spaghetti wifi remove "Guest"
 ```
+
+`spaghetti wifi scan` lists nearby access points (SSID, RSSI, security, and
+whether a profile is already saved). It works in unprovisioned/offline mode and
+does not connect. Use the printed security (`open` or `wpa2`) with `wifi add`.
+Networks reported as `other` (for example WPA3) cannot be saved with the current
+profile contract. At most eight strongest SSIDs are shown.
 
 For WPA2, the password is read with `shell_readline()` while
 `shell_obscure_set()` is active. It is not an argument of the command and therefore
@@ -87,7 +94,8 @@ but no optional worker resource.
 In `UNPROVISIONED` and `MAINTENANCE`, Core instead calls
 `spaghetti_wifi_profiles_init_offline()`. Profiles can still be added or removed by
 the local maintenance protocol and are persisted with the same protection, but no
-network callback or worker is started and `request_connect()` returns `-ENOTSUP`.
+worker is started and `request_connect()` returns `-ENOTSUP`. A catalog scan is
+still allowed so nearby networks can be listed before Normal mode.
 
 `CONFIG_MAIN_STACK_SIZE=4096` is explicit because boot loads and authenticates PSA ITS
 records from the main thread. The previous 2048-byte default was insufficient for the

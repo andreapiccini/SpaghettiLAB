@@ -37,6 +37,14 @@ describe("StreamFrameDecoder", () => {
       { kind: FRAME_KIND_EVENT, bytes: new Uint8Array([2, 3]) },
     ]);
   });
+
+  it("skips leftover shell bytes until a valid response or event kind", () => {
+    const decoder = new StreamFrameDecoder();
+    const inner = new Uint8Array([0xaa]);
+    const framed = frameStreamMessage(FRAME_KIND_RESPONSE, inner);
+    const junk = new Uint8Array([0x75, 0x61, 0x72, 0x74, ...framed]);
+    expect(decoder.push(junk)).toEqual([{ kind: FRAME_KIND_RESPONSE, bytes: inner }]);
+  });
 });
 
 describe("WebSerialProtocolTransport", () => {

@@ -9,7 +9,7 @@ import { CoreRow } from "./CoreRow.js";
 /** `ux/screens/S030-core-connections/visual.md` + `ui-behavior.md`. */
 export function CoreConnectionsScreen() {
   const { session } = useSession();
-  const { rows, connect } = useCoreSessions();
+  const { rows, connect, fail } = useCoreSessions();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const total = session?.stack.current.coreBindings.length ?? 0;
@@ -43,13 +43,21 @@ export function CoreConnectionsScreen() {
         <div className="flex-1 overflow-auto p-6">
           <div className="flex flex-col gap-3">
             {rows.map((row) => (
-              <CoreRow key={row.binding.bindingId} row={row} onConnect={() => void reconnectCoreBinding(row.binding, connect)} />
+              <CoreRow
+                key={row.binding.bindingId}
+                row={row}
+                onConnect={() =>
+                  void reconnectCoreBinding(row.binding, connect).catch((cause: unknown) => {
+                    fail(row.binding.bindingId, cause instanceof Error ? cause.message : String(cause));
+                  })
+                }
+              />
             ))}
           </div>
         </div>
       )}
 
-      <ConnectCoreDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onConnect={(binding, wsUrl) => connect(binding, wsUrl)} />
+      <ConnectCoreDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onConnect={(binding, link) => void connect(binding, link)} />
     </div>
   );
 }

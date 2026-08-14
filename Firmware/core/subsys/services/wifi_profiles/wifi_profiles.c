@@ -48,6 +48,7 @@ static struct spaghetti_wifi_profile_summary
 	scan_profiles[CONFIG_SPAGHETTI_WIFI_PROFILE_MAX_COUNT];
 static size_t scan_profile_count;
 static atomic_t scan_is_active;
+static atomic_t catalog_scan_active;
 static atomic_t connect_event_received;
 static atomic_t connect_status;
 static atomic_t wifi_is_connected;
@@ -56,6 +57,10 @@ static atomic_t startup_delay_pending;
 static atomic_t stop_requested;
 static struct spaghetti_service_thread wifi_worker_thread;
 static bool wifi_callback_registered;
+static struct spaghetti_wifi_scan_result
+	catalog[SPAGHETTI_WIFI_SCAN_MAX_RESULTS];
+static size_t catalog_count;
+K_MUTEX_DEFINE(scan_op_lock);
 K_SEM_DEFINE(worker_sem, 0, 1);
 K_SEM_DEFINE(scan_done_sem, 0, 1);
 K_SEM_DEFINE(connect_done_sem, 0, 1);
@@ -236,6 +241,88 @@ int spaghetti_wifi_profiles_order_candidates(
 }
 
 #if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+static enum spaghetti_wifi_scan_security map_scan_security(
+	enum wifi_security_type security)
+{
+	switch (security) {
+	case WIFI_SECURITY_TYPE_NONE:
+		return SPAGHETTI_WIFI_SCAN_OPEN;
+	case WIFI_SECURITY_TYPE_PSK:
+	case WIFI_SECURITY_TYPE_PSK_SHA256:
+		return SPAGHETTI_WIFI_SCAN_WPA2;
+	default:
+		return SPAGHETTI_WIFI_SCAN_OTHER;
+	}
+}
+
+static void catalog_add(const struct wifi_scan_result *entry)
+{
+	char ssid[SPAGHETTI_WIFI_SSID_SIZE];
+	size_t slot = 0U;
+	size_t weakest = 0U;
+
+	if ((entry->ssid_length == 0U) ||
+	    (entry->ssid_length >= SPAGHETTI_WIFI_SSID_SIZE)) {
+		return;
+	}
+
+	memcpy(ssid, entry->ssid, entry->ssid_length);
+	ssid[entry->ssid_length] = '\0';
+
+	for (size_t result_idx = 0U; result_idx < catalog_count;
+	     ++result_idx) {
+		if (strcmp(catalog[result_idx].ssid, ssid) != 0) {
+			continue;
+		}
+		if (entry->rssi > catalog[result_idx].rssi_dbm) {
+			catalog[result_idx].rssi_dbm = entry->rssi;
+			catalog[result_idx].security =
+				map_scan_security(entry->security);
+		}
+		return;
+	}
+
+	if (catalog_count < ARRAY_SIZE(catalog)) {
+		slot = catalog_count;
+		++catalog_count;
+	} else {
+		for (size_t result_idx = 1U; result_idx < catalog_count;
+		     ++result_idx) {
+			if (catalog[result_idx].rssi_dbm <
+			    catalog[weakest].rssi_dbm) {
+				weakest = result_idx;
+			}
+		}
+		if (entry->rssi <= catalog[weakest].rssi_dbm) {
+			return;
+		}
+		slot = weakest;
+	}
+
+	memset(&catalog[slot], 0, sizeof(catalog[slot]));
+	memcpy(catalog[slot].ssid, ssid, entry->ssid_length + 1U);
+	catalog[slot].security = map_scan_security(entry->security);
+	catalog[slot].rssi_dbm = entry->rssi;
+}
+
+static void sort_catalog_by_rssi(void)
+{
+	for (size_t result_idx = 1U; result_idx < catalog_count;
+	     ++result_idx) {
+		struct spaghetti_wifi_scan_result current =
+			catalog[result_idx];
+		size_t insert_idx = result_idx;
+
+		while ((insert_idx > 0U) &&
+		       (catalog[insert_idx - 1U].rssi_dbm <
+			current.rssi_dbm)) {
+			catalog[insert_idx] = catalog[insert_idx - 1U];
+			--insert_idx;
+		}
+		catalog[insert_idx] = current;
+	}
+}
+
 static void wifi_event_handler(struct net_mgmt_event_callback *callback,
 			       uint64_t event, struct net_if *iface)
 {
@@ -247,6 +334,11 @@ static void wifi_event_handler(struct net_mgmt_event_callback *callback,
 
 		if ((result == NULL) ||
 		    (result->ssid_length > WIFI_SSID_MAX_LEN)) {
+			return;
+		}
+
+		if (atomic_get(&catalog_scan_active) != 0) {
+			catalog_add(result);
 			return;
 		}
 
@@ -341,12 +433,19 @@ static void commit_scan_snapshot(const size_t *slots, size_t profile_count)
 static int scan_known_networks(struct net_if *iface, const size_t *slots,
 			       size_t profile_count)
 {
+	int err = k_mutex_lock(&scan_op_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+
 	k_sem_reset(&scan_done_sem);
 	atomic_set(&scan_is_active, 1);
-	int err = net_mgmt(NET_REQUEST_WIFI_SCAN, iface, NULL, 0U);
+	err = net_mgmt(NET_REQUEST_WIFI_SCAN, iface, NULL, 0U);
 
 	if (err < 0) {
 		atomic_set(&scan_is_active, 0);
+		k_mutex_unlock(&scan_op_lock);
 		return err;
 	}
 
@@ -354,10 +453,12 @@ static int scan_known_networks(struct net_if *iface, const size_t *slots,
 			 K_SECONDS(CONFIG_SPAGHETTI_WIFI_SCAN_TIMEOUT_SECONDS));
 	atomic_set(&scan_is_active, 0);
 	if (err < 0) {
+		k_mutex_unlock(&scan_op_lock);
 		return -ETIMEDOUT;
 	}
 
 	commit_scan_snapshot(slots, profile_count);
+	k_mutex_unlock(&scan_op_lock);
 	return 0;
 }
 
@@ -1121,6 +1222,138 @@ int spaghetti_wifi_profiles_list(
 	*out_count = required;
 	k_mutex_unlock(&profiles_lock);
 	return 0;
+}
+
+int spaghetti_wifi_profiles_scan(
+	struct spaghetti_wifi_scan_result *out,
+	size_t capacity,
+	size_t *out_count)
+{
+#if CONFIG_SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	struct net_if *iface;
+	size_t local_count = 0U;
+	bool brought_up = false;
+	bool release_iface = false;
+	int err;
+
+	if ((out_count == NULL) || ((out == NULL) != (capacity == 0U))) {
+		return -EINVAL;
+	}
+
+	err = k_mutex_lock(&profiles_lock, K_FOREVER);
+	if (err < 0) {
+		return err;
+	}
+	if (!context.initialized) {
+		k_mutex_unlock(&profiles_lock);
+		return -EACCES;
+	}
+	k_mutex_unlock(&profiles_lock);
+
+	iface = net_if_get_wifi_sta();
+	if (iface == NULL) {
+		return -ENODEV;
+	}
+
+	err = k_mutex_lock(&scan_op_lock, K_NO_WAIT);
+	if (err < 0) {
+		return -EBUSY;
+	}
+
+	err = k_mutex_lock(&profiles_lock, K_FOREVER);
+	if (err < 0) {
+		k_mutex_unlock(&scan_op_lock);
+		return err;
+	}
+	if (!wifi_callback_registered) {
+		net_mgmt_init_event_callback(
+			&wifi_event_callback, wifi_event_handler,
+			NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE |
+			NET_EVENT_WIFI_CONNECT_RESULT |
+			NET_EVENT_WIFI_DISCONNECT_RESULT);
+		net_mgmt_add_event_callback(&wifi_event_callback);
+		wifi_callback_registered = true;
+	}
+	release_iface = (wifi_worker_thread.stack == NULL);
+	k_mutex_unlock(&profiles_lock);
+
+	if (!net_if_is_up(iface)) {
+		err = net_if_up(iface);
+		if ((err < 0) && (err != -EALREADY)) {
+			k_mutex_unlock(&scan_op_lock);
+			return err;
+		}
+		brought_up = true;
+		k_sleep(K_MSEC(1000));
+	}
+
+	catalog_count = 0U;
+	atomic_set(&catalog_scan_active, 1);
+	k_sem_reset(&scan_done_sem);
+	atomic_set(&scan_is_active, 1);
+	err = net_mgmt(NET_REQUEST_WIFI_SCAN, iface, NULL, 0U);
+	if (err < 0) {
+		atomic_set(&scan_is_active, 0);
+		atomic_set(&catalog_scan_active, 0);
+		if (brought_up && release_iface) {
+			(void)net_if_down(iface);
+		}
+		k_mutex_unlock(&scan_op_lock);
+		return err;
+	}
+
+	err = k_sem_take(
+		&scan_done_sem,
+		K_SECONDS(CONFIG_SPAGHETTI_WIFI_SCAN_TIMEOUT_SECONDS));
+	atomic_set(&scan_is_active, 0);
+	atomic_set(&catalog_scan_active, 0);
+	if (brought_up && release_iface) {
+		(void)net_if_down(iface);
+	}
+	if (err < 0) {
+		k_mutex_unlock(&scan_op_lock);
+		return -ETIMEDOUT;
+	}
+
+	sort_catalog_by_rssi();
+	(void)k_mutex_lock(&profiles_lock, K_FOREVER);
+	for (size_t result_idx = 0U; result_idx < catalog_count;
+	     ++result_idx) {
+		catalog[result_idx].known =
+			find_slot_locked(catalog[result_idx].ssid) !=
+			SPAGHETTI_WIFI_INVALID_SLOT;
+	}
+	local_count = catalog_count;
+	if (out == NULL) {
+		*out_count = local_count;
+		k_mutex_unlock(&profiles_lock);
+		k_mutex_unlock(&scan_op_lock);
+		return 0;
+	}
+	if (capacity < local_count) {
+		k_mutex_unlock(&profiles_lock);
+		k_mutex_unlock(&scan_op_lock);
+		return -ENOSPC;
+	}
+	if (local_count > 0U) {
+		memcpy(out, catalog, local_count * sizeof(*out));
+	}
+	*out_count = local_count;
+	k_mutex_unlock(&profiles_lock);
+	k_mutex_unlock(&scan_op_lock);
+	return 0;
+#else
+	if ((out_count == NULL) || ((out == NULL) != (capacity == 0U))) {
+		return -EINVAL;
+	}
+	if (!context.initialized) {
+		return -EACCES;
+	}
+
+	ARG_UNUSED(out);
+	ARG_UNUSED(capacity);
+	return -ENOTSUP;
+#endif
 }
 
 int spaghetti_wifi_profiles_request_connect(void)

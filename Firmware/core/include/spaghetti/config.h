@@ -109,6 +109,10 @@ struct spaghetti_edge_config {
 
 /**
  * @brief Complete bounded desired-state snapshot.
+ *
+ * This object is tens of KiB on the V1 resource profile. Keep instances in
+ * static storage or caller-owned buffers; do not allocate it on small thread
+ * stacks such as main, shell, or ISR.
  */
 struct spaghetti_config {
 	uint32_t version; /**< Must equal @ref SPAGHETTI_CONFIG_VERSION. */
@@ -175,7 +179,8 @@ struct spaghetti_config_commit_result {
 /**
  * @brief Initialize Config with one complete safe desired-state snapshot.
  *
- * @param[in] defaults Caller-owned snapshot borrowed only during this call.
+ * @param[in] defaults Caller-owned snapshot borrowed only during this call, or
+ *                     NULL to install the compiled empty Config (no Modules).
  *
  * @retval 0 The copied defaults are generation 1.
  * @retval -EINVAL @p defaults is invalid.
@@ -259,5 +264,37 @@ int spaghetti_config_apply(
 int spaghetti_config_get_snapshot(
 	struct spaghetti_config *out,
 	struct spaghetti_config_revision *out_revision);
+
+/**
+ * @brief Copy the last successfully applied Config revision.
+ *
+ * @param[out] out_revision Caller-owned revision destination written only on
+ *                          success.
+ *
+ * @retval 0 The current revision was copied to @p out_revision.
+ * @retval -EINVAL @p out_revision is NULL.
+ * @retval -EACCES Config has not been initialized.
+ *
+ * @note Thread-safe and callable from thread context. No hardware is accessed.
+ */
+int spaghetti_config_get_revision(struct spaghetti_config_revision *out_revision);
+
+/**
+ * @brief Borrow the single firmware Config workspace.
+ *
+ * Bound is one @ref spaghetti_config. Only one caller may hold it. Release
+ * with @ref spaghetti_config_release_workspace before return.
+ *
+ * @retval non-NULL The workspace, locked for this caller.
+ * @retval NULL The workspace lock could not be taken.
+ */
+struct spaghetti_config *spaghetti_config_acquire_workspace(void);
+
+/**
+ * @brief Release the workspace borrowed from @ref spaghetti_config_acquire_workspace.
+ *
+ * @param[in] config Pointer returned by acquire, or NULL.
+ */
+void spaghetti_config_release_workspace(struct spaghetti_config *config);
 
 #endif /* SPAGHETTI_CONFIG_H */

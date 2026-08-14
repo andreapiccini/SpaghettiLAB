@@ -10,6 +10,8 @@ target_sources(app PRIVATE
   ../../subsys/communication/protocol_status.c
   ../../subsys/communication/ops_helpers.c
   ../../subsys/communication/communication_shell.c
+  ../../subsys/communication/usb_protocol_framing.c
+  ../../subsys/communication/usb_protocol.c
   ../../subsys/communication/operations/catalog.c
   ../../subsys/communication/operations/status.c
   ../../subsys/communication/operations/config_ops.c

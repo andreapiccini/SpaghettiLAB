@@ -1096,12 +1096,12 @@ static int decode_array_edges(zcbor_state_t *state,
 static int decode_wire_v2(const uint8_t *bytes, size_t length,
 			  struct spaghetti_config *out)
 {
-	struct spaghetti_config temporary = {
-		.version = SPAGHETTI_CONFIG_VERSION,
-	};
 	uint32_t wire_version;
 	uint32_t connectivity;
 	int err;
+
+	memset(out, 0, sizeof(*out));
+	out->version = SPAGHETTI_CONFIG_VERSION;
 
 	ZCBOR_STATE_D(state, SPAGHETTI_CONFIG_CBOR_BACKUP_COUNT, bytes, length,
 		       1U, 0U);
@@ -1119,7 +1119,7 @@ static int decode_wire_v2(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_modules(state, &temporary);
+	err = decode_array_modules(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1128,7 +1128,7 @@ static int decode_wire_v2(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_schedules(state, &temporary);
+	err = decode_array_schedules(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1137,7 +1137,7 @@ static int decode_wire_v2(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_rules(state, &temporary);
+	err = decode_array_rules(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1146,7 +1146,7 @@ static int decode_wire_v2(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_mqtt(state, &temporary.mqtt);
+	err = decode_mqtt(state, &out->mqtt);
 	if (err < 0) {
 		return err;
 	}
@@ -1155,45 +1155,39 @@ static int decode_wire_v2(const uint8_t *bytes, size_t length,
 	if ((err < 0) || !zcbor_uint32_decode(state, &connectivity)) {
 		return -EBADMSG;
 	}
-	temporary.connectivity_policy =
+	out->connectivity_policy =
 		(enum spaghetti_connectivity_policy)connectivity;
 
 	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_ENERGY);
 	if (err < 0) {
 		return err;
 	}
-	err = decode_energy(state, &temporary.energy_policy);
+	err = decode_energy(state, &out->energy_policy);
 	if (err < 0) {
 		return err;
 	}
 
 	/* Wire V2 has no processing graph; migrate to empty blocks/edges. */
-	temporary.block_count = 0U;
-	temporary.edge_count = 0U;
+	out->block_count = 0U;
+	out->edge_count = 0U;
 
 	if (!zcbor_map_end_decode(state) ||
 	    (state->payload != state->payload_end)) {
 		return -EBADMSG;
 	}
 
-	err = spaghetti_config_validate(&temporary, NULL);
-	if (err < 0) {
-		return err;
-	}
-
-	*out = temporary;
-	return 0;
+	return spaghetti_config_validate(out, NULL);
 }
 
 static int decode_wire_v3(const uint8_t *bytes, size_t length,
 			  struct spaghetti_config *out)
 {
-	struct spaghetti_config temporary = {
-		.version = SPAGHETTI_CONFIG_VERSION,
-	};
 	uint32_t wire_version;
 	uint32_t connectivity;
 	int err;
+
+	memset(out, 0, sizeof(*out));
+	out->version = SPAGHETTI_CONFIG_VERSION;
 
 	ZCBOR_STATE_D(state, SPAGHETTI_CONFIG_CBOR_BACKUP_COUNT, bytes, length,
 		       1U, 0U);
@@ -1211,7 +1205,7 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_modules(state, &temporary);
+	err = decode_array_modules(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1220,7 +1214,7 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_schedules(state, &temporary);
+	err = decode_array_schedules(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1229,7 +1223,7 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_rules(state, &temporary);
+	err = decode_array_rules(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1238,7 +1232,7 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_mqtt(state, &temporary.mqtt);
+	err = decode_mqtt(state, &out->mqtt);
 	if (err < 0) {
 		return err;
 	}
@@ -1247,14 +1241,14 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 	if ((err < 0) || !zcbor_uint32_decode(state, &connectivity)) {
 		return -EBADMSG;
 	}
-	temporary.connectivity_policy =
+	out->connectivity_policy =
 		(enum spaghetti_connectivity_policy)connectivity;
 
 	err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_ENERGY);
 	if (err < 0) {
 		return err;
 	}
-	err = decode_energy(state, &temporary.energy_policy);
+	err = decode_energy(state, &out->energy_policy);
 	if (err < 0) {
 		return err;
 	}
@@ -1263,7 +1257,7 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_blocks(state, &temporary);
+	err = decode_array_blocks(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1272,7 +1266,7 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 	if (err < 0) {
 		return err;
 	}
-	err = decode_array_edges(state, &temporary);
+	err = decode_array_edges(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -1282,13 +1276,7 @@ static int decode_wire_v3(const uint8_t *bytes, size_t length,
 		return -EBADMSG;
 	}
 
-	err = spaghetti_config_validate(&temporary, NULL);
-	if (err < 0) {
-		return err;
-	}
-
-	*out = temporary;
-	return 0;
+	return spaghetti_config_validate(out, NULL);
 }
 
 int spaghetti_config_decode_cbor(const uint8_t *bytes, size_t length,

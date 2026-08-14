@@ -42,7 +42,7 @@ The admission policy is:
 |---|---|---|
 | `UNPROVISIONED` | Stopped | Authenticated local maintenance only; no radio starts automatically |
 | `NORMAL + LOW_ENERGY` | Running | BLE according to its availability policy |
-| `NORMAL + ONLINE` | Running | BLE and Wi-Fi; direct MQTT if configured |
+| `NORMAL + ONLINE` | Running | Wi-Fi; direct MQTT if configured. BLE is off. |
 | `MAINTENANCE` | Stopped or explicitly quiesced | Exactly the selected BLE, Wi-Fi, or local adapter |
 | Update receiving | Quiesced and outputs safe | Exactly one BLE, Wi-Fi, or local upload owner |
 
@@ -66,6 +66,22 @@ radios, buses, pins, flash partitions, and external RAM.
 Every firmware artifact identifies its Core variant and resource profile. Update must
 reject an artifact that is incompatible with the running Core, flash layout, or
 required capabilities.
+
+### Core V1 radio images (ESP32-C3)
+
+The Minimal profile still describes capacities. On Core V1 it does **not** mean
+Wi-Fi and BLE in one binary. Measured 2026-08-14 (`dram0_0_seg` 365328 B):
+
+- Default `make build`: Wi-Fi + MQTT, `CONFIG_BT` off, USB Protocol V1 on Serial/JTAG, 362368 B DRAM (99.19%), kernel heap 51480.
+- `make build-ble` (`overlay-ble.conf`): BLE only, no IP, 288528 B DRAM (78.98%), heap 25600.
+- `CONFIG_BT` on top of Wi-Fi overflows DRAM (~13–16 KiB). Field cuts (Zephyr wifi
+  shell, TLS contexts, log level, `%f`) saved ~2 KiB and are not a path to a dual
+  radio image.
+
+React Flow uses the capability snapshot of the flashed artifact. Changing radio is a
+reflash. USB Shell remains on both. Runtime `LOW_ENERGY` / `ONLINE` still apply, but
+only to radios compiled in. Details and lessons:
+[Diary — ESP32-C3 SRAM](DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md).
 
 ## Normal connectivity policies
 
@@ -92,10 +108,11 @@ existing connection.
 
 ### Online
 
-`NORMAL + ONLINE` keeps Runtime active and permits BLE, Wi-Fi, and direct MQTT to serve
-different peers at the same time. On ESP32-C3, Wi-Fi and BLE share one 2.4 GHz radio.
-They may be logically connected concurrently, but radio access is time-shared and the
-profile must bound throughput, scanning, and connection counts.
+`NORMAL + ONLINE` keeps Runtime active and permits Wi-Fi and direct MQTT. BLE stays
+stopped. On ESP32-C3, Wi-Fi and BLE share one 2.4 GHz radio **and** do not both fit
+in SRAM, so they never run together and are not compiled together: a lease for the
+other radio switches the active one inside an image that contains it; the other
+medium requires a different artifact.
 
 `ONLINE` may be:
 

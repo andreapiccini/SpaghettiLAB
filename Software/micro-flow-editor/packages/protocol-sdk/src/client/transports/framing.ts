@@ -53,9 +53,18 @@ export class StreamFrameDecoder {
 
     const frames: Array<{ kind: number; bytes: Uint8Array }> = [];
     for (;;) {
-      if (this.buffer.length < 5) break;
+      if (this.buffer.length < 1) break;
       const kind = this.buffer[0]!;
+      if (kind !== FRAME_KIND_RESPONSE && kind !== FRAME_KIND_EVENT) {
+        this.buffer = this.buffer.subarray(1);
+        continue;
+      }
+      if (this.buffer.length < 5) break;
       const length = new DataView(this.buffer.buffer, this.buffer.byteOffset, 5).getUint32(1, false);
+      if (length > 2112) {
+        this.buffer = this.buffer.subarray(1);
+        continue;
+      }
       if (this.buffer.length < 5 + length) break;
       frames.push({ kind, bytes: this.buffer.slice(5, 5 + length) });
       this.buffer = this.buffer.slice(5 + length);

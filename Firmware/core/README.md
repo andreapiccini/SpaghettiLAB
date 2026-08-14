@@ -96,6 +96,11 @@ build/mcuboot/zephyr/zephyr.bin
 build/app/zephyr/zephyr.signed.bin
 ```
 
+The default image is Wi-Fi only (`CONFIG_BT` is off). A BLE-only artifact, without
+Wi-Fi or IP, is `make build-ble` (`build-ble/`). Core V1 cannot compile both radios
+into one binary. Why, and what 97% DRAM means:
+[Diary — ESP32-C3 SRAM](DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md).
+
 The first image build can take a while because it downloads Zephyr, the West
 modules, the toolchain, and Espressif binary blobs. Docker caches completed
 steps, so later builds are much faster.
@@ -159,10 +164,27 @@ on Windows, miniterm exits with `Ctrl-]`. Only one program can use the serial po
 a time, so close either console before flashing.
 
 On connection, the styled monitor sends `Ctrl-C` so an already-running Zephyr Shell
-immediately redraws `uart:~$` without adding an empty command to its history. For a
-future binary serial protocol, use
-`.venv/bin/python tools/device.py monitor --no-wake` to open the port without
-transmitting that byte, or use the raw `make screen` path.
+immediately redraws `uart:~$` without adding an empty command to its history. The
+same byte also leaves USB Protocol V1 framed mode, so `make monitor` works after
+React Flow or `spaghetti --transport serial` without a reboot. Close the protocol
+client before opening the monitor: only one program can own `/dev/cu.usbmodem*`.
+
+Protocol V1 on the same cable, with the monitor closed:
+
+```sh
+make ARGS='--transport serial status' spaghetti
+```
+
+Safari cannot open USB (no Web Serial). Keep the monitor closed and run a
+localhost bridge; React Flow Auto / Core via cavo then uses
+`ws://127.0.0.1:8766`:
+
+```sh
+make usb-bridge
+```
+
+Chrome and Edge can keep using Web Serial directly. The bridge, the monitor,
+and React Flow still cannot share the same cable at once.
 
 `tools/device.py` reads `build/domains.yaml` and each domain's generated
 `runners.yaml`; the image order, microcontroller, addresses and flash parameters
@@ -237,7 +259,8 @@ sudo usermod -aG dialout "$USER"
 | `make screen [PORT=...]` | Open the raw serial console at 115200 baud |
 | `make monitor [PORT=...]` | Open the styled, reconnecting Rich monitor |
 | `make host-tools` | Create `.venv/` and install monitor dependencies |
-| `make spaghetti ARGS='…'` | Run the Spaghetti CLI V1 (catalog / config / update) |
+| `make spaghetti ARGS='…'` | Run the Spaghetti CLI V1 (catalog / config / update). Close `make monitor` first for `--transport serial` |
+| `make usb-bridge` | USB Protocol V1 → `ws://127.0.0.1:8766` so Safari can use Core via cavo. Close `make monitor` first |
 | `make config-validate CONFIG=path.json` | Validate a local Config JSON against the Core catalog |
 | `make config-apply CONFIG=path.json` | Validate then apply Config (generation/hash CAS) |
 | `make remote-console-credential CREDENTIALS=...` | Create a protected TLS-PSK file |

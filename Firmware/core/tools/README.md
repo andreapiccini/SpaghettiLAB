@@ -33,3 +33,30 @@ status. Protocol status codes map directly to process exit codes (`conflict` →
 
 Update clients (`update uart|wifi|ble`) verify the signed image locally, stream
 bounded chunks with progress, cancel on Ctrl+C, and finalize as **trial** only.
+
+## USB Protocol V1 (same Serial/JTAG as the Shell)
+
+Close `make monitor` first. The CLI and React Flow own the port exclusively.
+
+```sh
+make ARGS='--transport serial status' spaghetti
+```
+
+## USB bridge for Safari
+
+Safari (and Tauri-on-macOS WKWebView) has no Web Serial. This process opens
+Core USB ports with Protocol V1 stream framing and exposes
+`WebSocketProtocolTransport` on loopback only (`127.0.0.1:8766`). Do not reuse
+the BLE gateway JSON/token control plane.
+
+```sh
+make usb-bridge
+```
+
+| Path | Payload |
+|---|---|
+| `/list` | text JSON `{cores:[{deviceIdHex,deviceName,version,port}]}` then close |
+| `/core/<device_id>` | binary: browser → raw request envelope; bridge → USB `0x02`+length+envelope; USB → browser kind+envelope (`0x00`/`0x01`) |
+
+React Flow Auto / Core via cavo probes this URL automatically. Chrome can keep
+using `navigator.serial` without the bridge.

@@ -168,7 +168,19 @@ int spaghetti_storage_read_config(struct spaghetti_config *out)
 	*out = (struct spaghetti_config) {
 		.version = SPAGHETTI_CONFIG_VERSION,
 		.module_count = 1U,
+		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
+		.energy_policy = {
+			.ble_availability = SPAGHETTI_BLE_OFF,
+		},
 	};
+	return 0;
+}
+
+int spaghetti_storage_probe_config(void)
+{
+	if (IS_ENABLED(CONFIG_SPAGHETTI_TEST_CONFIG_ABSENT)) {
+		return -ENOENT;
+	}
 	return 0;
 }
 
@@ -235,9 +247,23 @@ int spaghetti_discovery_init(void)
 
 int spaghetti_config_init(const struct spaghetti_config *defaults)
 {
-	zassert_not_null(defaults);
-	initialized_defaults = *defaults;
+	ARG_UNUSED(defaults);
+	initialized_defaults = (struct spaghetti_config) {
+		.version = SPAGHETTI_CONFIG_VERSION,
+	};
 	return record_step(STEP_CONFIG);
+}
+
+static struct spaghetti_config test_workspace;
+
+struct spaghetti_config *spaghetti_config_acquire_workspace(void)
+{
+	return &test_workspace;
+}
+
+void spaghetti_config_release_workspace(struct spaghetti_config *config)
+{
+	ARG_UNUSED(config);
 }
 
 int spaghetti_config_validate(const struct spaghetti_config *candidate,

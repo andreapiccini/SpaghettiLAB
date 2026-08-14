@@ -1,5 +1,5 @@
 import { decodeOne, encodeArray } from "../cbor.js";
-import { boolField, decodeEmptyPayload, encodeEmptyPayload, encodeMap, requireArray, requireBool, requireMap, requireText, requireU32, textField, u32Field } from "../fields.js";
+import { boolField, bytesField, decodeEmptyPayload, encodeEmptyPayload, encodeMap, requireArray, requireBool, requireBytes, requireMap, requireText, requireU32, textField, u32Field } from "../fields.js";
 
 /** `GET_STATUS` (op 2) has an empty request payload. */
 export const encodeGetStatusRequest = encodeEmptyPayload;
@@ -40,6 +40,10 @@ export type GetStatusResponse = {
   readonly lastResetCause: number;
   readonly healthState: number;
   readonly modules: readonly ModuleStatus[];
+  /** Hardware-derived identity from firmware `spaghetti_identity` — absent on older images. */
+  readonly deviceId?: Uint8Array;
+  /** Friendly name from Settings; empty string when unset. Absent on older images. */
+  readonly deviceName?: string;
 };
 
 export function encodeGetStatusResponse(r: GetStatusResponse): Uint8Array {
@@ -54,7 +58,7 @@ export function encodeGetStatusResponse(r: GetStatusResponse): Uint8Array {
       textField(6, m.typeId),
     ]),
   );
-  return encodeMap([
+  const fields: Array<readonly [number, Uint8Array]> = [
     u32Field(0, r.state),
     u32Field(1, r.mode),
     u32Field(2, r.imageState),
@@ -65,7 +69,14 @@ export function encodeGetStatusResponse(r: GetStatusResponse): Uint8Array {
     u32Field(7, r.lastResetCause),
     u32Field(8, r.healthState),
     [9, encodeArray(modules)],
-  ]);
+  ];
+  if (r.deviceId !== undefined) {
+    fields.push(bytesField(10, r.deviceId));
+  }
+  if (r.deviceName !== undefined) {
+    fields.push(textField(11, r.deviceName));
+  }
+  return encodeMap(fields);
 }
 
 export function decodeGetStatusResponse(bytes: Uint8Array): GetStatusResponse {
@@ -93,5 +104,7 @@ export function decodeGetStatusResponse(bytes: Uint8Array): GetStatusResponse {
     lastResetCause: requireU32(map, 7, "GetStatusResponse"),
     healthState: requireU32(map, 8, "GetStatusResponse"),
     modules,
+    ...(map.get(10)?.kind === "bytes" ? { deviceId: requireBytes(map, 10, "GetStatusResponse") } : {}),
+    ...(map.get(11)?.kind === "text" ? { deviceName: requireText(map, 11, "GetStatusResponse") } : {}),
   };
 }

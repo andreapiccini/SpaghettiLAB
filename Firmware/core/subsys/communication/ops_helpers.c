@@ -5,6 +5,16 @@
 
 #include <zephyr/sys/util.h>
 
+struct spaghetti_config *spaghetti_ops_alloc_config(void)
+{
+	return spaghetti_config_acquire_workspace();
+}
+
+void spaghetti_ops_free_config(struct spaghetti_config *config)
+{
+	spaghetti_config_release_workspace(config);
+}
+
 int spaghetti_ops_encode_empty_map(struct spaghetti_protocol_payload *out)
 {
 	ZCBOR_STATE_E(state, SPAGHETTI_OPS_CBOR_BACKUP, out->bytes,

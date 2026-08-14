@@ -61,6 +61,11 @@ struct spaghetti_block_output_slot {
 static K_MUTEX_DEFINE(processing_lock);
 static bool is_initialized;
 static struct spaghetti_processing_plan live_plan;
+/*
+ * Scratch plan used by validate and configure. The plan is tens of KiB;
+ * keep it off small thread stacks (main is 8 KiB on Core V1).
+ */
+static struct spaghetti_processing_plan work_plan;
 static uint8_t state_arena[SPAGHETTI_PROCESSING_STATE_ARENA_SIZE]
 	__aligned(8);
 static size_t state_arena_used;
@@ -487,15 +492,14 @@ int spaghetti_processing_validate_graph(
 	const struct spaghetti_module_config *modules,
 	size_t module_count)
 {
-	struct spaghetti_processing_plan scratch;
 	size_t arena_used = 0U;
 	int err;
 
 	(void)k_mutex_lock(&processing_lock, K_FOREVER);
 	err = build_plan(blocks, block_count, edges, edge_count, modules,
-			 module_count, &scratch, scratch_arena,
+			 module_count, &work_plan, scratch_arena,
 			 sizeof(scratch_arena), &arena_used);
-	deinit_plan(&scratch);
+	deinit_plan(&work_plan);
 	k_mutex_unlock(&processing_lock);
 
 	return err;
@@ -526,7 +530,6 @@ int spaghetti_processing_configure(
 	const struct spaghetti_edge_config *edges,
 	size_t edge_count)
 {
-	struct spaghetti_processing_plan next_plan;
 	size_t next_arena_used = 0U;
 	int err;
 
@@ -537,7 +540,7 @@ int spaghetti_processing_configure(
 	}
 
 	err = build_plan(blocks, block_count, edges, edge_count, NULL, 0U,
-			 &next_plan, scratch_arena, sizeof(scratch_arena),
+			 &work_plan, scratch_arena, sizeof(scratch_arena),
 			 &next_arena_used);
 	if (err < 0) {
 		k_mutex_unlock(&processing_lock);
@@ -546,8 +549,9 @@ int spaghetti_processing_configure(
 
 	deinit_plan(&live_plan);
 	memcpy(state_arena, scratch_arena, sizeof(state_arena));
-	relocate_plan_states(&next_plan, scratch_arena, state_arena);
-	live_plan = next_plan;
+	relocate_plan_states(&work_plan, scratch_arena, state_arena);
+	live_plan = work_plan;
+	memset(&work_plan, 0, sizeof(work_plan));
 	state_arena_used = next_arena_used;
 	module_cache_count = 0U;
 	memset(module_cache, 0, sizeof(module_cache));

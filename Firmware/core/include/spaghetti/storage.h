@@ -36,6 +36,23 @@
 int spaghetti_storage_init(void);
 
 /**
+ * @brief Report whether Storage currently holds a Config record.
+ *
+ * This does not decode the record. Use @ref spaghetti_storage_read_config to
+ * copy a present record into a caller-owned snapshot.
+ *
+ * @retval 0 A Config record is present in the in-memory Storage copy.
+ * @retval -EACCES Storage has not completed initialization.
+ * @retval -ENOENT No Config record exists in persistent Storage.
+ * @retval -EBADMSG The stored record has an invalid size, magic, or version.
+ * @retval -EIO The backend could not read or verify the complete record.
+ *
+ * @note Thread-safe and callable from thread context. It does not access flash
+ *       after initialization because Storage owns an in-memory copy.
+ */
+int spaghetti_storage_probe_config(void);
+
+/**
  * @brief Copy the Config record loaded from persistent Storage.
  *
  * @param[out] out Caller-owned, suitably aligned Config destination. It must

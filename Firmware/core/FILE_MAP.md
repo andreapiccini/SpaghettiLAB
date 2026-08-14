@@ -83,6 +83,8 @@ flowchart TD
 | `EXTENDING_SPAGHETTI_LAB.md` | End-to-end English guide for eleven extension paths after Module Driver V2 / Protocol V1 freeze | First file to open when extending hardware, plug-ins, protocol, topology, or host Node-RED |
 | `roadmap/V1-PLATFORM-CLOSURE.md` | Ordered plan for resources, generic Port/schema/Config/Runtime, BLE, protocol and Node-RED | Before implementing phases 291–390 or freezing Protocol V1 |
 | `tools/device.py` | Cross-platform port discovery, flashing, and shared Rich monitor over serial or authenticated TLS-PSK | Changing flash, screen, monitor transport, or host credential handling |
+| `tools/usb_bridge.py` | USB Serial/JTAG → `ws://127.0.0.1:8766` for Safari / browsers without Web Serial | Changing the React Flow cable path on Safari; close `make monitor` first |
+| `tools/README.md` | Host CLI, USB serial Protocol V1, and `make usb-bridge` | First checkout of host-side Protocol tools |
 | `ARCHITECTURE.md` | Generic ownership, boundaries, static/runtime split, data/control flow | Any new component, dependency, shared state, protocol adapter, or lifecycle change |
 | `UPDATE_HARDWARE_CONTRACT.md` | Board-independent Maintenance Link, boot-entry policy, and Core V1 mapping | Implementing provisioning, pinmux switching, MCUboot, OTA, recovery, or a new Core backend |
 | `FIRMWARE_IMPLEMENTATION_GUIDE.md` | Normative code/API/type/memory/thread/logging/testing rules | Before writing or reviewing firmware code |
@@ -157,7 +159,7 @@ Each subsystem follows the same three-file reading pattern:
 | Config | `subsys/config/README.md` | `subsys/config/config.c` | Validate/apply desired state and generation control |
 | Data | `subsys/data/README.md` | `subsys/data/data.c` | Generic messages, queues/zbus, delivery and backpressure |
 | Runtime | `subsys/runtime/README.md` | `subsys/runtime/runtime.c` | Periodic work, rules, worker context and lifecycle |
-| Communication | `subsys/communication/README.md` | `subsys/communication/communication.c` | Transport-neutral dispatch and status |
+| Communication | `subsys/communication/README.md` | `subsys/communication/communication.c`, `usb_protocol.c` | Transport-neutral dispatch; USB Protocol V1 on Serial/JTAG |
 | Discovery | `subsys/discovery/README.md` | `subsys/discovery/discovery.c` | Normalize/validate identification proposals |
 | Power | `subsys/power/README.md` | `subsys/power/power.c` | Coordinate a verified real shared power resource |
 

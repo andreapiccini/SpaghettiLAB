@@ -116,7 +116,12 @@ export class CoreSession {
         this.client.getFeatures(),
       ]);
 
-      if (this.deviceId !== null && !bytesEqualHex(this.deviceId, this.binding.expectedDeviceId)) {
+      if (status.deviceId) {
+        this.deviceId = status.deviceId;
+      }
+
+      if (this.deviceId !== null && this.binding.expectedDeviceId !== "" &&
+          !bytesEqualHex(this.deviceId, this.binding.expectedDeviceId)) {
         this._state = "ERROR";
         throw new CoreSessionError(
           CoreSessionErrorCode.DEVICE_ID_MISMATCH,

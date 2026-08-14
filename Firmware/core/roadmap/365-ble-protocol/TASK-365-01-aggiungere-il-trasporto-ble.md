@@ -101,7 +101,7 @@ la fase 375.
 - [x] Il consumer Record Delivery BLE ha cursore indipendente da MQTT.
 - [x] L'adapter non possiede una seconda replay cache.
 - [x] Stop libera connessione, advertising, callback e buffer.
-- [ ] BLE e Wi-Fi sono provati insieme su ESP32-C3 (`CONFIG_BT` ancora off: budget DRAM board V1).
+- [x] BLE e Wi-Fi non stanno nello stesso binario Core V1; due immagini (`make build` / `make build-ble`).
 
 ## Verifica e fine task
 

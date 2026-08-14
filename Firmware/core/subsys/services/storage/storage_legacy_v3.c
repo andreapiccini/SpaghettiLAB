@@ -94,13 +94,6 @@ int spaghetti_storage_legacy_v3_convert(
 	struct spaghetti_config *out)
 {
 	struct spaghetti_storage_legacy_record legacy;
-	struct spaghetti_config converted = {
-		.version = SPAGHETTI_CONFIG_VERSION,
-		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
-		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
-		},
-	};
 	int err;
 
 	if ((bytes == NULL) || (out == NULL)) {
@@ -119,13 +112,18 @@ int spaghetti_storage_legacy_v3_convert(
 		return -EPROTONOSUPPORT;
 	}
 
-	converted.module_count = legacy.config.module_count;
+	memset(out, 0, sizeof(*out));
+	out->version = SPAGHETTI_CONFIG_VERSION;
+	out->connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE;
+	out->energy_policy.ble_availability = SPAGHETTI_BLE_OFF;
+
+	out->module_count = legacy.config.module_count;
 	for (size_t module_idx = 0U; module_idx < legacy.config.module_count;
 	     ++module_idx) {
 		const struct spaghetti_storage_legacy_module_config *source =
 			&legacy.config.modules[module_idx];
 		struct spaghetti_module_config *destination =
-			&converted.modules[module_idx];
+			&out->modules[module_idx];
 
 		if ((source->key == 0U) ||
 		    !type_id_is_terminated(source->type_id) ||
@@ -150,26 +148,20 @@ int spaghetti_storage_legacy_v3_convert(
 		}
 	}
 
-	converted.schedules[0].enabled = legacy.config.sampling.enabled;
-	converted.schedules[0].source_key = legacy.config.sampling.source_key;
-	converted.schedules[0].period_ms = legacy.config.sampling.period_ms;
-	converted.schedule_count = 1U;
-	converted.mqtt = legacy.config.mqtt;
+	out->schedules[0].enabled = legacy.config.sampling.enabled;
+	out->schedules[0].source_key = legacy.config.sampling.source_key;
+	out->schedules[0].period_ms = legacy.config.sampling.period_ms;
+	out->schedule_count = 1U;
+	out->mqtt = legacy.config.mqtt;
 
 	if (legacy.config.threshold_rule.enabled) {
 		err = convert_legacy_threshold(&legacy.config.threshold_rule,
-					       &converted.rules[0]);
+					       &out->rules[0]);
 		if (err < 0) {
 			return err;
 		}
-		converted.rule_count = 1U;
+		out->rule_count = 1U;
 	}
 
-	err = spaghetti_config_validate(&converted, NULL);
-	if (err < 0) {
-		return err;
-	}
-
-	*out = converted;
-	return 0;
+	return spaghetti_config_validate(out, NULL);
 }

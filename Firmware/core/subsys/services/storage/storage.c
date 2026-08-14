@@ -255,9 +255,30 @@ int spaghetti_storage_init(void)
 	return 0;
 }
 
+int spaghetti_storage_probe_config(void)
+{
+	int err = k_mutex_lock(&storage_lock, K_FOREVER);
+
+	if (err < 0) {
+		return err;
+	}
+	if (storage_state != SPAGHETTI_STORAGE_READY) {
+		err = -EACCES;
+		goto unlock;
+	}
+	if (record_load_error < 0) {
+		err = record_load_error;
+		goto unlock;
+	}
+	err = record_present ? 0 : -ENOENT;
+
+unlock:
+	k_mutex_unlock(&storage_lock);
+	return err;
+}
+
 int spaghetti_storage_read_config(struct spaghetti_config *out)
 {
-	struct spaghetti_config config;
 	struct spaghetti_storage_record_v2 migrated;
 	bool should_persist = false;
 	int err;
@@ -287,11 +308,11 @@ int spaghetti_storage_read_config(struct spaghetti_config *out)
 	if (legacy_pending) {
 		err = spaghetti_storage_legacy_v3_convert(
 			(const uint8_t *)&legacy_record, sizeof(legacy_record),
-			&config);
+			out);
 		if (err < 0) {
 			goto unlock;
 		}
-		err = encode_v2_record(&config, &migrated);
+		err = encode_v2_record(out, &migrated);
 		if (err < 0) {
 			goto unlock;
 		}
@@ -299,7 +320,7 @@ int spaghetti_storage_read_config(struct spaghetti_config *out)
 		legacy_pending = false;
 		should_persist = true;
 	} else {
-		err = decode_v2_record(&loaded_record, &config);
+		err = decode_v2_record(&loaded_record, out);
 	}
 
 unlock:
@@ -315,9 +336,6 @@ unlock:
 		} else {
 			LOG_INF("legacy Config migrated to V2");
 		}
-	}
-	if (err == 0) {
-		*out = config;
 	}
 	return err;
 }

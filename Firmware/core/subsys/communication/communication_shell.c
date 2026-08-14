@@ -43,6 +43,21 @@ static const char *wifi_security_name(enum spaghetti_wifi_security security)
 	return (security == SPAGHETTI_WIFI_SECURITY_OPEN) ? "open" : "wpa2";
 }
 
+static const char *wifi_scan_security_name(
+	enum spaghetti_wifi_scan_security security)
+{
+	switch (security) {
+	case SPAGHETTI_WIFI_SCAN_OPEN:
+		return "open";
+	case SPAGHETTI_WIFI_SCAN_WPA2:
+		return "wpa2";
+	case SPAGHETTI_WIFI_SCAN_OTHER:
+		return "other";
+	default:
+		return "other";
+	}
+}
+
 static const char *wifi_state_name(enum spaghetti_wifi_profiles_state state)
 {
 	switch (state) {
@@ -323,7 +338,6 @@ static int cmd_apply(const struct shell *shell, size_t argc, char **argv)
 	struct spaghetti_protocol_response response;
 	uint8_t config_bytes[SPAGHETTI_PROTOCOL_PAYLOAD_MAX];
 	size_t config_size = 0U;
-	struct spaghetti_config snapshot;
 	struct spaghetti_config_revision revision;
 	int err;
 
@@ -341,7 +355,7 @@ static int cmd_apply(const struct shell *shell, size_t argc, char **argv)
 		shell_error(shell, "invalid hex payload: %d", err);
 		return err;
 	}
-	err = spaghetti_config_get_snapshot(&snapshot, &revision);
+	err = spaghetti_config_get_revision(&revision);
 	if (err < 0) {
 		shell_error(shell, "config snapshot failed: %d", err);
 		return err;
@@ -485,6 +499,57 @@ static int cmd_wifi_list(const struct shell *shell, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_wifi_scan(const struct shell *shell, size_t argc, char **argv)
+{
+	struct spaghetti_wifi_scan_result
+		networks[SPAGHETTI_WIFI_SCAN_MAX_RESULTS];
+	size_t network_count = 0U;
+	int err;
+
+	ARG_UNUSED(argv);
+	if (argc != 1U) {
+		shell_error(shell, "usage: spaghetti wifi scan");
+		return -EINVAL;
+	}
+
+	shell_print(shell, "scanning...");
+	err = spaghetti_wifi_profiles_scan(
+		networks, ARRAY_SIZE(networks), &network_count);
+	if (err == -ENOTSUP) {
+		shell_error(shell, "Wi-Fi scan is not available in this firmware");
+		return err;
+	}
+	if (err == -ENODEV) {
+		shell_error(shell, "Wi-Fi interface is not available");
+		return err;
+	}
+	if (err == -EBUSY) {
+		shell_error(shell, "a Wi-Fi scan is already running");
+		return err;
+	}
+	if (err == -ETIMEDOUT) {
+		shell_error(shell, "Wi-Fi scan timed out");
+		return err;
+	}
+	if (err < 0) {
+		shell_error(shell, "Wi-Fi scan failed: %d", err);
+		return err;
+	}
+
+	for (size_t network_idx = 0U; network_idx < network_count;
+	     ++network_idx) {
+		const struct spaghetti_wifi_scan_result *network =
+			&networks[network_idx];
+
+		shell_print(shell, "ssid=%s rssi=%d dBm security=%s known=%u",
+			    network->ssid, network->rssi_dbm,
+			    wifi_scan_security_name(network->security),
+			    network->known ? 1U : 0U);
+	}
+	shell_print(shell, "networks=%u", (uint32_t)network_count);
+	return 0;
+}
+
 static int cmd_wifi_prefer(const struct shell *shell, size_t argc, char **argv)
 {
 	int err;
@@ -555,6 +620,15 @@ static int cmd_wifi_connect(const struct shell *shell, size_t argc, char **argv)
 	}
 
 	err = spaghetti_wifi_profiles_request_connect();
+	if (err == -ENOTSUP) {
+		shell_error(shell,
+			    "Wi-Fi radio is off until Normal mode; this command only reconnects a started worker");
+		return err;
+	}
+	if (err == -ENOENT) {
+		shell_error(shell, "no saved Wi-Fi profile; use spaghetti wifi add");
+		return err;
+	}
 	if (err < 0) {
 		shell_error(shell, "connection request failed: %d", err);
 		return err;
@@ -599,14 +673,7 @@ static int cmd_maintenance_reboot(
 static int cmd_maintenance_finish(
 	const struct shell *shell, size_t argc, char **argv)
 {
-	const struct spaghetti_config safe_empty_config = {
-		.version = SPAGHETTI_CONFIG_VERSION,
-		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
-		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
-		},
-	};
-	struct spaghetti_config stored_config;
+	struct spaghetti_config *config;
 	bool config_replaced = false;
 	int err;
 
@@ -621,16 +688,31 @@ static int cmd_maintenance_finish(
 		return -EACCES;
 	}
 
-	err = spaghetti_storage_read_config(&stored_config);
+	config = spaghetti_ops_alloc_config();
+	if (config == NULL) {
+		shell_error(shell, "Normal-mode Config was not saved: %d",
+			    -ENOMEM);
+		return -ENOMEM;
+	}
+
+	err = spaghetti_storage_probe_config();
 	if (err == 0) {
-		err = spaghetti_config_validate(&stored_config, NULL);
+		err = spaghetti_storage_read_config(config);
+		if (err == 0) {
+			err = spaghetti_config_validate(config, NULL);
+		}
 	}
 	if ((err == -ENOENT) || (err == -EBADMSG) || (err == -EINVAL) ||
 	    (err == -ENOTSUP) || (err == -EEXIST) ||
 	    (err == -EADDRINUSE) || (err == -ERANGE)) {
-		err = spaghetti_storage_write_config(&safe_empty_config);
+		memset(config, 0, sizeof(*config));
+		config->version = SPAGHETTI_CONFIG_VERSION;
+		config->connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE;
+		config->energy_policy.ble_availability = SPAGHETTI_BLE_OFF;
+		err = spaghetti_storage_write_config(config);
 		config_replaced = err == 0;
 	}
+	spaghetti_ops_free_config(config);
 	if (err < 0) {
 		shell_error(shell, "Normal-mode Config was not saved: %d", err);
 		return err;
@@ -756,6 +838,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 	SHELL_CMD(add, NULL, "Save a Wi-Fi profile; password is prompted", cmd_wifi_add),
 	SHELL_CMD(unprefer, NULL, "Clear the preferred SSID", cmd_wifi_unprefer),
 	SHELL_CMD(list, NULL, "List Wi-Fi profiles without passwords", cmd_wifi_list),
+	SHELL_CMD(scan, NULL, "Scan nearby Wi-Fi networks", cmd_wifi_scan),
 	SHELL_CMD(prefer, NULL, "Set a preferred SSID", cmd_wifi_prefer),
 	SHELL_CMD(remove, NULL, "Delete one Wi-Fi profile", cmd_wifi_remove),
 	SHELL_CMD(connect, NULL, "Run connection selection now", cmd_wifi_connect),

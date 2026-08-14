@@ -83,7 +83,7 @@ remote command that confirms the trial image.
 
 | ID | Transport | Action | Expected result | Status | Evidence |
 |---|---|---|---|---|---|
-| Q-B01 | Common | Erase Config while leaving firmware and credentials intact, then boot. | Mode is Unprovisioned; UART Maintenance is active; Runtime, Wi-Fi, OTA and remote console stay off. | NOT RUN | - |
+| Q-B01 | Common | Erase Config while leaving firmware and credentials intact, then boot. | Mode is Unprovisioned; UART Maintenance is active; Runtime, Wi-Fi, OTA and remote console stay off. | PASS | Core V1 `90:70:69:ad:75:48` 2026-08-14. Settings partition erased (firmware slots untouched). Boot: `config=absent`, `mode=unprovisioned`, `maintenance_link active reason=0`, no Runtime/MQTT/OTA start. `spaghetti status` core=3 RUNNING, wifi `state=idle profiles=0`, remote-console uninitialized. |
 | Q-B02 | Common | Install a Config record with invalid integrity/version, then boot. | Corruption is reported and no unsafe automatic upload or operational start occurs. | NOT RUN | - |
 | Q-B03 | Common | Inject a temporary Storage read failure at boot. | Core fails closed; it does not start Runtime or a network update listener. | NOT RUN | - |
 | Q-B04 | UART | Boot valid Config with no bootstrap key and send no frame. | Receive-only bootstrap window expires and Port ownership returns to normal operation. | NOT RUN | - |
@@ -105,7 +105,7 @@ remote command that confirms the trial image.
 
 | ID | Transport | Action | Expected result | Status | Evidence |
 |---|---|---|---|---|---|
-| Q-S01 | Host | Run manifest checks and inspect committed files/artifacts. | No private signing key, PSK or Wi-Fi password is tracked or published. | NOT RUN | - |
+| Q-S01 | Host | Run manifest checks and inspect committed files/artifacts. | No private signing key, PSK or Wi-Fi password is tracked or published. | PASS | 2026-08-14 host scan on `Firmware/core`: `tracked_secret_candidates=[]`, `unsafe_private_file_modes=[]`. Full `update-qualification-manifest` not captured (working tree dirty with firmware stack fixes). |
 | Q-S02 | UART/USB | Provision credentials while capturing logs and command history. | Secret input is hidden and no plaintext secret appears in logs/history. | NOT RUN | - |
 | Q-S03 | Common | Exercise initial USB provisioning, local update, Wi-Fi OTA, base recovery and documented factory recovery separately. | Each path has distinct authorization and preserves at least one bootable image. | NOT RUN | - |
 | Q-S04 | Wi-Fi | Attempt Config, key, Wi-Fi and image-confirm operations through the remote console and OTA transport. | Restricted parsers reject every operation outside their documented boundary. | NOT RUN | - |

@@ -49,5 +49,6 @@
   ],
   "authoringMetadata": {
     "node-core-1": { "position": { "x": 120, "y": 80 }, "selected": false }
-  }
+  },
+  "deviceProfilePackages": []
 }

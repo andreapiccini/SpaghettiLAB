@@ -85,7 +85,6 @@ target_sources(app PRIVATE
   subsys/services/maintenance_link/maintenance_link.c
   subsys/services/maintenance_link/maintenance_mgmt.c
   subsys/services/ota/ota.c
-  subsys/services/ota/ota_dtls.c
   subsys/services/ota/ota_ble.c
   subsys/services/update/update.c
   subsys/services/update/update_mcuboot.c
@@ -100,6 +99,8 @@ target_sources(app PRIVATE
   subsys/communication/protocol_status.c
   subsys/communication/ops_helpers.c
   subsys/communication/communication_shell.c
+  subsys/communication/usb_protocol_framing.c
+  subsys/communication/usb_protocol.c
   subsys/communication/remote_console.c
   subsys/communication/operations/catalog.c
   subsys/communication/operations/status.c
@@ -116,11 +117,31 @@ target_sources(app PRIVATE
   subsys/communication/operations/resources_ops.c
   subsys/communication/operations/features_ops.c
   subsys/communication/operations/device_profile_ops.c
-  subsys/services/mqtt/mqtt.c
   subsys/services/mqtt/mqtt_credentials.c
-  subsys/services/wifi_profiles/wifi_profiles.c
-  subsys/services/wifi_profiles/wifi_profiles_storage.c
 )
+
+if(CONFIG_WIFI)
+  target_sources(app PRIVATE
+    subsys/services/wifi_profiles/wifi_profiles.c
+    subsys/services/wifi_profiles/wifi_profiles_storage.c
+    subsys/services/ota/ota_dtls.c
+  )
+else()
+  target_sources(app PRIVATE
+    subsys/services/wifi_profiles/wifi_profiles_disabled.c
+    subsys/services/ota/ota_dtls_disabled.c
+  )
+endif()
+
+if(CONFIG_MQTT_LIB)
+  target_sources(app PRIVATE
+    subsys/services/mqtt/mqtt.c
+  )
+else()
+  target_sources(app PRIVATE
+    subsys/services/mqtt/mqtt_disabled.c
+  )
+endif()
 
 if(CONFIG_SPAGHETTI_REMOTE_CONSOLE)
   target_sources(app PRIVATE

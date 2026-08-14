@@ -281,13 +281,6 @@ int spaghetti_config_decode_cbor_legacy(
 	uint32_t wire_version,
 	struct spaghetti_config *out)
 {
-	struct spaghetti_config temporary = {
-		.version = SPAGHETTI_CONFIG_VERSION,
-		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
-		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
-		},
-	};
 	struct spaghetti_runtime_schedule_config sampling = {0};
 	int err;
 
@@ -297,6 +290,11 @@ int spaghetti_config_decode_cbor_legacy(
 	     (wire_version != SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V1))) {
 		return -ENOTSUP;
 	}
+
+	memset(out, 0, sizeof(*out));
+	out->version = SPAGHETTI_CONFIG_VERSION;
+	out->connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE;
+	out->energy_policy.ble_availability = SPAGHETTI_BLE_OFF;
 
 	ZCBOR_STATE_D(state, SPAGHETTI_CONFIG_CBOR_BACKUP_COUNT, bytes, length,
 		       1U, 0U);
@@ -322,7 +320,7 @@ int spaghetti_config_decode_cbor_legacy(
 	if (err < 0) {
 		return err;
 	}
-	err = decode_modules(state, &temporary);
+	err = decode_modules(state, out);
 	if (err < 0) {
 		return err;
 	}
@@ -335,15 +333,15 @@ int spaghetti_config_decode_cbor_legacy(
 	if (err < 0) {
 		return err;
 	}
-	temporary.schedules[0] = sampling;
-	temporary.schedule_count = 1U;
+	out->schedules[0] = sampling;
+	out->schedule_count = 1U;
 
 	if (wire_version == SPAGHETTI_CONFIG_CBOR_WIRE_VERSION_V1) {
 		err = expect_key(state, SPAGHETTI_CONFIG_CBOR_ROOT_KEY_MQTT);
 		if (err < 0) {
 			return err;
 		}
-		err = decode_mqtt(state, &temporary.mqtt);
+		err = decode_mqtt(state, &out->mqtt);
 		if (err < 0) {
 			return err;
 		}
@@ -353,11 +351,10 @@ int spaghetti_config_decode_cbor_legacy(
 		return -EBADMSG;
 	}
 
-	err = spaghetti_config_validate(&temporary, NULL);
+	err = spaghetti_config_validate(out, NULL);
 	if (err < 0) {
 		return err;
 	}
 
-	*out = temporary;
 	return 0;
 }

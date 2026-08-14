@@ -39,10 +39,7 @@ export function CoreRow({ row, onConnect }: { readonly row: CoreRowState; readon
         </div>
 
         <div className="min-w-0 flex-1">
-          {/* CoreBindingRecord has no display-name field (S014) — the spec's "nome Core"
-              is the device id itself until a real name field exists; a known, honest gap
-              (see UI-S030's task file), not an invented value. */}
-          <div className="truncate font-body text-sm font-semibold text-ink">{row.binding.expectedDeviceId}</div>
+          <div className="truncate font-body text-sm font-semibold text-ink">{row.displayName}</div>
           <div className="truncate font-mono text-xs text-ink-faint">core://{row.binding.expectedDeviceId}{row.binding.lastKnownVariant ? ` · ${row.binding.lastKnownVariant}` : ""}</div>
         </div>
 

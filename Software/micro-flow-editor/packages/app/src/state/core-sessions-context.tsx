@@ -1,19 +1,19 @@
 import { CatalogCache, CoreSession, type CoreSessionSnapshot, type SessionState, type SyncRelationship } from "@spaghettilab/core-session";
 import type { CoreBindingId, CoreBindingRecord, DomainError } from "@spaghettilab/domain";
-import { EventStream, SpaghettiClient, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type DeviceProfileSummary, type DiscoveryCandidate } from "@spaghettilab/protocol-sdk";
+import { EventStream, SpaghettiClient, WebSerialProtocolTransport, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type DeviceProfileSummary, type DiscoveryCandidate, type ProtocolTransport } from "@spaghettilab/protocol-sdk";
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { connectBrowserWebSocket } from "../lib/browser-websocket-connection.js";
+import { openBrowserSerial, type UsbSerialPort } from "../lib/browser-serial-connection.js";
+import { coreDisplayName } from "../lib/core-identity.js";
 import { useSession } from "./session-context.js";
 
-/**
- * UI-visible view of one Core binding's live session — `CoreSession` itself
- * (`@spaghettilab/core-session`, S030) is a plain class with no React
- * reactivity, so this hook re-derives a plain snapshot object on every
- * relevant change instead of exposing the class instance directly to
- * components (which would silently go stale between renders).
- */
+export type CoreLink =
+  | { readonly kind: "websocket"; readonly url: string }
+  | { readonly kind: "usb"; readonly port: UsbSerialPort };
+
 export type CoreRowState = {
   readonly binding: CoreBindingRecord;
+  readonly displayName: string;
   readonly sessionState: SessionState;
   readonly stale: boolean;
   readonly syncRelationship: SyncRelationship | null;
@@ -22,11 +22,10 @@ export type CoreRowState = {
 
 type CoreSessionsContextValue = {
   rows: readonly CoreRowState[];
-  connect(binding: CoreBindingRecord, wsUrl: string): Promise<void>;
+  connect(binding: CoreBindingRecord, link: CoreLink): Promise<void>;
   cancel(bindingId: CoreBindingId): void;
-  /** `lastKnownSnapshot` for a binding's session, if one has ever been created this app session — `undefined` for a binding never connected to. */
+  fail(bindingId: CoreBindingId, message: string): void;
   getSnapshot(bindingId: CoreBindingId): CoreSessionSnapshot | undefined;
-  /** `undefined` if no session has ever been created for this binding this app session. */
   listDeviceProfiles(bindingId: CoreBindingId): Promise<readonly DeviceProfileSummary[]> | undefined;
   listDiscoveryCandidates(bindingId: CoreBindingId): Promise<readonly DiscoveryCandidate[]> | undefined;
   acceptDiscovery(bindingId: CoreBindingId, req: AcceptDiscoveryRequest): Promise<AcceptDiscoveryResponse> | undefined;
@@ -34,39 +33,69 @@ type CoreSessionsContextValue = {
 
 const CoreSessionsContext = createContext<CoreSessionsContextValue | undefined>(undefined);
 
-/** One shared `CatalogCache` for the whole app session — S030's own reasoning for why it's keyed by device id + fingerprint together applies across every Core, not per-row. */
 const sharedCatalogCache = new CatalogCache();
+
+async function openLink(link: CoreLink): Promise<{ transport: ProtocolTransport; dispose: () => void }> {
+  if (link.kind === "websocket") {
+    const { connection, socket } = await connectBrowserWebSocket(link.url);
+    const transport = new WebSocketProtocolTransport(connection);
+    return {
+      transport,
+      dispose: () => {
+        transport.dispose();
+        socket.close();
+      },
+    };
+  }
+  const connection = await openBrowserSerial(link.port);
+  const transport = new WebSerialProtocolTransport(connection);
+  return {
+    transport,
+    dispose: () => {
+      transport.dispose();
+      void connection.close();
+    },
+  };
+}
 
 export function CoreSessionsProvider({ children }: { readonly children: ReactNode }) {
   const { session } = useSession();
   const sessionsRef = useRef(new Map<CoreBindingId, CoreSession>());
+  const disposersRef = useRef(new Map<CoreBindingId, () => void>());
   const [renderCount, forceRender] = useState(0);
   const rerender = useCallback(() => forceRender((n) => n + 1), []);
   const [errors, setErrors] = useState<Map<CoreBindingId, DomainError | string>>(new Map());
 
   const connect = useCallback(
-    async (binding: CoreBindingRecord, wsUrl: string) => {
+    async (binding: CoreBindingRecord, link: CoreLink) => {
       setErrors((prev) => {
         const next = new Map(prev);
         next.delete(binding.bindingId);
         return next;
       });
+      sessionsRef.current.get(binding.bindingId)?.disconnect();
+      sessionsRef.current.get(binding.bindingId)?.dispose();
+      sessionsRef.current.delete(binding.bindingId);
+      disposersRef.current.get(binding.bindingId)?.();
+      disposersRef.current.delete(binding.bindingId);
       try {
-        const { connection } = await connectBrowserWebSocket(wsUrl);
-        const transport = new WebSocketProtocolTransport(connection);
-        const client = new SpaghettiClient(transport);
-        const eventStream = new EventStream(transport);
+        const opened = await openLink(link);
+        disposersRef.current.set(binding.bindingId, opened.dispose);
+        const client = new SpaghettiClient(opened.transport);
+        const eventStream = new EventStream(opened.transport);
         const coreSession = new CoreSession(binding, client, eventStream, sharedCatalogCache);
         sessionsRef.current.set(binding.bindingId, coreSession);
         rerender();
 
         await coreSession.connect();
-        // Optimistic until @spaghettilab/editor-model's compatibility engine (S042) is
-        // wired into this screen — a known, documented gap (see UI-S030's task file),
-        // not an invented "always compatible" claim about the real device.
         if (session) coreSession.syncWithProject(session.stack.current, true);
         rerender();
       } catch (cause) {
+        sessionsRef.current.get(binding.bindingId)?.disconnect();
+        sessionsRef.current.get(binding.bindingId)?.dispose();
+        sessionsRef.current.delete(binding.bindingId);
+        disposersRef.current.get(binding.bindingId)?.();
+        disposersRef.current.delete(binding.bindingId);
         setErrors((prev) => new Map(prev).set(binding.bindingId, cause instanceof Error ? cause.message : String(cause)));
         rerender();
       }
@@ -80,27 +109,32 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
       coreSession?.disconnect();
       coreSession?.dispose();
       sessionsRef.current.delete(bindingId);
+      disposersRef.current.get(bindingId)?.();
+      disposersRef.current.delete(bindingId);
       rerender();
     },
     [rerender],
   );
 
+  const fail = useCallback((bindingId: CoreBindingId, message: string) => {
+    setErrors((prev) => new Map(prev).set(bindingId, message));
+    rerender();
+  }, [rerender]);
+
   const rows = useMemo<readonly CoreRowState[]>(() => {
     const bindings = session?.stack.current.coreBindings ?? [];
     return bindings.map((binding) => {
       const coreSession = sessionsRef.current.get(binding.bindingId);
+      const deviceName = coreSession?.lastKnownSnapshot.status?.deviceName;
       return {
         binding,
+        displayName: coreDisplayName(deviceName, binding.expectedDeviceId),
         sessionState: coreSession?.state ?? "DISCONNECTED",
         stale: coreSession?.stale ?? false,
         syncRelationship: coreSession?.syncRelationship ?? null,
         error: errors.get(binding.bindingId) ?? null,
       };
     });
-    // `renderCount` is the actual dependency that matters here — `CoreSession` is a
-    // plain mutable class (no reactivity of its own), so `rerender()` bumping this
-    // counter after every `connect()`/`cancel()` step is what tells this memo to
-    // re-read `sessionsRef.current`, not `sessionsRef` itself (a stable ref object).
   }, [session, errors, renderCount]);
 
   const getSnapshot = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.lastKnownSnapshot, []);
@@ -108,7 +142,7 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
   const listDiscoveryCandidates = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.listDiscoveryCandidates(), []);
   const acceptDiscovery = useCallback((bindingId: CoreBindingId, req: AcceptDiscoveryRequest) => sessionsRef.current.get(bindingId)?.acceptDiscovery(req), []);
 
-  const value: CoreSessionsContextValue = { rows, connect, cancel, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery };
+  const value: CoreSessionsContextValue = { rows, connect, cancel, fail, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery };
   return <CoreSessionsContext.Provider value={value}>{children}</CoreSessionsContext.Provider>;
 }
 

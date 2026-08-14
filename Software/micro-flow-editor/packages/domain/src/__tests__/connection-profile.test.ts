@@ -40,6 +40,20 @@ describe("createConnectionProfile", () => {
     expect(profile.credentialRef).toBe("cred://mqtt-broker-01");
   });
 
+  it("builds a valid USB profile keyed by device identity, not a hostname", () => {
+    const profile = mustOk(
+      createConnectionProfile({
+        connectionProfileId: ID,
+        name: "core-lab",
+        transport: "usb",
+        host: "907069ad7548",
+        port: 1,
+      }),
+    );
+    expect(profile.transport).toBe("usb");
+    expect(profile.host).toBe("907069ad7548");
+  });
+
   it("rejects an empty name, unknown transport, empty host, out-of-range port and empty credentialRef together", () => {
     const result = createConnectionProfile({
       connectionProfileId: ID,

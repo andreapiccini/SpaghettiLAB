@@ -359,6 +359,7 @@ static int ina219_init(struct spaghetti_module *module,
 	err = ina219_write_register(context, SPAGHETTI_INA219_REG_CONFIG,
 				    SPAGHETTI_INA219_CONFIG_RESET);
 	if (err < 0) {
+		err = (err == -EIO) ? -ENODEV : err;
 		goto free_context;
 	}
 

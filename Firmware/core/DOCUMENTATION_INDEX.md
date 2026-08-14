@@ -17,6 +17,8 @@ For a complete introduction, use this order:
 3. [Protocol V1 freeze](PROTOCOL_V1.md) — machine contract for Node-RED / SDK / CLI.
 4. [Connectivity and resource contract](CONNECTIVITY_AND_RESOURCE_CONTRACT.md) — learn
    about RAM profiles, BLE, on-demand Wi-Fi, TLS, and service lifecycles.
+   Core V1 radio images and SRAM lessons:
+   [Diary — ESP32-C3 SRAM](DIARIO_PROBLEMI_SOLUZIONI_E_DECISIONI.md).
 4. [Update hardware contract](UPDATE_HARDWARE_CONTRACT.md) — separate the Maintenance
    Link, board pins, MCUboot, OTA, and recovery.
 5. [V1 platform closure](roadmap/V1-PLATFORM-CLOSURE.md) — shows the
@@ -121,7 +123,8 @@ Open these documents when the task enters its component:
 8. [Runtime](subsys/runtime/README.md) — schedule, worker and local rules.
 9. [Discovery](subsys/discovery/README.md) — candidates; Discovery proposes, Config decides.
 10. [Communication](subsys/communication/README.md) — requests independent of
-    transport.
+    transport (USB Protocol V1 on Serial/JTAG; Safari uses
+    [host tools](tools/README.md) `make usb-bridge`).
 11. [Power](subsys/power/README.md) — physically controllable electrical resources.
 12. [Optional services](subsys/services/README.md) — common backend rules.
 

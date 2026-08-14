@@ -54,15 +54,9 @@ LOG_MODULE_REGISTER(spaghetti_core, CONFIG_SPAGHETTI_CORE_LOG_LEVEL);
 	SPAGHETTI_CONNECTIVITY_ONLINE
 #endif
 
-static const struct spaghetti_config empty_config = {
-	.version = SPAGHETTI_CONFIG_VERSION,
-	.connectivity_policy = SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE,
-	.energy_policy = {
-		.ble_availability = SPAGHETTI_BLE_ADVERTISING,
-	},
-};
-
 static bool startup_config_present;
+static enum spaghetti_connectivity_policy startup_connectivity_policy =
+	SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE;
 static bool core_info_available;
 static struct spaghetti_core_info core_info;
 static enum spaghetti_maintenance_entry_reason maintenance_reason;
@@ -80,11 +74,13 @@ static int fail_initialization(const char *component, int err)
 
 static int retain_startup_config(void)
 {
-	struct spaghetti_config startup_config;
+	struct spaghetti_config *startup_config;
 	struct spaghetti_config_failure validation_failure;
-	int err = spaghetti_storage_read_config(&startup_config);
+	int err;
 
 	startup_config_present = false;
+	startup_connectivity_policy = SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE;
+	err = spaghetti_storage_probe_config();
 	if (err == -ENOENT) {
 		LOG_INF("no stored Config: first boot");
 		return 0;
@@ -97,18 +93,41 @@ static int retain_startup_config(void)
 		return err;
 	}
 
-	err = spaghetti_config_validate(&startup_config, &validation_failure);
+	/*
+	 * Heap snapshot owned by this function. Bound is one
+	 * sizeof(struct spaghetti_config); freed before return. Failure
+	 * leaves the live empty Config in place.
+	 */
+	startup_config = k_malloc(sizeof(*startup_config));
+	if (startup_config == NULL) {
+		return -ENOMEM;
+	}
+	err = spaghetti_storage_read_config(startup_config);
+	if (err < 0) {
+		k_free(startup_config);
+		if ((err == -EBADMSG) || (err == -EPROTONOSUPPORT)) {
+			LOG_WRN("stored Config is corrupt or incompatible; using empty state");
+			return 0;
+		}
+		return err;
+	}
+
+	err = spaghetti_config_validate(startup_config, &validation_failure);
 	if (err < 0) {
 		LOG_WRN("stored Config invalid: field=%u index=%u reason=%u err=%d",
 			(uint32_t)validation_failure.field,
 			(uint32_t)validation_failure.index,
 			(uint32_t)validation_failure.reason, err);
+		k_free(startup_config);
 		return 0;
 	}
 
 	startup_config_present = true;
-	LOG_INF("stored Config retained: modules=%u",
-		(uint32_t)startup_config.module_count);
+	startup_connectivity_policy = startup_config->connectivity_policy;
+	LOG_INF("stored Config retained: modules=%u policy=%u",
+		(uint32_t)startup_config->module_count,
+		(uint32_t)startup_connectivity_policy);
+	k_free(startup_config);
 	return 0;
 }
 
@@ -272,7 +291,7 @@ int spaghetti_core_init(void)
 	if (err < 0) {
 		goto processing_failed;
 	}
-	err = spaghetti_config_init(&empty_config);
+	err = spaghetti_config_init(NULL);
 	if (err < 0) {
 		goto config_failed;
 	}
@@ -337,8 +356,7 @@ int spaghetti_core_init(void)
 		if (err < 0) {
 			goto ota_start_failed;
 		}
-		err = spaghetti_connectivity_init(
-			SPAGHETTI_CONNECTIVITY_BOOT_POLICY_VALUE);
+		err = spaghetti_connectivity_init(startup_connectivity_policy);
 		if (err < 0) {
 			goto connectivity_failed;
 		}
@@ -476,7 +494,6 @@ int spaghetti_core_start(void)
 {
 	bool confirm_trial;
 	struct spaghetti_config_revision revision;
-	struct spaghetti_config startup_config;
 	int err = k_mutex_lock(&core_lock, K_FOREVER);
 
 	if (err < 0) {
@@ -489,18 +506,31 @@ int spaghetti_core_start(void)
 
 	if ((core_info.mode == SPAGHETTI_CORE_MODE_NORMAL) &&
 	    startup_config_present) {
-		err = spaghetti_config_get_snapshot(&startup_config, &revision);
-		if (err == 0) {
-			err = spaghetti_storage_read_config(&startup_config);
-		}
-		if (err == 0) {
-			err = spaghetti_config_apply(&startup_config,
-						     revision.generation,
-						     NULL);
-		}
-		if (err < 0) {
-			LOG_WRN("stored Config not applied; empty state remains live: err=%d",
-				err);
+		struct spaghetti_config *startup_config =
+			spaghetti_config_acquire_workspace();
+
+		if (startup_config == NULL) {
+			LOG_WRN("stored Config not applied; empty state remains live: "
+				"err=%d",
+				-ENOMEM);
+		} else {
+			err = spaghetti_config_get_snapshot(startup_config,
+							    &revision);
+			if (err == 0) {
+				err = spaghetti_storage_read_config(
+					startup_config);
+			}
+			if (err == 0) {
+				err = spaghetti_config_apply(
+					startup_config, revision.generation,
+					NULL);
+			}
+			spaghetti_config_release_workspace(startup_config);
+			if (err < 0) {
+				LOG_WRN("stored Config not applied; empty state remains live: "
+					"err=%d",
+					err);
+			}
 		}
 	}
 

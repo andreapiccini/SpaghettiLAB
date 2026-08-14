@@ -107,24 +107,31 @@ ZTEST(connectivity, test_policy_transitions_are_deterministic)
 	zassert_ok(spaghetti_connectivity_get_snapshot(&snapshot));
 	zassert_equal(snapshot.policy, SPAGHETTI_CONNECTIVITY_ONLINE);
 	zassert_equal(snapshot.active_services,
-		SPAGHETTI_CONNECTIVITY_SERVICE_BLE |
 		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI |
 		SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
 	zassert_equal(snapshot.leased_services, 0U);
 	zassert_equal(snapshot.lease_expires_at_ms, 0);
 	zassert_equal(snapshot.last_error, 0);
-	zassert_equal(action_count, 3U);
+	zassert_equal(action_count, 4U);
+	zassert_true(actions[1].started);
 	zassert_equal(actions[1].service,
 		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI);
+	zassert_true(actions[2].started);
 	zassert_equal(actions[2].service,
 		SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
-	zassert_ok(spaghetti_connectivity_set_policy(
-		SPAGHETTI_CONNECTIVITY_LOW_ENERGY));
 	zassert_false(actions[3].started);
 	zassert_equal(actions[3].service,
-		SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
-	zassert_false(actions[4].started);
+		SPAGHETTI_CONNECTIVITY_SERVICE_BLE);
+	zassert_ok(spaghetti_connectivity_set_policy(
+		SPAGHETTI_CONNECTIVITY_LOW_ENERGY));
+	zassert_true(actions[4].started);
 	zassert_equal(actions[4].service,
+		SPAGHETTI_CONNECTIVITY_SERVICE_BLE);
+	zassert_false(actions[5].started);
+	zassert_equal(actions[5].service,
+		SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
+	zassert_false(actions[6].started);
+	zassert_equal(actions[6].service,
 		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI);
 }
 
@@ -143,6 +150,7 @@ ZTEST(connectivity, test_lease_release_and_timeout_restore_policy)
 	zassert_ok(spaghetti_connectivity_get_snapshot(&snapshot));
 	zassert_equal(snapshot.leased_services,
 		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI);
+	zassert_equal(physical_services, SPAGHETTI_CONNECTIVITY_SERVICE_WIFI);
 	zassert_true(snapshot.lease_expires_at_ms > k_uptime_get());
 	zassert_ok(spaghetti_connectivity_release_lease());
 	zassert_equal(spaghetti_connectivity_release_lease(), -ENOENT);
@@ -237,6 +245,48 @@ ZTEST(connectivity, test_logical_reboot_clears_lease)
 	zassert_ok(spaghetti_connectivity_get_snapshot(&snapshot));
 	zassert_equal(snapshot.leased_services, 0U);
 	zassert_equal(snapshot.lease_expires_at_ms, 0);
+}
+
+ZTEST(connectivity, test_radio_mutex_never_runs_ble_and_wifi)
+{
+	const struct spaghetti_connectivity_lease_request wifi_lease = {
+		.services = SPAGHETTI_CONNECTIVITY_SERVICE_WIFI,
+		.duration_ms = 40U,
+	};
+	const struct spaghetti_connectivity_lease_request ble_lease = {
+		.services = SPAGHETTI_CONNECTIVITY_SERVICE_BLE,
+		.duration_ms = 40U,
+	};
+	const struct spaghetti_connectivity_lease_request both = {
+		.services = SPAGHETTI_CONNECTIVITY_SERVICE_BLE |
+			    SPAGHETTI_CONNECTIVITY_SERVICE_WIFI,
+		.duration_ms = 40U,
+	};
+	struct spaghetti_connectivity_snapshot snapshot;
+
+	zassert_ok(spaghetti_connectivity_init(
+		SPAGHETTI_CONNECTIVITY_LOW_ENERGY));
+	zassert_equal(spaghetti_connectivity_acquire_lease(&both), -EINVAL);
+	zassert_ok(spaghetti_connectivity_acquire_lease(&wifi_lease));
+	zassert_ok(spaghetti_connectivity_get_snapshot(&snapshot));
+	zassert_equal(snapshot.active_services,
+		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI);
+	zassert_ok(spaghetti_connectivity_release_lease());
+	zassert_equal(physical_services, SPAGHETTI_CONNECTIVITY_SERVICE_BLE);
+
+	zassert_ok(spaghetti_connectivity_set_policy(
+		SPAGHETTI_CONNECTIVITY_ONLINE));
+	zassert_equal(physical_services,
+		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI |
+		SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
+	zassert_ok(spaghetti_connectivity_acquire_lease(&ble_lease));
+	zassert_ok(spaghetti_connectivity_get_snapshot(&snapshot));
+	zassert_equal(snapshot.active_services,
+		SPAGHETTI_CONNECTIVITY_SERVICE_BLE);
+	zassert_ok(spaghetti_connectivity_release_lease());
+	zassert_equal(physical_services,
+		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI |
+		SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
 }
 
 ZTEST_SUITE(connectivity, NULL, NULL, connectivity_before,

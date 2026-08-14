@@ -18,7 +18,7 @@ function fingerprintHex(bytes: Uint8Array): string {
 /** `ux/screens/S040-catalog-topology/{visual,ui-behavior,backend-behavior}.md`. Puramente diagnostica: nessuna mutazione, nessun canvas React Flow (non è questa schermata a usare `react-flow-adapter`, vedi `backend-behavior.md`). */
 export function CatalogTopologyScreen() {
   const { session } = useSession();
-  const { rows, getSnapshot, listDeviceProfiles, connect } = useCoreSessions();
+  const { rows, getSnapshot, listDeviceProfiles, connect, fail } = useCoreSessions();
   const bindings = session?.stack.current.coreBindings ?? [];
 
   const [selectedId, setSelectedId] = useState<CoreBindingId | null>(bindings[0]?.bindingId ?? null);
@@ -78,7 +78,15 @@ export function CatalogTopologyScreen() {
           <TriangleAlert size={16} className="text-warning" />
           <span className="font-body text-sm text-ink">Lettura del catalogo interrotta — i dati mostrati potrebbero essere incompleti.</span>
           {selected && (
-            <button type="button" onClick={() => void reconnectCoreBinding(selected, connect)} className="ml-auto font-body text-sm font-semibold text-info underline">
+            <button
+              type="button"
+              onClick={() =>
+                void reconnectCoreBinding(selected, connect).catch((cause: unknown) => {
+                  fail(selected.bindingId, cause instanceof Error ? cause.message : String(cause));
+                })
+              }
+              className="ml-auto font-body text-sm font-semibold text-info underline"
+            >
               Riprova lettura
             </button>
           )}
@@ -92,7 +100,15 @@ export function CatalogTopologyScreen() {
       ) : !snapshot?.catalog ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3">
           <p className="font-body text-sm text-ink-muted">Nessun dato disponibile per questo Core.</p>
-          <button type="button" onClick={() => void reconnectCoreBinding(selected, connect)} className="rounded-slpill bg-brand-blue px-4 py-2 font-body-strong text-sm text-white hover:bg-brand-blue-dark">
+          <button
+            type="button"
+            onClick={() =>
+              void reconnectCoreBinding(selected, connect).catch((cause: unknown) => {
+                fail(selected.bindingId, cause instanceof Error ? cause.message : String(cause));
+              })
+            }
+            className="rounded-slpill bg-brand-blue px-4 py-2 font-body-strong text-sm text-white hover:bg-brand-blue-dark"
+          >
             Connetti e leggi
           </button>
         </div>

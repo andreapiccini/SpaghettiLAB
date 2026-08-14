@@ -14,6 +14,7 @@
 #include <spaghetti/config.h>
 #include <spaghetti/core.h>
 #include <spaghetti/health.h>
+#include <spaghetti/identity.h>
 #include <spaghetti/module.h>
 #include <spaghetti/module_manager.h>
 #include <spaghetti/port.h>
@@ -95,10 +96,13 @@ static int execute_get_status(
 	}
 
 	{
+		struct spaghetti_identity identity;
+		const bool have_identity = (spaghetti_identity_get(&identity) == 0);
+		const size_t map_keys = have_identity ? 12U : 10U;
 		ZCBOR_STATE_E(state, SPAGHETTI_OPS_CBOR_BACKUP, response->bytes,
 			       sizeof(response->bytes), 1U);
 
-		if (!zcbor_map_start_encode(state, 10U) ||
+		if (!zcbor_map_start_encode(state, map_keys) ||
 		    !zcbor_uint32_put(state, 0U) ||
 		    !zcbor_uint32_put(state, (uint32_t)core_info.state) ||
 		    !zcbor_uint32_put(state, 1U) ||
@@ -158,8 +162,19 @@ static int execute_get_status(
 			}
 		}
 
-		if (!zcbor_list_end_encode(state, module_count) ||
-		    !zcbor_map_end_encode(state, 10U)) {
+		if (!zcbor_list_end_encode(state, module_count)) {
+			return -EMSGSIZE;
+		}
+		if (have_identity &&
+		    (!zcbor_uint32_put(state, 10U) ||
+		     !zcbor_bstr_encode_ptr(state, identity.device_id,
+					    sizeof(identity.device_id)) ||
+		     !zcbor_uint32_put(state, 11U) ||
+		     !zcbor_tstr_put_term(state, identity.device_name,
+					  SPAGHETTI_DEVICE_NAME_SIZE))) {
+			return -EMSGSIZE;
+		}
+		if (!zcbor_map_end_encode(state, map_keys)) {
 			return -EMSGSIZE;
 		}
 		response->size = (size_t)(state->payload - response->bytes);

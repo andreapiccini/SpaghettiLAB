@@ -215,7 +215,7 @@ static struct spaghetti_config make_config(void)
 		},
 		.connectivity_policy = SPAGHETTI_CONNECTIVITY_ONLINE,
 		.energy_policy = {
-			.ble_availability = SPAGHETTI_BLE_ADVERTISING,
+			.ble_availability = SPAGHETTI_BLE_OFF,
 		},
 		.mqtt = {
 			.enabled = true,

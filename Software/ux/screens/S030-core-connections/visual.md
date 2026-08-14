@@ -98,14 +98,18 @@ Core" centrato sotto.
 pattern dei dialoghi già confermato in S070/S010.
 
 - Titolo "Connetti un Core" (`type.heading`).
-- Campo "Nome Core" (opzionale, se vuoto si usa l'identità riportata dal
-  dispositivo) — stesso stile campo testo di S070 § Inspector.
-- Selettore metodo: due opzioni a pillola affiancate, "Rilevamento automatico"
-  (selezionata di default) / "Indirizzo manuale" — quest'ultima rivela un campo
-  testo aggiuntivo (`font.mono`).
-- Se "Rilevamento automatico": lista dei Core trovati in rete (righe compatte
-  44px, nome + identificatore `font.mono`, radio selezione), skeleton mentre la
-  scansione è in corso, stato vuoto "Nessun Core trovato in rete" con azione
-  "Riprova scansione".
+- Campo "Nome" (opzionale, se vuoto si usa il nome o l'identificatore
+  riportato dal dispositivo via Protocol V1).
+- Selettore metodo: tre opzioni a pillola, "Auto" (selezionata di default) /
+  "Core in rete" / "Core via cavo".
+- "Auto" e "Core via cavo" elencano i Core trovati con Protocol V1 (più
+  dispositivi, selezione multipla): porte Web Serial già autorizzate (Chrome/Edge)
+  e, se in esecuzione, il ponte locale `make usb-bridge` (`ws://127.0.0.1:8766`).
+  Safari non ha Web Serial: a lista vuota il dialogo spiega di chiudere
+  `make monitor`, lanciare il ponte e usare «Riprova». "Core via cavo" in
+  Chrome/Edge aggiunge il picker Web Serial per autorizzare una porta nuova.
+  "Core in rete" rivela un campo indirizzo WebSocket (`font.mono`); l'identità
+  arriva dal Core, non va digitata. I Core visti dal ponte mostrano il suffisso
+  «ponte locale» sotto l'identificatore.
 - Pulsante primario "Connetti" (disabilitato finché non c'è una selezione o un
   indirizzo valido), pulsante secondario "Annulla".

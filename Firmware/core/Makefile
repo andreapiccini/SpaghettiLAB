@@ -26,14 +26,17 @@ BAUD ?= 115200
 FLASH_BAUD ?= 460800
 MCUBOOT_DEV_KEY := .keys/mcuboot-dev-ecdsa-p256.pem
 WEST_BUILD := west build --sysbuild
+# Optional extra Kconfig overlay. BLE-only image: make build-ble.
+EXTRA_CONF_FILE ?=
 WEST_CMAKE_ARGS := -- -DBOARD_ROOT=/opt/zephyrproject/app \
-	-DDTS_ROOT=/opt/zephyrproject/app
+	-DDTS_ROOT=/opt/zephyrproject/app \
+	$(if $(strip $(EXTRA_CONF_FILE)),-DEXTRA_CONF_FILE=$(EXTRA_CONF_FILE),)
 
-.PHONY: image shell signing-key validate build pristine flash screen monitor \
+.PHONY: image shell signing-key validate build build-ble pristine flash screen monitor \
 	host-tools ports remote-console-credential remote-console-provision \
 	remote-console-enable remote-console-clear remote-console-list update-qualification-manifest \
 	update-qualification-check resource-report node-red-ble-smoke node-red-mqtt-smoke \
-	spaghetti config-validate config-apply clean
+	spaghetti usb-bridge config-validate config-apply clean
 
 $(HOST_TOOLS_STAMP): tools/requirements.txt
 	@$(HOST_PYTHON) -m venv .venv
@@ -60,6 +63,11 @@ host-tools: $(HOST_TOOLS_STAMP)
 # Spaghetti CLI V1 (catalog-driven JSON Config / Protocol). Pass ARGS='…'.
 spaghetti: host-tools
 	@$(HOST_VENV_PYTHON) tools/spaghetti.py $(ARGS)
+
+# USB Serial/JTAG → ws://127.0.0.1:8766 for Safari / browsers without Web Serial.
+# Close make monitor first. Chrome can keep using navigator.serial without this.
+usb-bridge: host-tools
+	@PYTHONPATH=. $(HOST_VENV_PYTHON) -m tools.usb_bridge
 
 # CONFIG is a local JSON path (not a Kconfig symbol).
 config-validate: host-tools
@@ -123,6 +131,23 @@ build:
 		fi; \
 		$(VALIDATOR_ENV)$(WEST_BUILD) \
 			-p auto -b "$$BOARD" -d build . $(WEST_CMAKE_ARGS)'
+
+build-ble:
+	@$(COMPOSE) run --rm --entrypoint sh dev -lc \
+		'set -e; \
+		test -f "$(MCUBOOT_DEV_KEY)" || { \
+			echo "Missing $(MCUBOOT_DEV_KEY); run make signing-key first."; \
+			exit 2; \
+		}; \
+		if [ -d build-ble ] && [ ! -f build-ble/build.ninja ]; then \
+			echo "Incomplete build-ble directory detected; regenerating."; \
+			cmake -E remove_directory build-ble; \
+		fi; \
+		$(VALIDATOR_ENV)$(WEST_BUILD) \
+			-p auto -b "$$BOARD" -d build-ble . \
+			-- -DBOARD_ROOT=/opt/zephyrproject/app \
+			-DDTS_ROOT=/opt/zephyrproject/app \
+			-DEXTRA_CONF_FILE=overlay-ble.conf'
 
 pristine:
 	@$(COMPOSE) run --rm --entrypoint sh dev -lc \

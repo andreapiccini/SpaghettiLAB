@@ -75,12 +75,17 @@ punto 8 garantisce che gli altri workspace (le altre righe) restano operativi �
 
 ## Dialogo "Connetti un Core"
 
-1. "Rilevamento automatico" invoca il discovery di rete/BLE di S030 punto 1 — il
-   risultato **propone** un binding, non sostituisce mai l'identità già
-   registrata di un Core esistente (S030 punto 1, garanzia esplicita).
-2. Alla selezione/conferma, S030 crea un nuovo Core binding nell'inventory
+1. "Auto" / "Core via cavo" interrogano le porte USB già autorizzate (Web Serial)
+   e `ws://127.0.0.1:8766/list` se `make usb-bridge` è acceso. Ogni Core che
+   risponde a `GET_STATUS` **propone** un binding dalla `device_id` del protocollo;
+   non sostituisce mai l'identità già registrata (S030 punto 1).
+2. Safari non chiama `navigator.serial`. La connessione via cavo passa dal ponte:
+   React Flow usa `WebSocketProtocolTransport` su
+   `ws://127.0.0.1:8766/core/<device_id>`. Il profilo salvato resta `transport: usb`
+   con host = identità; al reconnect si riprova Web Serial, poi il ponte.
+3. Alla selezione/conferma, S030 crea un nuovo Core binding nell'inventory
    persistente del progetto (persistito via `ProjectRepository.save()`, S014) e
    avvia immediatamente la connessione (vedi sopra).
-3. "Indirizzo manuale" salta il discovery e passa direttamente il target al
-   transport di S030 (che gestisce anche il transport fallback autorizzato,
-   punto 7) — nessuna differenza nella state machine risultante.
+4. "Core in rete" salta lo scan USB e passa l'URL WebSocket al transport di S030
+   — nessuna differenza nella state machine risultante. Il nome digitato è solo
+   un soprannome opzionale.

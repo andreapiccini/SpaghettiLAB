@@ -7,7 +7,7 @@ import { err, ok, type Result } from "./result.js";
  * lists `connectionProfileId` on `CoreBinding` but leaves the profile shape
  * to this task.
  */
-export type ConnectionTransportKind = "mqtt" | "websocket" | "ble";
+export type ConnectionTransportKind = "mqtt" | "websocket" | "ble" | "usb";
 
 /**
  * A reusable, nameable way to reach a Core — referenced by `CoreBindingRecord.
@@ -36,7 +36,7 @@ export type ConnectionProfileInput = {
   readonly credentialRef?: string;
 };
 
-const TRANSPORT_KINDS: readonly ConnectionTransportKind[] = ["mqtt", "websocket", "ble"];
+const TRANSPORT_KINDS: readonly ConnectionTransportKind[] = ["mqtt", "websocket", "ble", "usb"];
 
 function invalid(field: string, target: unknown, remediation: string): DomainError {
   return domainError({

@@ -4,14 +4,18 @@
 
 The Connectivity Manager is the single owner of the persistent radio/network policy
 and of one bounded temporary service lease. Wi-Fi Profiles still owns credentials,
-MQTT owns broker state, and later BLE code will own peers; none of those components
+MQTT owns broker state, and BLE owns peers when compiled in; none of those components
 selects the overall power policy.
 
 ## Policy model
 
 `LOW_ENERGY` keeps only compiled BLE connectivity in the normal service set.
-`ONLINE` permits compiled BLE, Wi-Fi, and MQTT services. The remote console is never
-opened merely because Wi-Fi is active; it must be requested explicitly by a lease.
+`ONLINE` permits compiled Wi-Fi and MQTT. BLE and Wi-Fi never run together: the
+ESP32-C3 shares one 2.4 GHz radio, so a lease for the other radio switches the
+active one instead of OR-ing both. On Core V1 they are also **separate firmware
+images** (`make build` vs `make build-ble`) because SRAM cannot hold both stacks.
+The remote console is never opened merely because Wi-Fi is active; it must be
+requested explicitly by a lease.
 
 The build selects an initial policy through Kconfig. Config will persist it in phase
 330. The service callbacks are no-op adapters in this phase so existing radio behavior

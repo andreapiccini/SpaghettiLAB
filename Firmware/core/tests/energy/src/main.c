@@ -274,9 +274,9 @@ ZTEST(energy, test_online_with_active_lease_keeps_active_path)
 	zassert_ok(spaghetti_energy_get_snapshot(&snapshot));
 	zassert_true(snapshot.active_uptime_ms > 0U);
 	zassert_equal(physical_services,
-		SPAGHETTI_CONNECTIVITY_SERVICE_BLE |
 		SPAGHETTI_CONNECTIVITY_SERVICE_WIFI |
 		SPAGHETTI_CONNECTIVITY_SERVICE_MQTT);
+	zassert_false(snapshot.ble_radio_on);
 }
 
 ZTEST(energy, test_low_energy_rejects_busy_workspace)
@@ -309,21 +309,23 @@ ZTEST(energy, test_invalid_policy_and_init_boundaries)
 		}), -EINVAL);
 }
 
-ZTEST(energy, test_failed_ble_transition_rolls_back_connectivity)
+ZTEST(energy, test_online_forces_ble_radio_off)
 {
 	const struct spaghetti_energy_policy policy = {
 		.ble_availability = SPAGHETTI_BLE_ADVERTISING,
 	};
 	struct spaghetti_connectivity_snapshot snapshot;
+	struct spaghetti_energy_snapshot energy;
 
 	zassert_ok(spaghetti_energy_init(&policy));
 	zassert_ok(spaghetti_connectivity_init(
 		SPAGHETTI_CONNECTIVITY_LOW_ENERGY));
-	fail_ble_radio_on = true;
-	zassert_equal(spaghetti_energy_apply_connectivity(
-		SPAGHETTI_CONNECTIVITY_ONLINE), -EIO);
+	zassert_ok(spaghetti_energy_apply_connectivity(
+		SPAGHETTI_CONNECTIVITY_ONLINE));
 	zassert_ok(spaghetti_connectivity_get_snapshot(&snapshot));
-	zassert_equal(snapshot.policy, SPAGHETTI_CONNECTIVITY_LOW_ENERGY);
+	zassert_equal(snapshot.policy, SPAGHETTI_CONNECTIVITY_ONLINE);
+	zassert_ok(spaghetti_energy_get_snapshot(&energy));
+	zassert_false(energy.ble_radio_on);
 }
 
 ZTEST(energy, test_notify_local_event_rejects_non_windowed_policy)

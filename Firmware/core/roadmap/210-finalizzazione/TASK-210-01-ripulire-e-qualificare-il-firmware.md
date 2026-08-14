@@ -144,6 +144,11 @@ aggiungi la sua rappresentazione al codec del protocollo usato.
 - [x] Documentazione, validator e build pristine sono puliti.
 - [ ] Matrice hardware INA219/Relay/fault/PCB — **OPEN**, copiata in `verification/v1/PLATFORM_REPORT.md` e fase 290; non PASS via simulazione.
 
+Hardware 2026-08-14 on Core V1 (no INA219 attached): steps 1–2 PASS in
+unprovisioned/reduced mode; steps 3–9 N/A until a physical INA219 (and optional
+broker) are on Port 0. Do not boot this board to Normal just to force those
+rows.
+
 ## Verifica e fine task
 
 Software/fake items above are DONE as of platform V1 finalization (TASK-390).

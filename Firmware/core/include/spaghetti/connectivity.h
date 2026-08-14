@@ -11,10 +11,16 @@
 
 #include <zephyr/sys/util.h>
 
-/** Persistent policy used to derive the normal connectivity services. */
+/**
+ * Persistent policy used to derive the normal connectivity services.
+ *
+ * ESP32-C3 shares one 2.4 GHz radio: BLE and Wi-Fi never run together.
+ * `LOW_ENERGY` is BLE (when compiled). `ONLINE` is Wi-Fi and MQTT (when
+ * compiled). A lease for the other radio switches, it does not OR.
+ */
 enum spaghetti_connectivity_policy {
 	SPAGHETTI_CONNECTIVITY_LOW_ENERGY, /**< BLE only when compiled. */
-	SPAGHETTI_CONNECTIVITY_ONLINE, /**< BLE, Wi-Fi, and MQTT when compiled. */
+	SPAGHETTI_CONNECTIVITY_ONLINE, /**< Wi-Fi and MQTT when compiled. */
 };
 
 /** Independently controlled connectivity services. */

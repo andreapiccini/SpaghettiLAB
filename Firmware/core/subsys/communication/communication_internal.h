@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include <spaghetti/communication.h>
+#include <spaghetti/config.h>
 #include <spaghetti/protocol.h>
 
 #include <zcbor_common.h>
@@ -14,6 +15,8 @@
 #define SPAGHETTI_OPS_CBOR_BACKUP 4U
 
 int spaghetti_communication_shell_init(void);
+
+int spaghetti_usb_protocol_init(void);
 
 int spaghetti_communication_shell_decode_hex(
 	const char *hex,
@@ -25,6 +28,15 @@ uint32_t spaghetti_communication_shell_permissions(
 	enum spaghetti_core_mode mode);
 
 uint32_t spaghetti_communication_remote_console_permissions(void);
+
+/**
+ * Heap snapshot owned by the caller. Bound is one
+ * sizeof(struct spaghetti_config). Free with
+ * spaghetti_ops_free_config() before return. Failure: NULL.
+ */
+struct spaghetti_config *spaghetti_ops_alloc_config(void);
+
+void spaghetti_ops_free_config(struct spaghetti_config *config);
 
 int spaghetti_ops_encode_empty_map(struct spaghetti_protocol_payload *out);
 

@@ -102,6 +102,14 @@ static int apply_uart_pins(void)
 				   PINCTRL_STATE_SLEEP);
 }
 
+static void drain_maintenance_uart(void)
+{
+	uint8_t byte;
+
+	while (uart_fifo_read(maintenance_uart, &byte, 1) > 0) {
+	}
+}
+
 static bool tags_match(const uint8_t *first, const uint8_t *second,
 		       size_t size)
 {
@@ -372,15 +380,18 @@ int spaghetti_maintenance_link_enter(
 		goto unlock;
 	}
 
+	uart_irq_rx_disable(maintenance_uart);
+	uart_irq_tx_disable(maintenance_uart);
 	err = apply_uart_pins();
 	if (err < 0) {
 		(void)apply_normal_pins();
 		atomic_set(&link_state, SPAGHETTI_MAINTENANCE_LINK_ERROR);
 		goto unlock;
 	}
+	drain_maintenance_uart();
+	uart_irq_rx_enable(maintenance_uart);
 	entry_reason = reason;
 	atomic_set(&link_state, SPAGHETTI_MAINTENANCE_LINK_ACTIVE);
-	uart_irq_rx_enable(maintenance_uart);
 	LOG_INF("active: reason=%u", (uint32_t)entry_reason);
 
 unlock:

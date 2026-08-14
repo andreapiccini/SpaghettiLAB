@@ -246,6 +246,14 @@ static int apply_ble_policy_locked(void)
 	cancel_window_timers();
 	context.window_active = false;
 
+	if (context.connectivity == SPAGHETTI_CONNECTIVITY_ONLINE) {
+		err = set_ble_radio_locked(false);
+		if (err == 0) {
+			context.ble_runtime = SPAGHETTI_ENERGY_BLE_STOPPED;
+		}
+		return err;
+	}
+
 	switch (context.policy.ble_availability) {
 	case SPAGHETTI_BLE_OFF:
 		err = set_ble_radio_locked(false);

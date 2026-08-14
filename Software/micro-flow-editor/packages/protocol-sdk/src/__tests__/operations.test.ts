@@ -50,6 +50,8 @@ describe("GET_STATUS", () => {
       modules: [
         { key: 10, id: 1, portId: 0, state: 1, endpointKind: 2, endpointValueRaw: 64, typeId: "ina219" },
       ],
+      deviceId: new Uint8Array([0x90, 0x70, 0x69, 0xad]),
+      deviceName: "core-lab",
     };
     expect(ops.decodeGetStatusResponse(ops.encodeGetStatusResponse(response))).toEqual(response);
   });

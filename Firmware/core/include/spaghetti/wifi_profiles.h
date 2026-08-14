@@ -19,10 +19,20 @@
 /** Maximum WPA2 passphrase bytes including one spare terminating NUL. */
 #define SPAGHETTI_WIFI_PASSPHRASE_SIZE 65U
 
+/** Maximum nearby access points returned by one catalog scan. */
+#define SPAGHETTI_WIFI_SCAN_MAX_RESULTS 8U
+
 /** Supported personal-network security modes. */
 enum spaghetti_wifi_security {
 	SPAGHETTI_WIFI_SECURITY_OPEN, /**< Open network with no passphrase. */
 	SPAGHETTI_WIFI_SECURITY_WPA2_PSK, /**< WPA2-PSK with an 8-to-64-byte passphrase. */
+};
+
+/** Security class reported by a nearby-network scan. */
+enum spaghetti_wifi_scan_security {
+	SPAGHETTI_WIFI_SCAN_OPEN, /**< Open network with no passphrase. */
+	SPAGHETTI_WIFI_SCAN_WPA2, /**< WPA2-PSK or WPA2-PSK-SHA256. */
+	SPAGHETTI_WIFI_SCAN_OTHER, /**< WPA3, enterprise, or another unsupported mode. */
 };
 
 /** Wi-Fi profile service lifecycle visible to diagnostics. */
@@ -45,6 +55,18 @@ struct spaghetti_wifi_profile_config {
 	size_t passphrase_size;
 	/** Sensitive caller-owned bytes borrowed only during the set call. */
 	uint8_t passphrase[SPAGHETTI_WIFI_PASSPHRASE_SIZE];
+};
+
+/** @brief One visible access point from a nearby-network scan. */
+struct spaghetti_wifi_scan_result {
+	/** NUL-terminated advertised SSID. Hidden networks are omitted. */
+	char ssid[SPAGHETTI_WIFI_SSID_SIZE];
+	/** Advertised security class; passwords are never included. */
+	enum spaghetti_wifi_scan_security security;
+	/** Strongest RSSI observed for this SSID, in dBm. */
+	int8_t rssi_dbm;
+	/** True when a persistent profile already exists for this SSID. */
+	bool known;
 };
 
 /** @brief Non-sensitive caller-owned summary of one stored profile. */
@@ -91,7 +113,8 @@ int spaghetti_wifi_profiles_init(void);
  * @brief Load persistent profiles without starting network activity.
  *
  * This maintenance-only variant enables encrypted profile set/remove calls but
- * does not register Wi-Fi callbacks, allocate a worker, scan, or connect.
+ * does not allocate a worker or connect. `spaghetti_wifi_profiles_scan()` may
+ * briefly power the station interface to list nearby networks.
  *
  * @retval 0 Profiles are available in storage-only mode.
  * @retval -EALREADY The service was initialized previously.
@@ -252,6 +275,36 @@ int spaghetti_wifi_profiles_rotate(
  */
 int spaghetti_wifi_profiles_list(
 	struct spaghetti_wifi_profile_summary *out,
+	size_t capacity,
+	size_t *out_count);
+
+/**
+ * @brief Scan for nearby Wi-Fi networks, including SSIDs with no saved profile.
+ *
+ * Results are ordered by descending RSSI. Duplicate SSIDs keep the strongest
+ * observation. At most @c SPAGHETTI_WIFI_SCAN_MAX_RESULTS networks are kept.
+ * The call blocks until the scan completes or times out. It is allowed in
+ * unprovisioned/offline mode and does not connect.
+ *
+ * @param[out] out Caller-owned array written only on success. Pass NULL only
+ *                 when @p capacity is zero to query the result count.
+ * @param[in] capacity Number of elements available at @p out.
+ * @param[out] out_count Caller-owned count destination written on success.
+ *
+ * @retval 0 Nearby networks were copied or their count was returned.
+ * @retval -EINVAL Pointer and capacity arguments are inconsistent.
+ * @retval -EACCES The service is not initialized.
+ * @retval -ENODEV No Wi-Fi station interface is available.
+ * @retval -ENOSPC @p capacity is smaller than the number of results.
+ * @retval -EBUSY Another scan is already running.
+ * @retval -ETIMEDOUT The scan did not complete before the configured deadline.
+ * @retval -ENOTSUP Wi-Fi scan support is not compiled.
+ *
+ * @note Thread-safe. Call from thread context. Passwords are never collected.
+ *       The station radio may be powered for the duration of the scan.
+ */
+int spaghetti_wifi_profiles_scan(
+	struct spaghetti_wifi_scan_result *out,
 	size_t capacity,
 	size_t *out_count);
 

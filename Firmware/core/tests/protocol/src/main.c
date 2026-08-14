@@ -25,6 +25,7 @@
 #include <spaghetti/factory_reset.h>
 #include <spaghetti/feature_pack.h>
 #include <spaghetti/health.h>
+#include <spaghetti/identity.h>
 #include <spaghetti/image_manifest.h>
 #include <spaghetti/maintenance_link.h>
 #include <spaghetti/module_manager.h>
@@ -128,6 +129,22 @@ int spaghetti_core_get_info(struct spaghetti_core_info *out)
 	return 0;
 }
 
+int spaghetti_identity_get(struct spaghetti_identity *out)
+{
+	static const uint8_t k_id[SPAGHETTI_DEVICE_ID_SIZE] = {
+		0x90, 0x70, 0x69, 0xad, 0x75, 0x48,
+	};
+
+	if (out == NULL) {
+		return -EINVAL;
+	}
+	memset(out, 0, sizeof(*out));
+	memcpy(out->device_id, k_id, sizeof(k_id));
+	(void)strncpy(out->device_name, "test-core",
+		      sizeof(out->device_name) - 1U);
+	return 0;
+}
+
 size_t spaghetti_port_count(void)
 {
 	return 1U;
@@ -186,6 +203,28 @@ int spaghetti_config_get_snapshot(
 	out_revision->generation = apply_generation;
 	memset(out_revision->sha256, 0x11, sizeof(out_revision->sha256));
 	return 0;
+}
+
+int spaghetti_config_get_revision(struct spaghetti_config_revision *out_revision)
+{
+	if (out_revision == NULL) {
+		return -EINVAL;
+	}
+	out_revision->generation = apply_generation;
+	memset(out_revision->sha256, 0x11, sizeof(out_revision->sha256));
+	return 0;
+}
+
+static struct spaghetti_config test_workspace;
+
+struct spaghetti_config *spaghetti_config_acquire_workspace(void)
+{
+	return &test_workspace;
+}
+
+void spaghetti_config_release_workspace(struct spaghetti_config *config)
+{
+	ARG_UNUSED(config);
 }
 
 int spaghetti_config_apply(
@@ -617,6 +656,20 @@ int spaghetti_wifi_profiles_clear_preferred(void)
 
 int spaghetti_wifi_profiles_list(
 	struct spaghetti_wifi_profile_summary *out,
+	size_t capacity,
+	size_t *out_count)
+{
+	ARG_UNUSED(out);
+	ARG_UNUSED(capacity);
+	if (out_count == NULL) {
+		return -EINVAL;
+	}
+	*out_count = 0U;
+	return 0;
+}
+
+int spaghetti_wifi_profiles_scan(
+	struct spaghetti_wifi_scan_result *out,
 	size_t capacity,
 	size_t *out_count)
 {

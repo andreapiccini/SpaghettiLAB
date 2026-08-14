@@ -8,9 +8,9 @@ owned by Protocol V1; this document freezes only the BLE adapter surface.
 
 `SPAGHETTI_BUILD_CAP_BLE` is set only when `CONFIG_BT` is selected for the
 image. Runtime advertising still requires a successful `spaghetti_ble_start()`
-(`bt_enable()`, GATT registration, and advertising). Boards that cannot enable
-the controller must leave `CONFIG_BT` disabled so the capability snapshot stays
-false.
+(`bt_enable()`, GATT registration, and advertising). Core V1 ships two artifacts:
+the default Wi-Fi image leaves `CONFIG_BT` off; `make build-ble` selects it and
+drops Wi-Fi. Do not enable both in one binary on this SRAM budget.
 
 ## GATT UUIDs
 

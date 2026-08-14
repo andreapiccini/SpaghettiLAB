@@ -583,6 +583,11 @@ int spaghetti_communication_init(void)
 
 	err = spaghetti_communication_shell_init();
 	if (err == 0) {
+		const int usb_err = spaghetti_usb_protocol_init();
+
+		if (usb_err < 0) {
+			LOG_WRN("USB Protocol adapter skipped: %d", usb_err);
+		}
 		atomic_set(&is_initialized, 1);
 	}
 	k_mutex_unlock(&communication_lock);
