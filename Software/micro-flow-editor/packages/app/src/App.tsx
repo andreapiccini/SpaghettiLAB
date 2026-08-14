@@ -4,11 +4,11 @@ import { ProjectPicker } from "./components/project-picker/ProjectPicker.js";
 import { CoreConnectionsScreen } from "./components/core-connections/CoreConnectionsScreen.js";
 import { CatalogTopologyScreen } from "./components/catalog-topology/CatalogTopologyScreen.js";
 import { PhysicalCompositionScreen } from "./components/physical-composition/PhysicalCompositionScreen.js";
+import { DeviceProfileStudioScreen } from "./components/device-profile-studio/DeviceProfileStudioScreen.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
-  "device-profile-studio": { title: "Device Profile Studio", task: "UI-S060" },
   "processing-graph": { title: "Processing Graph Editor", task: "UI-S070" },
   "deploy-diff": { title: "Deploy & Diff", task: "UI-S080" },
   "runtime-diagnostics": { title: "Runtime & Diagnostics", task: "UI-S090" },
@@ -42,6 +42,14 @@ function AppContent() {
     return (
       <AppShell>
         <PhysicalCompositionScreen />
+      </AppShell>
+    );
+  }
+
+  if (activeScreen === "device-profile-studio") {
+    return (
+      <AppShell>
+        <DeviceProfileStudioScreen />
       </AppShell>
     );
   }

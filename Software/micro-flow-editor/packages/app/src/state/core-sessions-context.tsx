@@ -145,8 +145,13 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
   const listDeviceProfiles = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.listDeviceProfiles(), []);
   const listDiscoveryCandidates = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.listDiscoveryCandidates(), []);
   const acceptDiscovery = useCallback((bindingId: CoreBindingId, req: AcceptDiscoveryRequest) => sessionsRef.current.get(bindingId)?.acceptDiscovery(req), []);
+  const installProfile = useCallback((bindingId: CoreBindingId, draft: DeviceProfileDraft) => sessionsRef.current.get(bindingId)?.installProfile(draft), []);
+  const removeProfile = useCallback(
+    (bindingId: CoreBindingId, profileId: string, version: number, options: { readonly isReferencedLocally: boolean }) => sessionsRef.current.get(bindingId)?.removeProfile(profileId, version, options),
+    [],
+  );
 
-  const value: CoreSessionsContextValue = { rows, connect, cancel, fail, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery };
+  const value: CoreSessionsContextValue = { rows, connect, cancel, fail, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery, installProfile, removeProfile };
   return <CoreSessionsContext.Provider value={value}>{children}</CoreSessionsContext.Provider>;
 }
 

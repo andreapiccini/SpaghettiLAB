@@ -1,4 +1,4 @@
-import { Activity, Blocks, Boxes, Cable, FileCode, GitCompareArrows, PanelLeftClose, PanelLeftOpen, Settings, Share2, Store, Workflow } from "lucide-react";
+import { Activity, Blocks, Boxes, Cable, Cpu, GitCompareArrows, PanelLeftClose, PanelLeftOpen, Settings, Share2, Store, Workflow } from "lucide-react";
 import { useState } from "react";
 import type { ScreenId } from "../../state/session-context.js";
 import { useSession } from "../../state/session-context.js";
@@ -11,7 +11,7 @@ const GROUPS: readonly { readonly items: readonly RailItem[] }[] = [
       { id: "core-connections", label: "Core Connections", icon: Cable },
       { id: "catalog-topology", label: "Catalog & Topology", icon: Boxes },
       { id: "physical-composition", label: "Physical Composition", icon: Blocks },
-      { id: "device-profile-studio", label: "Device Profiles", icon: FileCode },
+      { id: "device-profile-studio", label: "Device Profiles", icon: Cpu },
     ],
   },
   {
