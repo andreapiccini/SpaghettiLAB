@@ -29,6 +29,7 @@ import {
 import { useMemo, useState, type DragEvent } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import { PROCESSING_BLOCK_MIME } from "./catalog-to-node.js";
+import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 
 const CATEGORY_ICONS: Record<ProcessingCatalogCategoryId, LucideIcon> = {
   system: Bell,
@@ -117,7 +118,12 @@ export function ProcessingBlockPalette({ onPlace }: { readonly onPlace: (entry: 
                         <PaletteRow
                           key={entry.id}
                           entry={entry}
-                          color={category.color}
+                          // The UX category color is only a grouping label — a row's own swatch
+                          // uses the real placed-node color (PROCESSING_NODE_KIND_CONFIG) so it
+                          // actually previews what the block looks like on canvas, since a UX
+                          // category (e.g. "Logica e flusso") mixes several real node kinds
+                          // (block/rule) with different canvas colors.
+                          color={entry.nodeKind ? PROCESSING_NODE_KIND_CONFIG[entry.nodeKind].colorVar : category.color}
                           icon={Icon}
                           delay={index * 0 + entryIndex * motionTokens.stagger.list}
                           onPlace={onPlace}
