@@ -1,8 +1,6 @@
-import { MoreVertical, Redo2, Settings, Undo2 } from "lucide-react";
-import { motion } from "motion/react";
+import { MoreVertical, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { chromeCopy } from "../../lib/chrome-copy.js";
-import { motionTokens } from "../../lib/motion-tokens.js";
 import { useLocale } from "../../state/locale-context.js";
 import { useSession } from "../../state/session-context.js";
 import { useSettingsModal } from "../../state/settings-modal-context.js";
@@ -10,25 +8,13 @@ import { useUiMode } from "../../state/ui-mode-context.js";
 import { ChromeStatus } from "./ChromeStatus.js";
 import { SettingsSwitch } from "../settings-modal/SettingsRow.js";
 
-const COMMAND_LABELS: Record<string, string> = {
-  RenameProject: "Rinomina progetto",
-  AddCoreBinding: "Aggiungi Core Binding",
-  RemoveCoreBinding: "Rimuovi Core Binding",
-};
-
-function describeCommand(kind: string | undefined): string | undefined {
-  if (!kind) return undefined;
-  return COMMAND_LABELS[kind] ?? kind;
-}
-
-/** `ux/screens/S010-workspace-shell/visual.md` § 2 — the standard top bar extended with undo/redo, inside an open project. */
+/** `ux/screens/S010-workspace-shell/visual.md` § 2 — the standard top bar, inside an open project. */
 export function TopBar() {
-  const { session, undo, redo } = useSession();
+  const { session } = useSession();
   const { mode, setMode } = useUiMode();
   const { locale } = useLocale();
   const { openSettings } = useSettingsModal();
   const copy = chromeCopy(locale);
-  const [pulse, setPulse] = useState<"undo" | "redo" | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -44,51 +30,14 @@ export function TopBar() {
   }, [menuOpen]);
 
   if (!session) return null;
-  const canUndo = session.stack.canUndo();
-  const canRedo = session.stack.canRedo();
-
-  function handleUndo() {
-    if (!canUndo) return;
-    setPulse("undo");
-    undo();
-  }
-  function handleRedo() {
-    if (!canRedo) return;
-    setPulse("redo");
-    redo();
-  }
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
       <div className="flex items-center gap-3">
         <img src="/ux-assets/icon-transparent-28@2x.png" alt="" className="h-7 w-7" />
-        <div className="flex items-center gap-1">
-          <motion.button
-            type="button"
-            title={canUndo ? `Annulla: ${describeCommand(session.stack.peekUndoKind())}` : undefined}
-            onClick={handleUndo}
-            animate={pulse === "undo" ? { scale: [1, 0.9, 1] } : {}}
-            transition={motionTokens.spring.snappy}
-            onAnimationComplete={() => setPulse(null)}
-            disabled={!canUndo}
-            className={`flex h-9 w-9 items-center justify-center rounded-slsm ${canUndo ? "text-ink-muted hover:bg-surface-raised" : "cursor-not-allowed opacity-40"}`}
-          >
-            <Undo2 size={18} />
-          </motion.button>
-          <motion.button
-            type="button"
-            title={canRedo ? `Ripeti: ${describeCommand(session.stack.peekRedoKind())}` : undefined}
-            onClick={handleRedo}
-            animate={pulse === "redo" ? { scale: [1, 0.9, 1] } : {}}
-            transition={motionTokens.spring.snappy}
-            onAnimationComplete={() => setPulse(null)}
-            disabled={!canRedo}
-            className={`flex h-9 w-9 items-center justify-center rounded-slsm ${canRedo ? "text-ink-muted hover:bg-surface-raised" : "cursor-not-allowed opacity-40"}`}
-          >
-            <Redo2 size={18} />
-          </motion.button>
-        </div>
-        <div className="h-6 w-px bg-border" />
+        {/* Undo/redo buttons hidden for now — no keyboard shortcut backs them, they were
+            the only entry point, and it's unclear yet whether surfacing undo/redo here is
+            right for every flow. undo()/redo() themselves are untouched in session-context. */}
         <span className="font-body text-sm text-ink-muted">Nessun Core attivo</span>
       </div>
       <div className="flex items-center gap-2">

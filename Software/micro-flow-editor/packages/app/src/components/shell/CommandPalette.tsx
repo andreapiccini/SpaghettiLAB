@@ -22,7 +22,7 @@ type PaletteEntry = { readonly id: string; readonly label: string; readonly icon
  * so it is fixed here rather than deferred.
  */
 export function CommandPalette() {
-  const { session, navigate, undo, redo } = useSession();
+  const { session, navigate, undo, redo, markSaved } = useSession();
   const { mode, setMode } = useUiMode();
   const { locale } = useLocale();
   const { openSettings } = useSettingsModal();
@@ -56,6 +56,7 @@ export function CommandPalette() {
     setSaveState("saving");
     try {
       await saveOpenProject(session);
+      markSaved();
       setSaveState("saved");
     } catch {
       setSaveState("error");
