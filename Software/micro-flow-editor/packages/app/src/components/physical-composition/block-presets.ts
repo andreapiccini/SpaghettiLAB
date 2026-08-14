@@ -60,7 +60,6 @@ export const BLOCK_PRESETS: readonly BlockPreset[] = [
   { code: "blk-btn", name: "Pulsante", category: "Interfaccia utente", description: "Pulsante singolo." },
   { code: "blk-led", name: "LED indicatore", category: "Interfaccia utente", description: "LED indicatore ad alta visibilità, colore selezionabile." },
   { code: "blk-ir", name: "Ricevitore/trasmettitore IR", category: "Interfaccia utente", description: "Circuito ricevitore infrarossi e diodo trasmettitore." },
-  { code: "blk-wiegand", name: "Porta Wiegand/clock-data", category: "Interfaccia", description: "Porta per lettori Wiegand o clock/data, più un'uscita open collector." },
   { code: "blk-rtc", name: "RTC con NVRAM tamponata", category: "Interfaccia", description: "Orologio in tempo reale e memoria non volatile con batteria tampone." },
   { code: "blk-onewire", name: "Porta 1-Wire", category: "Interfaccia", description: "Porta per bus 1-Wire/Single-Wire." },
   { code: "blk-sd", name: "Slot micro SD", category: "Storage", description: "Slot per scheda micro SD." },

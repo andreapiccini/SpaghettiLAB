@@ -83,6 +83,10 @@ packages/
                            model and graph validation (cycles, dangling
                            references, type/unit checks, cross-Core rejection)
                            for one Core's local processing behavior (S071).
+  processing-block-catalog/ Host catalog of functional blocks: AppBlocks
+                           Library mapped onto firmware node kinds, plus
+                           native Block Drivers, with explicit Node-RED /
+                           Features / out-of-scope rows (S074).
   config-compiler/        Deterministic Config compiler — stable key
                            assignment, real wire-V3 CBOR encoding, canonical
                            JSON, reproducible SHA-256 hash, budget checks with

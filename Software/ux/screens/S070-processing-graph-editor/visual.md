@@ -92,15 +92,20 @@ opacità per sfondi-chip su qualunque colore semantico o di categoria.
   icona 24×24px, `border-radius: 8px`, sfondo colore-categoria a 12% opacità, icona
   14px colorata. Titolo 14px/400, sottotitolo 12px `color.ink-faint`.
 
-### Set di blocchi placeholder (11, tutti finti)
+### Set di blocchi (S074 — catalogo funzionale)
 
-| Categoria | Colore | Icona | Blocchi |
+I 11 blocchi della tabella sotto erano **placeholder del prototipo** ("tutti finti").
+La palette reale è `@spaghettilab/processing-block-catalog`: stesse misure (260px,
+ricerca, accordion), categorie e voci dal catalogo (AppBlocks Library + Block
+firmware). Layout e token di questa sezione restano validi.
+
+| Categoria prototipo | Colore | Icona | Ruolo rimasto |
 |---|---|---|---|
-| Trigger | `#7C5CFC` | `Zap` | Schedule ("ogni 30s") · Event source ("bus locale") |
-| Lettura | `#3F77DA` | `Radio` | Module read ("1 modulo") · Device Profile sample ("campionamento") |
-| Elaborazione | `#0EA5A0` | `SlidersHorizontal` | Filter ("passa-basso") · Scale ("lineare") · Kalman ("1D") |
-| Logica | `#B36B00` | `GitBranch` | Rule ("soglia") · Condition ("if / else") |
-| Uscita | `#1F9D55` | `Send` | Publish ("topic MQTT") · Command target ("attuatore") |
+| Trigger | `#7C5CFC` | `Zap` | Schedule / Event source (node kind firmware) |
+| Lettura | `#3F77DA` | `Radio` | Collassata nel trigger: nessun nodo Read separato |
+| Elaborazione | `#0EA5A0` | `SlidersHorizontal` | Block (`type_id` catalogati) |
+| Logica | `#B36B00` | `GitBranch` | Rule / Block threshold-select |
+| Uscita | `#1F9D55` | `Send` | Block sink (`publish_field`) o Rule comando |
 
 ### Matrice di compatibilità (finta, solo per l'anteprima)
 

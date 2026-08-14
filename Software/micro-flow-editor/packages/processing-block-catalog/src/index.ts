@@ -1,0 +1,21 @@
+export type {
+  ProcessingAvailability,
+  ProcessingCatalogCategory,
+  ProcessingCatalogCategoryId,
+  ProcessingCatalogEntry,
+  ProcessingNodeKind,
+  ProcessingRuntime,
+} from "./types.js";
+export { PROCESSING_CATALOG_CATEGORIES, catalogCategory } from "./categories.js";
+export { PROCESSING_BLOCK_CATALOG } from "./entries.js";
+export {
+  catalogEntriesForNodeKind,
+  findCatalogEntriesByTypeId,
+  findCatalogEntryByAppblocksId,
+  findCatalogEntryById,
+  groupCatalogByCategory,
+  isPlaceableOnDeviceGraph,
+  searchCatalog,
+  shippedTypeIds,
+  unavailableReason,
+} from "./query.js";

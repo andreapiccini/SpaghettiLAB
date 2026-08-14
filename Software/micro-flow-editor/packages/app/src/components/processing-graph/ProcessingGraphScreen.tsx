@@ -3,38 +3,32 @@ import { dryRunConfig, type DryRunResult } from "@spaghettilab/config-decompiler
 import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
 import type { CoreBindingId, CoreBindingRecord, GraphNode, GraphState } from "@spaghettilab/domain";
 import { isModuleNodeData, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
+import { findCatalogEntryById, shippedTypeIds, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
 import { addGraphNodeCommand, deviceGraphLens, nodeChangesToCommands, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
-import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Node, type NodeChange } from "@xyflow/react";
+import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Node, type NodeChange, type ReactFlowInstance } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { CircleAlert, Clock, GitBranch, PlayCircle, Radio, SlidersHorizontal } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { CircleAlert, PlayCircle, Workflow } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
 import { useSession } from "../../state/session-context.js";
 import { DEFAULT_ENERGY, DISABLED_MQTT } from "../../lib/default-config-policy.js";
 import { CoreSelector } from "../catalog-topology/CoreSelector.js";
+import { PROCESSING_BLOCK_MIME, nodeDataFromCatalogEntry, snapToGrid } from "./catalog-to-node.js";
 import { NodeInspector, type ProcessingInspectorMode } from "./NodeInspector.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
+import { ProcessingBlockPalette } from "./ProcessingBlockPalette.js";
 import { PROCESSING_NODE_TYPES } from "./ProcessingNode.js";
 import { toProcessingNodes, type ProcessingNodeUiData } from "./to-nodes.js";
 
 const EMPTY_GRAPH: GraphState<"device-processing"> = { layer: "device-processing", nodes: [], edges: [] };
 const EMPTY_PHYSICAL_GRAPH: GraphState<"physical-composition"> = { layer: "physical-composition", nodes: [], edges: [] };
-
-const TOOLBAR_ITEMS: readonly { readonly kind: DeviceProcessingNodeData["kind"]; readonly icon: typeof Clock }[] = [
-  { kind: "schedule", icon: Clock },
-  { kind: "event-source", icon: Radio },
-  { kind: "block", icon: SlidersHorizontal },
-  { kind: "rule", icon: GitBranch },
-];
+const SHIPPED_TYPE_IDS = shippedTypeIds();
 
 /**
  * `ux/screens/S070-processing-graph-editor/{visual,ui-behavior,backend-behavior}.md`
- * confirmed "as-built" from a Lovable prototype — but the fake 11-block palette, fake
- * category compatibility matrix, and fake `core://greenhouse-01/{id}` source field are
- * exactly that: fake, explicitly labeled "tutti finti" in the spec itself. This
- * implementation uses the real four node kinds from `@spaghettilab/device-
- * processing-graph-model` instead, and a real, local, no-network Dry-run via
- * `@spaghettilab/config-compiler`/`config-decompiler` (S072/S073) for the status bar
- * hash and error/warning counts.
+ * layout (260px palette, search, categorie) with the real functional catalog
+ * (`@spaghettilab/processing-block-catalog`, S074) instead of the prototype's 11
+ * fake blocks. Node kinds stay the four firmware-backed ones. Dry-run is local via
+ * `@spaghettilab/config-compiler`/`config-decompiler` (S072/S073).
  */
 export function ProcessingGraphScreen() {
   return (
@@ -56,6 +50,8 @@ function ProcessingGraphScreenInner() {
   const [dryRun, setDryRun] = useState<DryRunResult | null>(null);
   const [running, setRunning] = useState(false);
   const [hashHex, setHashHex] = useState<string | null>(null);
+  const [rf, setRf] = useState<ReactFlowInstance<Node<ProcessingNodeUiData>> | null>(null);
+  const [dropPreview, setDropPreview] = useState<{ x: number; y: number } | null>(null);
 
   const graphState: GraphState<"device-processing"> = (bindingIndex >= 0 ? session?.stack.current.deviceGraphs[bindingIndex] : undefined) ?? EMPTY_GRAPH;
   const physicalGraphState: GraphState<"physical-composition"> = (bindingIndex >= 0 ? session?.stack.current.physicalGraphs[bindingIndex] : undefined) ?? EMPTY_PHYSICAL_GRAPH;
@@ -122,6 +118,28 @@ function ProcessingGraphScreenInner() {
     if (domainNode) setInspector({ kind: "edit", nodeId: node.id, data: domainNode.data, comment: meta?.comment ?? "" });
   }
 
+  function placeFromCatalog(entry: ProcessingCatalogEntry, position = { x: 80, y: 80 }) {
+    if (!execute || bindingIndex < 0) return;
+    const data = nodeDataFromCatalogEntry(entry, moduleOptions[0]?.id);
+    if (!data) return;
+    const id = `dp-${Date.now()}-${Math.round(Math.random() * 1e6)}`;
+    execute(addGraphNodeCommand(deviceGraphLens(bindingIndex), { layer: "device-processing", id, data }));
+    execute({
+      kind: "UpdateAuthoringMetadata",
+      apply: (project) => ({
+        ok: true,
+        value: {
+          ...project,
+          authoringMetadata: {
+            ...project.authoringMetadata,
+            [id]: { comment: entry.label, position },
+          },
+        },
+      }),
+    });
+    setInspector({ kind: "edit", nodeId: id, data, comment: entry.label });
+  }
+
   function handleSave(data: DeviceProcessingNodeData, comment: string) {
     if (!execute || bindingIndex < 0) return;
     const lens = deviceGraphLens(bindingIndex);
@@ -148,11 +166,29 @@ function ProcessingGraphScreenInner() {
     setInspector(null);
   }
 
+  function onCanvasDragOver(event: DragEvent<HTMLDivElement>) {
+    if (![...event.dataTransfer.types].includes(PROCESSING_BLOCK_MIME)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    const rect = event.currentTarget.getBoundingClientRect();
+    setDropPreview({ x: snapToGrid(event.clientX - rect.left), y: snapToGrid(event.clientY - rect.top) });
+  }
+
+  function onCanvasDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDropPreview(null);
+    const id = event.dataTransfer.getData(PROCESSING_BLOCK_MIME);
+    const entry = findCatalogEntryById(id);
+    if (!entry) return;
+    const flowPos = rf?.screenToFlowPosition({ x: event.clientX, y: event.clientY }) ?? { x: 80, y: 80 };
+    placeFromCatalog(entry, { x: snapToGrid(flowPos.x), y: snapToGrid(flowPos.y) });
+  }
+
   async function handleDryRun() {
     setRunning(true);
     setHashHex(null);
     try {
-      const result = dryRunConfig({ physicalGraph: physicalGraphState, processingGraph: graphState, mqtt: DISABLED_MQTT, connectivity: 0, energy: DEFAULT_ENERGY });
+      const result = dryRunConfig({ physicalGraph: physicalGraphState, processingGraph: graphState, mqtt: DISABLED_MQTT, connectivity: 0, energy: DEFAULT_ENERGY }, { availableBlockRuleTypeIds: SHIPPED_TYPE_IDS });
       setDryRun(result);
       if (result.compiled) {
         const digest = await sha256(encodeConfigCbor(result.compiled));
@@ -195,23 +231,35 @@ function ProcessingGraphScreenInner() {
         </div>
       ) : (
         <div className="relative flex flex-1 overflow-hidden">
-          <div className="flex flex-col gap-2 border-r border-border bg-surface p-2">
-            {TOOLBAR_ITEMS.map(({ kind, icon: Icon }) => {
-              const config = PROCESSING_NODE_KIND_CONFIG[kind];
-              return (
-                <button key={kind} type="button" title={`+ ${config.label}`} onClick={() => setInspector({ kind: "create", nodeKind: kind })} className="flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
-                  <Icon size={18} />
-                </button>
-              );
-            })}
-          </div>
+          <ProcessingBlockPalette onPlace={(entry) => placeFromCatalog(entry)} />
 
-          <div className="relative flex-1">
-            <ReactFlow nodeTypes={PROCESSING_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onNodeClick={onNodeClick} fitView>
+          <div className="relative flex-1" onDragOver={onCanvasDragOver} onDragLeave={() => setDropPreview(null)} onDrop={onCanvasDrop}>
+            <ReactFlow nodeTypes={PROCESSING_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onNodeClick={onNodeClick} onInit={setRf} fitView>
               <Background gap={20} color="#E1E4EB" />
               <Controls position="bottom-left" />
               <MiniMap position="bottom-right" nodeColor={(n) => PROCESSING_NODE_KIND_CONFIG[(n.data as ProcessingNodeUiData).kind]?.colorVar ?? "#8A8F99"} />
             </ReactFlow>
+
+            {domainNodes.length === 0 && !dropPreview && (
+              <div className="pointer-events-none absolute inset-0 mb-10 flex flex-col items-center justify-center">
+                <Workflow size={48} strokeWidth={1.5} className="text-ink-faint" />
+                <p className="mt-2 font-heading text-lg font-semibold text-ink">Nessun blocco ancora</p>
+                <p className="mt-2 rounded-slpill bg-brand-blue px-4 py-1.5 font-body-strong text-sm text-white opacity-70">Trascina un blocco dalla palette per iniziare</p>
+              </div>
+            )}
+
+            {dropPreview && (
+              <div
+                className="pointer-events-none absolute rounded-slmd border-2 border-dashed border-brand-blue"
+                style={{
+                  width: 224,
+                  height: 48,
+                  left: dropPreview.x,
+                  top: dropPreview.y,
+                  backgroundColor: "color-mix(in srgb, var(--color-brand-blue) 8%, transparent)",
+                }}
+              />
+            )}
 
             <div className="absolute bottom-0 left-0 right-0 flex h-10 items-center gap-2 border-t border-border bg-surface px-4">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColor }} />

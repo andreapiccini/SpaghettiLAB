@@ -1,5 +1,6 @@
 import type { AuthoringMetadata, GraphState } from "@spaghettilab/domain";
 import { isBlockNodeData, isRuleNodeData, moduleReferenceOf, type DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
+import { findCatalogEntriesByTypeId } from "@spaghettilab/processing-block-catalog";
 import type { Node } from "@xyflow/react";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 
@@ -41,7 +42,7 @@ function subtitleFor(data: DeviceProcessingNodeData, moduleLabel: (moduleNodeId:
   const moduleRef = moduleReferenceOf(data);
   if (data.kind === "schedule") return `${moduleLabel(data.moduleNodeId)} · ogni ${data.periodMs}ms${data.enabled ? "" : " · disabilitato"}`;
   if (data.kind === "event-source") return moduleLabel(data.moduleNodeId);
-  if (isBlockNodeData(data)) return data.blockTypeId || "—";
-  if (isRuleNodeData(data)) return data.ruleTypeId || "—";
+  if (isBlockNodeData(data)) return findCatalogEntriesByTypeId(data.blockTypeId)[0]?.label ?? (data.blockTypeId || "—");
+  if (isRuleNodeData(data)) return findCatalogEntriesByTypeId(data.ruleTypeId)[0]?.label ?? (data.ruleTypeId || "—");
   return moduleRef ?? "—";
 }

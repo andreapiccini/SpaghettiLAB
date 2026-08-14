@@ -32,6 +32,7 @@
     "@spaghettilab/ota-lifecycle": "*",
     "@spaghettilab/ota-preflight": "*",
     "@spaghettilab/physical-composition-model": "*",
+    "@spaghettilab/processing-block-catalog": "*",
     "@spaghettilab/project-store": "*",
     "@spaghettilab/protocol-sdk": "*",
     "@spaghettilab/react-flow-adapter": "*",

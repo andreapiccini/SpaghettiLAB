@@ -68,6 +68,15 @@ Usa soltanto Module Driver, Device Profile, Rule e Block presenti nel catalogo d
 Core. Il grafo salvato nel progetto contiene metadati editor; quello inviato al Core è
 normalizzato, bounded e privo di coordinate.
 
+Finché `GET_CATALOG` elenca solo i Module Driver, l'authoring usa
+`@spaghettilab/processing-block-catalog` (S074): Library AppBlocks mappata sui quattro
+node kind firmware, più i Block Driver già in `spaghetti_blocks/`. HTTP/socket
+restano Node-RED; display senza hardware sul Core, SMS e for-next non si fingono
+come driver. I blocchi vendor-only non stanno nel catalogo.
+Le Features AppBlocks (debug, variabili, oggetti timer) arrivano col dump successivo,
+non come `type_id` inventati. Un `typeId` shipped deve coincidere con un driver
+registrato; un Block `planned` si può mettere sul grafo ma il dry-run avvisa.
+
 ### System Automation Graph
 
 Descrive collegamenti fra Core o servizi esterni:

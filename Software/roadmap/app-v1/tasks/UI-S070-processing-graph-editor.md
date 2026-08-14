@@ -74,8 +74,10 @@ aperta senza Core nel progetto, nessun crash, console pulita su una tab nuova.
   protocollo (`GET_CATALOG` espone solo `{typeId, commandCount}`). Gli edge già
   persistiti (nessuno, in pratica) verrebbero comunque renderizzati in sola lettura;
   non c'è un modo reale per crearne di nuovi oggi.
-- **Nessun catalogo reale per `blockTypeId`/`ruleTypeId`** — testo libero, stesso gap
-  già documentato per Rule/Block in UI-S040.
+- **Catalogo Block/Rule host (S074)** — `blockTypeId`/`ruleTypeId` non sono più testo
+  libero: la palette e l'Inspector usano `@spaghettilab/processing-block-catalog`.
+  `GET_CATALOG` non elenca ancora Block/Rule; i `type_id` shipped coincidono con i
+  driver firmware, quelli `planned` restano autorabili con warning in dry-run.
 - **`resolveRuleActionFieldIds`/`resolveRuleSourceFieldIds`/`resolveBlockCost`/
   `resolveSourcePortOrField`/`resolveTargetInput`** (opzioni di `compileConfig`) non
   sono cablati — nessuno schema reale esiste ancora per derivarli (stesso gap del

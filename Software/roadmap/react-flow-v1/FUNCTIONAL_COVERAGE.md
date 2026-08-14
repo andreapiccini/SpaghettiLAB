@@ -27,7 +27,7 @@ senza solo drag-and-drop restano requisiti di S130.
 | Init, wait, CRC, conversioni base | S061 | S130.4 |
 | Install profilo senza OTA | S063 | S130.4 |
 | Schedule, eventi, Rule e comandi | S071 | S130.5, S130.15 |
-| Blocchi elaborazione e filtri | S071 | S130.5, S130.7 |
+| Blocchi elaborazione e filtri | S071, S074 | S130.5, S130.7 |
 | Compilazione Config deterministica | S072 | S130.5, S130.7 |
 | Validate/diff/apply CAS | S080 | S130.7, S130.12 |
 | Conflitto e modifiche esterne | S080 | S130.12 |

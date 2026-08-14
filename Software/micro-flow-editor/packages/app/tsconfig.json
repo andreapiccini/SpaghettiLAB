@@ -28,6 +28,7 @@
     { "path": "../ota-lifecycle" },
     { "path": "../ota-preflight" },
     { "path": "../physical-composition-model" },
+    { "path": "../processing-block-catalog" },
     { "path": "../protocol-sdk" },
     { "path": "../project-store" },
     { "path": "../react-flow-adapter" },

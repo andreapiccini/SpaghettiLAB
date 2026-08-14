@@ -1,9 +1,26 @@
 import type { DomainError, GraphNode } from "@spaghettilab/domain";
 import { validateDeviceProcessingGraph, type DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
+import { catalogEntriesForNodeKind, findCatalogEntriesByTypeId } from "@spaghettilab/processing-block-catalog";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
+
+function uniqueTypeOptions(kind: "block" | "rule"): readonly { readonly typeId: string; readonly label: string; readonly planned: boolean }[] {
+  const seen = new Set<string>();
+  const options: { typeId: string; label: string; planned: boolean }[] = [];
+  const ranked = [...catalogEntriesForNodeKind(kind)].sort((a, b) => Number(scoreNative(b)) - Number(scoreNative(a)));
+  for (const entry of ranked) {
+    if (!entry.typeId || seen.has(entry.typeId)) continue;
+    seen.add(entry.typeId);
+    options.push({ typeId: entry.typeId, label: entry.label, planned: entry.availability === "planned" });
+  }
+  return options;
+}
+
+function scoreNative(entry: { readonly id: string }): boolean {
+  return entry.id.startsWith("block.") || entry.id.startsWith("rule.") || entry.id.startsWith("native.");
+}
 
 export type ProcessingInspectorMode = { readonly kind: "create"; readonly nodeKind: DeviceProcessingNodeData["kind"] } | { readonly kind: "edit"; readonly nodeId: string; readonly data: DeviceProcessingNodeData; readonly comment: string };
 
@@ -114,9 +131,15 @@ export function NodeInspector({
         {data.kind === "block" && (
           <>
             <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-blocktype">
-              Block type (catalogo non ancora esposto — testo libero)
+              Block
             </label>
-            <input id="ni-blocktype" value={data.blockTypeId} onChange={(e) => patch({ blockTypeId: e.target.value })} className="mb-4 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" />
+            <TypeIdSelect
+              id="ni-blocktype"
+              kind="block"
+              value={data.blockTypeId}
+              onChange={(blockTypeId) => patch({ blockTypeId })}
+            />
+            <CatalogNotes typeId={data.blockTypeId} />
             <div className="mb-4 flex gap-2">
               <div className="flex-1">
                 <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-minver">
@@ -131,16 +154,17 @@ export function NodeInspector({
                 <input id="ni-exactver" type="number" value={data.exactVersion ?? ""} onChange={(e) => patch({ exactVersion: e.target.value === "" ? undefined : Number(e.target.value) })} className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" />
               </div>
             </div>
-            <p className="mb-4 font-body text-xs text-ink-faint">Nessuno schema di proprietà esposto dal protocollo per questo tipo — non ci sono ancora campi aggiuntivi da compilare.</p>
+            <p className="mb-4 font-body text-xs text-ink-faint">GET_CATALOG non espone ancora lo schema proprietà del Block: i campi extra restano nel Config dopo il compile, non come form generato.</p>
           </>
         )}
 
         {data.kind === "rule" && (
           <>
             <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-ruletype">
-              Rule type (catalogo non ancora esposto — testo libero)
+              Rule
             </label>
-            <input id="ni-ruletype" value={data.ruleTypeId} onChange={(e) => patch({ ruleTypeId: e.target.value })} className="mb-4 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" />
+            <TypeIdSelect id="ni-ruletype" kind="rule" value={data.ruleTypeId} onChange={(ruleTypeId) => patch({ ruleTypeId })} />
+            <CatalogNotes typeId={data.ruleTypeId} />
 
             <p className="mb-1 font-body text-xs font-semibold text-ink-muted">Sorgente (quale Module/campo legge)</p>
             <div className="mb-4 flex gap-2">
@@ -182,5 +206,42 @@ export function NodeInspector({
         </button>
       </div>
     </motion.div>
+  );
+}
+
+function TypeIdSelect({
+  id,
+  kind,
+  value,
+  onChange,
+}: {
+  readonly id: string;
+  readonly kind: "block" | "rule";
+  readonly value: string;
+  readonly onChange: (typeId: string) => void;
+}) {
+  const options = uniqueTypeOptions(kind);
+  const known = options.some((o) => o.typeId === value);
+  return (
+    <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className="mb-2 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none">
+      <option value="">—</option>
+      {!known && value !== "" && <option value={value}>{value} (non in catalogo)</option>}
+      {options.map((o) => (
+        <option key={o.typeId} value={o.typeId}>
+          {o.label} ({o.typeId}){o.planned ? " · pianificato" : ""}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function CatalogNotes({ typeId }: { readonly typeId: string }) {
+  const entry = findCatalogEntriesByTypeId(typeId)[0];
+  if (!entry) return null;
+  return (
+    <p className="mb-4 font-body text-xs text-ink-faint">
+      {entry.availability === "planned" ? "Il Core V1 non ha ancora questo driver: il grafo si salva, il deploy fallirà finché il Block Driver non è nell'immagine. " : ""}
+      {entry.notes}
+    </p>
   );
 }
