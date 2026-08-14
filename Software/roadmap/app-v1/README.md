@@ -36,7 +36,7 @@ browser quando possibile, non solo per tipo.
 | ✅ | [UI-S070](tasks/UI-S070-processing-graph-editor.md) | Processing Graph Editor | (già "as-built", solo da ricollegare ai pacchetti reali) | `device-processing-graph-model`, `config-compiler`, `config-decompiler` |
 | ✅ | [UI-S080](tasks/UI-S080-deploy-diff.md) | Deploy & Diff | [UX-S080](../ux-v1/tasks/UX-S080-deploy-diff.md) | `config-deployment` |
 | ✅ | [UI-S090](tasks/UI-S090-runtime-diagnostics.md) | Runtime & Diagnostics | [UX-S090](../ux-v1/tasks/UX-S090-runtime-diagnostics.md) | `telemetry-buffer`, `core-actions`, `core-status`, `core-admin` |
-| ⬜ | [UI-S100](tasks/UI-S100-capability-marketplace.md) | Capability Marketplace & OTA | [UX-S100](../ux-v1/tasks/UX-S100-capability-marketplace.md) | `capability-marketplace` (S101+S104), `ota-preflight`, `ota-lifecycle`, `device-profile-install` |
+| ✅ | [UI-S100](tasks/UI-S100-capability-marketplace.md) | Capability Marketplace & OTA | [UX-S100](../ux-v1/tasks/UX-S100-capability-marketplace.md) | `capability-marketplace` (S101+S104), `ota-preflight`, `ota-lifecycle`, `device-profile-install` |
 | ⬜ | [UI-S110](tasks/UI-S110-cross-core-automation.md) | Cross-Core Automation | [UX-S110](../ux-v1/tasks/UX-S110-cross-core-automation.md) | `system-automation-graph`, `node-red-nodes`, `node-red-deploy` |
 | ⬜ | [UI-S120](tasks/UI-S120-settings-security.md) | Settings, Security & Recovery | [UX-S120](../ux-v1/tasks/UX-S120-settings-security.md) | `security-recovery` |
 | ✅ | [UI-S125](tasks/UI-S125-simple-advanced-mode.md) | Modalità base / avanzata (persistenza + filtro shell) | [UX-S125](../ux-v1/tasks/UX-S125-simple-advanced-mode.md) | `LocalStorageAdapter` (non `ProjectV1`) |

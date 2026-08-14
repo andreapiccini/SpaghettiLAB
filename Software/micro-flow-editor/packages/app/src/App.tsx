@@ -9,6 +9,7 @@ import { DeviceProfileStudioScreen } from "./components/device-profile-studio/De
 import { ProcessingGraphScreen } from "./components/processing-graph/ProcessingGraphScreen.js";
 import { DeployDiffScreen } from "./components/deploy-diff/DeployDiffScreen.js";
 import { RuntimeDiagnosticsScreen } from "./components/runtime-diagnostics/RuntimeDiagnosticsScreen.js";
+import { CapabilityMarketplaceScreen } from "./components/capability-marketplace/CapabilityMarketplaceScreen.js";
 import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
@@ -85,6 +86,14 @@ function AppContent() {
     return (
       <AppShell>
         <RuntimeDiagnosticsScreen />
+      </AppShell>
+    );
+  }
+
+  if (activeScreen === "capability-marketplace") {
+    return (
+      <AppShell>
+        <CapabilityMarketplaceScreen />
       </AppShell>
     );
   }

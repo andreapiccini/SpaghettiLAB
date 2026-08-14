@@ -30,6 +30,7 @@ import type {
   GetResourcesResponse,
   GetStatusResponse,
   GetTopologyResponse,
+  GetUpdateStatusResponse,
   RecordEventPayload,
   SpaghettiClient,
 } from "@spaghettilab/protocol-sdk";
@@ -70,7 +71,16 @@ export class CoreSession {
 
   constructor(
     readonly binding: CoreBindingRecord,
-    private readonly client: SpaghettiClient,
+    /**
+     * The underlying wire client — `readonly` but not `private`, so a
+     * caller can construct a `@spaghettilab/ota-lifecycle` `BleOtaSession`
+     * directly (Aggiornamento tab, S103): `ota-lifecycle` depends on
+     * `core-session` (for `CatalogCache`), so `core-session` cannot depend
+     * back on it without a circular package reference. `client`
+     * structurally satisfies `BleOtaWireClient`, same as every other
+     * workflow this class wraps internally.
+     */
+    readonly client: SpaghettiClient,
     private readonly eventStream: EventStream,
     private readonly catalogCache: CatalogCache,
   ) {
@@ -335,6 +345,12 @@ export class CoreSession {
   async requestFactoryReset(scope: number, granted: PermissionSet, confirmation: DestructiveConfirmation): Promise<ResetScopeOutcome> {
     return requestFactoryResetWorkflow(this.client, granted, scope, confirmation);
   }
+
+  /** Reads the current OTA update-coordinator status (`GET_UPDATE_STATUS`) — explicit, on-demand, used to drive the Aggiornamento tab's post-reboot stages (S103 § Verifiche), since `@spaghettilab/ota-lifecycle`'s `BleOtaSession` itself only models `ARM → UPLOAD → FINALIZE → PENDING_REBOOT`. */
+  async getUpdateStatus(): Promise<GetUpdateStatusResponse> {
+    return this.client.getUpdateStatus();
+  }
+
 
   /** Explicit action: adopt the device's live Config as-is. Never called automatically. */
   importLiveState(): GetConfigResponse {

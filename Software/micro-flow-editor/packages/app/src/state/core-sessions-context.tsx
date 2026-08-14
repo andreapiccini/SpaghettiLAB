@@ -6,7 +6,7 @@ import { CatalogCache, CoreSession, type CoreSessionSnapshot, type SessionState,
 import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
 import type { InstallProfileResult } from "@spaghettilab/device-profile-install";
 import type { CoreBindingId, CoreBindingRecord, DomainError, PermissionSet, Result } from "@spaghettilab/domain";
-import { EventStream, SpaghettiClient, WebSerialProtocolTransport, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type AuditLogEntry, type DeviceProfileSummary, type DiscoveryCandidate, type GetConnectivityStatusResponse, type GetJobStatusResponse, type ProtocolTransport, type RecordEventPayload } from "@spaghettilab/protocol-sdk";
+import { EventStream, SpaghettiClient, WebSerialProtocolTransport, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type AuditLogEntry, type DeviceProfileSummary, type DiscoveryCandidate, type GetConnectivityStatusResponse, type GetJobStatusResponse, type GetUpdateStatusResponse, type ProtocolTransport, type RecordEventPayload } from "@spaghettilab/protocol-sdk";
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { connectBrowserWebSocket } from "../lib/browser-websocket-connection.js";
 import { openBrowserSerial, type UsbSerialPort } from "../lib/browser-serial-connection.js";
@@ -49,6 +49,8 @@ type CoreSessionsContextValue = {
   releaseLease(bindingId: CoreBindingId, granted: PermissionSet): Promise<LeaseOutcome> | undefined;
   openNetworkMaintenance(bindingId: CoreBindingId, granted: PermissionSet, confirmation: DestructiveConfirmation): Promise<MaintenanceOutcome> | undefined;
   requestFactoryReset(bindingId: CoreBindingId, scope: number, granted: PermissionSet, confirmation: DestructiveConfirmation): Promise<ResetScopeOutcome> | undefined;
+  getUpdateStatus(bindingId: CoreBindingId): Promise<GetUpdateStatusResponse> | undefined;
+  getClient(bindingId: CoreBindingId): SpaghettiClient | undefined;
 };
 
 const CoreSessionsContext = createContext<CoreSessionsContextValue | undefined>(undefined);
@@ -196,6 +198,8 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
     (bindingId: CoreBindingId, scope: number, granted: PermissionSet, confirmation: DestructiveConfirmation) => sessionsRef.current.get(bindingId)?.requestFactoryReset(scope, granted, confirmation),
     [],
   );
+  const getUpdateStatus = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.getUpdateStatus(), []);
+  const getClient = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.client, []);
 
   const value: CoreSessionsContextValue = {
     rows,
@@ -220,6 +224,8 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
     releaseLease,
     openNetworkMaintenance,
     requestFactoryReset,
+    getUpdateStatus,
+    getClient,
   };
   return <CoreSessionsContext.Provider value={value}>{children}</CoreSessionsContext.Provider>;
 }
