@@ -274,6 +274,7 @@ function PhysicalCompositionScreenInner() {
 
           {inspector && (
             <NodeInspector
+              key={inspector.kind === "edit" ? inspector.nodeId : `create-${inspector.nodeKind}`}
               mode={inspector}
               topology={topologyIndex}
               catalog={catalogIndex}

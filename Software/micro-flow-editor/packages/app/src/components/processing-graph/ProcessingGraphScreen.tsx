@@ -315,7 +315,18 @@ function ProcessingGraphScreenInner() {
             </div>
           </div>
 
-          {inspector && <NodeInspector mode={inspector} moduleOptions={moduleOptions} existingNodes={domainNodes} knownModuleNodeIds={knownModuleNodeIds} onSave={handleSave} onDelete={inspector.kind === "edit" ? handleDelete : undefined} onClose={() => setInspector(null)} />}
+          {inspector && (
+            <NodeInspector
+              key={inspector.kind === "edit" ? inspector.nodeId : `create-${inspector.nodeKind}`}
+              mode={inspector}
+              moduleOptions={moduleOptions}
+              existingNodes={domainNodes}
+              knownModuleNodeIds={knownModuleNodeIds}
+              onSave={handleSave}
+              onDelete={inspector.kind === "edit" ? handleDelete : undefined}
+              onClose={() => setInspector(null)}
+            />
+          )}
         </div>
       )}
     </div>
