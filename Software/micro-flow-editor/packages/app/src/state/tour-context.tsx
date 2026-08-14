@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { localStorageAdapter } from "../lib/repository.js";
 import { readTourSeenFromLocalStorage, saveTourSeen } from "../lib/tour.js";
 import { useSession } from "./session-context.js";
@@ -43,13 +43,24 @@ export function TourProvider({ children }: { readonly children: ReactNode }) {
   // Fires the moment a project is actually open, whether that's the arming
   // render itself (already inside a project when "Rivedi il tutorial" is
   // clicked) or a later one (armed from the ProjectPicker, project opened
-  // afterwards) — same render-time pattern as above, not a useEffect.
+  // afterwards) — same render-time pattern as above, not a useEffect: this
+  // only touches TourProvider's own state, which render-time adjustment is
+  // fine for.
   if (session && pending) {
     setPending(false);
     setStepIndex(0);
     setActive(true);
-    navigate("core-connections");
   }
+
+  // navigate() belongs to SessionProvider, not this component — calling it
+  // during render (as the block above does for its own state) trips React's
+  // "Cannot update a component while rendering a different component"
+  // check, so it has to happen in an effect instead. Keyed on `active`
+  // alone: fires once when the tour actually turns on, not on every step.
+  useEffect(() => {
+    if (active) navigate("core-connections");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   const close = useCallback(() => {
     setActive(false);

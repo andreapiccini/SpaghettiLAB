@@ -18,6 +18,10 @@ import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 import { ProcessingBlockPalette } from "./ProcessingBlockPalette.js";
 import { PROCESSING_NODE_TYPES } from "./ProcessingNode.js";
 import { toProcessingNodes, type ProcessingNodeUiData } from "./to-nodes.js";
+import { TRIGGER_GROUP_NODE_TYPES, type TriggerGroupNodeData } from "./TriggerGroupNode.js";
+import { computeTriggerGroups } from "./trigger-groups.js";
+
+const NODE_TYPES = { ...PROCESSING_NODE_TYPES, ...TRIGGER_GROUP_NODE_TYPES };
 
 const EMPTY_GRAPH: GraphState<"device-processing"> = { layer: "device-processing", nodes: [], edges: [] };
 const EMPTY_PHYSICAL_GRAPH: GraphState<"physical-composition"> = { layer: "physical-composition", nodes: [], edges: [] };
@@ -80,6 +84,25 @@ function ProcessingGraphScreenInner() {
 
   const domainRfNodes = useMemo(() => toProcessingNodes(graphState, authoringMetadata, new Set(errorsByNode.keys()), moduleLabel), [graphState, authoringMetadata, errorsByNode, moduleLabel]);
   const edges = useMemo(() => toReactFlowEdges(graphState), [graphState]);
+
+  // Purely derived from positions + edges already on the canvas — never part of
+  // the domain graph or authoringMetadata, so these never generate a command.
+  const groupNodes = useMemo<Node<TriggerGroupNodeData>[]>(
+    () =>
+      computeTriggerGroups(graphState, authoringMetadata).map((group) => ({
+        id: group.id,
+        type: "trigger-group",
+        position: { x: group.x, y: group.y },
+        style: { width: group.width, height: group.height },
+        draggable: false,
+        selectable: false,
+        connectable: false,
+        focusable: false,
+        zIndex: -1,
+        data: { label: group.label },
+      })),
+    [graphState, authoringMetadata],
+  );
 
   const [localNodes, setLocalNodes] = useState<Node<ProcessingNodeUiData>[]>(domainRfNodes);
   const [syncedFrom, setSyncedFrom] = useState(domainRfNodes);
@@ -267,8 +290,11 @@ function ProcessingGraphScreenInner() {
 
           <div className="relative flex-1" onDragOver={onCanvasDragOver} onDragLeave={() => setDropPreview(null)} onDrop={onCanvasDrop}>
             <ReactFlow
-              nodeTypes={PROCESSING_NODE_TYPES}
-              nodes={localNodes}
+              nodeTypes={NODE_TYPES}
+              // TriggerGroupNode reads its own `data` shape at runtime regardless of this
+              // component's single node-data generic — ReactFlow itself is happy to render
+              // heterogeneous node types side by side, TypeScript just needs the cast.
+              nodes={[...groupNodes, ...localNodes] as unknown as Node<ProcessingNodeUiData>[]}
               edges={localEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
