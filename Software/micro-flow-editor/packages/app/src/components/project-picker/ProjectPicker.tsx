@@ -1,7 +1,8 @@
 import { importProjectV1, projectId as parseProjectId, type ProjectId } from "@spaghettilab/domain";
-import { FolderPlus, Plus, Search, Settings, Upload } from "lucide-react";
+import { FolderPlus, Plus, PlayCircle, Search, Settings, Upload } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { buildDemoProject } from "../../lib/demo-project.js";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import { projectRepository } from "../../lib/repository.js";
 import { useSession } from "../../state/session-context.js";
@@ -11,6 +12,8 @@ import { NewProjectDialog } from "./NewProjectDialog.js";
 import { ProjectCard } from "./ProjectCard.js";
 
 export type ProjectSummary = { readonly projectId: ProjectId; readonly name: string; readonly coreBindingCount: number };
+
+const DEMO_PROJECT_NAME = "Demo";
 
 type LoadState = { readonly kind: "loading" } | { readonly kind: "error"; readonly message: string } | { readonly kind: "loaded"; readonly projects: readonly ProjectSummary[] };
 
@@ -66,6 +69,22 @@ export function ProjectPicker() {
     [openProject],
   );
 
+  // Reopens the existing demo instead of piling up a new "Demo" project on every click.
+  const openDemo = useCallback(async () => {
+    const existing = state.kind === "loaded" ? state.projects.find((p) => p.name === DEMO_PROJECT_NAME) : undefined;
+    if (existing) {
+      await openById(existing.projectId);
+      return;
+    }
+    const demo = buildDemoProject(DEMO_PROJECT_NAME);
+    if (!demo) {
+      setState({ kind: "error", message: "Non è stato possibile creare il progetto demo." });
+      return;
+    }
+    await projectRepository.save(demo);
+    openProject(demo.projectId, demo);
+  }, [openProject, openById, state]);
+
   const handleImportFile = useCallback(
     async (file: File) => {
       setImporting(true);
@@ -116,7 +135,7 @@ export function ProjectPicker() {
       </header>
 
       {state.kind === "loaded" && state.projects.length === 0 ? (
-        <EmptyState onCreate={() => setDialogOpen(true)} />
+        <EmptyState onCreate={() => setDialogOpen(true)} onDemo={() => void openDemo()} />
       ) : (
         <div className="flex-1 overflow-auto p-6">
           <div className="mb-6 flex items-center justify-between">
@@ -129,13 +148,22 @@ export function ProjectPicker() {
                 className="w-full bg-transparent text-sm font-body outline-none placeholder:text-ink-faint"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setDialogOpen(true)}
-              className="flex items-center gap-1.5 rounded-slpill bg-brand-blue px-4 py-2 text-sm font-body-strong text-white hover:bg-brand-blue-dark"
-            >
-              <Plus size={16} /> Nuovo progetto
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void openDemo()}
+                className="flex items-center gap-1.5 rounded-slpill border border-border-strong px-4 py-2 text-sm font-body-strong text-ink hover:bg-surface-raised"
+              >
+                <PlayCircle size={16} /> Prova la demo
+              </button>
+              <button
+                type="button"
+                onClick={() => setDialogOpen(true)}
+                className="flex items-center gap-1.5 rounded-slpill bg-brand-blue px-4 py-2 text-sm font-body-strong text-white hover:bg-brand-blue-dark"
+              >
+                <Plus size={16} /> Nuovo progetto
+              </button>
+            </div>
           </div>
 
           {state.kind === "loading" || importing ? (
@@ -168,7 +196,7 @@ export function ProjectPicker() {
   );
 }
 
-function EmptyState({ onCreate }: { readonly onCreate: () => void }) {
+function EmptyState({ onCreate, onDemo }: { readonly onCreate: () => void; readonly onDemo: () => void }) {
   return (
     <div
       className="flex flex-1 flex-col items-center justify-center gap-4 text-center"
@@ -179,9 +207,14 @@ function EmptyState({ onCreate }: { readonly onCreate: () => void }) {
       <FolderPlus size={48} className="text-ink-faint" />
       <h1 className="font-heading text-[28px] font-bold leading-[1.2]">Nessun progetto ancora</h1>
       <p className="max-w-sm font-body text-sm text-ink-muted">Crea il tuo primo progetto per iniziare a comporre Core, sensori e automazioni.</p>
-      <button type="button" onClick={onCreate} className="mt-2 flex items-center gap-1.5 rounded-slpill bg-brand-blue px-4 py-2 text-sm font-body-strong text-white hover:bg-brand-blue-dark">
-        <Plus size={16} /> Crea il tuo primo progetto
-      </button>
+      <div className="mt-2 flex items-center gap-2">
+        <button type="button" onClick={onDemo} className="flex items-center gap-1.5 rounded-slpill border border-border-strong px-4 py-2 text-sm font-body-strong text-ink hover:bg-surface-raised">
+          <PlayCircle size={16} /> Prova la demo
+        </button>
+        <button type="button" onClick={onCreate} className="flex items-center gap-1.5 rounded-slpill bg-brand-blue px-4 py-2 text-sm font-body-strong text-white hover:bg-brand-blue-dark">
+          <Plus size={16} /> Crea il tuo primo progetto
+        </button>
+      </div>
     </div>
   );
 }
