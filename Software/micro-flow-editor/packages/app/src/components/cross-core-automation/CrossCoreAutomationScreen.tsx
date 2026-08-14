@@ -4,6 +4,7 @@ import { useSession } from "../../state/session-context.js";
 import { DeployTab } from "./DeployTab.js";
 import { DiagnosticsTab } from "./DiagnosticsTab.js";
 import { GraphTab } from "./GraphTab.js";
+import { NodeRedRuntimeBar } from "./NodeRedRuntimeBar.js";
 import type { AppLink, LinkMeta } from "./link-meta.js";
 import type { CrossCoreNodeData } from "./node-data.js";
 
@@ -47,8 +48,9 @@ export function CrossCoreAutomationScreen() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface px-4">
-        <h1 className="font-heading text-lg font-semibold text-ink">Cross-Core Automation</h1>
+      <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-3 border-b border-border bg-surface px-4 py-2">
+        <h1 className="font-heading text-lg font-semibold text-ink">Automazioni</h1>
+        <NodeRedRuntimeBar />
         <span className="ml-auto flex items-center gap-1.5 rounded-slpill border border-border-strong px-3 py-1.5 font-body text-sm text-ink-muted">
           {graphState.nodes.length} nodi · {graphState.edges.length} link
         </span>
@@ -65,7 +67,7 @@ export function CrossCoreAutomationScreen() {
         })}
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {tab === "grafo" && <GraphTab linkMeta={linkMeta} setLinkMeta={setLinkMeta} />}
         {tab === "deploy" && <DeployTab links={links} />}
         {tab === "diagnostica" && <DiagnosticsTab links={links} bindings={bindings} />}

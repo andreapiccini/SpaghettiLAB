@@ -68,7 +68,7 @@ export function CommandPalette() {
         ["deploy-diff", "Deploy & Diff", GitCompareArrows],
         ["runtime-diagnostics", "Runtime & Diagnostics", Activity],
         ["capability-marketplace", "Capability Marketplace & OTA", Store],
-        ["cross-core-automation", "Cross-Core Automation", Share2],
+        ["cross-core-automation", "Automazioni", Share2],
         ["settings-security", "Settings, Security & Recovery", Settings],
       ] as const
     )

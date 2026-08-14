@@ -15,7 +15,9 @@ export {
   findCatalogEntryById,
   groupCatalogByCategory,
   isPlaceableOnDeviceGraph,
+  isPlaceableOnSystemAutomationGraph,
   searchCatalog,
   shippedTypeIds,
+  systemAutomationCatalogEntries,
   unavailableReason,
 } from "./query.js";

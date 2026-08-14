@@ -5,8 +5,10 @@ import {
   findCatalogEntryByAppblocksId,
   groupCatalogByCategory,
   isPlaceableOnDeviceGraph,
+  isPlaceableOnSystemAutomationGraph,
   searchCatalog,
   shippedTypeIds,
+  systemAutomationCatalogEntries,
 } from "../query.js";
 
 const OMITTED_VENDOR_IDS = [
@@ -77,11 +79,14 @@ describe("processing-block-catalog", () => {
     }
   });
 
-  it("does not let unbounded or host-only blocks land on the Core graph", () => {
+  it("keeps host automations off the Core graph and on the System Automation Graph", () => {
     expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("forloop")!)).toBe(false);
     expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("lcd_set_screen")!)).toBe(false);
     expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("sms_send")!)).toBe(false);
     expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("http")!)).toBe(false);
+    expect(isPlaceableOnSystemAutomationGraph(findCatalogEntryByAppblocksId("http")!)).toBe(true);
+    expect(systemAutomationCatalogEntries().every((e) => e.runtime === "node-red")).toBe(true);
+    expect(systemAutomationCatalogEntries().length).toBeGreaterThan(0);
   });
 
   it("places Core analogs for IF, schedule, lookup and publish", () => {

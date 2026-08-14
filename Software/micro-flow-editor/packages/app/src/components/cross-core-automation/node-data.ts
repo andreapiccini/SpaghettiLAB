@@ -13,4 +13,9 @@ import type { CommandEndpoint, NodeRedEndpoint, RecordFieldEndpoint } from "@spa
 export type CrossCoreNodeData =
   | (RecordFieldEndpoint & { readonly label: string; readonly valueType: string; readonly unit?: string })
   | (CommandEndpoint & { readonly label: string; readonly valueType?: string; readonly unit?: string })
-  | (NodeRedEndpoint & { readonly label: string });
+  | (NodeRedEndpoint & {
+      readonly label: string;
+      /** Catalog id of a host function (`runtime: "node-red"`), when placed from the Automazioni palette. */
+      readonly catalogId?: string;
+      readonly subtitle?: string;
+    });

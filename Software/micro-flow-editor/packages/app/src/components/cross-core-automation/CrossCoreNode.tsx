@@ -14,7 +14,7 @@ export function CrossCoreNode({ data, selected }: NodeProps & { readonly data: C
       ? `${domainData.schemaId} · campo ${domainData.fieldId}${domainData.unit ? ` · ${domainData.unit}` : ""}`
       : domainData.kind === "command"
         ? `module ${domainData.moduleKey} · cmd ${domainData.commandId}`
-        : "integrazione";
+        : (domainData.subtitle ?? "funzione host");
 
   return (
     <div className="w-56 rounded-slmd bg-surface p-3 shadow-e1" style={{ borderLeft: `3px solid ${colorVar}`, outline: selected ? "2px solid var(--color-brand-blue)" : "1px solid var(--color-border)" }}>

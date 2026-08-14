@@ -15,6 +15,7 @@ import { SettingsSecurityScreen } from "./components/settings-security/SettingsS
 import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
+import { NodeRedRuntimeProvider } from "./state/node-red-runtime-context.js";
 import { UiModeProvider, useUiMode } from "./state/ui-mode-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
@@ -123,11 +124,13 @@ function AppContent() {
 export default function App() {
   return (
     <UiModeProvider>
-      <SessionProvider>
-        <CoreSessionsProvider>
-          <AppContent />
-        </CoreSessionsProvider>
-      </SessionProvider>
+      <NodeRedRuntimeProvider>
+        <SessionProvider>
+          <CoreSessionsProvider>
+            <AppContent />
+          </CoreSessionsProvider>
+        </SessionProvider>
+      </NodeRedRuntimeProvider>
     </UiModeProvider>
   );
 }

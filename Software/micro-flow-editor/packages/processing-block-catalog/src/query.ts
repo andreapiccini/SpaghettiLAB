@@ -9,6 +9,15 @@ export function isPlaceableOnDeviceGraph(entry: ProcessingCatalogEntry): boolean
   return PLACEABLE_RUNTIMES.has(entry.runtime) && PLACEABLE_AVAILABILITY.has(entry.availability);
 }
 
+/** HTTP/socket/cron and other host automations — System Automation Graph, never Config. */
+export function isPlaceableOnSystemAutomationGraph(entry: ProcessingCatalogEntry): boolean {
+  return entry.runtime === "node-red";
+}
+
+export function systemAutomationCatalogEntries(): readonly ProcessingCatalogEntry[] {
+  return PROCESSING_BLOCK_CATALOG.filter(isPlaceableOnSystemAutomationGraph);
+}
+
 export function findCatalogEntryById(id: string): ProcessingCatalogEntry | undefined {
   return PROCESSING_BLOCK_CATALOG.find((e) => e.id === id);
 }

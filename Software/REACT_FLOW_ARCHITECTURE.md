@@ -43,6 +43,14 @@ al firmware. Una relazione fra dispositivi differenti o servizi Internet apparti
 Node-RED. React Flow costruisce e coordina entrambe senza eseguire direttamente la
 logica finale.
 
+Node-RED è un **runtime trasparente**, non un secondo editor. L'utente disegna
+automazioni host (HTTP, socket, cron, Core A→Core B) solo in React Flow, nella
+sezione Automazioni. Serve un server Node-RED raggiungibile — locale
+(`127.0.0.1:1880`), un altro device in LAN, o un host in rete — visibile e
+selezionabile lì, come un Core è visibile in Core Connections. L'editor Node-RED
+nativo non è il flusso di lavoro. Token e URL restano nello store host, mai in
+`ProjectV1`.
+
 ## Tre grafi distinti
 
 ### Physical Composition Graph
@@ -171,6 +179,8 @@ Config dopo il reboot.
 Compila il System Automation Graph in un insieme gestito di nodi/flow SpaghettiLAB,
 valida connessioni e credenziali, applica deploy con revisione e riconcilia solo le
 risorse possedute dal progetto. Non modifica flow Node-RED creati dall'utente.
+L'istanza target (URL locale/LAN/remoto) è un runtime host, non un campo del
+progetto esportabile.
 
 ## Modello dati principale
 

@@ -26,7 +26,7 @@ const GROUPS: readonly { readonly items: readonly RailItem[] }[] = [
   {
     items: [
       { id: "capability-marketplace", label: "Capability Marketplace", icon: Store },
-      { id: "cross-core-automation", label: "Cross-Core Automation", icon: Share2 },
+      { id: "cross-core-automation", label: "Automazioni", icon: Share2 },
       { id: "settings-security", label: "Settings", icon: Settings },
     ],
   },

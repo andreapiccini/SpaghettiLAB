@@ -1,5 +1,6 @@
 import { bytesToHex } from "@spaghettilab/core-session";
-import type { AuthoringMetadata, CoreBindingRecord, GraphState } from "@spaghettilab/domain";
+import { nodeRedResourceId, type AuthoringMetadata, type CoreBindingRecord, type GraphState } from "@spaghettilab/domain";
+import type { ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
 import { checkFieldCompatibility, LinkCompatibility, revalidateLink, type FieldRegistry } from "@spaghettilab/system-automation-graph";
 import { addGraphEdgeCommand, addGraphNodeCommand, nodeChangesToCommands, systemAutomationGraphLens, toReactFlowEdges } from "@spaghettilab/react-flow-adapter";
 import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Connection, type Edge, type Node, type NodeChange } from "@xyflow/react";
@@ -8,6 +9,7 @@ import { AlertTriangle, Plus, RefreshCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useCoreSessions } from "../../state/core-sessions-context.js";
 import { useSession } from "../../state/session-context.js";
+import { AutomationFunctionPalette } from "./AutomationFunctionPalette.js";
 import { CROSS_CORE_NODE_TYPES } from "./CrossCoreNode.js";
 import type { AppLink, LinkMeta } from "./link-meta.js";
 import type { CrossCoreNodeData } from "./node-data.js";
@@ -38,7 +40,9 @@ export function GraphTab({
 }) {
   return (
     <ReactFlowProvider>
-      <GraphTabInner linkMeta={linkMeta} setLinkMeta={setLinkMeta} />
+      <div className="flex h-full w-full min-h-0">
+        <GraphTabInner linkMeta={linkMeta} setLinkMeta={setLinkMeta} />
+      </div>
     </ReactFlowProvider>
   );
 }
@@ -166,6 +170,18 @@ function GraphTabInner({ linkMeta, setLinkMeta }: { readonly linkMeta: ReadonlyM
     execute({ kind: "UpdateAuthoringMetadata", apply: (project) => ({ ok: true, value: { ...project, authoringMetadata: { ...project.authoringMetadata, [id]: { position: { x: 80, y: 80 } } } } }) });
   }
 
+  function handlePlaceCatalogEntry(entry: ProcessingCatalogEntry) {
+    const resourceId = nodeRedResourceId(crypto.randomUUID());
+    if (!resourceId.ok) return;
+    handleCreateNode({
+      kind: "nodered",
+      nodeRedResourceId: resourceId.value,
+      label: entry.label,
+      catalogId: entry.id,
+      subtitle: entry.subtitle,
+    });
+  }
+
   function handleRevalidate(edgeId: string, link: AppLink) {
     setLinkMeta((prev) => {
       const next = new Map(prev);
@@ -179,11 +195,14 @@ function GraphTabInner({ linkMeta, setLinkMeta }: { readonly linkMeta: ReadonlyM
   const staleLinks = links.filter((l) => l.link && revalidateLink(l.link, currentFingerprints).kind === "STALE");
 
   return (
-    <div className="relative flex flex-1 overflow-hidden">
-      <div className="flex flex-col gap-2 border-r border-border bg-surface p-2">
-        <button type="button" title="+ Nodo" onClick={() => setCreateOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
-          <Plus size={18} />
-        </button>
+    <div className="relative flex h-full min-h-0 w-full overflow-hidden">
+      <div className="flex h-full">
+        <AutomationFunctionPalette onPlace={handlePlaceCatalogEntry} />
+        <div className="flex flex-col gap-2 border-r border-border bg-surface p-2">
+          <button type="button" title="Nodo Core (record o comando)" onClick={() => setCreateOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
+            <Plus size={18} />
+          </button>
+        </div>
       </div>
 
       <div className="relative flex-1">
@@ -208,6 +227,9 @@ function GraphTabInner({ linkMeta, setLinkMeta }: { readonly linkMeta: ReadonlyM
           </div>
         )}
 
+        <p className="absolute left-4 top-4 max-w-md rounded-slsm border border-border bg-surface/90 px-2 py-1 font-body text-[11px] text-ink-faint">
+          Il deploy attuale compila i link Core→Core (record→comando). HTTP/socket/cron restano sul grafo e useranno il server Node-RED collegato.
+        </p>
         {error && <p className="absolute bottom-2 left-2 font-body text-xs text-error">{error}</p>}
       </div>
 

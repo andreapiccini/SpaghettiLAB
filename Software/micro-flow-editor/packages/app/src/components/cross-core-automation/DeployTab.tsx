@@ -11,7 +11,9 @@ import {
 import { Rocket, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useSession } from "../../state/session-context.js";
+import { useNodeRedRuntime } from "../../state/node-red-runtime-context.js";
 import type { AppLink } from "./link-meta.js";
+import type { CrossCoreNodeData } from "./node-data.js";
 
 type DiffRow = { readonly id: string; readonly change: "added" | "removed" | "modified" };
 
@@ -31,8 +33,7 @@ type DiffRow = { readonly id: string; readonly change: "added" | "removed" | "mo
  */
 export function DeployTab({ links }: { readonly links: readonly AppLink[] }) {
   const { session } = useSession();
-  const [baseUrl, setBaseUrl] = useState("http://localhost:1880");
-  const [token, setToken] = useState("");
+  const { target, token, reachability } = useNodeRedRuntime();
   const [diff, setDiff] = useState<readonly DiffRow[] | null>(null);
   const [liveRev, setLiveRev] = useState<string | null>(null);
   const [merged, setMerged] = useState<readonly NodeRedFlowNode[] | null>(null);
@@ -45,13 +46,14 @@ export function DeployTab({ links }: { readonly links: readonly AppLink[] }) {
   const connectionProfileByCoreBinding = new Map(bindings.map((b) => [b.bindingId, b.connectionProfileId]));
 
   const compiled = project ? compileSystemAutomationFlow(links, project.projectId, connectionProfileByCoreBinding) : null;
+  const hostFunctionCount = project?.systemAutomationGraph.nodes.filter((n) => (n.data as CrossCoreNodeData).kind === "nodered").length ?? 0;
 
   async function handlePreviewDiff() {
     if (!project || !compiled) return;
     setError(null);
     setLoading(true);
     try {
-      const adminApi = new NodeRedAdminApiClient({ baseUrl, token: token || undefined });
+      const adminApi = new NodeRedAdminApiClient({ baseUrl: target.baseUrl, token: token || undefined });
       const live = await adminApi.getFlows();
       const mergedNodes = reconcileFlows(live.nodes, compiled.nodes, project.projectId);
       setMerged(mergedNodes);
@@ -79,7 +81,7 @@ export function DeployTab({ links }: { readonly links: readonly AppLink[] }) {
     if (!project || !compiled) return;
     setLoading(true);
     try {
-      const adminApi = new NodeRedAdminApiClient({ baseUrl, token: token || undefined });
+      const adminApi = new NodeRedAdminApiClient({ baseUrl: target.baseUrl, token: token || undefined });
       const outcome = await deployNodeRedFlow(adminApi, project.projectId, compiled.nodes);
       setResult(outcome);
     } catch (cause) {
@@ -100,15 +102,17 @@ export function DeployTab({ links }: { readonly links: readonly AppLink[] }) {
         </p>
       </div>
 
+      {hostFunctionCount > 0 && (
+        <p className="font-body text-sm text-ink-muted">
+          {hostFunctionCount} funzioni host sul grafo (HTTP/socket/cron). Il compilatore attuale deploya i link record→comando fra Core; quelle funzioni restano nell&apos;editor finché il mapping Node-RED nativo non è cablato.
+        </p>
+      )}
+
       <div className="flex flex-wrap items-end gap-2 rounded-slmd border border-border p-3">
-        <label className="flex flex-col gap-1">
-          <span className="font-body text-xs text-ink-muted">Node-RED Admin API base URL</span>
-          <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} className="w-64 rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-xs outline-none" />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="font-body text-xs text-ink-muted">Token (opz.)</span>
-          <input value={token} onChange={(e) => setToken(e.target.value)} type="password" className="w-40 rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-xs outline-none" />
-        </label>
+        <p className="w-full font-mono text-xs text-ink-muted">
+          Destinazione: {target.baseUrl}
+          {reachability === "reachable" ? " · raggiungibile" : reachability === "unreachable" ? " · non raggiungibile (CORS o server spento)" : ""}
+        </p>
         <button type="button" disabled={loading} onClick={() => void handlePreviewDiff()} className="rounded-slpill border border-border-strong px-3 py-1.5 font-body-strong text-xs text-ink hover:bg-surface-raised disabled:opacity-40">
           Calcola diff
         </button>
