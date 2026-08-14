@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import { projectRepository } from "../../lib/repository.js";
 import { useSession } from "../../state/session-context.js";
+import { useSettingsModal } from "../../state/settings-modal-context.js";
+import { ChromeStatus } from "../shell/ChromeStatus.js";
 import { NewProjectDialog } from "./NewProjectDialog.js";
 import { ProjectCard } from "./ProjectCard.js";
 
@@ -35,6 +37,7 @@ async function loadSummaries(): Promise<LoadState> {
 
 export function ProjectPicker() {
   const { openProject } = useSession();
+  const { openSettings } = useSettingsModal();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -87,6 +90,7 @@ export function ProjectPicker() {
       <header className="flex h-16 items-center justify-between border-b border-border px-6">
         <img src="/ux-assets/logo-full.png" alt="Spaghetti LAB" className="h-8" />
         <div className="flex items-center gap-2">
+          <ChromeStatus />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -105,7 +109,7 @@ export function ProjectPicker() {
               e.target.value = "";
             }}
           />
-          <button type="button" className="flex h-9 w-9 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised" aria-label="Settings">
+          <button type="button" onClick={() => openSettings()} className="flex h-9 w-9 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised" aria-label="Settings">
             <Settings size={18} />
           </button>
         </div>

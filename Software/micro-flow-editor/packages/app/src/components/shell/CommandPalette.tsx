@@ -2,8 +2,11 @@ import { Activity, Boxes, Cable, FileCode, GitCompareArrows, Network, Redo2, Sav
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { isScreenVisibleInMode } from "../../lib/ui-mode.js";
+import { chromeCopy } from "../../lib/chrome-copy.js";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import { saveOpenProject, useSession, type ScreenId } from "../../state/session-context.js";
+import { useLocale } from "../../state/locale-context.js";
+import { useSettingsModal } from "../../state/settings-modal-context.js";
 import { useUiMode } from "../../state/ui-mode-context.js";
 
 type PaletteEntry = { readonly id: string; readonly label: string; readonly icon: LucideIcon; readonly shortcut?: string; readonly run: () => void };
@@ -21,6 +24,9 @@ type PaletteEntry = { readonly id: string; readonly label: string; readonly icon
 export function CommandPalette() {
   const { session, navigate, undo, redo } = useSession();
   const { mode, setMode } = useUiMode();
+  const { locale } = useLocale();
+  const { openSettings } = useSettingsModal();
+  const copy = chromeCopy(locale);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
@@ -81,6 +87,12 @@ export function CommandPalette() {
       }));
 
     const actionEntries: PaletteEntry[] = [];
+    actionEntries.push({
+      id: "open-settings",
+      label: copy.settings,
+      icon: Settings,
+      run: () => openSettings(),
+    });
     if (session) {
       actionEntries.push({ id: "save", label: "Salva progetto", icon: Save, shortcut: "⌘S", run: () => void save() });
     }
@@ -99,7 +111,7 @@ export function CommandPalette() {
 
     return [...actionEntries, ...navEntries];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, navigate, undo, redo, mode, setMode]);
+  }, [session, navigate, undo, redo, mode, setMode, copy.settings, openSettings]);
 
   const filtered = entries.filter((e) => e.label.toLowerCase().includes(query.toLowerCase()));
 

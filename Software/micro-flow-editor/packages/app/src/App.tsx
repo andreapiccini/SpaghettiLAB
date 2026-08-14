@@ -12,10 +12,13 @@ import { RuntimeDiagnosticsScreen } from "./components/runtime-diagnostics/Runti
 import { CapabilityMarketplaceScreen } from "./components/capability-marketplace/CapabilityMarketplaceScreen.js";
 import { CrossCoreAutomationScreen } from "./components/cross-core-automation/CrossCoreAutomationScreen.js";
 import { SettingsSecurityScreen } from "./components/settings-security/SettingsSecurityScreen.js";
+import { SettingsModal } from "./components/settings-modal/SettingsModal.js";
 import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
-import { SessionProvider, useSession } from "./state/session-context.js";
+import { LocaleProvider } from "./state/locale-context.js";
 import { NodeRedRuntimeProvider } from "./state/node-red-runtime-context.js";
+import { SessionProvider, useSession } from "./state/session-context.js";
+import { SettingsModalProvider } from "./state/settings-modal-context.js";
 import { UiModeProvider, useUiMode } from "./state/ui-mode-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
@@ -124,13 +127,18 @@ function AppContent() {
 export default function App() {
   return (
     <UiModeProvider>
-      <NodeRedRuntimeProvider>
-        <SessionProvider>
-          <CoreSessionsProvider>
-            <AppContent />
-          </CoreSessionsProvider>
-        </SessionProvider>
-      </NodeRedRuntimeProvider>
+      <LocaleProvider>
+        <SettingsModalProvider>
+          <NodeRedRuntimeProvider>
+            <SessionProvider>
+              <CoreSessionsProvider>
+                <AppContent />
+                <SettingsModal />
+              </CoreSessionsProvider>
+            </SessionProvider>
+          </NodeRedRuntimeProvider>
+        </SettingsModalProvider>
+      </LocaleProvider>
     </UiModeProvider>
   );
 }
