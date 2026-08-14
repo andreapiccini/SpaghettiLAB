@@ -104,9 +104,9 @@ pattern dei dialoghi già confermato in S070/S010.
   "Core in rete" / "Core via cavo".
 - "Auto" e "Core via cavo" elencano i Core trovati con Protocol V1 (più
   dispositivi, selezione multipla): porte Web Serial già autorizzate (Chrome/Edge)
-  e, se in esecuzione, il ponte locale `make usb-bridge` (`ws://127.0.0.1:8766`).
-  Safari non ha Web Serial: a lista vuota il dialogo spiega di chiudere
-  `make monitor`, lanciare il ponte e usare «Riprova». "Core via cavo" in
+  e il ponte locale `ws://127.0.0.1:8766` avviato da `make up-d` in
+  `Software/micro-flow-editor`. Safari non ha Web Serial: a lista vuota il
+  dialogo ricorda `make up-d` e di chiudere `make monitor`. "Core via cavo" in
   Chrome/Edge aggiunge il picker Web Serial per autorizzare una porta nuova.
   "Core in rete" rivela un campo indirizzo WebSocket (`font.mono`); l'identità
   arriva dal Core, non va digitata. I Core visti dal ponte mostrano il suffisso

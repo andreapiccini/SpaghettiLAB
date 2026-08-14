@@ -62,8 +62,8 @@ Dettaglio e checklist completa: [**SOFTWARE_MASTER_INDEX.md § 6**](SOFTWARE_MAS
 ## Avvio rapido (componenti esistenti)
 
 ```sh
-# React Flow dev (Docker)
-cd Software/micro-flow-editor && docker compose up
+# React Flow + USB bridge for Safari (Docker)
+cd Software/micro-flow-editor && make up-d
 
 # Node-RED locale
 cd Software/node-red && docker compose up -d

@@ -1,0 +1,7 @@
+#!/bin/sh
+# Start the host USB bridge (Safari via cavo) then React Flow Compose.
+set -e
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
+sh "$ROOT/scripts/usb-bridge.sh" start
+exec docker compose up "$@"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCoreBinding, CommandStack, removeCoreBinding, renameProject } from "../commands.js";
+import { addCoreBinding, CommandStack, removeCoreBinding, renameProject, setDeviceProfilePackages } from "../commands.js";
 import { createEmptyProject } from "../project.js";
 import { coreBindingId, projectId } from "../ids.js";
 import type { Result } from "../result.js";

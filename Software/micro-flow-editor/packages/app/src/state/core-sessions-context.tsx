@@ -1,5 +1,7 @@
 import { CatalogCache, CoreSession, type CoreSessionSnapshot, type SessionState, type SyncRelationship } from "@spaghettilab/core-session";
-import type { CoreBindingId, CoreBindingRecord, DomainError } from "@spaghettilab/domain";
+import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
+import type { InstallProfileResult } from "@spaghettilab/device-profile-install";
+import type { CoreBindingId, CoreBindingRecord, DomainError, Result } from "@spaghettilab/domain";
 import { EventStream, SpaghettiClient, WebSerialProtocolTransport, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type DeviceProfileSummary, type DiscoveryCandidate, type ProtocolTransport } from "@spaghettilab/protocol-sdk";
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { connectBrowserWebSocket } from "../lib/browser-websocket-connection.js";
@@ -29,6 +31,8 @@ type CoreSessionsContextValue = {
   listDeviceProfiles(bindingId: CoreBindingId): Promise<readonly DeviceProfileSummary[]> | undefined;
   listDiscoveryCandidates(bindingId: CoreBindingId): Promise<readonly DiscoveryCandidate[]> | undefined;
   acceptDiscovery(bindingId: CoreBindingId, req: AcceptDiscoveryRequest): Promise<AcceptDiscoveryResponse> | undefined;
+  installProfile(bindingId: CoreBindingId, draft: DeviceProfileDraft): Promise<Result<InstallProfileResult, DomainError>> | undefined;
+  removeProfile(bindingId: CoreBindingId, profileId: string, version: number, options: { readonly isReferencedLocally: boolean }): Promise<Result<void, DomainError>> | undefined;
 };
 
 const CoreSessionsContext = createContext<CoreSessionsContextValue | undefined>(undefined);

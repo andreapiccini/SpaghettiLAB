@@ -27,14 +27,24 @@ export class WebSerialProtocolTransport implements ProtocolTransport {
   private readonly responseHandlers = new Set<(bytes: Uint8Array) => void>();
   private readonly eventHandlers = new Set<(bytes: Uint8Array) => void>();
   private readonly unsubscribeConnection: () => void;
+  /** Core USB accepts one in-flight request; later writes wait for a response frame. */
+  private sendQueue: Promise<void> = Promise.resolve();
+  private inFlightWaiter: (() => void) | null = null;
 
   constructor(private readonly connection: RawByteStreamConnection) {
     this.unsubscribeConnection = connection.onData((chunk) => this.dispatch(chunk));
   }
 
+  private releaseInFlight(): void {
+    const waiter = this.inFlightWaiter;
+    this.inFlightWaiter = null;
+    waiter?.();
+  }
+
   private dispatch(chunk: Uint8Array): void {
     for (const { kind, bytes } of this.decoder.push(chunk)) {
       if (kind === FRAME_KIND_RESPONSE) {
+        this.releaseInFlight();
         for (const handler of this.responseHandlers) handler(bytes);
       } else if (kind === FRAME_KIND_EVENT) {
         for (const handler of this.eventHandlers) handler(bytes);
@@ -43,11 +53,27 @@ export class WebSerialProtocolTransport implements ProtocolTransport {
   }
 
   send(bytes: Uint8Array): Promise<void> {
-    // Requests need the same length-prefix framing so the far end's own
-    // stream parser can find the boundary — this is a raw byte stream, not a
-    // message-oriented transport like WebSocket.
-    this.connection.write(frameStreamMessage(FRAME_KIND_REQUEST, bytes));
-    return Promise.resolve();
+    const framed = frameStreamMessage(FRAME_KIND_REQUEST, bytes);
+    const run = this.sendQueue.then(() => this.writeOne(framed));
+    this.sendQueue = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  private writeOne(framed: Uint8Array): Promise<void> {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        this.releaseInFlight();
+        resolve();
+      }, 8000);
+      this.inFlightWaiter = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      this.connection.write(framed);
+    });
   }
 
   onResponse(handler: (bytes: Uint8Array) => void): () => void {

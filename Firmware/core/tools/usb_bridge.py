@@ -40,6 +40,11 @@ HEADER_SIZE = 5
 ENVELOPE_MAX = 512 + 64
 DEFAULT_LISTEN = "127.0.0.1:8766"
 IDENTIFY_TIMEOUT_S = 4.0
+RESPONSE_WAIT_S = 8.0
+# SpaghettiClient starts at 1; a colliding GET_STATUS with a different payload
+# is CONFLICT for the whole replay window (~30 s on Core V1).
+IDENTIFY_CORRELATION = 0x71C0FFEE
+EMPTY_MAP_PAYLOAD = b"\xa0"
 
 
 def encode_usb_frame(kind: int, envelope: bytes) -> bytes:
@@ -102,7 +107,9 @@ def _identify_sync(port: str) -> BoundCore | None:
     buffer = bytearray()
     try:
         conn.reset_input_buffer()
-        envelope = encode_request(1, Operation.GET_STATUS, b"")
+        envelope = encode_request(
+            IDENTIFY_CORRELATION, Operation.GET_STATUS, EMPTY_MAP_PAYLOAD
+        )
         conn.write(encode_usb_frame(KIND_REQUEST, envelope))
         conn.flush()
         deadline = time.monotonic() + IDENTIFY_TIMEOUT_S
@@ -247,6 +254,8 @@ async def _pipe_core(websocket: Any, core: BoundCore) -> None:
     )
     reader.start()
     buffer = bytearray()
+    idle = asyncio.Event()
+    idle.set()
 
     async def pump_serial() -> None:
         while True:
@@ -259,6 +268,8 @@ async def _pipe_core(websocket: Any, core: BoundCore) -> None:
                 if parsed is None:
                     break
                 kind, envelope = parsed
+                if kind == KIND_RESPONSE:
+                    idle.set()
                 await websocket.send(bytes([kind]) + envelope)
 
     serial_task = asyncio.create_task(pump_serial())
@@ -274,8 +285,14 @@ async def _pipe_core(websocket: Any, core: BoundCore) -> None:
                     core.connection.flush()
 
             try:
+                await asyncio.wait_for(idle.wait(), timeout=RESPONSE_WAIT_S)
+            except TimeoutError:
+                logger.warning("usb in-flight wait timed out port=%s", core.port)
+            idle.clear()
+            try:
                 await asyncio.to_thread(write)
             except Exception:
+                idle.set()
                 logger.exception("usb write failed port=%s", core.port)
                 break
     finally:

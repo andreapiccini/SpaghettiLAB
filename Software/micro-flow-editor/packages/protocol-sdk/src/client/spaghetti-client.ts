@@ -150,7 +150,7 @@ function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
  */
 export class SpaghettiClient {
   private readonly pending = new Map<number, PendingEntry>();
-  private nextCorrelationId = 0;
+  private nextCorrelationId = 0x10000 + Math.floor(Math.random() * 0x0fff0000);
   private lastKnownBootId: bigint | null = null;
   private readonly unsubscribeResponse: () => void;
   private readonly unsubscribeEvent: () => void;

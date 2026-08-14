@@ -53,9 +53,27 @@ describe("WebSerialProtocolTransport", () => {
     const transport = new WebSerialProtocolTransport(connection);
     const payload = new Uint8Array([1, 2, 3]);
 
-    await transport.send(payload);
+    const sent = transport.send(payload);
+    await Promise.resolve();
+    connection.deliver(frameStreamMessage(FRAME_KIND_RESPONSE, new Uint8Array([0])));
+    await sent;
 
     expect(connection.written).toEqual([frameStreamMessage(FRAME_KIND_REQUEST, payload)]);
+  });
+
+  it("holds the next request until a response arrives", async () => {
+    const connection = new FakeRawByteStreamConnection();
+    const transport = new WebSerialProtocolTransport(connection);
+    const first = transport.send(new Uint8Array([1]));
+    const second = transport.send(new Uint8Array([2]));
+    await Promise.resolve();
+    expect(connection.written).toHaveLength(1);
+    connection.deliver(frameStreamMessage(FRAME_KIND_RESPONSE, new Uint8Array([0xaa])));
+    await first;
+    await Promise.resolve();
+    expect(connection.written).toHaveLength(2);
+    connection.deliver(frameStreamMessage(FRAME_KIND_RESPONSE, new Uint8Array([0xbb])));
+    await second;
   });
 
   it("dispatches response/event frames delivered across split chunks", () => {

@@ -41,6 +41,7 @@ __pycache__/
 *.py[cod]
 /.venv/
 /venv/
+/.run/
 
 # Host TypeScript SDK build artifacts
 /tools/sdk/typescript/node_modules/

@@ -1,3 +1,6 @@
+# USB Serial/JTAG → ws://127.0.0.1:8766 (Safari). Docker on macOS cannot
+# see /dev/cu.usbmodem*; the browser talks to the host. `make up-d` in
+# Software/micro-flow-editor starts this process automatically.
 services:
   micro-flow-editor:
     build: .

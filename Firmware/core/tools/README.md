@@ -49,6 +49,8 @@ Core USB ports with Protocol V1 stream framing and exposes
 `WebSocketProtocolTransport` on loopback only (`127.0.0.1:8766`). Do not reuse
 the BLE gateway JSON/token control plane.
 
+React Flow starts it with `make up-d` in `Software/micro-flow-editor`. Low-level:
+
 ```sh
 make usb-bridge
 ```

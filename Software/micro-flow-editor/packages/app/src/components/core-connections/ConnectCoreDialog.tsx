@@ -238,10 +238,10 @@ export function ConnectCoreDialog({
                       </p>
                       <p className="max-w-80 font-body text-xs text-ink-faint">
                         {!usbSerialSupported()
-                          ? "Safari non apre la USB da solo. Nel firmware chiudi make monitor, lancia make usb-bridge, poi riprova."
+                          ? "Safari non apre la USB da solo. Avvia React Flow con make up-d (parte il ponte USB). Chiudi make monitor, poi riprova."
                           : method === "auto"
-                            ? "Auto interroga le porte USB già autorizzate e il ponte locale (make usb-bridge). Per un Core nuovo usa «Core via cavo»."
-                            : "Autorizza la porta USB del Core, oppure lancia make usb-bridge se usi Safari. Chiudi make monitor prima."}
+                            ? "Auto interroga le porte USB già autorizzate e il ponte locale avviato con make up-d. Per un Core nuovo usa «Core via cavo»."
+                            : "Autorizza la porta USB del Core. In Safari il ponte parte con make up-d. Chiudi make monitor prima."}
                       </p>
                       <button
                         type="button"

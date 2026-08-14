@@ -1,0 +1,7 @@
+#!/bin/sh
+# Stop React Flow Compose and the host USB bridge.
+set -e
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
+docker compose down "$@"
+sh "$ROOT/scripts/usb-bridge.sh" stop || true

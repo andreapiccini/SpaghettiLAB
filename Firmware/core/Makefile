@@ -65,7 +65,7 @@ spaghetti: host-tools
 	@$(HOST_VENV_PYTHON) tools/spaghetti.py $(ARGS)
 
 # USB Serial/JTAG → ws://127.0.0.1:8766 for Safari / browsers without Web Serial.
-# Close make monitor first. Chrome can keep using navigator.serial without this.
+# Close make monitor first. React Flow: Software/micro-flow-editor `make up-d`.
 usb-bridge: host-tools
 	@PYTHONPATH=. $(HOST_VENV_PYTHON) -m tools.usb_bridge
 

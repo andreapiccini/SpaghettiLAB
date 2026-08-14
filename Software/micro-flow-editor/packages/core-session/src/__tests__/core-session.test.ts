@@ -8,6 +8,8 @@ import {
   type CoreBindingRecord,
   type ProjectV1,
 } from "@spaghettilab/domain";
+import { PortTransport, type DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
+import { encodeDeviceProfileCbor, sha256 } from "@spaghettilab/device-profile-install";
 import {
   decodeRequest,
   encodeAcceptDiscoveryResponse,
@@ -18,9 +20,12 @@ import {
   encodeGetResourcesResponse,
   encodeGetStatusResponse,
   encodeGetTopologyResponse,
+  encodeInstallDeviceProfileResponse,
   encodeListDeviceProfilesResponse,
   encodeListDiscoveryResponse,
+  encodeRemoveDeviceProfileResponse,
   encodeResponse,
+  encodeValidateDeviceProfileResponse,
   EventStream,
   FakeTransport,
   Operation,
@@ -363,5 +368,99 @@ describe("CoreSession — discovery", () => {
     }, acceptResponder);
 
     expect(result).toEqual({ generation: 4, moduleKey: 7 });
+  });
+});
+
+function fixtureDraft(): DeviceProfileDraft {
+  return {
+    profileId: "sensor.example",
+    version: 1,
+    transport: PortTransport.I2C,
+    requiredCapabilities: 1,
+    maxTotalTimeMs: 100,
+    maxTransactions: 5,
+    maxBytes: 16,
+    initOps: [{ op: "I2C_WRITE", src: 0, length: 1, timeoutMs: 20 }],
+    sampleOps: [
+      { op: "I2C_READ", dst: 1, length: 2, timeoutMs: 20 },
+      { op: "EMIT_FIELD", src: 1, fieldId: 1 },
+      { op: "EMIT_RECORD" },
+    ],
+    safeStopOps: [],
+    sampleSchemaId: "sensor.example.sample",
+    sampleSchemaVersion: 1,
+    sampleFields: [{ fieldId: 1, type: "int64", name: "current", unit: "mA" }],
+  };
+}
+
+/**
+ * `installProfile()` interleaves real wire round trips with a real
+ * `crypto.subtle.digest()` call (S063's post-install hash verification,
+ * deliberately not mocked here) — `runToCompletion`'s pure-microtask drain
+ * loop can exhaust its iteration budget before that digest's callback ever
+ * gets a turn (macrotask starvation), leaving the final `LIST_DEVICE_PROFILES`
+ * request sent-but-undrained. Real `setTimeout` ticks avoid that.
+ */
+async function runToCompletionWithRealTimers(work: () => Promise<void>, responder: FakeCoreResponder): Promise<void> {
+  const done = work().catch((e: unknown) => {
+    throw e;
+  });
+  let settled = false;
+  void done.then(
+    () => (settled = true),
+    () => (settled = true),
+  );
+  for (let i = 0; i < 200 && !settled; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    responder.drain();
+  }
+  await done;
+}
+
+describe("CoreSession — device profile install/remove", () => {
+  it("installProfile() validates, installs, and verifies the post-install hash", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+
+    const draft = fixtureDraft();
+    const expectedHash = await sha256(encodeDeviceProfileCbor(draft));
+    const summary: DeviceProfileSummary = { profileId: draft.profileId, version: draft.version, hash: expectedHash };
+    const installResponder = new FakeCoreResponder(transport, {
+      [Operation.VALIDATE_DEVICE_PROFILE]: () => encodeValidateDeviceProfileResponse({ valid: 1 }),
+      [Operation.INSTALL_DEVICE_PROFILE]: () => encodeInstallDeviceProfileResponse(),
+      [Operation.LIST_DEVICE_PROFILES]: () => encodeListDeviceProfilesResponse({ profiles: [summary], nextCursor: 0 }),
+    });
+
+    let result: Awaited<ReturnType<CoreSession["installProfile"]>> | undefined;
+    await runToCompletionWithRealTimers(async () => {
+      result = await session.installProfile(draft);
+    }, installResponder);
+
+    expect(result?.ok).toBe(true);
+    if (result?.ok) expect(result.value.summary).toEqual(summary);
+  });
+
+  it("removeProfile() refuses locally-referenced profiles without a round trip", async () => {
+    const { session, responder } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+
+    const result = await session.removeProfile("sensor.example", 1, { isReferencedLocally: true });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("device-profile-install.profile_in_use");
+  });
+
+  it("removeProfile() sends REMOVE_DEVICE_PROFILE when not locally referenced", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+
+    const removeResponder = new FakeCoreResponder(transport, {
+      [Operation.REMOVE_DEVICE_PROFILE]: () => encodeRemoveDeviceProfileResponse(),
+    });
+    let result: Awaited<ReturnType<CoreSession["removeProfile"]>> | undefined;
+    await runToCompletion(async () => {
+      result = await session.removeProfile("sensor.example", 1, { isReferencedLocally: false });
+    }, removeResponder);
+
+    expect(result?.ok).toBe(true);
   });
 });

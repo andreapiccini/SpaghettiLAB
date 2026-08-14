@@ -76,7 +76,7 @@ punto 8 garantisce che gli altri workspace (le altre righe) restano operativi �
 ## Dialogo "Connetti un Core"
 
 1. "Auto" / "Core via cavo" interrogano le porte USB già autorizzate (Web Serial)
-   e `ws://127.0.0.1:8766/list` se `make usb-bridge` è acceso. Ogni Core che
+   e `ws://127.0.0.1:8766/list` se il ponte è acceso (`make up-d`). Ogni Core che
    risponde a `GET_STATUS` **propone** un binding dalla `device_id` del protocollo;
    non sostituisce mai l'identità già registrata (S030 punto 1).
 2. Safari non chiama `navigator.serial`. La connessione via cavo passa dal ponte:

@@ -1,4 +1,6 @@
-import { canonicalProjectHash, type CoreBindingRecord, type DeploymentRecordV1, type ProjectV1 } from "@spaghettilab/domain";
+import { canonicalProjectHash, type CoreBindingRecord, type DeploymentRecordV1, type DomainError, type ProjectV1, type Result } from "@spaghettilab/domain";
+import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
+import { installProfile as installProfileWorkflow, removeProfile as removeProfileWorkflow, type InstallProfileResult } from "@spaghettilab/device-profile-install";
 import type {
   AcceptDiscoveryRequest,
   AcceptDiscoveryResponse,
@@ -217,6 +219,22 @@ export class CoreSession {
   /** Explicit action: accepts one discovery candidate on the Core, returning the firmware-assigned Module key. Never called without a prior, human-reviewed diff — see `@spaghettilab/physical-composition-model`'s `previewDiscoveryAcceptDiff()`. */
   async acceptDiscovery(req: AcceptDiscoveryRequest): Promise<AcceptDiscoveryResponse> {
     return this.client.acceptDiscovery(req);
+  }
+
+  /**
+   * Installs a Device Profile draft (Device Profile Studio, S061-S063) —
+   * `SpaghettiClient` satisfies `@spaghettilab/device-profile-install`'s narrow
+   * `DeviceProfileWireClient` structurally, no adapter needed. Validates
+   * remotely, installs, and verifies the post-install hash; never called
+   * automatically.
+   */
+  async installProfile(draft: DeviceProfileDraft): Promise<Result<InstallProfileResult, DomainError>> {
+    return installProfileWorkflow(this.client, draft);
+  }
+
+  /** Explicit action: removes an installed Device Profile, refusing locally-referenced ones without a round trip — see `@spaghettilab/device-profile-install`'s own doc comment. */
+  async removeProfile(profileId: string, version: number, options: { readonly isReferencedLocally: boolean }): Promise<Result<void, DomainError>> {
+    return removeProfileWorkflow(this.client, profileId, version, options);
   }
 
   /** Explicit action: adopt the device's live Config as-is. Never called automatically. */

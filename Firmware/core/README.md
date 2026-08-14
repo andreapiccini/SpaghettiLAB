@@ -175,16 +175,17 @@ Protocol V1 on the same cable, with the monitor closed:
 make ARGS='--transport serial status' spaghetti
 ```
 
-Safari cannot open USB (no Web Serial). Keep the monitor closed and run a
-localhost bridge; React Flow Auto / Core via cavo then uses
-`ws://127.0.0.1:8766`:
+Safari cannot open USB (no Web Serial). From `Software/micro-flow-editor`,
+`make up-d` starts the localhost USB bridge on this machine and then Docker.
+Keep the monitor closed. Chrome and Edge can keep using Web Serial directly.
+The bridge, the monitor, and React Flow still cannot share the same cable at
+once.
+
+Low-level (without React Flow):
 
 ```sh
 make usb-bridge
 ```
-
-Chrome and Edge can keep using Web Serial directly. The bridge, the monitor,
-and React Flow still cannot share the same cable at once.
 
 `tools/device.py` reads `build/domains.yaml` and each domain's generated
 `runners.yaml`; the image order, microcontroller, addresses and flash parameters
@@ -260,7 +261,7 @@ sudo usermod -aG dialout "$USER"
 | `make monitor [PORT=...]` | Open the styled, reconnecting Rich monitor |
 | `make host-tools` | Create `.venv/` and install monitor dependencies |
 | `make spaghetti ARGS='…'` | Run the Spaghetti CLI V1 (catalog / config / update). Close `make monitor` first for `--transport serial` |
-| `make usb-bridge` | USB Protocol V1 → `ws://127.0.0.1:8766` so Safari can use Core via cavo. Close `make monitor` first |
+| `make usb-bridge` | USB Protocol V1 → `ws://127.0.0.1:8766` (low-level). React Flow: `make up-d` in `Software/micro-flow-editor` |
 | `make config-validate CONFIG=path.json` | Validate a local Config JSON against the Core catalog |
 | `make config-apply CONFIG=path.json` | Validate then apply Config (generation/hash CAS) |
 | `make remote-console-credential CREDENTIALS=...` | Create a protected TLS-PSK file |
