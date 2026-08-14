@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react
 import { useSession } from "../../state/session-context.js";
 import { DEFAULT_ENERGY, DISABLED_MQTT } from "../../lib/default-config-policy.js";
 import { CoreSelector } from "../catalog-topology/CoreSelector.js";
-import { PROCESSING_BLOCK_MIME, nodeDataFromCatalogEntry, snapToGrid } from "./catalog-to-node.js";
+import { PROCESSING_BLOCK_MIME, nextSpawnPosition, nodeDataFromCatalogEntry, snapToGrid } from "./catalog-to-node.js";
 import { NodeInspector, type ProcessingInspectorMode } from "./NodeInspector.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 import { ProcessingBlockPalette } from "./ProcessingBlockPalette.js";
@@ -118,7 +118,7 @@ function ProcessingGraphScreenInner() {
     if (domainNode) setInspector({ kind: "edit", nodeId: node.id, data: domainNode.data, comment: meta?.comment ?? "" });
   }
 
-  function placeFromCatalog(entry: ProcessingCatalogEntry, position = { x: 80, y: 80 }) {
+  function placeFromCatalog(entry: ProcessingCatalogEntry, position = nextSpawnPosition(domainNodes.length)) {
     if (!execute || bindingIndex < 0) return;
     const data = nodeDataFromCatalogEntry(entry, moduleOptions[0]?.id);
     if (!data) return;
@@ -154,7 +154,7 @@ function ProcessingGraphScreenInner() {
       execute(addGraphNodeCommand(lens, { layer: "device-processing", id, data }));
       execute({
         kind: "UpdateAuthoringMetadata",
-        apply: (project) => ({ ok: true, value: { ...project, authoringMetadata: { ...project.authoringMetadata, [id]: { comment, position: { x: 80, y: 80 } } } } }),
+        apply: (project) => ({ ok: true, value: { ...project, authoringMetadata: { ...project.authoringMetadata, [id]: { comment, position: nextSpawnPosition(domainNodes.length) } } } }),
       });
     }
     setInspector(null);

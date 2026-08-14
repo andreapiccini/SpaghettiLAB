@@ -20,6 +20,18 @@ import { toPhysicalNodes, type PhysicalNodeData } from "./to-nodes.js";
 
 const EMPTY_GRAPH: GraphState<"physical-composition"> = { layer: "physical-composition", nodes: [], edges: [] };
 
+/**
+ * Nodes created via the toolbar have no drop coordinate to snap to —
+ * cascading them by node count keeps each new node visible instead of
+ * stacking every one at the same fixed point, which reads as a single
+ * overlapping mess and makes it look like earlier nodes vanished.
+ */
+function nextSpawnPosition(existingNodeCount: number, perRow = 4, colStep = 260, rowStep = 80): { x: number; y: number } {
+  const col = existingNodeCount % perRow;
+  const row = Math.floor(existingNodeCount / perRow);
+  return { x: 80 + col * colStep, y: 80 + row * rowStep };
+}
+
 const TOOLBAR_ITEMS: readonly { readonly kind: PhysicalCompositionNodeData["kind"]; readonly icon: typeof Rows3 }[] = [
   { kind: "backbone", icon: Rows3 },
   { kind: "power-source", icon: Zap },
@@ -172,7 +184,7 @@ function PhysicalCompositionScreenInner() {
       execute(addGraphNodeCommand(lens, { layer: "physical-composition", id, data }));
       execute({
         kind: "UpdateAuthoringMetadata",
-        apply: (project) => ({ ok: true, value: { ...project, authoringMetadata: { ...project.authoringMetadata, [id]: { comment, position: { x: 80, y: 80 } } } } }),
+        apply: (project) => ({ ok: true, value: { ...project, authoringMetadata: { ...project.authoringMetadata, [id]: { comment, position: nextSpawnPosition(domainNodes.length) } } } }),
       });
     }
     setInspector(null);

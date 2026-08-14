@@ -20,3 +20,16 @@ export function nodeDataFromCatalogEntry(entry: ProcessingCatalogEntry, firstMod
 export function snapToGrid(value: number, grid = 20): number {
   return Math.round(value / grid) * grid;
 }
+
+/**
+ * Blocks placed by clicking a palette entry (as opposed to dragging one onto
+ * a chosen canvas spot) have no drop coordinate to snap to — cascading them
+ * by node count keeps each new block visible instead of stacking every one
+ * at the same fixed point, which reads as a single overlapping mess and
+ * makes it look like earlier blocks vanished.
+ */
+export function nextSpawnPosition(existingNodeCount: number, perRow = 4, colStep = 260, rowStep = 80): { x: number; y: number } {
+  const col = existingNodeCount % perRow;
+  const row = Math.floor(existingNodeCount / perRow);
+  return { x: 80 + col * colStep, y: 80 + row * rowStep };
+}
