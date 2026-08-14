@@ -1,4 +1,4 @@
-import { diffConfigs, isConfigDiffEmpty } from "@spaghettilab/config-deployment";
+import { diffConfigs, isConfigDiffEmpty, type ConfigDiff } from "@spaghettilab/config-deployment";
 import { decodeConfigCbor, dryRunConfig } from "@spaghettilab/config-decompiler";
 import type { GraphState } from "@spaghettilab/domain";
 import { CloudOff, Cpu } from "lucide-react";
@@ -29,18 +29,27 @@ export function CoreRow({ row, bindingIndex, onConnect }: { readonly row: CoreRo
   // Recomputed fresh from the live Config snapshot + current graphs, not `row.syncRelationship`
   // (which is a point-in-time classification from connect() and goes stale the moment the user
   // edits the project afterwards) — same reasoning Deploy & Diff's own candidate list documents.
-  const diff = useMemo(() => {
+  // A discriminated result, not a bare `ConfigDiff | null` — collapsing "no live session",
+  // "live Config didn't decode", and "graphs didn't compile" into one generic message hid which
+  // of those three genuinely different problems was actually happening.
+  const diffResult = useMemo((): { readonly kind: "ok"; readonly diff: ConfigDiff } | { readonly kind: "no-snapshot" } | { readonly kind: "decode-failed"; readonly reason: string } | { readonly kind: "compile-failed"; readonly reason: string } | null => {
     if (!expanded || !session) return null;
     const snapshot = getSnapshot(row.binding.bindingId);
-    if (!snapshot?.config) return null;
+    if (!snapshot?.config) return { kind: "no-snapshot" };
     const liveDecoded = decodeConfigCbor(snapshot.config.configBytes);
-    if (!liveDecoded.ok) return null;
+    if (!liveDecoded.ok) return { kind: "decode-failed", reason: liveDecoded.error.remediation };
     const physicalGraph = session.stack.current.physicalGraphs[bindingIndex] ?? EMPTY_PHYSICAL;
     const processingGraph = session.stack.current.deviceGraphs[bindingIndex] ?? EMPTY_PROCESSING;
     const dryRun = dryRunConfig({ physicalGraph, processingGraph, mqtt: DISABLED_MQTT, connectivity: 0, energy: DEFAULT_ENERGY });
-    if (!dryRun.compiled) return null;
-    return diffConfigs(liveDecoded.value, dryRun.compiled);
+    if (!dryRun.compiled) return { kind: "compile-failed", reason: dryRun.issues[0]?.remediation ?? "il dry-run del progetto ha errori" };
+    return { kind: "ok", diff: diffConfigs(liveDecoded.value, dryRun.compiled) };
   }, [expanded, session, getSnapshot, row.binding.bindingId, bindingIndex]);
+
+  // A DIVERGED classification is the designed, conservative default the moment a project has
+  // never been deployed to this binding at all (sync-classifier.ts: `lastDeployment === null`)
+  // — not necessarily a real conflict to resolve, so it needs to read differently from a
+  // genuine "device and project both changed" divergence.
+  const neverDeployed = session ? !session.stack.current.deploymentRecords.some((r) => r.target === row.binding.bindingId) : false;
 
   function handleAction() {
     if (action === "Connetti" || action === "Riconnetti") {
@@ -126,14 +135,27 @@ export function CoreRow({ row, bindingIndex, onConnect }: { readonly row: CoreRo
             <div className="mt-3 border-t border-border pt-3 font-body text-sm text-ink-muted">
               {row.error ? (
                 <p className="text-error">{typeof row.error === "string" ? row.error : row.error.remediation}</p>
-              ) : diff ? (
-                isConfigDiffEmpty(diff) ? (
-                  <p>Relazione: {row.syncRelationship ?? "n/d"} — il Config live e quello ricompilato dal progetto sono in realtà identici in questo momento (la classificazione di sync risale al connect, il progetto potrebbe essere cambiato da allora).</p>
-                ) : (
-                  <ConfigDiffView diff={diff} />
-                )
               ) : (
-                <p>Relazione: {row.syncRelationship ?? "n/d"} — nessun Config live disponibile per calcolare il dettaglio.</p>
+                <>
+                  {row.syncRelationship === "DIVERGED" && neverDeployed && (
+                    <p className="mb-2 rounded-slsm bg-[color-mix(in_srgb,var(--color-info)_8%,transparent)] px-2 py-1.5 text-xs text-ink">
+                      Questo progetto non è mai stato inviato a questo Core (nessun deploy registrato) — DIVERGED qui è il default prudente, non necessariamente un conflitto reale. Il confronto qui sotto mostra comunque cosa cambierebbe un deploy adesso.
+                    </p>
+                  )}
+                  {diffResult?.kind === "ok" ? (
+                    isConfigDiffEmpty(diffResult.diff) ? (
+                      <p>Relazione: {row.syncRelationship ?? "n/d"} — il Config live e quello ricompilato dal progetto sono in realtà identici in questo momento (la classificazione di sync risale al connect, il progetto potrebbe essere cambiato da allora).</p>
+                    ) : (
+                      <ConfigDiffView diff={diffResult.diff} />
+                    )
+                  ) : diffResult?.kind === "decode-failed" ? (
+                    <p className="text-error">Relazione: {row.syncRelationship ?? "n/d"} — il Config letto dal Core non si è decodificato: {diffResult.reason}</p>
+                  ) : diffResult?.kind === "compile-failed" ? (
+                    <p className="text-error">Relazione: {row.syncRelationship ?? "n/d"} — il progetto non compila in questo momento: {diffResult.reason}</p>
+                  ) : (
+                    <p>Relazione: {row.syncRelationship ?? "n/d"} — nessuna sessione live per questo Core in questo momento.</p>
+                  )}
+                </>
               )}
             </div>
           </motion.div>

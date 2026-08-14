@@ -57,7 +57,7 @@ const CoreSessionsContext = createContext<CoreSessionsContextValue | undefined>(
 
 const sharedCatalogCache = new CatalogCache();
 
-async function openLink(link: CoreLink): Promise<{ transport: ProtocolTransport; dispose: () => void }> {
+async function openLink(link: CoreLink): Promise<{ transport: ProtocolTransport; dispose: () => void; onDisconnected: (cb: () => void) => void }> {
   if (link.kind === "websocket") {
     const { connection, socket } = await connectBrowserWebSocket(link.url);
     const transport = new WebSocketProtocolTransport(connection);
@@ -66,6 +66,13 @@ async function openLink(link: CoreLink): Promise<{ transport: ProtocolTransport;
       dispose: () => {
         transport.dispose();
         socket.close();
+      },
+      // The socket had no close/error listener at all post-handshake — a dead
+      // connection (proxy/idle timeout, physically unplugged) left every
+      // in-flight and future request to fail on its own, one 5s timeout at a
+      // time, instead of the session surfacing a real DISCONNECTED state.
+      onDisconnected: (cb) => {
+        socket.addEventListener("close", cb, { once: true });
       },
     };
   }
@@ -77,6 +84,7 @@ async function openLink(link: CoreLink): Promise<{ transport: ProtocolTransport;
       transport.dispose();
       void connection.close();
     },
+    onDisconnected: () => {},
   };
 }
 
@@ -107,6 +115,14 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
         const eventStream = new EventStream(opened.transport);
         const coreSession = new CoreSession(binding, client, eventStream, sharedCatalogCache);
         sessionsRef.current.set(binding.bindingId, coreSession);
+        opened.onDisconnected(() => {
+          // Ignore a stale close from an already-superseded socket (e.g. a
+          // quick reconnect already replaced this session before the old
+          // one's close event fired).
+          if (sessionsRef.current.get(binding.bindingId) !== coreSession) return;
+          coreSession.disconnect();
+          rerender();
+        });
         rerender();
 
         await coreSession.connect();
