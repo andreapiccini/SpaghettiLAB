@@ -12,7 +12,10 @@
   "references": [
     { "path": "../domain" },
     { "path": "../catalog-model" },
+    { "path": "../config-compiler" },
+    { "path": "../config-decompiler" },
     { "path": "../core-session" },
+    { "path": "../device-processing-graph-model" },
     { "path": "../device-profile-authoring-model" },
     { "path": "../device-profile-install" },
     { "path": "../device-profile-package" },

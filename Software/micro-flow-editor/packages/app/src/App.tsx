@@ -5,11 +5,11 @@ import { CoreConnectionsScreen } from "./components/core-connections/CoreConnect
 import { CatalogTopologyScreen } from "./components/catalog-topology/CatalogTopologyScreen.js";
 import { PhysicalCompositionScreen } from "./components/physical-composition/PhysicalCompositionScreen.js";
 import { DeviceProfileStudioScreen } from "./components/device-profile-studio/DeviceProfileStudioScreen.js";
+import { ProcessingGraphScreen } from "./components/processing-graph/ProcessingGraphScreen.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
-  "processing-graph": { title: "Processing Graph Editor", task: "UI-S070" },
   "deploy-diff": { title: "Deploy & Diff", task: "UI-S080" },
   "runtime-diagnostics": { title: "Runtime & Diagnostics", task: "UI-S090" },
   "capability-marketplace": { title: "Capability Marketplace & OTA", task: "UI-S100" },
@@ -50,6 +50,14 @@ function AppContent() {
     return (
       <AppShell>
         <DeviceProfileStudioScreen />
+      </AppShell>
+    );
+  }
+
+  if (activeScreen === "processing-graph") {
+    return (
+      <AppShell>
+        <ProcessingGraphScreen />
       </AppShell>
     );
   }
