@@ -1,10 +1,12 @@
 import type { CompileConfigInput } from "@spaghettilab/config-compiler";
 import type { DeploymentContext, DeploymentResult } from "@spaghettilab/config-deployment";
+import type { CommandOutcome, RunCommandRequest, ScanOutcome } from "@spaghettilab/core-actions";
+import type { DestructiveConfirmation, LeaseOutcome, MaintenanceOutcome, ResetScopeOutcome } from "@spaghettilab/core-admin";
 import { CatalogCache, CoreSession, type CoreSessionSnapshot, type SessionState, type SyncRelationship } from "@spaghettilab/core-session";
 import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
 import type { InstallProfileResult } from "@spaghettilab/device-profile-install";
-import type { CoreBindingId, CoreBindingRecord, DomainError, Result } from "@spaghettilab/domain";
-import { EventStream, SpaghettiClient, WebSerialProtocolTransport, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type DeviceProfileSummary, type DiscoveryCandidate, type ProtocolTransport } from "@spaghettilab/protocol-sdk";
+import type { CoreBindingId, CoreBindingRecord, DomainError, PermissionSet, Result } from "@spaghettilab/domain";
+import { EventStream, SpaghettiClient, WebSerialProtocolTransport, WebSocketProtocolTransport, type AcceptDiscoveryRequest, type AcceptDiscoveryResponse, type AuditLogEntry, type DeviceProfileSummary, type DiscoveryCandidate, type GetConnectivityStatusResponse, type GetJobStatusResponse, type ProtocolTransport, type RecordEventPayload } from "@spaghettilab/protocol-sdk";
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { connectBrowserWebSocket } from "../lib/browser-websocket-connection.js";
 import { openBrowserSerial, type UsbSerialPort } from "../lib/browser-serial-connection.js";
@@ -36,6 +38,17 @@ type CoreSessionsContextValue = {
   installProfile(bindingId: CoreBindingId, draft: DeviceProfileDraft): Promise<Result<InstallProfileResult, DomainError>> | undefined;
   removeProfile(bindingId: CoreBindingId, profileId: string, version: number, options: { readonly isReferencedLocally: boolean }): Promise<Result<void, DomainError>> | undefined;
   deployConfig(bindingId: CoreBindingId, input: CompileConfigInput, context: DeploymentContext): Promise<DeploymentResult> | undefined;
+  onRecordEvent(bindingId: CoreBindingId, listener: (payload: RecordEventPayload) => void): (() => void) | undefined;
+  getLastBootId(bindingId: CoreBindingId): bigint | null | undefined;
+  runCommand(bindingId: CoreBindingId, req: RunCommandRequest, granted: PermissionSet): Promise<CommandOutcome> | undefined;
+  requestScan(bindingId: CoreBindingId, req: { readonly portId: number; readonly invasive: boolean }, granted: PermissionSet): Promise<ScanOutcome> | undefined;
+  getJobStatus(bindingId: CoreBindingId, jobId: number): Promise<GetJobStatusResponse> | undefined;
+  getConnectivityStatus(bindingId: CoreBindingId): Promise<GetConnectivityStatusResponse> | undefined;
+  getAuditLog(bindingId: CoreBindingId): Promise<readonly AuditLogEntry[]> | undefined;
+  acquireLease(bindingId: CoreBindingId, services: number, durationMs: number, granted: PermissionSet): Promise<LeaseOutcome> | undefined;
+  releaseLease(bindingId: CoreBindingId, granted: PermissionSet): Promise<LeaseOutcome> | undefined;
+  openNetworkMaintenance(bindingId: CoreBindingId, granted: PermissionSet, confirmation: DestructiveConfirmation): Promise<MaintenanceOutcome> | undefined;
+  requestFactoryReset(bindingId: CoreBindingId, scope: number, granted: PermissionSet, confirmation: DestructiveConfirmation): Promise<ResetScopeOutcome> | undefined;
 };
 
 const CoreSessionsContext = createContext<CoreSessionsContextValue | undefined>(undefined);
@@ -154,8 +167,60 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
     [],
   );
   const deployConfig = useCallback((bindingId: CoreBindingId, input: CompileConfigInput, context: DeploymentContext) => sessionsRef.current.get(bindingId)?.deployConfig(input, context), []);
+  const onRecordEvent = useCallback(
+    (bindingId: CoreBindingId, listener: (payload: RecordEventPayload) => void) => sessionsRef.current.get(bindingId)?.onRecordEvent(listener),
+    [],
+  );
+  const getLastBootId = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.lastBootId, []);
+  const runCommand = useCallback(
+    (bindingId: CoreBindingId, req: RunCommandRequest, granted: PermissionSet) => sessionsRef.current.get(bindingId)?.runCommand(req, granted),
+    [],
+  );
+  const requestScan = useCallback(
+    (bindingId: CoreBindingId, req: { readonly portId: number; readonly invasive: boolean }, granted: PermissionSet) => sessionsRef.current.get(bindingId)?.requestScan(req, granted),
+    [],
+  );
+  const getJobStatus = useCallback((bindingId: CoreBindingId, jobId: number) => sessionsRef.current.get(bindingId)?.getJobStatus(jobId), []);
+  const getConnectivityStatus = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.getConnectivityStatus(), []);
+  const getAuditLog = useCallback((bindingId: CoreBindingId) => sessionsRef.current.get(bindingId)?.getAuditLog(), []);
+  const acquireLease = useCallback(
+    (bindingId: CoreBindingId, services: number, durationMs: number, granted: PermissionSet) => sessionsRef.current.get(bindingId)?.acquireLease(services, durationMs, granted),
+    [],
+  );
+  const releaseLease = useCallback((bindingId: CoreBindingId, granted: PermissionSet) => sessionsRef.current.get(bindingId)?.releaseLease(granted), []);
+  const openNetworkMaintenance = useCallback(
+    (bindingId: CoreBindingId, granted: PermissionSet, confirmation: DestructiveConfirmation) => sessionsRef.current.get(bindingId)?.openNetworkMaintenance(granted, confirmation),
+    [],
+  );
+  const requestFactoryReset = useCallback(
+    (bindingId: CoreBindingId, scope: number, granted: PermissionSet, confirmation: DestructiveConfirmation) => sessionsRef.current.get(bindingId)?.requestFactoryReset(scope, granted, confirmation),
+    [],
+  );
 
-  const value: CoreSessionsContextValue = { rows, connect, cancel, fail, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery, installProfile, removeProfile, deployConfig };
+  const value: CoreSessionsContextValue = {
+    rows,
+    connect,
+    cancel,
+    fail,
+    getSnapshot,
+    listDeviceProfiles,
+    listDiscoveryCandidates,
+    acceptDiscovery,
+    installProfile,
+    removeProfile,
+    deployConfig,
+    onRecordEvent,
+    getLastBootId,
+    runCommand,
+    requestScan,
+    getJobStatus,
+    getConnectivityStatus,
+    getAuditLog,
+    acquireLease,
+    releaseLease,
+    openNetworkMaintenance,
+    requestFactoryReset,
+  };
   return <CoreSessionsContext.Provider value={value}>{children}</CoreSessionsContext.Provider>;
 }
 

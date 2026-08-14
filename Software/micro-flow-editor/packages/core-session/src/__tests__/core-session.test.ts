@@ -34,6 +34,7 @@ import {
   Operation,
   ProtocolStatus,
   SpaghettiClient,
+  fakeRecordEvent,
   fakeStatusEvent,
   type DeviceProfileSummary,
   type DiscoveryCandidate,
@@ -256,6 +257,34 @@ describe("CoreSession — reboot mid-READY", () => {
     for (let i = 0; i < 10; i++) await Promise.resolve();
 
     expect(session.state).toBe("SYNCHRONIZING");
+  });
+});
+
+describe("CoreSession — onRecordEvent()", () => {
+  it("fans a RECORD event out to every subscriber without disturbing STATUS-driven state tracking", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+    expect(session.state).toBe("READY");
+
+    const receivedA: unknown[] = [];
+    const receivedB: unknown[] = [];
+    const unsubscribeA = session.onRecordEvent((payload) => receivedA.push(payload));
+    session.onRecordEvent((payload) => receivedB.push(payload));
+
+    transport.deliverEvent(fakeRecordEvent(42, 7, "sensor.example", 1));
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+
+    expect(receivedA).toEqual([{ sourceKey: 7, sequence: 42, schemaId: "sensor.example", schemaVersion: 1 }]);
+    expect(receivedB).toEqual(receivedA);
+    // STATUS-driven tracking is untouched by a RECORD event passing through the same loop.
+    expect(session.state).toBe("READY");
+    expect(session.lastBootId).toBe(1n);
+
+    unsubscribeA();
+    transport.deliverEvent(fakeRecordEvent(43, 7, "sensor.example", 1));
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    expect(receivedA).toHaveLength(1); // unsubscribed, no second entry
+    expect(receivedB).toHaveLength(2);
   });
 });
 

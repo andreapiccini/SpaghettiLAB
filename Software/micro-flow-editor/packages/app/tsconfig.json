@@ -15,7 +15,10 @@
     { "path": "../config-compiler" },
     { "path": "../config-decompiler" },
     { "path": "../config-deployment" },
+    { "path": "../core-actions" },
+    { "path": "../core-admin" },
     { "path": "../core-session" },
+    { "path": "../core-status" },
     { "path": "../device-processing-graph-model" },
     { "path": "../device-profile-authoring-model" },
     { "path": "../device-profile-install" },
@@ -24,7 +27,8 @@
     { "path": "../physical-composition-model" },
     { "path": "../protocol-sdk" },
     { "path": "../project-store" },
-    { "path": "../react-flow-adapter" }
+    { "path": "../react-flow-adapter" },
+    { "path": "../telemetry-buffer" }
   ],
   "include": ["src"],
   "exclude": ["src/**/__tests__/**"]

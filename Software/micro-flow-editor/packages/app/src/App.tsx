@@ -8,6 +8,7 @@ import { PhysicalCompositionScreen } from "./components/physical-composition/Phy
 import { DeviceProfileStudioScreen } from "./components/device-profile-studio/DeviceProfileStudioScreen.js";
 import { ProcessingGraphScreen } from "./components/processing-graph/ProcessingGraphScreen.js";
 import { DeployDiffScreen } from "./components/deploy-diff/DeployDiffScreen.js";
+import { RuntimeDiagnosticsScreen } from "./components/runtime-diagnostics/RuntimeDiagnosticsScreen.js";
 import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
@@ -76,6 +77,14 @@ function AppContent() {
     return (
       <AppShell>
         <DeployDiffScreen />
+      </AppShell>
+    );
+  }
+
+  if (activeScreen === "runtime-diagnostics") {
+    return (
+      <AppShell>
+        <RuntimeDiagnosticsScreen />
       </AppShell>
     );
   }
