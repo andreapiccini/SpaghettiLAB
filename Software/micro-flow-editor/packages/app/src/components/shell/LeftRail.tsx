@@ -43,7 +43,7 @@ export function LeftRail() {
   })).filter((group) => group.items.length > 0);
 
   return (
-    <nav className={`flex h-full flex-col border-r border-border bg-surface py-3 transition-[width] duration-200 ${expanded ? "w-60" : "w-16"}`}>
+    <nav className={`flex h-full shrink-0 flex-col border-r border-border bg-surface py-3 transition-[width] duration-200 ${expanded ? "w-60" : "w-16"}`}>
       <div className="flex flex-col gap-1 px-2">
         {visibleGroups.map((group, i) => (
           <div key={i} className={i > 0 ? "mt-3 border-t border-border pt-3" : undefined}>
