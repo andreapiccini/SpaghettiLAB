@@ -88,10 +88,15 @@ function ProcessingGraphScreenInner() {
 
   // Purely derived from positions + edges already on the canvas — never part of
   // the domain graph or authoringMetadata, so these never generate a command.
+  const triggerGroups = useMemo(() => computeTriggerGroups(graphState, authoringMetadata), [graphState, authoringMetadata]);
+  const groupedTriggerIds = useMemo(() => new Set(triggerGroups.map((g) => g.triggerId)), [triggerGroups]);
+  // The group node's own id is the trigger's real domain id (not a "group-" prefix) — it's
+  // the trigger's on-canvas representation now, not a decoration next to it, so onNodeClick's
+  // existing `domainNodes.find(n => n.id === node.id)` lookup already resolves it correctly.
   const groupNodes = useMemo<Node<TriggerGroupNodeData>[]>(
     () =>
-      computeTriggerGroups(graphState, authoringMetadata).map((group) => ({
-        id: group.id,
+      triggerGroups.map((group) => ({
+        id: group.triggerId,
         type: "trigger-group",
         position: { x: group.x, y: group.y },
         style: { width: group.width, height: group.height },
@@ -102,7 +107,7 @@ function ProcessingGraphScreenInner() {
         zIndex: -1,
         data: { label: group.label },
       })),
-    [graphState, authoringMetadata],
+    [triggerGroups],
   );
 
   const [localNodes, setLocalNodes] = useState<Node<ProcessingNodeUiData>[]>(domainRfNodes);
@@ -295,7 +300,10 @@ function ProcessingGraphScreenInner() {
               // TriggerGroupNode reads its own `data` shape at runtime regardless of this
               // component's single node-data generic — ReactFlow itself is happy to render
               // heterogeneous node types side by side, TypeScript just needs the cast.
-              nodes={[...groupNodes, ...localNodes] as unknown as Node<ProcessingNodeUiData>[]}
+              // A grouped trigger's own card is skipped here — the dashed box (id'd with the
+              // same trigger id) is its on-canvas representation now, not a separate node next
+              // to it. Filtered only from the render; localNodes/the domain graph still has it.
+              nodes={[...groupNodes, ...localNodes.filter((n) => !groupedTriggerIds.has(n.id))] as unknown as Node<ProcessingNodeUiData>[]}
               edges={localEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}

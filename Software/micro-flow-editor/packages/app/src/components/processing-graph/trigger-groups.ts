@@ -56,8 +56,13 @@ export function computeTriggerGroups(graphState: GraphState<"device-processing">
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
+    // The trigger's own position never contributes to the box — it's no longer
+    // rendered as its own card (the box itself is its clickable representation
+    // now), so sizing around it would leave dead space or distort the box as
+    // the real (Block) members get dragged away from wherever it happened to
+    // be dropped originally.
     for (const id of memberIds) {
-      if (!nodesById.has(id)) continue;
+      if (id === node.id || !nodesById.has(id)) continue;
       const pos = authoringMetadata[id]?.position ?? { x: 0, y: 0 };
       minX = Math.min(minX, pos.x);
       minY = Math.min(minY, pos.y);
