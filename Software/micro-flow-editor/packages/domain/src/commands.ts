@@ -1,6 +1,6 @@
 import { domainError, DomainErrorCode, type DomainError } from "./errors.js";
 import type { CoreBindingId } from "./ids.js";
-import type { CoreBindingRecord, GraphState, ProjectV1 } from "./project.js";
+import type { CoreBindingRecord, DeploymentRecordV1, GraphState, ProjectV1 } from "./project.js";
 import { err, ok, type Result } from "./result.js";
 
 /** A fresh, empty graph for a newly bound Core — `physicalGraphLens`/`deviceGraphLens` (S043) match `ProjectV1.physicalGraphs`/`deviceGraphs` to `coreBindings` by array index, so every `addCoreBinding` must append one of each to keep that alignment true from the start. */
@@ -91,6 +91,21 @@ export function setDeviceProfilePackages(packages: readonly string[]): ProjectCo
   return {
     kind: "SetDeviceProfilePackages",
     apply: (project) => ok({ ...project, deviceProfilePackages: packages }),
+  };
+}
+
+/**
+ * Appends a `DeploymentRecordV1` (Deploy & Diff, S080) — `@spaghettilab/config-
+ * deployment`'s `deployConfig()` only ever returns a `record` after a real
+ * read-back-verified apply (`SUCCESS`/`NO_OP`/`AMBIGUOUS_RESOLVED_APPLIED`), so
+ * this command never needs to validate the record's own correctness, only
+ * append it — same "caller resolves the value, domain just stores" split
+ * `setDeviceProfilePackages` already uses.
+ */
+export function appendDeploymentRecord(record: DeploymentRecordV1): ProjectCommand {
+  return {
+    kind: "AppendDeploymentRecord",
+    apply: (project) => ok({ ...project, deploymentRecords: [...project.deploymentRecords, record] }),
   };
 }
 

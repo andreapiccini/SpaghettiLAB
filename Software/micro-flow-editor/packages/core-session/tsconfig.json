@@ -4,7 +4,7 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "references": [{ "path": "../domain" }, { "path": "../protocol-sdk" }, { "path": "../device-profile-authoring-model" }, { "path": "../device-profile-install" }],
+  "references": [{ "path": "../domain" }, { "path": "../protocol-sdk" }, { "path": "../device-profile-authoring-model" }, { "path": "../device-profile-install" }, { "path": "../config-compiler" }, { "path": "../config-deployment" }],
   "include": ["src"],
   "exclude": ["src/**/__tests__/**"]
 }

@@ -1,4 +1,6 @@
 import { canonicalProjectHash, type CoreBindingRecord, type DeploymentRecordV1, type DomainError, type ProjectV1, type Result } from "@spaghettilab/domain";
+import type { CompileConfigInput } from "@spaghettilab/config-compiler";
+import { deployConfig as deployConfigWorkflow, type DeploymentContext, type DeploymentResult } from "@spaghettilab/config-deployment";
 import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
 import { installProfile as installProfileWorkflow, removeProfile as removeProfileWorkflow, type InstallProfileResult } from "@spaghettilab/device-profile-install";
 import type {
@@ -235,6 +237,18 @@ export class CoreSession {
   /** Explicit action: removes an installed Device Profile, refusing locally-referenced ones without a round trip — see `@spaghettilab/device-profile-install`'s own doc comment. */
   async removeProfile(profileId: string, version: number, options: { readonly isReferencedLocally: boolean }): Promise<Result<void, DomainError>> {
     return removeProfileWorkflow(this.client, profileId, version, options);
+  }
+
+  /**
+   * Runs the full compile → local dry-run → remote validate → apply (CAS) →
+   * read-back pipeline (Deploy & Diff, S080) — `SpaghettiClient` satisfies
+   * `@spaghettilab/config-deployment`'s narrow `ConfigWireClient`
+   * structurally, same pattern as `installProfile`. One atomic call: this
+   * package has no intermediate per-stage callback, so a caller cannot show
+   * real incremental pipeline progress, only the final outcome.
+   */
+  async deployConfig(input: CompileConfigInput, context: DeploymentContext): Promise<DeploymentResult> {
+    return deployConfigWorkflow(this.client, input, context);
   }
 
   /** Explicit action: adopt the device's live Config as-is. Never called automatically. */

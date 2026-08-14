@@ -1,3 +1,5 @@
+import type { CompileConfigInput } from "@spaghettilab/config-compiler";
+import type { DeploymentContext, DeploymentResult } from "@spaghettilab/config-deployment";
 import { CatalogCache, CoreSession, type CoreSessionSnapshot, type SessionState, type SyncRelationship } from "@spaghettilab/core-session";
 import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
 import type { InstallProfileResult } from "@spaghettilab/device-profile-install";
@@ -33,6 +35,7 @@ type CoreSessionsContextValue = {
   acceptDiscovery(bindingId: CoreBindingId, req: AcceptDiscoveryRequest): Promise<AcceptDiscoveryResponse> | undefined;
   installProfile(bindingId: CoreBindingId, draft: DeviceProfileDraft): Promise<Result<InstallProfileResult, DomainError>> | undefined;
   removeProfile(bindingId: CoreBindingId, profileId: string, version: number, options: { readonly isReferencedLocally: boolean }): Promise<Result<void, DomainError>> | undefined;
+  deployConfig(bindingId: CoreBindingId, input: CompileConfigInput, context: DeploymentContext): Promise<DeploymentResult> | undefined;
 };
 
 const CoreSessionsContext = createContext<CoreSessionsContextValue | undefined>(undefined);
@@ -150,8 +153,9 @@ export function CoreSessionsProvider({ children }: { readonly children: ReactNod
     (bindingId: CoreBindingId, profileId: string, version: number, options: { readonly isReferencedLocally: boolean }) => sessionsRef.current.get(bindingId)?.removeProfile(profileId, version, options),
     [],
   );
+  const deployConfig = useCallback((bindingId: CoreBindingId, input: CompileConfigInput, context: DeploymentContext) => sessionsRef.current.get(bindingId)?.deployConfig(input, context), []);
 
-  const value: CoreSessionsContextValue = { rows, connect, cancel, fail, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery, installProfile, removeProfile };
+  const value: CoreSessionsContextValue = { rows, connect, cancel, fail, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery, installProfile, removeProfile, deployConfig };
   return <CoreSessionsContext.Provider value={value}>{children}</CoreSessionsContext.Provider>;
 }
 

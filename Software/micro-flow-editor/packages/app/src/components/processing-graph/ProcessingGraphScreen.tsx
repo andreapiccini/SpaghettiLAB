@@ -1,4 +1,4 @@
-import { encodeConfigCbor, sha256, type CanonicalEnergy, type CanonicalMqtt } from "@spaghettilab/config-compiler";
+import { encodeConfigCbor, sha256 } from "@spaghettilab/config-compiler";
 import { dryRunConfig, type DryRunResult } from "@spaghettilab/config-decompiler";
 import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
 import type { CoreBindingId, CoreBindingRecord, GraphNode, GraphState } from "@spaghettilab/domain";
@@ -9,6 +9,7 @@ import "@xyflow/react/dist/style.css";
 import { CircleAlert, Clock, GitBranch, PlayCircle, Radio, SlidersHorizontal } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "../../state/session-context.js";
+import { DEFAULT_ENERGY, DISABLED_MQTT } from "../../lib/default-config-policy.js";
 import { CoreSelector } from "../catalog-topology/CoreSelector.js";
 import { NodeInspector, type ProcessingInspectorMode } from "./NodeInspector.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
@@ -42,10 +43,6 @@ export function ProcessingGraphScreen() {
     </ReactFlowProvider>
   );
 }
-
-/** No screen authors MQTT/connectivity/energy settings yet (that's UI-S120 territory) — Dry-run needs *some* value for `compileConfig`'s required fields, so it uses an explicit, honestly-disabled default rather than fabricating the project's real settings. */
-const DISABLED_MQTT: CanonicalMqtt = { enabled: false, host: "", port: 0, baseTopic: "", security: 0, credentialId: 0 };
-const DEFAULT_ENERGY: CanonicalEnergy = { bleAvailability: 0, advertisingWindowMs: 0, advertisingPeriodMs: 0 };
 
 function ProcessingGraphScreenInner() {
   const { session, execute, navigate } = useSession();

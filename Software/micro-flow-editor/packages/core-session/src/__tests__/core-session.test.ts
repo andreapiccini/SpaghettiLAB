@@ -8,11 +8,13 @@ import {
   type CoreBindingRecord,
   type ProjectV1,
 } from "@spaghettilab/domain";
+import { encodeConfigCbor, sha256 as sha256Config } from "@spaghettilab/config-compiler";
 import { PortTransport, type DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
 import { encodeDeviceProfileCbor, sha256 } from "@spaghettilab/device-profile-install";
 import {
   decodeRequest,
   encodeAcceptDiscoveryResponse,
+  encodeApplyConfigResponse,
   encodeGetCapabilitiesResponse,
   encodeGetCatalogResponse,
   encodeGetConfigResponse,
@@ -25,6 +27,7 @@ import {
   encodeListDiscoveryResponse,
   encodeRemoveDeviceProfileResponse,
   encodeResponse,
+  encodeValidateConfigResponse,
   encodeValidateDeviceProfileResponse,
   EventStream,
   FakeTransport,
@@ -462,5 +465,44 @@ describe("CoreSession — device profile install/remove", () => {
     }, removeResponder);
 
     expect(result?.ok).toBe(true);
+  });
+});
+
+describe("CoreSession — deployConfig()", () => {
+  it("compiles, validates, applies with CAS, and verifies read-back for an empty (no-op) graph pair", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+
+    const input = {
+      physicalGraph: { layer: "physical-composition" as const, nodes: [], edges: [] },
+      processingGraph: { layer: "device-processing" as const, nodes: [], edges: [] },
+      mqtt: { enabled: false, host: "", port: 0, baseTopic: "", security: 0, credentialId: 0 },
+      connectivity: 0,
+      energy: { bleAvailability: 0, advertisingWindowMs: 0, advertisingPeriodMs: 0 },
+    };
+    const candidate = { version: 4 as const, modules: [], schedules: [], rules: [], mqtt: input.mqtt, connectivity: 0, energy: input.energy, blocks: [], edges: [] };
+    const expectedHash = await sha256Config(encodeConfigCbor(candidate));
+    const depId = deploymentId("dddddddd-0000-4000-8000-000000000009");
+    if (!depId.ok) throw new Error("bad fixture id");
+
+    const deployResponder = new FakeCoreResponder(transport, {
+      [Operation.VALIDATE_CONFIG]: () => encodeValidateConfigResponse({ valid: true }),
+      [Operation.APPLY_CONFIG]: () => encodeApplyConfigResponse({ changed: true, generation: 6, sha256: expectedHash }),
+      [Operation.GET_CONFIG]: () => encodeGetConfigResponse({ generation: 6, sha256: expectedHash, configBytes: new Uint8Array([0]) }),
+    });
+
+    let result: Awaited<ReturnType<CoreSession["deployConfig"]>> | undefined;
+    await runToCompletionWithRealTimers(async () => {
+      result = await session.deployConfig(input, {
+        expectedGeneration: 5,
+        sourceProjectHash: "some-project-hash",
+        target: session.binding.bindingId,
+        deploymentId: depId.value,
+        timestamp: "2026-01-01T00:00:00.000Z",
+      });
+    }, deployResponder);
+
+    expect(result?.outcome).toBe("SUCCESS");
+    expect(result?.record?.configGeneration).toBe(6);
   });
 });

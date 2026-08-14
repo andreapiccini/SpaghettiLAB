@@ -6,11 +6,11 @@ import { CatalogTopologyScreen } from "./components/catalog-topology/CatalogTopo
 import { PhysicalCompositionScreen } from "./components/physical-composition/PhysicalCompositionScreen.js";
 import { DeviceProfileStudioScreen } from "./components/device-profile-studio/DeviceProfileStudioScreen.js";
 import { ProcessingGraphScreen } from "./components/processing-graph/ProcessingGraphScreen.js";
+import { DeployDiffScreen } from "./components/deploy-diff/DeployDiffScreen.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
-  "deploy-diff": { title: "Deploy & Diff", task: "UI-S080" },
   "runtime-diagnostics": { title: "Runtime & Diagnostics", task: "UI-S090" },
   "capability-marketplace": { title: "Capability Marketplace & OTA", task: "UI-S100" },
   "cross-core-automation": { title: "Cross-Core Automation", task: "UI-S110" },
@@ -58,6 +58,14 @@ function AppContent() {
     return (
       <AppShell>
         <ProcessingGraphScreen />
+      </AppShell>
+    );
+  }
+
+  if (activeScreen === "deploy-diff") {
+    return (
+      <AppShell>
+        <DeployDiffScreen />
       </AppShell>
     );
   }

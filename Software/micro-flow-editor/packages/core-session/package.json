@@ -12,6 +12,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@spaghettilab/config-compiler": "*",
+    "@spaghettilab/config-deployment": "*",
     "@spaghettilab/device-profile-authoring-model": "*",
     "@spaghettilab/device-profile-install": "*",
     "@spaghettilab/domain": "*",

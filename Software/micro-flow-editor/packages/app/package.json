@@ -16,6 +16,7 @@
     "@spaghettilab/catalog-model": "*",
     "@spaghettilab/config-compiler": "*",
     "@spaghettilab/config-decompiler": "*",
+    "@spaghettilab/config-deployment": "*",
     "@spaghettilab/core-session": "*",
     "@spaghettilab/device-processing-graph-model": "*",
     "@spaghettilab/device-profile-authoring-model": "*",

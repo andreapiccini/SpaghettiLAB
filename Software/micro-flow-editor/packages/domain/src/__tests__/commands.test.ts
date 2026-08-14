@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { addCoreBinding, CommandStack, removeCoreBinding, renameProject, setDeviceProfilePackages } from "../commands.js";
+import { addCoreBinding, appendDeploymentRecord, CommandStack, removeCoreBinding, renameProject, setDeviceProfilePackages } from "../commands.js";
 import { createEmptyProject } from "../project.js";
-import { coreBindingId, projectId } from "../ids.js";
+import { coreBindingId, deploymentId, projectId } from "../ids.js";
 import type { Result } from "../result.js";
 
 function mustOk<T, E>(result: Result<T, E>): T {
@@ -151,5 +151,28 @@ describe("CommandStack", () => {
 
     stack.undo();
     expect(stack.current.deviceProfilePackages).toEqual(["pkg-json-1"]);
+  });
+
+  it("appendDeploymentRecord adds to the list, undo/redo restore it exactly", () => {
+    const stack = new CommandStack(fixtureProject());
+    expect(stack.current.deploymentRecords).toEqual([]);
+    const id = mustOk(deploymentId("dddddddd-0000-4000-8000-000000000001"));
+
+    stack.execute(
+      appendDeploymentRecord({
+        deploymentId: id,
+        target: "core-1",
+        timestamp: "2026-01-01T00:00:00.000Z",
+        sourceProjectHash: "hash-1",
+        configGeneration: 6,
+        configHash: "config-hash-1",
+        outcome: "success",
+      }),
+    );
+    expect(stack.current.deploymentRecords).toHaveLength(1);
+    expect(stack.current.deploymentRecords[0]!.configGeneration).toBe(6);
+
+    stack.undo();
+    expect(stack.current.deploymentRecords).toEqual([]);
   });
 });
