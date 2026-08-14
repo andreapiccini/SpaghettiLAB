@@ -84,8 +84,13 @@ export function CoreRow({ row, onConnect }: { readonly row: CoreRowState; readon
         )}
 
         {action && (
-          <button type="button" onClick={handleAction} className="ml-auto h-9 shrink-0 rounded-slsm border border-border-strong px-3 text-sm font-body text-ink hover:bg-surface-raised">
+          <button type="button" onClick={handleAction} className={row.sessionState === "READY" ? "h-9 shrink-0 rounded-slsm border border-border-strong px-3 text-sm font-body text-ink hover:bg-surface-raised" : "ml-auto h-9 shrink-0 rounded-slsm border border-border-strong px-3 text-sm font-body text-ink hover:bg-surface-raised"}>
             {action}
+          </button>
+        )}
+        {row.sessionState === "READY" && (
+          <button type="button" onClick={() => cancel(row.binding.bindingId)} className={`h-9 shrink-0 rounded-slsm border border-border-strong px-3 text-sm font-body text-ink-muted hover:bg-surface-raised ${action ? "" : "ml-auto"}`}>
+            Disconnetti
           </button>
         )}
       </div>

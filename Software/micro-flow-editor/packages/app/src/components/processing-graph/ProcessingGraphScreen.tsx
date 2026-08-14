@@ -5,7 +5,7 @@ import type { CoreBindingId, CoreBindingRecord, GraphNode, GraphState } from "@s
 import { isModuleNodeData, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
 import { findCatalogEntryById, shippedTypeIds, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
 import { addGraphEdgeCommand, addGraphNodeCommand, deviceGraphLens, edgeChangesToCommands, nodeChangesToCommands, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
-import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Connection, type EdgeChange, type Node, type NodeChange, type ReactFlowInstance } from "@xyflow/react";
+import { applyEdgeChanges, applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Connection, type EdgeChange, type Node, type NodeChange, type ReactFlowInstance } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { CircleAlert, PlayCircle, Workflow } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
@@ -88,6 +88,17 @@ function ProcessingGraphScreenInner() {
     setLocalNodes(domainRfNodes);
   }
 
+  // Same "local mirror" reasoning as `localNodes` above — `edges` is a controlled
+  // prop, so without this a click's transient `selected` change (never written
+  // back into `graphState`) would just be dropped on the next unrelated re-render,
+  // making edges look unselectable.
+  const [localEdges, setLocalEdges] = useState(edges);
+  const [edgesSyncedFrom, setEdgesSyncedFrom] = useState(edges);
+  if (edges !== edgesSyncedFrom) {
+    setEdgesSyncedFrom(edges);
+    setLocalEdges(edges);
+  }
+
   useEffect(() => {
     if (!session || bindingIndex < 0 || !execute) return;
     if (session.stack.current.deviceGraphs.length > bindingIndex) return;
@@ -113,6 +124,7 @@ function ProcessingGraphScreenInner() {
   }
 
   function onEdgesChange(changes: EdgeChange[]) {
+    setLocalEdges((eds) => applyEdgeChanges(changes, eds));
     if (!execute || bindingIndex < 0) return;
     const commands = edgeChangesToCommands(changes, deviceGraphLens(bindingIndex));
     for (const command of commands) execute(command);
@@ -254,7 +266,19 @@ function ProcessingGraphScreenInner() {
           <ProcessingBlockPalette onPlace={(entry) => placeFromCatalog(entry)} />
 
           <div className="relative flex-1" onDragOver={onCanvasDragOver} onDragLeave={() => setDropPreview(null)} onDrop={onCanvasDrop}>
-            <ReactFlow nodeTypes={PROCESSING_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={onNodeClick} onInit={setRf} deleteKeyCode={["Backspace", "Delete"]} fitView>
+            <ReactFlow
+              nodeTypes={PROCESSING_NODE_TYPES}
+              nodes={localNodes}
+              edges={localEdges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={onNodeClick}
+              onInit={setRf}
+              deleteKeyCode={["Backspace", "Delete"]}
+              defaultEdgeOptions={{ interactionWidth: 24, style: { stroke: "var(--color-ink-faint)", strokeWidth: 1.5 } }}
+              fitView
+            >
               <Background gap={20} color="#E1E4EB" />
               <Controls position="bottom-left" />
               {domainNodes.length > 0 && <MiniMap position="bottom-right" pannable zoomable className="!rounded-slsm !border !border-border-strong !shadow-e1" nodeColor={(n) => PROCESSING_NODE_KIND_CONFIG[(n.data as ProcessingNodeUiData).kind]?.colorVar ?? "#8A8F99"} />}
