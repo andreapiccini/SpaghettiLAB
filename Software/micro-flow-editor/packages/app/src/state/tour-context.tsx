@@ -15,28 +15,40 @@ type TourContextValue = {
 const TourContext = createContext<TourContextValue | undefined>(undefined);
 
 /**
- * Auto-starts once per browser (localStorage flag, same as `locale`/`ui-mode`)
- * the first time a project is open — the tour highlights shell zones
- * (`LeftRail`/`TopBar`), which only exist once `AppShell` is mounted, so
- * there is nothing to point at before a project is open.
+ * `start()` never opens the tour directly — it only arms `pending`. The tour
+ * highlights shell zones (`LeftRail`/`TopBar`) that only exist once
+ * `AppShell` is mounted, i.e. once a project is open, so calling `start()`
+ * from the ProjectPicker (Settings is reachable from there too) would dim
+ * the screen over nothing to point at. Arming instead means: fire as soon as
+ * a project — this one or the next one opened/created — is actually open,
+ * which is also what covers the first-ever-launch auto-start, just gated by
+ * the "never seen before" flag instead of an explicit click.
  */
 export function TourProvider({ children }: { readonly children: ReactNode }) {
-  const { session } = useSession();
+  const { session, navigate } = useSession();
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [pending, setPending] = useState(false);
   // React's documented "adjusting state when a prop changes" pattern
   // (https://react.dev/learn/you-might-not-need-an-effect) — `session` only
   // changes reference at `openProject`, so this fires exactly once per
   // project open, same technique `ProcessingGraphScreen` uses to resync
-  // `localNodes` from `domainRfNodes`. A ref can't be read during render
-  // (the React Compiler rejects that), so the guard has to be state.
+  // `localNodes` from `domainRfNodes`.
   const [seenSession, setSeenSession] = useState<typeof session>(null);
   if (session && session !== seenSession) {
     setSeenSession(session);
-    if (!readTourSeenFromLocalStorage()) {
-      setStepIndex(0);
-      setActive(true);
-    }
+    if (!readTourSeenFromLocalStorage()) setPending(true);
+  }
+
+  // Fires the moment a project is actually open, whether that's the arming
+  // render itself (already inside a project when "Rivedi il tutorial" is
+  // clicked) or a later one (armed from the ProjectPicker, project opened
+  // afterwards) — same render-time pattern as above, not a useEffect.
+  if (session && pending) {
+    setPending(false);
+    setStepIndex(0);
+    setActive(true);
+    navigate("core-connections");
   }
 
   const close = useCallback(() => {
@@ -45,8 +57,7 @@ export function TourProvider({ children }: { readonly children: ReactNode }) {
   }, []);
 
   const start = useCallback(() => {
-    setStepIndex(0);
-    setActive(true);
+    setPending(true);
   }, []);
 
   const next = useCallback(() => {
