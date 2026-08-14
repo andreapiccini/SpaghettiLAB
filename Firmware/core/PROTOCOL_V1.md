@@ -121,8 +121,10 @@ production Remote Console TLS worker.
 
 ## 8. Device Profile, acquisition, Block Driver, processing graph
 
-- Device Profiles use declarative opcodes; two profiles may share
-  `declarative-device`.
+- Device Profiles use declarative opcodes (`SPAGHETTI_DEVICE_PROFILE_OPCODE_VERSION`
+  2: I2C/SPI/UART/GPIO/ADC plus `W1_WRITE_READ`, `UART_READ`, `WAIT_GPIO`, and SPI
+  mode 0..3 on `SPI_TRANSCEIVE.imm3`); two profiles may share `declarative-device`.
+  Instance 1-Wire ROM is Config `w1_rom` (8 bytes), not the shared profile.
 - Installable profiles that use only already-compiled opcodes do not require OTA.
 - Block Drivers register via `SPAGHETTI_BLOCK_DRIVER_DEFINE`.
 - Graphs are bounded by profile limits (blocks/edges/contexts). Cycles,

@@ -51,6 +51,7 @@ export function toRawOp(instruction: Instruction): RawDeviceProfileOp {
         imm0: instruction.length,
         imm1: instruction.timeoutMs,
         imm2: instruction.frequencyHz,
+        imm3: instruction.mode,
       };
     case "UART_WRITE":
       return { ...base, opcode: DeviceProfileOpcode.UART_WRITE, srcA: instruction.src, imm0: instruction.length, imm1: instruction.timeoutMs };
@@ -62,6 +63,24 @@ export function toRawOp(instruction: Instruction): RawDeviceProfileOp {
         imm0: instruction.maxLength,
         imm1: instruction.timeoutMs,
         imm2: instruction.stopByte,
+      };
+    case "UART_READ":
+      return {
+        ...base,
+        opcode: DeviceProfileOpcode.UART_READ,
+        dst: instruction.dst,
+        imm0: instruction.length,
+        imm1: instruction.timeoutMs,
+      };
+    case "W1_WRITE_READ":
+      return {
+        ...base,
+        opcode: DeviceProfileOpcode.W1_WRITE_READ,
+        srcA: instruction.src,
+        dst: instruction.dst,
+        imm0: instruction.readLength,
+        imm1: instruction.writeLength,
+        imm2: instruction.timeoutMs,
       };
     case "GPIO_GET":
       return { ...base, opcode: DeviceProfileOpcode.GPIO_GET, dst: instruction.dst };
@@ -81,6 +100,15 @@ export function toRawOp(instruction: Instruction): RawDeviceProfileOp {
         imm1: instruction.intervalMs,
         imm2: instruction.mask,
         imm3: instruction.expected,
+      };
+    case "WAIT_GPIO":
+      return {
+        ...base,
+        opcode: DeviceProfileOpcode.WAIT_GPIO,
+        dst: instruction.dst,
+        imm0: instruction.attempts,
+        imm1: instruction.intervalMs,
+        imm2: instruction.expectedLevel,
       };
     case "LOAD_CONST":
       return { ...base, opcode: DeviceProfileOpcode.LOAD_CONST, dst: instruction.dst, imm0: instruction.length, imm2: instruction.low, imm3: instruction.high };
@@ -135,11 +163,18 @@ export function fromRawOp(raw: RawDeviceProfileOp): Result<Instruction, DomainEr
     case DeviceProfileOpcode.I2C_WRITE_READ:
       return ok({ op: "I2C_WRITE_READ", src: raw.srcA, dst: raw.dst, readLength: raw.imm0, writeLength: raw.imm1, timeoutMs: raw.imm2 });
     case DeviceProfileOpcode.SPI_TRANSCEIVE:
-      return ok({ op: "SPI_TRANSCEIVE", src: raw.srcA, dst: raw.dst, length: raw.imm0, timeoutMs: raw.imm1, frequencyHz: raw.imm2 });
+      if (raw.imm3 !== 0 && raw.imm3 !== 1 && raw.imm3 !== 2 && raw.imm3 !== 3) {
+        return err(invalidOperand(String(raw.imm3), "SPI_TRANSCEIVE mode (imm3) must be 0-3"));
+      }
+      return ok({ op: "SPI_TRANSCEIVE", src: raw.srcA, dst: raw.dst, length: raw.imm0, timeoutMs: raw.imm1, frequencyHz: raw.imm2, mode: raw.imm3 });
     case DeviceProfileOpcode.UART_WRITE:
       return ok({ op: "UART_WRITE", src: raw.srcA, length: raw.imm0, timeoutMs: raw.imm1 });
     case DeviceProfileOpcode.UART_READ_UNTIL:
       return ok({ op: "UART_READ_UNTIL", dst: raw.dst, maxLength: raw.imm0, timeoutMs: raw.imm1, stopByte: raw.imm2 });
+    case DeviceProfileOpcode.UART_READ:
+      return ok({ op: "UART_READ", dst: raw.dst, length: raw.imm0, timeoutMs: raw.imm1 });
+    case DeviceProfileOpcode.W1_WRITE_READ:
+      return ok({ op: "W1_WRITE_READ", src: raw.srcA, dst: raw.dst, readLength: raw.imm0, writeLength: raw.imm1, timeoutMs: raw.imm2 });
     case DeviceProfileOpcode.GPIO_GET:
       return ok({ op: "GPIO_GET", dst: raw.dst });
     case DeviceProfileOpcode.GPIO_SET:
@@ -150,6 +185,11 @@ export function fromRawOp(raw: RawDeviceProfileOp): Result<Instruction, DomainEr
       return ok({ op: "DELAY_BOUNDED", milliseconds: raw.imm0 });
     case DeviceProfileOpcode.WAIT_FIELD_MASK:
       return ok({ op: "WAIT_FIELD_MASK", dst: raw.dst, src: raw.srcA, attempts: raw.imm0, intervalMs: raw.imm1, mask: raw.imm2, expected: raw.imm3 });
+    case DeviceProfileOpcode.WAIT_GPIO:
+      if (raw.imm2 !== 0 && raw.imm2 !== 1) {
+        return err(invalidOperand(String(raw.imm2), "WAIT_GPIO expectedLevel (imm2) must be 0 or 1"));
+      }
+      return ok({ op: "WAIT_GPIO", dst: raw.dst, attempts: raw.imm0, intervalMs: raw.imm1, expectedLevel: raw.imm2 });
     case DeviceProfileOpcode.LOAD_CONST:
       return ok({ op: "LOAD_CONST", dst: raw.dst, length: raw.imm0, low: raw.imm2, high: raw.imm3 });
     case DeviceProfileOpcode.COPY_BYTES:

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DeviceProfileDraft } from "../profile.js";
-import { PortTransport } from "../transport.js";
+import { PortCapability, PortTransport } from "../transport.js";
 import { validateDeviceProfile } from "../validate-profile.js";
 
 function baseDraft(overrides: Partial<DeviceProfileDraft> = {}): DeviceProfileDraft {
@@ -203,5 +203,63 @@ describe("validateDeviceProfile — S061 § Verifiche", () => {
     const result = validateDeviceProfile(draft, { maxOperationCount: 1 });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.some((e) => e.code === "device-profile.operation_count_exceeded")).toBe(true);
+  });
+
+  it("accepts 1-Wire, UART_READ, WAIT_GPIO, and SPI mode 3 drafts", () => {
+    const w1 = baseDraft({
+      profileId: "sensor.ds18b20",
+      transport: PortTransport.W1,
+      requiredCapabilities: PortCapability.W1,
+      sampleOps: [
+        { op: "LOAD_CONST", dst: 0, length: 1, low: 0xbe, high: 0 },
+        { op: "W1_WRITE_READ", src: 0, dst: 1, readLength: 2, writeLength: 1, timeoutMs: 20 },
+        { op: "EMIT_FIELD", src: 1, fieldId: 1 },
+        { op: "EMIT_RECORD" },
+      ],
+      sampleSchemaId: "sensor.ds18b20.sample",
+      sampleFields: [{ fieldId: 1, type: "int64", name: "raw" }],
+    });
+    const uart = baseDraft({
+      profileId: "sensor.pms",
+      transport: PortTransport.UART,
+      requiredCapabilities: PortCapability.UART,
+      sampleOps: [
+        { op: "UART_READ", dst: 0, length: 4, timeoutMs: 50 },
+        { op: "EMIT_FIELD", src: 0, fieldId: 1 },
+        { op: "EMIT_RECORD" },
+      ],
+      sampleSchemaId: "sensor.pms.sample",
+      sampleFields: [{ fieldId: 1, type: "uint64", name: "frame" }],
+    });
+    const spi = baseDraft({
+      profileId: "sensor.adc",
+      transport: PortTransport.SPI,
+      requiredCapabilities: PortCapability.SPI,
+      sampleOps: [
+        { op: "LOAD_CONST", dst: 0, length: 2, low: 0, high: 0 },
+        { op: "SPI_TRANSCEIVE", src: 0, dst: 1, length: 2, timeoutMs: 10, frequencyHz: 1_000_000, mode: 3 },
+        { op: "EMIT_FIELD", src: 1, fieldId: 1 },
+        { op: "EMIT_RECORD" },
+      ],
+      sampleSchemaId: "sensor.adc.sample",
+      sampleFields: [{ fieldId: 1, type: "uint64", name: "raw" }],
+    });
+    const gpio = baseDraft({
+      profileId: "sensor.pir",
+      transport: PortTransport.I2C,
+      requiredCapabilities: PortCapability.I2C | PortCapability.DIGITAL_INPUT,
+      sampleOps: [
+        { op: "WAIT_GPIO", dst: 0, attempts: 5, intervalMs: 10, expectedLevel: 1 },
+        { op: "EMIT_FIELD", src: 0, fieldId: 1 },
+        { op: "EMIT_RECORD" },
+      ],
+      sampleSchemaId: "sensor.pir.sample",
+      sampleFields: [{ fieldId: 1, type: "uint64", name: "level" }],
+    });
+
+    expect(validateDeviceProfile(w1).ok).toBe(true);
+    expect(validateDeviceProfile(uart).ok).toBe(true);
+    expect(validateDeviceProfile(spi).ok).toBe(true);
+    expect(validateDeviceProfile(gpio).ok).toBe(true);
   });
 });

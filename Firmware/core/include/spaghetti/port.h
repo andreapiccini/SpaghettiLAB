@@ -286,6 +286,30 @@ int spaghetti_port_uart_read_until(
 	k_timeout_t timeout);
 
 /**
+ * @brief Read exactly @p len UART bytes with a bounded timeout.
+ *
+ * Does not return a silent partial frame: timeout or a short read fails
+ * without reporting a successful length.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[out] buf Caller-owned RX buffer written only on success.
+ * @param[in] len Exact byte count that must arrive.
+ * @param[in] timeout Bounded wait; must not be @c K_FOREVER.
+ *
+ * @retval 0 Exactly @p len bytes were stored in @p buf.
+ * @retval -EINVAL Invalid argument, zero @p len, or forever timeout.
+ * @retval -ENOTSUP Port has no UART capability.
+ * @retval -ENODEV Controller is not ready.
+ * @retval -ETIMEDOUT The timeout expired before @p len bytes arrived.
+ * @retval -EIO Or other original Zephyr UART errno.
+ */
+int spaghetti_port_uart_read(
+	const struct spaghetti_port *port,
+	uint8_t *buf,
+	size_t len,
+	k_timeout_t timeout);
+
+/**
  * @brief Drive the raw electrical level of a Port digital output.
  *
  * @param[in] port Port borrowed for this call and never retained.

@@ -210,18 +210,28 @@ static int exec_spi(
 	struct spaghetti_device_profile_temp *dst,
 	uint16_t len,
 	uint16_t timeout_ms,
-	uint32_t frequency_hz)
+	uint32_t frequency_hz,
+	uint32_t mode)
 {
 	struct spi_buf tx_buf;
 	struct spi_buf rx_buf;
 	struct spi_buf_set tx_set;
 	struct spi_buf_set rx_set;
 	struct spaghetti_port_spi_request request;
+	spi_operation_t operation;
 	int err;
 
 	if ((len == 0U) || (len > src->size) ||
-	    (len > SPAGHETTI_VALUE_BYTES_MAX)) {
+	    (len > SPAGHETTI_VALUE_BYTES_MAX) || (mode > 3U)) {
 		return -EINVAL;
+	}
+
+	operation = SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB;
+	if ((mode & 1U) != 0U) {
+		operation |= SPI_MODE_CPHA;
+	}
+	if ((mode & 2U) != 0U) {
+		operation |= SPI_MODE_CPOL;
 	}
 
 	tx_buf.buf = src->bytes;
@@ -235,8 +245,7 @@ static int exec_spi(
 	request.chip_select = binding->spi_cs;
 	request.frequency_hz = (frequency_hz != 0U) ? frequency_hz :
 						      binding->spi_frequency_hz;
-	request.operation = SPI_OP_MODE_MASTER | SPI_WORD_SET(8) |
-			    SPI_TRANSFER_MSB;
+	request.operation = operation;
 	request.tx = &tx_set;
 	request.rx = &rx_set;
 	err = spaghetti_port_spi_transceive(
@@ -285,6 +294,60 @@ static int exec_wait_field_mask(
 		value = (uint32_t)load_unsigned_be(dst->bytes,
 						   MIN(dst->size, 4U));
 		if ((value & op->imm2) == (op->imm3 & op->imm2)) {
+			return 0;
+		}
+
+		if ((attempt + 1U) < op->imm0) {
+			k_sleep(K_MSEC(op->imm1));
+		}
+	}
+
+	return -ETIMEDOUT;
+}
+
+static bool w1_rom_is_present(const uint8_t rom[SPAGHETTI_ENDPOINT_VALUE_MAX])
+{
+	for (size_t idx = 0U; idx < SPAGHETTI_ENDPOINT_VALUE_MAX; ++idx) {
+		if (rom[idx] != 0U) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static int exec_wait_gpio(
+	const struct spaghetti_port *port,
+	struct spaghetti_device_profile_temp *temps,
+	const struct spaghetti_device_profile_op *op)
+{
+	struct spaghetti_device_profile_temp *dst;
+	int err;
+
+	if (!spaghetti_port_has_capability(port,
+					   SPAGHETTI_PORT_CAP_DIGITAL_INPUT)) {
+		return -ENOTSUP;
+	}
+	if (op->imm2 > 1U) {
+		return -EINVAL;
+	}
+
+	err = temp_get(temps, op->dst, &dst);
+	if (err < 0) {
+		return err;
+	}
+
+	for (uint16_t attempt = 0U; attempt < op->imm0; ++attempt) {
+		bool high = false;
+
+		err = spaghetti_port_get_input(port, &high);
+		if (err < 0) {
+			return err;
+		}
+
+		dst->bytes[0] = high ? 1U : 0U;
+		dst->size = 1U;
+		if ((high ? 1U : 0U) == op->imm2) {
 			return 0;
 		}
 
@@ -419,7 +482,8 @@ int spaghetti_device_profile_exec(
 			}
 			if (err == 0) {
 				err = exec_spi(port, binding, src_a, dst,
-					       op->imm0, op->imm1, op->imm2);
+					       op->imm0, op->imm1, op->imm2,
+					       op->imm3);
 			}
 			break;
 		case SPAGHETTI_DEVICE_PROFILE_OP_UART_WRITE:
@@ -445,6 +509,54 @@ int spaghetti_device_profile_exec(
 				if (err == 0) {
 					dst->size = out_len;
 				}
+			}
+			break;
+		}
+		case SPAGHETTI_DEVICE_PROFILE_OP_UART_READ:
+			err = temp_get(temps, op->dst, &dst);
+			if (err == 0) {
+				err = spaghetti_port_uart_read(
+					port, dst->bytes, op->imm0,
+					K_MSEC(binding_timeout_ms(binding,
+								  op->imm1)));
+				if (err == 0) {
+					dst->size = op->imm0;
+				}
+			}
+			break;
+		case SPAGHETTI_DEVICE_PROFILE_OP_W1_WRITE_READ: {
+			uint16_t write_size;
+
+			if (!spaghetti_port_has_capability(
+				    port, SPAGHETTI_PORT_CAP_W1)) {
+				err = -ENOTSUP;
+				break;
+			}
+			if (!w1_rom_is_present(binding->w1_rom)) {
+				err = -EINVAL;
+				break;
+			}
+			err = temp_get(temps, op->src_a, &src_a);
+			if (err == 0) {
+				err = temp_get(temps, op->dst, &dst);
+			}
+			if (err < 0) {
+				break;
+			}
+			write_size = (op->imm1 != 0U) ? op->imm1 :
+						       (uint16_t)src_a->size;
+			if ((write_size > src_a->size) ||
+			    (op->imm0 > SPAGHETTI_VALUE_BYTES_MAX)) {
+				err = -EINVAL;
+				break;
+			}
+			err = spaghetti_port_w1_write_read(
+				port, binding->w1_rom, src_a->bytes, write_size,
+				dst->bytes, op->imm0,
+				K_MSEC(binding_timeout_ms(binding,
+							  (uint16_t)op->imm2)));
+			if (err == 0) {
+				dst->size = op->imm0;
 			}
 			break;
 		}
@@ -487,6 +599,9 @@ int spaghetti_device_profile_exec(
 			break;
 		case SPAGHETTI_DEVICE_PROFILE_OP_WAIT_FIELD_MASK:
 			err = exec_wait_field_mask(port, binding, temps, op);
+			break;
+		case SPAGHETTI_DEVICE_PROFILE_OP_WAIT_GPIO:
+			err = exec_wait_gpio(port, temps, op);
 			break;
 		case SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST: {
 			uint8_t raw[8];

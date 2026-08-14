@@ -27,7 +27,7 @@
 #define SPAGHETTI_DEVICE_PROFILE_TEMP_SLOTS 8U
 
 /** Opcode vocabulary revision understood by this firmware image. */
-#define SPAGHETTI_DEVICE_PROFILE_OPCODE_VERSION 1U
+#define SPAGHETTI_DEVICE_PROFILE_OPCODE_VERSION 2U
 
 /** Compact CBOR map wire revision decoded by install. */
 #define SPAGHETTI_DEVICE_PROFILE_WIRE_VERSION 1U
@@ -75,6 +75,9 @@ enum spaghetti_device_profile_opcode {
 	SPAGHETTI_DEVICE_PROFILE_OP_CRC16 = 20U, /**< CRC-16-CCITT over temp. */
 	SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD = 21U, /**< Append one record field. */
 	SPAGHETTI_DEVICE_PROFILE_OP_EMIT_RECORD = 22U, /**< Finalize sample record. */
+	SPAGHETTI_DEVICE_PROFILE_OP_W1_WRITE_READ = 23U, /**< 1-Wire write then read. */
+	SPAGHETTI_DEVICE_PROFILE_OP_UART_READ = 24U, /**< Read imm0 UART bytes. */
+	SPAGHETTI_DEVICE_PROFILE_OP_WAIT_GPIO = 25U, /**< Bounded digital-input poll. */
 };
 
 /**
@@ -185,6 +188,7 @@ struct spaghetti_device_profile_binding {
 	uint8_t adc_channel; /**< Logical ADC channel index 0..4. */
 	uint32_t spi_frequency_hz; /**< SPI clock used by SPI_TRANSCEIVE. */
 	uint32_t default_timeout_ms; /**< Fallback Port lock timeout. */
+	uint8_t w1_rom[SPAGHETTI_ENDPOINT_VALUE_MAX]; /**< 1-Wire ROM when transport is W1. */
 };
 
 /**

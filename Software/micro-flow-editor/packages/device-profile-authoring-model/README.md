@@ -28,18 +28,20 @@ says so (see Honest scope gaps below).
 ## Instructions (`instruction.ts`, `opcodes.ts`, `raw-op.ts`)
 
 `Instruction` is a discriminated union with one typed, named-field variant per opcode in
-`enum spaghetti_device_profile_opcode` (22 opcodes: I2C/SPI/UART transactions, GPIO/ADC,
-bounded delay/wait, byte manipulation, CRC8/CRC16, EMIT_FIELD/EMIT_RECORD) — ergonomic
+`enum spaghetti_device_profile_opcode` (25 opcodes: I2C/SPI/UART/1-Wire transactions, GPIO/ADC,
+bounded delay/wait including `WAIT_GPIO`, byte manipulation, CRC8/CRC16, EMIT_FIELD/EMIT_RECORD) — ergonomic
 for an editor, instead of raw `imm0`-`imm3` slots. `toRawOp()` compiles each variant down
 to `RawDeviceProfileOp`, which mirrors `struct spaghetti_device_profile_op` field for
 field, using a **fixed per-opcode mapping** grounded in that struct's own per-field and
 per-opcode doc comments (e.g. `I2C_READ`: "Read imm0 bytes into temp" → `imm0` is
 `length`) — never an arbitrary/configurable formula (S061 point 3).
 
-`MAX_TEMP_SLOTS` (8) mirrors `SPAGHETTI_DEVICE_PROFILE_TEMP_SLOTS`. `WAIT_FIELD_MASK` is
-the only looping construct the instruction set has (there is no jump/branch opcode at
-all) — `attempts` must be greater than zero, matching the firmware's own `-EINVAL` for a
-zero-attempt (unbounded) wait.
+`MAX_TEMP_SLOTS` (8) mirrors `SPAGHETTI_DEVICE_PROFILE_TEMP_SLOTS`. `WAIT_FIELD_MASK` and
+`WAIT_GPIO` are the only looping constructs (there is no jump/branch opcode) —
+`attempts` must be greater than zero, matching the firmware's own `-EINVAL` for a
+zero-attempt (unbounded) wait. `SPI_TRANSCEIVE.mode` is 0..3 (`imm3`; `0` is Mode 0).
+1-Wire uses `W1_WRITE_READ`; the 8-byte ROM is instance Config `w1_rom`, not the shared
+profile. `UART_READ` reads a fixed length; `UART_READ_UNTIL` still stops on a byte.
 
 ## Profile (`profile.ts`, `sample-field.ts`, `transport.ts`)
 

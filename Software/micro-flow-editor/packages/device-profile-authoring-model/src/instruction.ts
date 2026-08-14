@@ -36,13 +36,14 @@ export type I2cWriteReadInstruction = Op<"I2C_WRITE_READ"> & {
   readonly writeLength: number;
   readonly timeoutMs: number;
 };
-/** `exec_spi`: `imm0` full-duplex byte count, `imm1` timeout ms, `imm2` SPI clock in Hz. */
+/** `exec_spi`: `imm0` full-duplex byte count, `imm1` timeout ms, `imm2` SPI clock in Hz, `imm3` SPI mode 0..3 (CPOL/CPHA; `0` is Mode 0, the previous hardcoded value). */
 export type SpiTransceiveInstruction = Op<"SPI_TRANSCEIVE"> & {
   readonly src: TempSlot;
   readonly dst: TempSlot;
   readonly length: number;
   readonly timeoutMs: number;
   readonly frequencyHz: number;
+  readonly mode: 0 | 1 | 2 | 3;
 };
 /** `spaghetti_port_uart_write`: `imm0` byte count (0 = use `src`'s actual size), `imm1` timeout ms. */
 export type UartWriteInstruction = Op<"UART_WRITE"> & { readonly src: TempSlot; readonly length: number; readonly timeoutMs: number };
@@ -52,6 +53,12 @@ export type UartReadUntilInstruction = Op<"UART_READ_UNTIL"> & {
   readonly maxLength: number;
   readonly timeoutMs: number;
   readonly stopByte: number;
+};
+/** `spaghetti_port_uart_read`: `imm0` exact byte count, `imm1` timeout ms — distinct from `UART_READ_UNTIL` (stop byte). */
+export type UartReadInstruction = Op<"UART_READ"> & {
+  readonly dst: TempSlot;
+  readonly length: number;
+  readonly timeoutMs: number;
 };
 export type GpioGetInstruction = Op<"GPIO_GET"> & { readonly dst: TempSlot };
 /** `spaghetti_port_set_output(port, imm0 != 0)` — an immediate boolean, never a temp slot read (the firmware doesn't even validate `src_a` for this opcode). */
@@ -74,6 +81,25 @@ export type WaitFieldMaskInstruction = Op<"WAIT_FIELD_MASK"> & {
   readonly expected: number;
   readonly attempts: number;
   readonly intervalMs: number;
+};
+/**
+ * Bounded digital-input poll — `attempts` (`imm0`) must be > 0, `intervalMs`
+ * (`imm1`) is milliseconds, `expectedLevel` (`imm2`) is 0 or 1. Calls
+ * `spaghetti_port_get_input`; the Port must expose `CAP_DIGITAL_INPUT`.
+ */
+export type WaitGpioInstruction = Op<"WAIT_GPIO"> & {
+  readonly dst: TempSlot;
+  readonly attempts: number;
+  readonly intervalMs: number;
+  readonly expectedLevel: 0 | 1;
+};
+/** `spaghetti_port_w1_write_read`: `imm0` is the **read** length, `imm1` the **write** length (0 = use `src`'s actual size), `imm2` the timeout in ms. The 8-byte ROM is instance binding, not this op. */
+export type W1WriteReadInstruction = Op<"W1_WRITE_READ"> & {
+  readonly src: TempSlot;
+  readonly dst: TempSlot;
+  readonly readLength: number;
+  readonly writeLength: number;
+  readonly timeoutMs: number;
 };
 /** `imm0` is the byte count actually copied (1-8) from `low`/`high` (`imm2`/`imm3`, little-endian). */
 export type LoadConstInstruction = Op<"LOAD_CONST"> & { readonly dst: TempSlot; readonly length: number; readonly low: number; readonly high: number };
@@ -98,11 +124,14 @@ export type Instruction =
   | SpiTransceiveInstruction
   | UartWriteInstruction
   | UartReadUntilInstruction
+  | UartReadInstruction
   | GpioGetInstruction
   | GpioSetInstruction
   | AdcReadInstruction
   | DelayBoundedInstruction
   | WaitFieldMaskInstruction
+  | WaitGpioInstruction
+  | W1WriteReadInstruction
   | LoadConstInstruction
   | CopyBytesInstruction
   | ConcatInstruction

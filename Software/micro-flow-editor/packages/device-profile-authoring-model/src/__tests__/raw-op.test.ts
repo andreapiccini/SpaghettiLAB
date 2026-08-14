@@ -82,6 +82,50 @@ describe("toRawOp — fixed per-opcode compile, S061 point 3", () => {
     });
   });
 
+  it("compiles SPI_TRANSCEIVE mode 3 into imm3, leaving Mode 0 as imm3=0", () => {
+    expect(toRawOp({ op: "SPI_TRANSCEIVE", src: 0, dst: 1, length: 2, timeoutMs: 10, frequencyHz: 1_000_000, mode: 3 }).imm3).toBe(3);
+    expect(toRawOp({ op: "SPI_TRANSCEIVE", src: 0, dst: 1, length: 2, timeoutMs: 10, frequencyHz: 1_000_000, mode: 0 }).imm3).toBe(0);
+  });
+
+  it("compiles W1_WRITE_READ with imm0=readLength, imm1=writeLength, imm2=timeoutMs — ROM is binding, not this op", () => {
+    expect(toRawOp({ op: "W1_WRITE_READ", src: 0, dst: 1, readLength: 2, writeLength: 1, timeoutMs: 20 })).toEqual({
+      opcode: DeviceProfileOpcode.W1_WRITE_READ,
+      dst: 1,
+      srcA: 0,
+      srcB: 0,
+      imm0: 2,
+      imm1: 1,
+      imm2: 20,
+      imm3: 0,
+    });
+  });
+
+  it("compiles UART_READ with imm0=length and imm1=timeoutMs, distinct from UART_READ_UNTIL", () => {
+    expect(toRawOp({ op: "UART_READ", dst: 2, length: 8, timeoutMs: 40 })).toEqual({
+      opcode: DeviceProfileOpcode.UART_READ,
+      dst: 2,
+      srcA: 0,
+      srcB: 0,
+      imm0: 8,
+      imm1: 40,
+      imm2: 0,
+      imm3: 0,
+    });
+  });
+
+  it("compiles WAIT_GPIO with attempts/intervalMs/expectedLevel in imm0-imm2", () => {
+    expect(toRawOp({ op: "WAIT_GPIO", dst: 0, attempts: 5, intervalMs: 10, expectedLevel: 1 })).toEqual({
+      opcode: DeviceProfileOpcode.WAIT_GPIO,
+      dst: 0,
+      srcA: 0,
+      srcB: 0,
+      imm0: 5,
+      imm1: 10,
+      imm2: 1,
+      imm3: 0,
+    });
+  });
+
   it("compiles EMIT_FIELD with the field id in dst, per the struct's own 'destination temp slot or emitted field id'", () => {
     expect(toRawOp({ op: "EMIT_FIELD", src: 2, fieldId: 7 })).toMatchObject({
       opcode: DeviceProfileOpcode.EMIT_FIELD,
@@ -109,14 +153,17 @@ describe("fromRawOp — the inverse of toRawOp, used by device-profile-install's
     { op: "I2C_WRITE", src: 0, length: 2, timeoutMs: 10 },
     { op: "I2C_READ", dst: 1, length: 4, timeoutMs: 10 },
     { op: "I2C_WRITE_READ", src: 0, dst: 1, readLength: 4, writeLength: 1, timeoutMs: 20 },
-    { op: "SPI_TRANSCEIVE", src: 0, dst: 1, length: 3, timeoutMs: 5, frequencyHz: 1_000_000 },
+    { op: "SPI_TRANSCEIVE", src: 0, dst: 1, length: 3, timeoutMs: 5, frequencyHz: 1_000_000, mode: 0 },
     { op: "UART_WRITE", src: 0, length: 2, timeoutMs: 10 },
     { op: "UART_READ_UNTIL", dst: 1, maxLength: 16, timeoutMs: 100, stopByte: 0x0a },
+    { op: "UART_READ", dst: 1, length: 4, timeoutMs: 50 },
+    { op: "W1_WRITE_READ", src: 0, dst: 1, readLength: 2, writeLength: 1, timeoutMs: 20 },
     { op: "GPIO_GET", dst: 0 },
     { op: "GPIO_SET", value: true },
     { op: "ADC_READ", dst: 0, timeoutMs: 5 },
     { op: "DELAY_BOUNDED", milliseconds: 15 },
     { op: "WAIT_FIELD_MASK", dst: 0, src: 1, mask: 0xff, expected: 0x01, attempts: 3, intervalMs: 10 },
+    { op: "WAIT_GPIO", dst: 0, attempts: 5, intervalMs: 10, expectedLevel: 1 },
     { op: "LOAD_CONST", dst: 0, length: 4, low: 100, high: 0 },
     { op: "COPY_BYTES", src: 0, dst: 1, length: 2 },
     { op: "CONCAT", srcA: 0, srcB: 1, dst: 2 },
@@ -144,6 +191,12 @@ describe("fromRawOp — the inverse of toRawOp, used by device-profile-install's
 
   it("rejects a BYTE_SWAP width that isn't 2 or 4", () => {
     const result = fromRawOp({ opcode: DeviceProfileOpcode.BYTE_SWAP, dst: 1, srcA: 0, srcB: 0, imm0: 3, imm1: 0, imm2: 0, imm3: 0 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("device-profile.invalid_raw_operand");
+  });
+
+  it("rejects an SPI_TRANSCEIVE mode outside 0-3", () => {
+    const result = fromRawOp({ opcode: DeviceProfileOpcode.SPI_TRANSCEIVE, dst: 1, srcA: 0, srcB: 0, imm0: 2, imm1: 10, imm2: 1000000, imm3: 4 });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe("device-profile.invalid_raw_operand");
   });

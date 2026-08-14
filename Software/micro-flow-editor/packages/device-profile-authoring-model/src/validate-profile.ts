@@ -32,9 +32,11 @@ function tempSlots(instruction: Instruction): number[] {
     case "GPIO_GET":
     case "ADC_READ":
     case "UART_READ_UNTIL":
+    case "UART_READ":
       return [instruction.dst];
     case "I2C_WRITE_READ":
     case "SPI_TRANSCEIVE":
+    case "W1_WRITE_READ":
     case "COPY_BYTES":
     case "BYTE_SWAP":
     case "MASK":
@@ -45,6 +47,7 @@ function tempSlots(instruction: Instruction): number[] {
       return [instruction.src, instruction.dst];
     case "WAIT_FIELD_MASK":
       return [instruction.dst, instruction.src];
+    case "WAIT_GPIO":
     case "LOAD_CONST":
       return [instruction.dst];
     case "CONCAT":
@@ -67,12 +70,16 @@ function transactionsFor(instruction: Instruction): number {
     case "SPI_TRANSCEIVE":
     case "UART_WRITE":
     case "UART_READ_UNTIL":
+    case "UART_READ":
     case "GPIO_GET":
     case "GPIO_SET":
     case "ADC_READ":
       return 1;
     case "WAIT_FIELD_MASK":
+    case "WAIT_GPIO":
       return instruction.attempts;
+    case "W1_WRITE_READ":
+      return 1;
     default:
       return 0;
   }
@@ -87,9 +94,12 @@ function bytesFor(instruction: Instruction): number {
     case "UART_WRITE":
       return instruction.length;
     case "I2C_WRITE_READ":
+    case "W1_WRITE_READ":
       return instruction.readLength + (instruction.writeLength !== 0 ? instruction.writeLength : 1);
     case "UART_READ_UNTIL":
       return instruction.maxLength;
+    case "UART_READ":
+      return instruction.length;
     case "WAIT_FIELD_MASK":
       return instruction.attempts * 2;
     default:
@@ -104,14 +114,17 @@ function timeFor(instruction: Instruction): number {
     case "SPI_TRANSCEIVE":
     case "UART_WRITE":
     case "UART_READ_UNTIL":
+    case "UART_READ":
       return instruction.timeoutMs;
     case "I2C_WRITE_READ":
+    case "W1_WRITE_READ":
       return Math.min(instruction.timeoutMs, 0xffff);
     case "ADC_READ":
       return instruction.timeoutMs;
     case "DELAY_BOUNDED":
       return instruction.milliseconds;
     case "WAIT_FIELD_MASK":
+    case "WAIT_GPIO":
       return instruction.attempts * instruction.intervalMs;
     default:
       return 0;
@@ -137,6 +150,7 @@ function structuralError(instruction: Instruction): { target: string; remediatio
   switch (instruction.op) {
     case "I2C_READ":
     case "SPI_TRANSCEIVE":
+    case "UART_READ":
     case "UART_READ_UNTIL":
       return instruction.op === "UART_READ_UNTIL"
         ? instruction.maxLength === 0
@@ -144,9 +158,14 @@ function structuralError(instruction: Instruction): { target: string; remediatio
           : undefined
         : instruction.length === 0
           ? { target: "length", remediation: "length must be greater than zero" }
-          : undefined;
+          : instruction.op === "SPI_TRANSCEIVE" && (instruction.mode < 0 || instruction.mode > 3)
+            ? { target: "mode", remediation: "SPI_TRANSCEIVE mode must be 0-3" }
+            : undefined;
     case "I2C_WRITE_READ":
-      return instruction.readLength === 0 ? { target: "readLength", remediation: "readLength must be greater than zero" } : undefined;
+    case "W1_WRITE_READ":
+      return instruction.readLength === 0 && instruction.op === "I2C_WRITE_READ"
+        ? { target: "readLength", remediation: "readLength must be greater than zero" }
+        : undefined;
     case "LOAD_CONST":
       return instruction.length < 1 || instruction.length > 8
         ? { target: "length", remediation: "LOAD_CONST length must be 1-8 bytes" }
@@ -199,9 +218,9 @@ export function validateDeviceProfile(
           errors.push(failure(DeviceProfileErrorCode.TEMP_SLOT_OUT_OF_RANGE, path, String(slot), `temp slot must be 0-${MAX_TEMP_SLOTS - 1}`));
         }
       }
-      if (instruction.op === "WAIT_FIELD_MASK" && instruction.attempts <= 0) {
+      if ((instruction.op === "WAIT_FIELD_MASK" || instruction.op === "WAIT_GPIO") && instruction.attempts <= 0) {
         errors.push(
-          failure(DeviceProfileErrorCode.UNBOUNDED_WAIT, path, "attempts", "WAIT_FIELD_MASK.attempts must be greater than zero — zero attempts is an unbounded wait"),
+          failure(DeviceProfileErrorCode.UNBOUNDED_WAIT, path, "attempts", `${instruction.op}.attempts must be greater than zero — zero attempts is an unbounded wait`),
         );
       }
       const structural = structuralError(instruction);

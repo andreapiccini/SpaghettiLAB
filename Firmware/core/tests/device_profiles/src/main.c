@@ -41,6 +41,7 @@ struct fake_bus {
 	uint8_t i2c_mem[0x80][256];
 	uint8_t spi_last_tx[16];
 	size_t spi_last_tx_len;
+	spi_operation_t spi_last_operation;
 	uint8_t spi_rx[16];
 	size_t spi_rx_len;
 	int32_t adc_microvolts;
@@ -50,6 +51,11 @@ struct fake_bus {
 	size_t uart_rx_len;
 	size_t uart_rx_pos;
 	int i2c_error;
+	uint8_t w1_last_rom[SPAGHETTI_ENDPOINT_VALUE_MAX];
+	uint8_t w1_last_tx[16];
+	size_t w1_last_tx_len;
+	uint8_t w1_rx[16];
+	size_t w1_rx_len;
 };
 
 static struct fake_bus bus;
@@ -57,7 +63,8 @@ static struct spaghetti_port fake_port = {
 	.id = 0U,
 	.capabilities = SPAGHETTI_PORT_CAP_I2C | SPAGHETTI_PORT_CAP_SPI |
 			SPAGHETTI_PORT_CAP_UART | SPAGHETTI_PORT_CAP_DIGITAL_INPUT |
-			SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT | SPAGHETTI_PORT_CAP_ADC,
+			SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT | SPAGHETTI_PORT_CAP_ADC |
+			SPAGHETTI_PORT_CAP_W1,
 };
 
 static bool profile_referenced;
@@ -154,6 +161,9 @@ static void bus_reset(void)
 	bus.spi_rx[0] = 0x00U;
 	bus.spi_rx[1] = 0x99U;
 	bus.spi_rx_len = 2U;
+	bus.w1_rx[0] = 0x12U;
+	bus.w1_rx[1] = 0x34U;
+	bus.w1_rx_len = 2U;
 }
 
 static bool hash_is_zero(const uint8_t *hash)
@@ -366,6 +376,7 @@ int spaghetti_port_spi_transceive(
 	bus.spi_last_tx_len = MIN(request->tx->buffers[0].len,
 				  sizeof(bus.spi_last_tx));
 	memcpy(bus.spi_last_tx, request->tx->buffers[0].buf, bus.spi_last_tx_len);
+	bus.spi_last_operation = request->operation;
 	memcpy(request->rx->buffers[0].buf, bus.spi_rx,
 	       MIN(request->rx->buffers[0].len, bus.spi_rx_len));
 	return 0;
@@ -445,6 +456,59 @@ int spaghetti_port_uart_read_until(
 		}
 	}
 	return -ETIMEDOUT;
+}
+
+int spaghetti_port_uart_read(
+	const struct spaghetti_port *port,
+	uint8_t *buf,
+	size_t len,
+	k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+
+	if ((port != &fake_port) || (buf == NULL) || (len == 0U)) {
+		return -EINVAL;
+	}
+	if ((bus.uart_rx_pos + len) > bus.uart_rx_len) {
+		return -ETIMEDOUT;
+	}
+	memcpy(buf, &bus.uart_rx[bus.uart_rx_pos], len);
+	bus.uart_rx_pos += len;
+	return 0;
+}
+
+int spaghetti_port_w1_write_read(
+	const struct spaghetti_port *port,
+	const uint8_t rom[SPAGHETTI_ENDPOINT_VALUE_MAX],
+	const uint8_t *write_data,
+	size_t write_size,
+	uint8_t *read_data,
+	size_t read_size,
+	k_timeout_t timeout)
+{
+	ARG_UNUSED(timeout);
+
+	if ((port != &fake_port) || (rom == NULL) ||
+	    ((write_size > 0U) && (write_data == NULL)) ||
+	    ((read_size > 0U) && (read_data == NULL))) {
+		return -EINVAL;
+	}
+	if (!spaghetti_port_has_capability(port, SPAGHETTI_PORT_CAP_W1)) {
+		return -ENOTSUP;
+	}
+
+	memcpy(bus.w1_last_rom, rom, SPAGHETTI_ENDPOINT_VALUE_MAX);
+	bus.w1_last_tx_len = MIN(write_size, sizeof(bus.w1_last_tx));
+	if (bus.w1_last_tx_len > 0U) {
+		memcpy(bus.w1_last_tx, write_data, bus.w1_last_tx_len);
+	}
+	if (read_size > 0U) {
+		if (read_size > bus.w1_rx_len) {
+			return -EIO;
+		}
+		memcpy(read_data, bus.w1_rx, read_size);
+	}
+	return 0;
 }
 
 const struct spaghetti_flow_descriptor *spaghetti_topology_flow_for_port(
@@ -626,6 +690,41 @@ static int configure_module(
 	return spaghetti_module_manager_configure(&request, out_id);
 }
 
+static void append_w1_rom(struct spaghetti_property_set *out,
+			  const uint8_t rom[SPAGHETTI_ENDPOINT_VALUE_MAX])
+{
+	out->fields[out->field_count].field_id =
+		SPAGHETTI_DECLARATIVE_CONFIG_W1_ROM;
+	out->fields[out->field_count].type = SPAGHETTI_VALUE_BYTES;
+	out->fields[out->field_count].data.bytes.size =
+		SPAGHETTI_ENDPOINT_VALUE_MAX;
+	memcpy(out->fields[out->field_count].data.bytes.bytes, rom,
+	       SPAGHETTI_ENDPOINT_VALUE_MAX);
+	out->field_count += 1U;
+}
+
+static int configure_module_w1(
+	spaghetti_module_key_t key,
+	const char *profile_id,
+	const uint8_t rom[SPAGHETTI_ENDPOINT_VALUE_MAX],
+	spaghetti_module_id_t *out_id)
+{
+	struct spaghetti_property_set config;
+	struct spaghetti_module_request request;
+
+	memset(&request, 0, sizeof(request));
+	make_config(&config, profile_id, 0U, 0xFFU, 0xFFU);
+	append_w1_rom(&config, rom);
+	request.key = key;
+	request.port_id = 0U;
+	request.type_id = "declarative-device";
+	request.config = &config;
+	request.placement.bay_id = SPAGHETTI_BAY_ID_UNSPECIFIED;
+	request.placement.power_rail_id = SPAGHETTI_POWER_RAIL_UNSPECIFIED;
+	request.revision = 1U;
+	return spaghetti_module_manager_configure(&request, out_id);
+}
+
 static void *device_profiles_setup(void)
 {
 	bus_reset();
@@ -635,7 +734,8 @@ static void *device_profiles_setup(void)
 	fake_port.capabilities =
 		SPAGHETTI_PORT_CAP_I2C | SPAGHETTI_PORT_CAP_SPI |
 		SPAGHETTI_PORT_CAP_UART | SPAGHETTI_PORT_CAP_DIGITAL_INPUT |
-		SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT | SPAGHETTI_PORT_CAP_ADC;
+		SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT | SPAGHETTI_PORT_CAP_ADC |
+		SPAGHETTI_PORT_CAP_W1;
 	spaghetti_device_profile_clear_persisted_for_test();
 	spaghetti_device_profile_reset_for_test();
 	zassert_ok(spaghetti_device_profile_init());
@@ -761,7 +861,8 @@ ZTEST(device_profiles, test_negatives_persist_and_caps)
 	fake_port.capabilities =
 		SPAGHETTI_PORT_CAP_I2C | SPAGHETTI_PORT_CAP_SPI |
 		SPAGHETTI_PORT_CAP_UART | SPAGHETTI_PORT_CAP_DIGITAL_INPUT |
-		SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT | SPAGHETTI_PORT_CAP_ADC;
+		SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT | SPAGHETTI_PORT_CAP_ADC |
+		SPAGHETTI_PORT_CAP_W1;
 
 	zassert_ok(encode_simple_cbor(cbor, sizeof(cbor), &cbor_size,
 				      "sensor-persist"));
@@ -809,6 +910,182 @@ ZTEST(device_profiles, test_validate_cbor_does_not_install)
 	zassert_equal(failure.field, SPAGHETTI_DEVICE_PROFILE_FAILURE_PLAN);
 	zassert_equal(failure.reason, SPAGHETTI_DEVICE_PROFILE_FAILURE_UNSUPPORTED);
 	zassert_equal(spaghetti_device_profile_count(), before);
+}
+
+ZTEST(device_profiles, test_w1_uart_spi_mode_wait_gpio)
+{
+	struct spaghetti_record record;
+	struct spaghetti_device_profile profile;
+	struct spaghetti_device_profile bad;
+	struct spaghetti_device_profile_budget budget;
+	struct spaghetti_device_profile_binding binding;
+	struct spaghetti_record_payload payload;
+	spaghetti_module_id_t id;
+	static const uint8_t rom[SPAGHETTI_ENDPOINT_VALUE_MAX] = {
+		0x28U, 0x11U, 0x22U, 0x33U, 0x44U, 0x55U, 0x66U, 0x77U,
+	};
+
+	fill_base(&profile, "sensor-w1", SPAGHETTI_PORT_TRANSPORT_W1,
+		  SPAGHETTI_PORT_CAP_W1);
+	profile.sample_ops[0] = make_op(SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST, 0, 0, 0,
+					1, 0, 0xBEU, 0);
+	profile.sample_ops[1] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_W1_WRITE_READ, 1, 0, 0, 2, 1, 100, 0);
+	profile.sample_ops[2] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 1, 0, 2, 1, 0, 1);
+	profile.sample_ops[3] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_RECORD, 0, 0, 0, 0, 0, 0, 0);
+	profile.sample_count = 4U;
+	strncpy(profile.sample_schema_id, "spaghetti.w1.sample",
+		sizeof(profile.sample_schema_id) - 1U);
+	zassert_ok(spaghetti_device_profile_install_decoded(&profile));
+
+	zassert_ok(configure_module_w1(30U, "sensor-w1", rom, &id));
+	zassert_ok(spaghetti_module_manager_read(id, &record));
+	zassert_equal(record.payload.values.fields[0].data.signed_integer, 0x1234);
+	zassert_mem_equal(bus.w1_last_rom, rom, sizeof(rom));
+	zassert_ok(spaghetti_module_manager_remove(id, 1U));
+
+	memset(&binding, 0, sizeof(binding));
+	binding.default_timeout_ms = 100U;
+	zassert_equal(spaghetti_device_profile_exec(&profile, profile.sample_ops,
+						    profile.sample_count,
+						    &fake_port, &binding, &payload),
+		      -EINVAL);
+
+	fake_port.capabilities &= ~SPAGHETTI_PORT_CAP_W1;
+	memcpy(binding.w1_rom, rom, sizeof(rom));
+	zassert_equal(spaghetti_device_profile_exec(&profile, profile.sample_ops,
+						    profile.sample_count,
+						    &fake_port, &binding, &payload),
+		      -ENOTSUP);
+	fake_port.capabilities |= SPAGHETTI_PORT_CAP_W1;
+	zassert_ok(spaghetti_device_profile_remove("sensor-w1", 1U));
+
+	fill_base(&bad, "bad-w1-transport", SPAGHETTI_PORT_TRANSPORT_I2C,
+		  SPAGHETTI_PORT_CAP_I2C);
+	bad.sample_ops[0] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_W1_WRITE_READ, 1, 0, 0, 2, 1, 100, 0);
+	bad.sample_ops[1] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 1, 0, 2, 1, 0, 1);
+	bad.sample_count = 2U;
+	zassert_equal(spaghetti_device_profile_validate(&bad, &budget), -EINVAL);
+
+	fill_base(&bad, "bad-w1-caps", SPAGHETTI_PORT_TRANSPORT_W1,
+		  SPAGHETTI_PORT_CAP_I2C);
+	bad.sample_ops[0] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 0, 0, 1, 1, 0, 1);
+	bad.sample_count = 1U;
+	zassert_equal(spaghetti_device_profile_validate(&bad, &budget), -EINVAL);
+
+	fill_base(&profile, "sensor-uart-bin", SPAGHETTI_PORT_TRANSPORT_UART,
+		  SPAGHETTI_PORT_CAP_UART);
+	profile.sample_ops[0] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_UART_READ, 0, 0, 0, 4, 50, 0, 0);
+	profile.sample_ops[1] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 0, 0, 4, 1, 0, 1);
+	profile.sample_ops[2] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_RECORD, 0, 0, 0, 0, 0, 0, 0);
+	profile.sample_count = 3U;
+	strncpy(profile.sample_schema_id, "spaghetti.uart-bin.sample",
+		sizeof(profile.sample_schema_id) - 1U);
+	zassert_ok(spaghetti_device_profile_install_decoded(&profile));
+
+	bus.uart_rx[0] = 0x42U;
+	bus.uart_rx[1] = 0x00U;
+	bus.uart_rx[2] = 0xFFU;
+	bus.uart_rx[3] = 0x0AU;
+	bus.uart_rx_len = 4U;
+	bus.uart_rx_pos = 0U;
+	zassert_ok(configure_module(31U, "sensor-uart-bin", 0U, 0xFFU, 0xFFU, &id));
+	zassert_ok(spaghetti_module_manager_read(id, &record));
+	zassert_equal(record.payload.values.fields[0].data.signed_integer,
+		      (int64_t)0x4200FF0A);
+	zassert_ok(spaghetti_module_manager_remove(id, 1U));
+
+	memset(&binding, 0, sizeof(binding));
+	binding.default_timeout_ms = 100U;
+	bus.uart_rx_len = 0U;
+	bus.uart_rx_pos = 0U;
+	zassert_equal(spaghetti_device_profile_exec(&profile, profile.sample_ops,
+						    profile.sample_count,
+						    &fake_port, &binding, &payload),
+		      -ETIMEDOUT);
+	zassert_ok(spaghetti_device_profile_remove("sensor-uart-bin", 1U));
+
+	fill_base(&profile, "sensor-spi-mode3", SPAGHETTI_PORT_TRANSPORT_SPI,
+		  SPAGHETTI_PORT_CAP_SPI);
+	profile.sample_ops[0] = make_op(SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST, 0, 0, 0,
+					2, 0, 0x00A5U, 0);
+	profile.sample_ops[1] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_SPI_TRANSCEIVE, 1, 0, 0, 2, 100,
+			1000000U, 3U);
+	profile.sample_ops[2] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 1, 0, 2, 1, 0, 1);
+	profile.sample_ops[3] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_RECORD, 0, 0, 0, 0, 0, 0, 0);
+	profile.sample_count = 4U;
+	strncpy(profile.sample_schema_id, "spaghetti.spi-m3.sample",
+		sizeof(profile.sample_schema_id) - 1U);
+	zassert_ok(spaghetti_device_profile_install_decoded(&profile));
+
+	zassert_ok(configure_module(32U, "sensor-spi-mode3", 0U, 0U, 0xFFU, &id));
+	zassert_ok(spaghetti_module_manager_read(id, &record));
+	zassert_true((bus.spi_last_operation & SPI_MODE_CPOL) != 0U);
+	zassert_true((bus.spi_last_operation & SPI_MODE_CPHA) != 0U);
+	zassert_ok(spaghetti_module_manager_remove(id, 1U));
+	zassert_ok(spaghetti_device_profile_remove("sensor-spi-mode3", 1U));
+
+	fill_base(&bad, "bad-spi-mode", SPAGHETTI_PORT_TRANSPORT_SPI,
+		  SPAGHETTI_PORT_CAP_SPI);
+	bad.sample_ops[0] = make_op(SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST, 0, 0, 0,
+				    2, 0, 0x00A5U, 0);
+	bad.sample_ops[1] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_SPI_TRANSCEIVE, 1, 0, 0, 2, 100,
+			1000000U, 4U);
+	bad.sample_ops[2] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 1, 0, 2, 1, 0, 1);
+	bad.sample_count = 3U;
+	zassert_equal(spaghetti_device_profile_validate(&bad, &budget), -EINVAL);
+
+	fill_base(&profile, "sensor-wait-gpio", SPAGHETTI_PORT_TRANSPORT_I2C,
+		  SPAGHETTI_PORT_CAP_I2C | SPAGHETTI_PORT_CAP_DIGITAL_INPUT);
+	profile.sample_ops[0] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_WAIT_GPIO, 0, 0, 0, 5, 1, 1, 0);
+	profile.sample_ops[1] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 0, 0, 1, 1, 0, 1);
+	profile.sample_ops[2] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_RECORD, 0, 0, 0, 0, 0, 0, 0);
+	profile.sample_count = 3U;
+	strncpy(profile.sample_schema_id, "spaghetti.wait-gpio.sample",
+		sizeof(profile.sample_schema_id) - 1U);
+	zassert_ok(spaghetti_device_profile_install_decoded(&profile));
+
+	zassert_ok(configure_module(33U, "sensor-wait-gpio", I2C_ADDR_A, 0xFFU, 0xFFU,
+				    &id));
+	bus.gpio_input = true;
+	zassert_ok(spaghetti_module_manager_read(id, &record));
+	zassert_equal(record.payload.values.fields[0].data.signed_integer, 1);
+	zassert_ok(spaghetti_module_manager_remove(id, 1U));
+
+	memset(&binding, 0, sizeof(binding));
+	binding.default_timeout_ms = 100U;
+	fake_port.capabilities &= ~SPAGHETTI_PORT_CAP_DIGITAL_INPUT;
+	zassert_equal(spaghetti_device_profile_exec(&profile, profile.sample_ops,
+						    profile.sample_count,
+						    &fake_port, &binding, &payload),
+		      -ENOTSUP);
+	fake_port.capabilities |= SPAGHETTI_PORT_CAP_DIGITAL_INPUT;
+	zassert_ok(spaghetti_device_profile_remove("sensor-wait-gpio", 1U));
+
+	fill_base(&bad, "bad-wait-gpio-cap", SPAGHETTI_PORT_TRANSPORT_I2C,
+		  SPAGHETTI_PORT_CAP_I2C);
+	bad.sample_ops[0] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_WAIT_GPIO, 0, 0, 0, 5, 1, 1, 0);
+	bad.sample_ops[1] =
+		make_op(SPAGHETTI_DEVICE_PROFILE_OP_EMIT_FIELD, FIELD_VALUE, 0, 0, 1, 1, 0, 1);
+	bad.sample_count = 2U;
+	zassert_equal(spaghetti_device_profile_validate(&bad, &budget), -EINVAL);
 }
 
 ZTEST_SUITE(device_profiles, NULL, device_profiles_setup, NULL, NULL, NULL);

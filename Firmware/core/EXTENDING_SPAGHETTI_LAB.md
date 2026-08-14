@@ -384,6 +384,20 @@ Paths:
 Unknown opcodes require a firmware Capability Pack that extends the interpreter;
 install never invents opcodes.
 
+Port families the generic `declarative-device` Module can already execute
+(profile data only — no per-chip C):
+
+| Port transport | Profile opcodes | Instance Config |
+|---|---|---|
+| I2C | `I2C_WRITE`, `I2C_READ`, `I2C_WRITE_READ` | `i2c_address` |
+| SPI | `SPI_TRANSCEIVE` (`imm3` = mode 0..3; `0` is Mode 0) | `spi_cs`, `spi_frequency_hz` |
+| UART | `UART_WRITE`, `UART_READ_UNTIL`, `UART_READ` | (baud/pins = Port/DTS) |
+| GPIO | `GPIO_GET`, `GPIO_SET`, `WAIT_GPIO` | (one digital line per Port) |
+| ADC | `ADC_READ` | `adc_channel` |
+| 1-Wire | `W1_WRITE_READ` | `w1_rom` (8 bytes) |
+
+Not Port families, not profile-installable: CAN, USB host, Ethernet, PWM.
+
 ### Verify
 
 ```sh

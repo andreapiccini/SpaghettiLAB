@@ -103,6 +103,17 @@ static const struct spaghetti_field_descriptor declarative_config_fields[] = {
 		.description = "Instance SPI clock",
 		.unit = "Hz",
 	},
+	{
+		.field_id = SPAGHETTI_DECLARATIVE_CONFIG_W1_ROM,
+		.type = SPAGHETTI_VALUE_BYTES,
+		.semantic = SPAGHETTI_FIELD_SEMANTIC_VALUE,
+		.flags = SPAGHETTI_FIELD_WRITABLE,
+		.bytes_min_size = SPAGHETTI_ENDPOINT_VALUE_MAX,
+		.bytes_max_size = SPAGHETTI_ENDPOINT_VALUE_MAX,
+		.name = "w1_rom",
+		.description = "Instance 1-Wire ROM identity",
+		.unit = "",
+	},
 };
 
 static const struct spaghetti_schema_descriptor declarative_config_schema = {
@@ -153,6 +164,7 @@ static int resolve_profile(
 	const struct spaghetti_value *spi_cs;
 	const struct spaghetti_value *adc_channel;
 	const struct spaghetti_value *spi_frequency;
+	const struct spaghetti_value *w1_rom;
 	const struct spaghetti_device_profile *profile;
 	const uint8_t *hash_bytes = NULL;
 	int err;
@@ -236,6 +248,16 @@ static int resolve_profile(
 			(uint32_t)spi_frequency->data.unsigned_integer;
 	}
 
+	w1_rom = spaghetti_property_find(config, SPAGHETTI_DECLARATIVE_CONFIG_W1_ROM);
+	if (w1_rom != NULL) {
+		if ((w1_rom->type != SPAGHETTI_VALUE_BYTES) ||
+		    (w1_rom->data.bytes.size != SPAGHETTI_ENDPOINT_VALUE_MAX)) {
+			return -EINVAL;
+		}
+		memcpy(out_binding->w1_rom, w1_rom->data.bytes.bytes,
+		       SPAGHETTI_ENDPOINT_VALUE_MAX);
+	}
+
 	*out_profile = profile;
 	return 0;
 }
@@ -289,6 +311,11 @@ static int declarative_describe_endpoint(
 		out->kind = SPAGHETTI_ENDPOINT_ADC_CHANNEL;
 		out->value_size = 1U;
 		out->value[0] = binding.adc_channel;
+		break;
+	case SPAGHETTI_PORT_TRANSPORT_W1:
+		out->kind = SPAGHETTI_ENDPOINT_W1_ROM;
+		out->value_size = SPAGHETTI_ENDPOINT_VALUE_MAX;
+		memcpy(out->value, binding.w1_rom, SPAGHETTI_ENDPOINT_VALUE_MAX);
 		break;
 	default:
 		return -ENOTSUP;

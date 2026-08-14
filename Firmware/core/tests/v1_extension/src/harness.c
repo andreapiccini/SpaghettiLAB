@@ -370,3 +370,29 @@ int spaghetti_port_uart_read_until(const struct spaghetti_port *port,
 	}
 	return -ENOTSUP;
 }
+
+int spaghetti_port_uart_read(const struct spaghetti_port *port, uint8_t *buf,
+			     size_t len, k_timeout_t timeout)
+{
+	ARG_UNUSED(port);
+	ARG_UNUSED(buf);
+	ARG_UNUSED(len);
+	ARG_UNUSED(timeout);
+	return -ENOTSUP;
+}
+
+int spaghetti_port_w1_write_read(const struct spaghetti_port *port,
+				 const uint8_t rom[SPAGHETTI_ENDPOINT_VALUE_MAX],
+				 const uint8_t *write_data, size_t write_size,
+				 uint8_t *read_data, size_t read_size,
+				 k_timeout_t timeout)
+{
+	ARG_UNUSED(port);
+	ARG_UNUSED(rom);
+	ARG_UNUSED(write_data);
+	ARG_UNUSED(write_size);
+	ARG_UNUSED(read_data);
+	ARG_UNUSED(read_size);
+	ARG_UNUSED(timeout);
+	return -ENOTSUP;
+}

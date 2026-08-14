@@ -30,4 +30,7 @@ export const DeviceProfileOpcode = {
   CRC16: 20,
   EMIT_FIELD: 21,
   EMIT_RECORD: 22,
+  W1_WRITE_READ: 23,
+  UART_READ: 24,
+  WAIT_GPIO: 25,
 } as const;

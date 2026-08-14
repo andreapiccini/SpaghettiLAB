@@ -2,7 +2,7 @@ import type { Instruction } from "@spaghettilab/device-profile-authoring-model";
 
 /**
  * `ux/screens/S060-device-profile-studio/visual.md` § Selettore tipo step groups
- * the 21 real opcodes (`@spaghettilab/device-profile-authoring-model`'s
+ * the 25 real opcodes (`@spaghettilab/device-profile-authoring-model`'s
  * `Instruction` union) into 10 categories — "Transazione I2C" covers
  * `I2C_WRITE`/`I2C_READ`/`I2C_WRITE_READ`, etc. Field descriptors here are
  * hand-mapped from `instruction.ts`'s own field list per opcode — no schema
@@ -21,10 +21,11 @@ export type StepCategory = {
 export const STEP_CATEGORIES: readonly StepCategory[] = [
   { label: "Transazione I2C", ops: ["I2C_WRITE", "I2C_READ", "I2C_WRITE_READ"] },
   { label: "Transazione SPI", ops: ["SPI_TRANSCEIVE"] },
-  { label: "Transazione UART", ops: ["UART_WRITE", "UART_READ_UNTIL"] },
+  { label: "Transazione UART", ops: ["UART_WRITE", "UART_READ_UNTIL", "UART_READ"] },
+  { label: "Transazione 1-Wire", ops: ["W1_WRITE_READ"] },
   { label: "GPIO", ops: ["GPIO_GET", "GPIO_SET"] },
   { label: "ADC", ops: ["ADC_READ"] },
-  { label: "Wait (bounded)", ops: ["DELAY_BOUNDED", "WAIT_FIELD_MASK"] },
+  { label: "Wait (bounded)", ops: ["DELAY_BOUNDED", "WAIT_FIELD_MASK", "WAIT_GPIO"] },
   { label: "Byte operation", ops: ["LOAD_CONST", "COPY_BYTES", "CONCAT", "BYTE_SWAP"] },
   { label: "Mask/Shift/Sign", ops: ["MASK", "SHIFT", "SIGN_EXTEND"] },
   { label: "CRC", ops: ["CRC8", "CRC16"] },
@@ -38,11 +39,14 @@ export const OP_LABEL: Record<Instruction["op"], string> = {
   SPI_TRANSCEIVE: "SPI transceive",
   UART_WRITE: "UART write",
   UART_READ_UNTIL: "UART read-until",
+  UART_READ: "UART read",
+  W1_WRITE_READ: "1-Wire write-read",
   GPIO_GET: "GPIO get",
   GPIO_SET: "GPIO set",
   ADC_READ: "ADC read",
   DELAY_BOUNDED: "Delay (bounded)",
   WAIT_FIELD_MASK: "Wait field mask",
+  WAIT_GPIO: "Wait GPIO",
   LOAD_CONST: "Load const",
   COPY_BYTES: "Copy bytes",
   CONCAT: "Concat",
@@ -80,6 +84,7 @@ const FIELDS: Record<Instruction["op"], readonly FieldSpec[]> = {
     { key: "length", label: "length", kind: "number" },
     { key: "timeoutMs", label: "timeout (ms)", kind: "number" },
     { key: "frequencyHz", label: "frequenza (Hz)", kind: "number" },
+    { key: "mode", label: "SPI mode (0-3)", kind: "number" },
   ],
   UART_WRITE: [
     { key: "src", label: "src (temp slot)", kind: "tempSlot" },
@@ -91,6 +96,18 @@ const FIELDS: Record<Instruction["op"], readonly FieldSpec[]> = {
     { key: "maxLength", label: "max length", kind: "number" },
     { key: "timeoutMs", label: "timeout (ms)", kind: "number" },
     { key: "stopByte", label: "stop byte", kind: "number" },
+  ],
+  UART_READ: [
+    { key: "dst", label: "dst (temp slot)", kind: "tempSlot" },
+    { key: "length", label: "length", kind: "number" },
+    { key: "timeoutMs", label: "timeout (ms)", kind: "number" },
+  ],
+  W1_WRITE_READ: [
+    { key: "src", label: "src (temp slot)", kind: "tempSlot" },
+    { key: "dst", label: "dst (temp slot)", kind: "tempSlot" },
+    { key: "readLength", label: "read length", kind: "number" },
+    { key: "writeLength", label: "write length (0 = usa src)", kind: "number" },
+    { key: "timeoutMs", label: "timeout (ms)", kind: "number" },
   ],
   GPIO_GET: [{ key: "dst", label: "dst (temp slot)", kind: "tempSlot" }],
   GPIO_SET: [{ key: "value", label: "valore", kind: "boolean" }],
@@ -106,6 +123,12 @@ const FIELDS: Record<Instruction["op"], readonly FieldSpec[]> = {
     { key: "expected", label: "expected", kind: "number" },
     { key: "attempts", label: "tentativi (>0)", kind: "number" },
     { key: "intervalMs", label: "intervallo (ms)", kind: "number" },
+  ],
+  WAIT_GPIO: [
+    { key: "dst", label: "dst (temp slot)", kind: "tempSlot" },
+    { key: "attempts", label: "tentativi (>0)", kind: "number" },
+    { key: "intervalMs", label: "intervallo (ms)", kind: "number" },
+    { key: "expectedLevel", label: "livello atteso (0/1)", kind: "number" },
   ],
   LOAD_CONST: [
     { key: "dst", label: "dst (temp slot)", kind: "tempSlot" },
@@ -173,11 +196,15 @@ export function defaultInstruction(op: Instruction["op"]): Instruction {
     case "I2C_WRITE_READ":
       return { op, src: 0, dst: 1, readLength: 1, writeLength: 0, timeoutMs: 20 };
     case "SPI_TRANSCEIVE":
-      return { op, src: 0, dst: 1, length: 1, timeoutMs: 20, frequencyHz: 1000000 };
+      return { op, src: 0, dst: 1, length: 1, timeoutMs: 20, frequencyHz: 1000000, mode: 0 };
     case "UART_WRITE":
       return { op, src: 0, length: 0, timeoutMs: 20 };
     case "UART_READ_UNTIL":
       return { op, dst: 0, maxLength: 16, timeoutMs: 20, stopByte: 10 };
+    case "UART_READ":
+      return { op, dst: 0, length: 1, timeoutMs: 20 };
+    case "W1_WRITE_READ":
+      return { op, src: 0, dst: 1, readLength: 1, writeLength: 0, timeoutMs: 20 };
     case "GPIO_GET":
       return { op, dst: 0 };
     case "GPIO_SET":
@@ -188,6 +215,8 @@ export function defaultInstruction(op: Instruction["op"]): Instruction {
       return { op, milliseconds: 10 };
     case "WAIT_FIELD_MASK":
       return { op, dst: 0, src: 0, mask: 0xff, expected: 0, attempts: 5, intervalMs: 10 };
+    case "WAIT_GPIO":
+      return { op, dst: 0, attempts: 5, intervalMs: 10, expectedLevel: 1 };
     case "LOAD_CONST":
       return { op, dst: 0, length: 1, low: 0, high: 0 };
     case "COPY_BYTES":

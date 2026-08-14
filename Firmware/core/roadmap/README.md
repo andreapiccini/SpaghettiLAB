@@ -143,6 +143,7 @@ non sono istruzioni sufficienti se il concetto non è stato ancora spiegato.
 | ✅ | [390 — Finalizzazione piattaforma V1](390-v1-finalization/README.md) | Contratti, SDK, watchdog, fuzz ed estensioni fake superano il gate Node-RED. |
 | ✅ | [391 — Validazione remota reale dei Device Profile](391-device-profile-remote-validation/README.md) | `VALIDATE_DEVICE_PROFILE` esegue il validatore reale invece di rispondere sempre `valid: 1`. |
 | ✅ | [392 — Flash headroom e RAM statica su GET_RESOURCES](392-resources-flash-ram-wire-exposure/README.md) | `GET_RESOURCES` espone flash headroom e RAM statica come campi distinti, non solo i pool. |
+| ✅ | [393 — Trasporti Port nei Device Profile](393-device-profile-port-transports/README.md) | 1-Wire + UART_READ + SPI mode + WAIT_GPIO; i chip restano profili, non driver compilati. |
 
 ## Da dove iniziare
 
@@ -158,5 +159,7 @@ release hardware 1.0, ma può procedere in parallelo ai contratti 291–390 veri
 fake e `native_sim`.
 
 Follow-up software post-freeze (senza hardware): [391](391-device-profile-remote-validation/README.md)
-(`VALIDATE_DEVICE_PROFILE` reale) e
-[392](392-resources-flash-ram-wire-exposure/README.md) (flash/RAM su `GET_RESOURCES`).
+(`VALIDATE_DEVICE_PROFILE` reale),
+[392](392-resources-flash-ram-wire-exposure/README.md) (flash/RAM su `GET_RESOURCES`) e
+[393](393-device-profile-port-transports/README.md) (1-Wire nei profili; le altre
+famiglie Port sono già nell'interprete).

@@ -213,6 +213,9 @@ are in [verification/update](verification/update/README.md) and its
 25. [380 — Developer tools](roadmap/380-developer-tools-v1/README.md)
 26. [385 — Developer handbook](roadmap/385-developer-handbook/README.md)
 27. [390 — V1 platform finalization](roadmap/390-v1-finalization/README.md)
+28. [391 — Device Profile remote validation](roadmap/391-device-profile-remote-validation/README.md)
+29. [392 — Flash/RAM on GET_RESOURCES](roadmap/392-resources-flash-ram-wire-exposure/README.md)
+30. [393 — Device Profile Port transports (1-Wire)](roadmap/393-device-profile-port-transports/README.md)
 
 Phases 210 and 290 remain partially open when they require unavailable hardware. Phase
 390 distinguishes the software platform freeze from the production hardware release.

@@ -62,7 +62,7 @@ static bool profile_id_is_valid(const char *id)
 static bool opcode_is_known(uint8_t opcode)
 {
 	return (opcode >= SPAGHETTI_DEVICE_PROFILE_OP_I2C_WRITE) &&
-	       (opcode <= SPAGHETTI_DEVICE_PROFILE_OP_EMIT_RECORD);
+	       (opcode <= SPAGHETTI_DEVICE_PROFILE_OP_WAIT_GPIO);
 }
 
 static bool temp_ok(uint8_t slot)
@@ -135,7 +135,8 @@ static int accumulate_op_budget(
 	case SPAGHETTI_DEVICE_PROFILE_OP_SPI_TRANSCEIVE:
 		if (!temp_ok(op->src_a) || !temp_ok(op->dst) ||
 		    (op->imm0 == 0U) ||
-		    (op->imm0 > SPAGHETTI_VALUE_BYTES_MAX)) {
+		    (op->imm0 > SPAGHETTI_VALUE_BYTES_MAX) ||
+		    (op->imm3 > 3U)) {
 			return -EINVAL;
 		}
 		transactions = 1U;
@@ -151,6 +152,7 @@ static int accumulate_op_budget(
 		time_ms = op->imm1;
 		break;
 	case SPAGHETTI_DEVICE_PROFILE_OP_UART_READ_UNTIL:
+	case SPAGHETTI_DEVICE_PROFILE_OP_UART_READ:
 		if (!temp_ok(op->dst) || (op->imm0 == 0U) ||
 		    (op->imm0 > SPAGHETTI_VALUE_BYTES_MAX)) {
 			return -EINVAL;
@@ -158,6 +160,17 @@ static int accumulate_op_budget(
 		transactions = 1U;
 		bytes = op->imm0;
 		time_ms = op->imm1;
+		break;
+	case SPAGHETTI_DEVICE_PROFILE_OP_W1_WRITE_READ:
+		if (!temp_ok(op->src_a) || !temp_ok(op->dst) ||
+		    (op->imm0 > SPAGHETTI_VALUE_BYTES_MAX)) {
+			return -EINVAL;
+		}
+		transactions = 1U;
+		bytes = (uint32_t)op->imm0 +
+			((op->imm1 != 0U) ? (uint32_t)op->imm1 : 1U);
+		time_ms = (op->imm2 > UINT16_MAX) ? UINT16_MAX :
+						   (uint16_t)op->imm2;
 		break;
 	case SPAGHETTI_DEVICE_PROFILE_OP_GPIO_GET:
 		if (!temp_ok(op->dst)) {
@@ -184,6 +197,13 @@ static int accumulate_op_budget(
 		}
 		transactions = op->imm0;
 		bytes = (uint32_t)op->imm0 * 2U;
+		time_ms = (uint32_t)op->imm0 * (uint32_t)op->imm1;
+		break;
+	case SPAGHETTI_DEVICE_PROFILE_OP_WAIT_GPIO:
+		if (!temp_ok(op->dst) || (op->imm0 == 0U) || (op->imm2 > 1U)) {
+			return -EINVAL;
+		}
+		transactions = op->imm0;
 		time_ms = (uint32_t)op->imm0 * (uint32_t)op->imm1;
 		break;
 	case SPAGHETTI_DEVICE_PROFILE_OP_LOAD_CONST:
@@ -241,6 +261,38 @@ static int accumulate_op_budget(
 	return 0;
 }
 
+static int opcode_matches_profile(
+	const struct spaghetti_device_profile_op *op,
+	const struct spaghetti_device_profile *profile)
+{
+	switch (op->opcode) {
+	case SPAGHETTI_DEVICE_PROFILE_OP_W1_WRITE_READ:
+		if (profile->transport != SPAGHETTI_PORT_TRANSPORT_W1) {
+			return -EINVAL;
+		}
+		if ((profile->required_capabilities & SPAGHETTI_PORT_CAP_W1) ==
+		    0U) {
+			return -EINVAL;
+		}
+		return 0;
+	case SPAGHETTI_DEVICE_PROFILE_OP_UART_READ:
+		if ((profile->transport != SPAGHETTI_PORT_TRANSPORT_UART) &&
+		    ((profile->required_capabilities & SPAGHETTI_PORT_CAP_UART) ==
+		     0U)) {
+			return -EINVAL;
+		}
+		return 0;
+	case SPAGHETTI_DEVICE_PROFILE_OP_WAIT_GPIO:
+		if ((profile->required_capabilities &
+		     SPAGHETTI_PORT_CAP_DIGITAL_INPUT) == 0U) {
+			return -EINVAL;
+		}
+		return 0;
+	default:
+		return 0;
+	}
+}
+
 static int validate_plan(
 	const struct spaghetti_device_profile_op *ops,
 	size_t count,
@@ -259,6 +311,11 @@ static int validate_plan(
 
 		if (!opcode_is_known(op->opcode)) {
 			return -ENOTSUP;
+		}
+
+		err = opcode_matches_profile(op, profile);
+		if (err < 0) {
+			return err;
 		}
 
 		err = accumulate_op_budget(op, budget);
@@ -354,6 +411,10 @@ int spaghetti_device_profile_validate(
 	    (profile->sample_schema_id[0] == '\0') ||
 	    (profile->sample_schema_version == 0U) ||
 	    (profile->sample_field_count == 0U)) {
+		return -EINVAL;
+	}
+	if ((profile->transport == SPAGHETTI_PORT_TRANSPORT_W1) &&
+	    ((profile->required_capabilities & SPAGHETTI_PORT_CAP_W1) == 0U)) {
 		return -EINVAL;
 	}
 

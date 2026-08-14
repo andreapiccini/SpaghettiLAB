@@ -20,3 +20,9 @@ ogni modello di sensore.
 - [x] Profili e Config di installazione hanno identità, versione e ownership separate.
 - [x] Ogni piano è validato e bounded prima di qualsiasi I/O.
 - [x] Un nuovo profilo compatibile non richiede aggiornamento firmware.
+
+## Trasporti
+
+L'interprete copre I2C, SPI (mode 0..3), UART (`READ_UNTIL` e `READ`), GPIO
+(`GET`/`SET`/`WAIT_GPIO`), ADC e 1-Wire (`W1_WRITE_READ`, ROM in Config).
+CAN/USB/PWM non sono famiglie Port e restano fuori da questa via.

@@ -694,6 +694,52 @@ int spaghetti_port_uart_read_until(
 	return -EMSGSIZE;
 }
 
+int spaghetti_port_uart_read(
+	const struct spaghetti_port *port,
+	uint8_t *buf,
+	size_t len,
+	k_timeout_t timeout)
+{
+	const struct device *uart;
+	k_timepoint_t deadline;
+	size_t offset = 0U;
+
+	if ((port == NULL) || (buf == NULL) || (len == 0U)) {
+		return -EINVAL;
+	}
+	if (timeout_is_forever(timeout)) {
+		return -EINVAL;
+	}
+
+	uart = spaghetti_port_uart_device(port);
+	if (uart == NULL) {
+		return -ENOTSUP;
+	}
+	if (!device_is_ready(uart)) {
+		return -ENODEV;
+	}
+
+	deadline = sys_timepoint_calc(timeout);
+	while (offset < len) {
+		unsigned char byte = 0U;
+		int err = uart_poll_in(uart, &byte);
+
+		if (err == 0) {
+			buf[offset++] = (uint8_t)byte;
+			continue;
+		}
+		if (err != -1) {
+			return err;
+		}
+		if (sys_timepoint_expired(deadline)) {
+			return -ETIMEDOUT;
+		}
+		k_sleep(K_MSEC(1));
+	}
+
+	return 0;
+}
+
 int spaghetti_port_set_output(const struct spaghetti_port *port, bool high)
 {
 	if (port == NULL) {

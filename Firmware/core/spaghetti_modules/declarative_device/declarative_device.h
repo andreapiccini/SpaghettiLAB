@@ -22,5 +22,7 @@
 #define SPAGHETTI_DECLARATIVE_CONFIG_ADC_CHANNEL 6U
 /** Config field: optional SPI frequency Hz UINT64. */
 #define SPAGHETTI_DECLARATIVE_CONFIG_SPI_FREQUENCY_HZ 7U
+/** Config field: optional 1-Wire ROM BYTES, exactly 8. */
+#define SPAGHETTI_DECLARATIVE_CONFIG_W1_ROM 8U
 
 #endif /* SPAGHETTI_DECLARATIVE_DEVICE_H */
