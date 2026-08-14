@@ -23,9 +23,14 @@ export function ConfigDiffView({ diff }: { readonly diff: ConfigDiff }) {
         return <DiffSection key={key} label={label} added={section.added} removed={section.removed} changed={section.changed} nameOf={nameOf} />;
       })}
       {diff.policyChanged && (
-        <div className="flex h-11 items-center gap-2 rounded-slsm border-l-[3px] border-warning bg-[color-mix(in_srgb,var(--color-warning)_4%,transparent)] px-2 font-body text-sm text-ink">
-          <PenLine size={14} className="text-warning" />
-          Policy (MQTT/connettività/energy) modificata
+        <div className="flex flex-col gap-1 rounded-slsm border-l-[3px] border-warning bg-[color-mix(in_srgb,var(--color-warning)_4%,transparent)] px-2 py-2 font-body text-sm text-ink">
+          <div className="flex items-center gap-2">
+            <PenLine size={14} className="shrink-0 text-warning" />
+            Policy (MQTT/connettività/energy) modificata
+          </div>
+          <p className="pl-[22px] font-body text-xs text-ink-faint">
+            Nessuna schermata gestisce ancora queste impostazioni per progetto — il confronto usa MQTT disattivato come riferimento fisso, quindi questa riga compare ogni volta che il Core ha MQTT configurato, anche senza modifiche reali nel progetto.
+          </p>
         </div>
       )}
     </div>
