@@ -25,6 +25,8 @@
     { "path": "../device-profile-install" },
     { "path": "../device-profile-package" },
     { "path": "../editor-model" },
+    { "path": "../node-red-deploy" },
+    { "path": "../node-red-nodes" },
     { "path": "../ota-lifecycle" },
     { "path": "../ota-preflight" },
     { "path": "../physical-composition-model" },
@@ -32,6 +34,7 @@
     { "path": "../protocol-sdk" },
     { "path": "../project-store" },
     { "path": "../react-flow-adapter" },
+    { "path": "../system-automation-graph" },
     { "path": "../telemetry-buffer" }
   ],
   "include": ["src"],

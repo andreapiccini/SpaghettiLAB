@@ -10,6 +10,7 @@ import { ProcessingGraphScreen } from "./components/processing-graph/ProcessingG
 import { DeployDiffScreen } from "./components/deploy-diff/DeployDiffScreen.js";
 import { RuntimeDiagnosticsScreen } from "./components/runtime-diagnostics/RuntimeDiagnosticsScreen.js";
 import { CapabilityMarketplaceScreen } from "./components/capability-marketplace/CapabilityMarketplaceScreen.js";
+import { CrossCoreAutomationScreen } from "./components/cross-core-automation/CrossCoreAutomationScreen.js";
 import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
@@ -94,6 +95,14 @@ function AppContent() {
     return (
       <AppShell>
         <CapabilityMarketplaceScreen />
+      </AppShell>
+    );
+  }
+
+  if (activeScreen === "cross-core-automation") {
+    return (
+      <AppShell>
+        <CrossCoreAutomationScreen />
       </AppShell>
     );
   }
