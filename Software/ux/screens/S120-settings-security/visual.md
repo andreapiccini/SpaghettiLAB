@@ -15,8 +15,11 @@ cross-cutting.
 - Altezza 56px, `border-bottom: 1px solid color.border`, sfondo `color.surface`,
   padding orizzontale `space.4`, titolo "Settings, Security & Recovery"
   (`type.heading`).
-- **Segmented control**, sei voci: **Credenziali · Permessi · Backup & Versioni ·
-  Import/Export · Audit · Recovery**.
+- **Segmented control**, sette voci: **Interfaccia · Credenziali · Permessi ·
+  Backup & Versioni · Import/Export · Audit · Recovery**. La tab Interfaccia
+  ospita lo switch modalità base/avanzata; in modalità base Permessi, Audit e
+  Recovery non compaiono nel segmented control. Spec:
+  [`S125-simple-advanced-mode`](../S125-simple-advanced-mode/visual.md).
 
 ## Tab Credenziali
 

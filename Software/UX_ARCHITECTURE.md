@@ -90,7 +90,9 @@ Layout fisso su tutte le schermate, tre regioni:
   Catalog/Topology, Physical Composition, Device Profiles), *Comportamento*
   (Processing Graph, Deploy & Diff, Runtime & Diagnostics), *Estensioni* (Capability
   Marketplace, Cross-Core Automation, Settings). Espandibile con testo etichetta o
-  collassata a sole icone (preferenza utente persistita).
+  collassata a sole icone (preferenza utente persistita). In **modalità base**
+  (default, vedi § Convenzioni cross-cutting) la rail nasconde le voci di estensione
+  piattaforma; le 11 schermate restano tutte raggiungibili in **modalità avanzata**.
 - **Inspector**: pannello contestuale che appare quando qualcosa è selezionato nell'area
   principale (un nodo, un Module, un Core). Non è sempre visibile — il layout senza
   Inspector aperto usa la larghezza extra per l'area di contenuto.
@@ -117,7 +119,10 @@ Il lavoro su ciascuna schermata è tracciato in [`roadmap/ux-v1/`](roadmap/ux-v1
 **Tutte le 11 schermate sono ora documentate per intero** (`S070-processing-graph-editor`
 resta l'unica confermata "as-built" contro un prototipo React reale; le altre dieci
 sono specifiche scritte prima dell'implementazione, coerenti con quel formato e con
-i token di questo documento).
+i token di questo documento). Il cross-cut **modalità base / avanzata**
+([UX-S125](roadmap/ux-v1/tasks/UX-S125-simple-advanced-mode.md),
+[`ux/screens/S125-simple-advanced-mode/`](ux/screens/S125-simple-advanced-mode/))
+non è una dodicesima schermata: filtra rail, palette e tab.
 
 ## Design token
 
@@ -328,6 +333,19 @@ Valgono per **ogni** schermata, non ripetute in ciascun documento:
   `deep`), righe di lista da 40-48px, non 64px+.
 - **Tastiera**: ogni azione primaria ha una scorciatoia; la command palette (`⌘K`) è
   disponibile ovunque per navigare fra schermate e Core senza mouse.
+- **Modalità base / avanzata**: un unico switch persistito, **non** nel `ProjectV1`
+  (preferenza della macchina/browser, indipendente da export e da ⌘S). Chiave
+  `spaghettilab:ui.mode`, valori `"base"` | `"advanced"`. **Chiave assente, corrotta
+  o sconosciuta → `base`** (primo avvio e fail-safe). Scrittura immediata al toggle,
+  sopravvive al riavvio del browser. Non inferire mai `advanced` dal contenuto del
+  progetto. La modalità **base** nasconde l'estensione della piattaforma (authoring
+  profili, catalogo topologia, marketplace OTA, automazione multi-Core, tab Runtime
+  "Stato & Risorse" / "Amministrazione", tab Settings Permessi / Audit / Recovery),
+  non l'uso di un Core con i sensori del catalogo (connetti, Port+Module, indirizzo
+  bus, deploy, telemetria, credenziali rete). I dati avanzati già nel progetto non
+  si cancellano: badge "configurazione avanzata presente". Errori sempre visibili;
+  hash/opcode/pool RAM dietro il toggle o "Dettagli". Spec:
+  [`ux/screens/S125-simple-advanced-mode/`](ux/screens/S125-simple-advanced-mode/).
 
 ## Prossimo passo
 

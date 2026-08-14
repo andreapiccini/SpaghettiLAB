@@ -2,7 +2,7 @@
 
 **Stato:** ✅ DONE
 **Dipende da:** `UX_ARCHITECTURE.md` (nessuna dipendenza dalla roadmap backend)
-**Fase backend collegata (riferimento):** S101–S103
+**Fase backend collegata (riferimento):** S101–S104, S063
 
 ## Obiettivo
 

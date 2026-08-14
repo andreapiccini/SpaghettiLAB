@@ -4,10 +4,9 @@
 [Visual](visual.md) · [UI behavior](ui-behavior.md)
 
 Quale dato/operazione reale alimenta ciascuna tab. Fonti: S101 (marketplace catalog
-e dependency resolver, ⬜ TODO), S102 (preflight e budget risorse, ⬜ TODO), S103
-(state machine OTA, postflight e audit, ⬜ TODO) — nessuna ancora implementata;
-questo file descrive cosa dovrebbe alimentare la schermata una volta che lo sono,
-coerente con la convenzione di `roadmap/ux-v1/README.md`.
+e dependency resolver, ✅), S104 (kind di artifact, ⬜ — Device Profile e registro
+estendibile), S102 (preflight e budget risorse, ✅ pacchetto / UI da cablare),
+S103 (state machine OTA, ✅ pacchetto / UI da cablare), S063 (install profilo).
 
 ## Tab Marketplace
 
@@ -41,10 +40,11 @@ coerente con la convenzione di `roadmap/ux-v1/README.md`.
 
 ## Tab Preflight
 
-1. Un profilo dati installabile (S063, già usato in `UX-S060`) **non fa mai
+1. Un artifact `kind=device-profile` (S104, install S063) **non fa mai
    scattare questo preflight OTA** (S102 § Verifiche) — questa tab si attiva
-   solo per candidati che richiedono un vero aggiornamento firmware, mai per
-   l'installazione dati di un Device Profile.
+   solo se il descrittore kind ha `requiresPreflight` (Capability Pack), mai per
+   l'installazione dati di un Device Profile. Il pulsante Installa sulla card
+   profilo chiama `VALIDATE_DEVICE_PROFILE` / `INSTALL_DEVICE_PROFILE`.
 2. La checklist copre esattamente le verifiche di S102 punto 1: trusted
    source, firma/hash metadata, variante, profile, slot/layout, downgrade,
    bootloader, compatibilità Config/profile — nessuna voce aggiuntiva inventata

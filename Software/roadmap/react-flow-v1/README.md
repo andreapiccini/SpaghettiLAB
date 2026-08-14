@@ -39,6 +39,7 @@ finale end-to-end).
 | ✅ | [S061 — Modello authoring ed editor istruzioni](tasks/S061-profile-authoring-instructions.md) | Un profilo si descrive interamente con le istruzioni catalogate disponibili. |
 | ✅ | [S062 — Budget locale, import/export e resolver](tasks/S062-profile-budget-export-resolver.md) | Il profilo è verificato localmente, scambiabile e risolto in uno dei sei esiti previsti. |
 | ✅ | [S063 — Installazione, catalogo e sorgenti profilo](tasks/S063-profile-install-catalog-sources.md) | Un sensore compatibile viene installato e istanziato come Module senza OTA. |
+| ⬜ | [S064 — Famiglie Port complete nei profili](tasks/S064-profile-port-transports.md) | I2C/SPI/UART/GPIO/ADC/W1 si descrivono e si legano in Studio; 1-Wire arriva col firmware 393. |
 | | **S070 — Processing graph e compilatore Config** | |
 | ✅ | [S071 — Authoring e validazione del processing graph](tasks/S071-processing-graph-authoring.md) | Il grafo locale rifiuta cicli, riferimenti dangling ed edge cross-Core. |
 | ✅ | [S072 — Compilatore Config deterministico](tasks/S072-config-compiler.md) | Il grafo validato compila in Config canonico, deterministico, senza dettagli React Flow. |
@@ -53,6 +54,7 @@ finale end-to-end).
 | ✅ | [S101 — Marketplace catalog e dependency resolver](tasks/S101-marketplace-dependency-resolver.md) | Pack disponibili, installati e richiesti restano distinti; il resolver motiva ogni esito. |
 | ✅ | [S102 — Preflight e budget risorse](tasks/S102-ota-preflight-resources.md) | Un candidato è verificato per compatibilità e risorse prima di trasferire byte. |
 | ✅ | [S103 — State machine OTA, postflight e audit](tasks/S103-ota-state-machine-postflight.md) | L'aggiornamento non lascia mai un Core in stato "installato" falso. |
+| ⬜ | [S104 — Tipi di artifact estendibili e Device Profile](tasks/S104-marketplace-artifact-kinds.md) | Il marketplace elenca profili-dati oltre ai pack firmware; un kind nuovo si registra, non si hardcoda. |
 | | **S110 — Automazioni cross-Core con Node-RED** | |
 | ✅ | [S111 — System Automation Graph e compatibility engine](tasks/S111-system-automation-graph.md) | I collegamenti cross-Core sono rappresentati con identità stabile, mai runtime ID. |
 | ✅ | [S112 — Package nodi Node-RED SpaghettiLAB](tasks/S112-node-red-node-package.md) | I nodi Node-RED reali condividono lo stesso SDK Protocol dell'app. |
@@ -88,8 +90,10 @@ S041 → S042 → S043
                                └──→ S093
                                               │
                     S063 → S101 → S102 ←── S093
-                                    │
-                                   S103
+                         │          │
+                        S104        S103
+                         │
+        firmware 393 → S064
                                               │
         S111 (da S043,S080,S093) → S112 → S113
                                               │
@@ -110,6 +114,8 @@ dopo i flussi operativi (S103, S113).
 2. Physical, Device Processing e System Automation Graph hanno ownership separate.
 3. Il catalogo del Core è l'autorità sui tipi installati.
 4. Device Profile compatibili sono dati; Capability Pack richiedono OTA firmato.
+   Il marketplace distingue i due con `ArtifactKind` (S104); un kind sconosciuto
+   si salta, non si esegue.
 5. Il progetto non contiene segreti né stato runtime effimero.
 6. Il deploy Config usa sempre validate e compare-and-swap.
 7. Un conflitto non viene risolto con last-write-wins automatico.

@@ -14,6 +14,9 @@
   "dependencies": {
     "@spaghettilab/config-compiler": "*",
     "@spaghettilab/config-deployment": "*",
+    "@spaghettilab/core-actions": "*",
+    "@spaghettilab/core-admin": "*",
+    "@spaghettilab/core-status": "*",
     "@spaghettilab/device-profile-authoring-model": "*",
     "@spaghettilab/device-profile-install": "*",
     "@spaghettilab/domain": "*",

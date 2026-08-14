@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { AppShell } from "./components/shell/AppShell.js";
 import { ScreenStub } from "./components/shell/ScreenStub.js";
 import { ProjectPicker } from "./components/project-picker/ProjectPicker.js";
@@ -7,8 +8,10 @@ import { PhysicalCompositionScreen } from "./components/physical-composition/Phy
 import { DeviceProfileStudioScreen } from "./components/device-profile-studio/DeviceProfileStudioScreen.js";
 import { ProcessingGraphScreen } from "./components/processing-graph/ProcessingGraphScreen.js";
 import { DeployDiffScreen } from "./components/deploy-diff/DeployDiffScreen.js";
+import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
+import { UiModeProvider, useUiMode } from "./state/ui-mode-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
   "runtime-diagnostics": { title: "Runtime & Diagnostics", task: "UI-S090" },
@@ -18,7 +21,14 @@ const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: str
 };
 
 function AppContent() {
-  const { session, activeScreen } = useSession();
+  const { session, activeScreen, navigate } = useSession();
+  const { mode } = useUiMode();
+
+  useEffect(() => {
+    if (!isScreenVisibleInMode(activeScreen, mode)) {
+      navigate("core-connections");
+    }
+  }, [activeScreen, mode, navigate]);
 
   if (!session) return <ProjectPicker />;
 
@@ -76,10 +86,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <SessionProvider>
-      <CoreSessionsProvider>
-        <AppContent />
-      </CoreSessionsProvider>
-    </SessionProvider>
+    <UiModeProvider>
+      <SessionProvider>
+        <CoreSessionsProvider>
+          <AppContent />
+        </CoreSessionsProvider>
+      </SessionProvider>
+    </UiModeProvider>
   );
 }

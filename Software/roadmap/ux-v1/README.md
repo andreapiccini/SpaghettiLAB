@@ -27,9 +27,10 @@ esiste, non richiede che esista già.
 | ✅ | [UX-S060](tasks/UX-S060-device-profile-studio.md) | Device Profile Studio | S061–S063 |
 | ✅ | [UX-S080](tasks/UX-S080-deploy-diff.md) | Deploy & Diff | S080 |
 | ✅ | [UX-S090](tasks/UX-S090-runtime-diagnostics.md) | Runtime & Diagnostics | S091–S094 |
-| ✅ | [UX-S100](tasks/UX-S100-capability-marketplace.md) | Capability Marketplace & OTA | S101–S103 |
+| ✅ | [UX-S100](tasks/UX-S100-capability-marketplace.md) | Capability Marketplace & OTA | S101–S104, S063 |
 | ✅ | [UX-S110](tasks/UX-S110-cross-core-automation.md) | Cross-Core Automation | S111–S113 |
 | ✅ | [UX-S120](tasks/UX-S120-settings-security.md) | Settings, Security & Recovery | S121–S124 |
+| ✅ | [UX-S125](tasks/UX-S125-simple-advanced-mode.md) | Modalità base / avanzata (cross-cut shell, non una 12ª schermata) | — (`LocalStorageAdapter`) |
 
 ## Convenzione
 
@@ -51,4 +52,7 @@ Ogni task produce la cartella `ux/screens/<slug>/` con esattamente tre file:
 
 Un task è completo quando i tre file esistono, seguono il formato di
 `S070-processing-graph-editor`, e la riga corrispondente nella tabella schermate di
-`UX_ARCHITECTURE.md` passa da "⬜ da scrivere" a "✅".
+`UX_ARCHITECTURE.md` passa da "⬜ da scrivere" a "✅". UX-S125 è un cross-cut
+(non una riga in quella tabella): è completo quando esiste
+`ux/screens/S125-simple-advanced-mode/` e la convenzione in
+`UX_ARCHITECTURE.md` § Convenzioni cross-cutting.

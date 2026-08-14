@@ -44,8 +44,11 @@ restano distinguibili in ogni stato" (S101 punto 2).
 
 ### Ricerca/sfoglio
 
-Barra di ricerca pillola (stesso stile 320px di `UX-S010`), filtro per categoria
-(chip multi-select: Driver, Block, Profile pack, Transport).
+Barra di ricerca pillola (stesso stile 320px di `UX-S010`), filtro per categoria.
+I chip **non sono una lista hardcoded**: derivano dal registro `ArtifactKind`
+(S104) — all'apertura V1: Driver, Block, Rule, Device Profile, Transport. Un
+kind registrato in seguito compare come chip aggiuntivo; un kind sconosciuto
+nell'indice non ha chip e non è installabile.
 
 ## Pannello dettaglio pack (tray laterale)
 

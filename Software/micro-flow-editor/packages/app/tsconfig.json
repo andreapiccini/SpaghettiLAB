@@ -26,5 +26,6 @@
     { "path": "../project-store" },
     { "path": "../react-flow-adapter" }
   ],
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
 }

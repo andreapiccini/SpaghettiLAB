@@ -23,6 +23,7 @@ senza solo drag-and-drop restano requisiti di S130.
 | Discovery manuale/automatica | S050, S092 | S130.15 |
 | Device Profile no-code | S061 | S130.4 |
 | Registri I2C/SPI/UART/GPIO/ADC | S061 | S130.4 |
+| 1-Wire via profilo (Port W1) | S064, firmware 393 | S130.4 |
 | Init, wait, CRC, conversioni base | S061 | S130.4 |
 | Install profilo senza OTA | S063 | S130.4 |
 | Schedule, eventi, Rule e comandi | S071 | S130.5, S130.15 |
@@ -36,7 +37,7 @@ senza solo drag-and-drop restano requisiti di S130.
 | Connectivity, lease, maintenance | S094 | S130.15 |
 | Flash e image headroom | S093, S102 | S130.14 |
 | RAM statica, stack, pool/workspace/high-water | S093 | S130.14 |
-| Marketplace feature/profile | S063, S101 | S130.4, S130.6 |
+| Marketplace feature/profile | S063, S101, S104 | S130.4, S130.6 |
 | Dependency e compatibility resolver | S062, S101 | S130.6 |
 | Capability Pack Modbus/Kalman | S101 | S130.6–7 |
 | OTA firmato e progress | S103 | S130.6 |

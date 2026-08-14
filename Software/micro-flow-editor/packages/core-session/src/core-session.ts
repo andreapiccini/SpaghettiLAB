@@ -1,21 +1,36 @@
-import { canonicalProjectHash, type CoreBindingRecord, type DeploymentRecordV1, type DomainError, type ProjectV1, type Result } from "@spaghettilab/domain";
+import { canonicalProjectHash, type CoreBindingRecord, type DeploymentRecordV1, type DomainError, type PermissionSet, type ProjectV1, type Result } from "@spaghettilab/domain";
 import type { CompileConfigInput } from "@spaghettilab/config-compiler";
 import { deployConfig as deployConfigWorkflow, type DeploymentContext, type DeploymentResult } from "@spaghettilab/config-deployment";
+import { requestScan as requestScanWorkflow, runCommand as runCommandWorkflow, type CommandOutcome, type RunCommandRequest, type ScanOutcome } from "@spaghettilab/core-actions";
+import {
+  acquireLease as acquireLeaseWorkflow,
+  openNetworkMaintenance as openNetworkMaintenanceWorkflow,
+  releaseLease as releaseLeaseWorkflow,
+  requestFactoryResetWithConfirmation as requestFactoryResetWorkflow,
+  type DestructiveConfirmation,
+  type LeaseOutcome,
+  type MaintenanceOutcome,
+  type ResetScopeOutcome,
+} from "@spaghettilab/core-admin";
 import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
 import { installProfile as installProfileWorkflow, removeProfile as removeProfileWorkflow, type InstallProfileResult } from "@spaghettilab/device-profile-install";
 import type {
   AcceptDiscoveryRequest,
   AcceptDiscoveryResponse,
+  AuditLogEntry,
   DeviceProfileSummary,
   DiscoveryCandidate,
   EventStream,
   GetCapabilitiesResponse,
   GetCatalogResponse,
   GetConfigResponse,
+  GetConnectivityStatusResponse,
   GetFeaturesResponse,
+  GetJobStatusResponse,
   GetResourcesResponse,
   GetStatusResponse,
   GetTopologyResponse,
+  RecordEventPayload,
   SpaghettiClient,
 } from "@spaghettilab/protocol-sdk";
 import { CatalogCache } from "./catalog-cache.js";
@@ -51,6 +66,7 @@ export class CoreSession {
   private snapshot: CoreSessionSnapshot = {};
   private _syncRelationship: SyncRelationship | null = null;
   private readonly eventLoop: Promise<void>;
+  private readonly recordListeners = new Set<(payload: RecordEventPayload) => void>();
 
   constructor(
     readonly binding: CoreBindingRecord,
@@ -79,10 +95,35 @@ export class CoreSession {
     return this._syncRelationship;
   }
 
+  /**
+   * Fans a `RECORD` event out to every subscriber (Runtime & Diagnostics'
+   * Telemetria tab, S091) — the single real `consumeEvents()` loop is the
+   * only consumer of `eventStream` itself (it's a bounded, pull-based
+   * single-consumer queue, `@spaghettilab/protocol-sdk`'s `EventStream`), so
+   * external callers subscribe here instead of iterating the stream a
+   * second time, which would silently split events between two competing
+   * consumers rather than each seeing all of them.
+   */
+  onRecordEvent(listener: (payload: RecordEventPayload) => void): () => void {
+    this.recordListeners.add(listener);
+    return () => {
+      this.recordListeners.delete(listener);
+    };
+  }
+
+  /** The most recent `boot_id` this session has observed via a `STATUS` event — `null` before the first one arrives, never a fabricated placeholder. Needed alongside a `RECORD` event's own fields to build a complete `TelemetryProvenance` (`@spaghettilab/telemetry-buffer`), since `RecordEventPayload` itself carries no boot ID (S091: boot ID is a `STATUS`-only field). */
+  get lastBootId(): bigint | null {
+    return this.bootId;
+  }
+
   private async consumeEvents(): Promise<void> {
     try {
       for await (const event of this.eventStream) {
         if (this.disposed) return;
+        if (event.kind === "record") {
+          for (const listener of this.recordListeners) listener(event.payload);
+          continue;
+        }
         if (event.kind !== "status") continue;
         this.deviceId = event.payload.deviceId;
         const rebooted = this.bootId !== null && event.payload.bootId !== this.bootId;
@@ -249,6 +290,50 @@ export class CoreSession {
    */
   async deployConfig(input: CompileConfigInput, context: DeploymentContext): Promise<DeploymentResult> {
     return deployConfigWorkflow(this.client, input, context);
+  }
+
+  /** Runs one immediate Module command (Runtime & Diagnostics' Comandi tab, S092) — structurally distinct from any Config mutation, never touches `ProjectV1`/`CommandStack`. */
+  async runCommand(req: RunCommandRequest, granted: PermissionSet): Promise<CommandOutcome> {
+    return runCommandWorkflow(this.client, granted, req);
+  }
+
+  /** Starts a discovery scan job, gating an invasive scan on the `core.discovery.invasive-scan` permission before ever calling the wire (S092). Distinct from `listDiscoveryCandidates()`/`acceptDiscovery()`, which read/accept already-known candidates. */
+  async requestScan(req: { readonly portId: number; readonly invasive: boolean }, granted: PermissionSet): Promise<ScanOutcome> {
+    return requestScanWorkflow(this.client, granted, req);
+  }
+
+  /** Reads a job's current status (discovery scan, OTA transfer, ...) — generic, no interpretation. */
+  async getJobStatus(jobId: number): Promise<GetJobStatusResponse> {
+    return this.client.getJobStatus({ jobId });
+  }
+
+  /** Explicit, on-demand read — not part of `connect()`'s own sync sequence. */
+  async getConnectivityStatus(): Promise<GetConnectivityStatusResponse> {
+    return this.client.getConnectivityStatus();
+  }
+
+  /** Reads the full audit log — explicit, on-demand, paginated internally by `SpaghettiClient`. */
+  async getAuditLog(): Promise<readonly AuditLogEntry[]> {
+    return this.client.getFullAuditLog();
+  }
+
+  /** Acquires a bounded, self-expiring connectivity lease (Amministrazione tab) — never preempts another principal's lease; `-EBUSY` surfaces as `REMOTE_ERROR` instead. Not destructive, no confirmation required. */
+  async acquireLease(services: number, durationMs: number, granted: PermissionSet): Promise<LeaseOutcome> {
+    return acquireLeaseWorkflow(this.client, granted, services, durationMs);
+  }
+
+  async releaseLease(granted: PermissionSet): Promise<LeaseOutcome> {
+    return releaseLeaseWorkflow(this.client, granted);
+  }
+
+  /** Opens network maintenance mode (stops MQTT workspace-wide, may disconnect BLE) — destructive-confirmation-gated (S094: caller must show the real target and get it typed back before this is called). */
+  async openNetworkMaintenance(granted: PermissionSet, confirmation: DestructiveConfirmation): Promise<MaintenanceOutcome> {
+    return openNetworkMaintenanceWorkflow(this.client, granted, confirmation);
+  }
+
+  /** Requests a factory reset for the given scope bitmask — destructive-confirmation-gated, same pattern as `openNetworkMaintenance`. */
+  async requestFactoryReset(scope: number, granted: PermissionSet, confirmation: DestructiveConfirmation): Promise<ResetScopeOutcome> {
+    return requestFactoryResetWorkflow(this.client, granted, scope, confirmation);
   }
 
   /** Explicit action: adopt the device's live Config as-is. Never called automatically. */

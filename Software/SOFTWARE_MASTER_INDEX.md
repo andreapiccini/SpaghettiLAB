@@ -127,7 +127,7 @@ Legenda: ✅ fatto · ⬜ da fare · 📄 solo documentazione
 |---|---:|---:|---|
 | S010–S080 core pipeline | 18 | 0 | — |
 | S090 runtime | 1 | 3 | S092–S094 |
-| S100 OTA | 0 | 3 | S101–S103 |
+| S100 OTA | 0 | 4 | S101–S104 |
 | S110 Node-RED integration | 0 | 3 | S111–S113 |
 | S120 security | 3 | 1 | S124 |
 | Chiusura | 0 | 1 | **S130** |
@@ -142,9 +142,17 @@ Dettaglio: [roadmap/react-flow-v1/README.md](roadmap/react-flow-v1/README.md)
 
 | Stato | Note |
 |---|---|
-| ✅ **Completa (doc)** | 11 schermate, 3 file ciascuna — nessun task ⬜ |
+| ✅ **Completa (doc)** | 11 schermate + cross-cut UX-S125 (modalità base/avanzata, default `base`) |
 
 Dettaglio: [roadmap/ux-v1/README.md](roadmap/ux-v1/README.md)
+
+### 5.2b UI React Flow (`roadmap/app-v1/`)
+
+Implementazione in `micro-flow-editor/packages/app`. Schermate S010–S080 ✅;
+S090–S120 ⬜; cross-cut [UI-S125](roadmap/app-v1/tasks/UI-S125-simple-advanced-mode.md)
+(modalità base/avanzata, persistenza `localStorage`, default `base`) ✅.
+
+Dettaglio: [roadmap/app-v1/README.md](roadmap/app-v1/README.md)
 
 ### 5.3 Dashboard fase 1 (`dashboard/roadmap/dashboard-v1/`)
 
@@ -333,6 +341,7 @@ prodotto commerciale turnkey.
 |---|---|---|
 | React Flow backend | S0xx | [roadmap/react-flow-v1/](roadmap/react-flow-v1/README.md) |
 | UX React Flow (doc) | UX-S0xx | [roadmap/ux-v1/](roadmap/ux-v1/README.md) |
+| UI React Flow (app) | UI-S0xx | [roadmap/app-v1/](roadmap/app-v1/README.md) |
 | Dashboard fase 1 | D0xx | [dashboard/roadmap/dashboard-v1/](dashboard/roadmap/dashboard-v1/README.md) |
 | Access & turnkey | Exxx | [roadmap/ecosystem-access-v1/](roadmap/ecosystem-access-v1/README.md) |
 

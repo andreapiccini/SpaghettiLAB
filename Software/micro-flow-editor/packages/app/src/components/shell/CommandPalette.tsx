@@ -1,8 +1,10 @@
-import { Activity, Boxes, Cable, FileCode, GitCompareArrows, Network, Redo2, Save, Search, Settings, Share2, Store, Undo2, Workflow, type LucideIcon } from "lucide-react";
+import { Activity, Boxes, Cable, FileCode, GitCompareArrows, Network, Redo2, Save, Search, Settings, Share2, SlidersHorizontal, Store, Undo2, Workflow, type LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
+import { isScreenVisibleInMode } from "../../lib/ui-mode.js";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import { saveOpenProject, useSession, type ScreenId } from "../../state/session-context.js";
+import { useUiMode } from "../../state/ui-mode-context.js";
 
 type PaletteEntry = { readonly id: string; readonly label: string; readonly icon: LucideIcon; readonly shortcut?: string; readonly run: () => void };
 
@@ -18,6 +20,7 @@ type PaletteEntry = { readonly id: string; readonly label: string; readonly icon
  */
 export function CommandPalette() {
   const { session, navigate, undo, redo } = useSession();
+  const { mode, setMode } = useUiMode();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
@@ -68,12 +71,14 @@ export function CommandPalette() {
         ["cross-core-automation", "Cross-Core Automation", Share2],
         ["settings-security", "Settings, Security & Recovery", Settings],
       ] as const
-    ).map(([id, label, icon]: readonly [ScreenId, string, LucideIcon]) => ({
-      id: `nav-${id}`,
-      label: `Vai a: ${label}`,
-      icon,
-      run: () => navigate(id),
-    }));
+    )
+      .filter(([id]) => isScreenVisibleInMode(id, mode))
+      .map(([id, label, icon]: readonly [ScreenId, string, LucideIcon]) => ({
+        id: `nav-${id}`,
+        label: `Vai a: ${label}`,
+        icon,
+        run: () => navigate(id),
+      }));
 
     const actionEntries: PaletteEntry[] = [];
     if (session) {
@@ -85,10 +90,16 @@ export function CommandPalette() {
     if (session?.stack.canRedo()) {
       actionEntries.push({ id: "redo", label: "Ripeti ultima modifica", icon: Redo2, shortcut: "⌘⇧Z", run: redo });
     }
+    actionEntries.push({
+      id: "ui-mode",
+      label: mode === "advanced" ? "Disattiva modalità avanzata" : "Attiva modalità avanzata",
+      icon: SlidersHorizontal,
+      run: () => setMode(mode === "advanced" ? "base" : "advanced"),
+    });
 
     return [...actionEntries, ...navEntries];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, navigate, undo, redo]);
+  }, [session, navigate, undo, redo, mode, setMode]);
 
   const filtered = entries.filter((e) => e.label.toLowerCase().includes(query.toLowerCase()));
 

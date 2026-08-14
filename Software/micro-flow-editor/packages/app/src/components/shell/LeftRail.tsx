@@ -1,7 +1,9 @@
 import { Activity, Blocks, Boxes, Cable, Cpu, GitCompareArrows, PanelLeftClose, PanelLeftOpen, Settings, Share2, Store, Workflow } from "lucide-react";
 import { useState } from "react";
+import { isScreenVisibleInMode } from "../../lib/ui-mode.js";
 import type { ScreenId } from "../../state/session-context.js";
 import { useSession } from "../../state/session-context.js";
+import { useUiMode } from "../../state/ui-mode-context.js";
 
 type RailItem = { readonly id: ScreenId; readonly label: string; readonly icon: typeof Cable };
 
@@ -33,12 +35,16 @@ const GROUPS: readonly { readonly items: readonly RailItem[] }[] = [
 /** `UX_ARCHITECTURE.md` § Shell applicativa — 64px collapsed / 240px expanded, three groups separated by a thin divider. */
 export function LeftRail() {
   const { activeScreen, navigate } = useSession();
+  const { mode } = useUiMode();
   const [expanded, setExpanded] = useState(false);
+  const visibleGroups = GROUPS.map((group) => ({
+    items: group.items.filter((item) => isScreenVisibleInMode(item.id, mode)),
+  })).filter((group) => group.items.length > 0);
 
   return (
     <nav className={`flex h-full flex-col border-r border-border bg-surface py-3 transition-[width] duration-200 ${expanded ? "w-60" : "w-16"}`}>
       <div className="flex flex-col gap-1 px-2">
-        {GROUPS.map((group, i) => (
+        {visibleGroups.map((group, i) => (
           <div key={i} className={i > 0 ? "mt-3 border-t border-border pt-3" : undefined}>
             {group.items.map((item) => {
               const Icon = item.icon;

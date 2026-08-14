@@ -263,6 +263,12 @@ Il resolver produce uno di questi esiti:
 Un Capability Pack non viene mai caricato dinamicamente nel browser o nel Core come
 codice non firmato. L'app installa esclusivamente immagini firmware firmate compatibili.
 
+Il marketplace (S101, S104) è un indice di artifact discriminati per `kind`, non
+una sola coda OTA. Un Device Profile è un kind a installazione dati
+(`INSTALL_DEVICE_PROFILE`). Un kind futuro si aggiunge registrando strategia di
+installazione e se serve preflight; un kind sconosciuto si ignora con
+motivazione, senza eseguire il payload.
+
 ## Risorse
 
 L'app mostra e conserva separatamente:

@@ -14,6 +14,8 @@ Nessun Inspector: ogni dettaglio vive in linea. Dipende da S091–S094.
   padding orizzontale `space.4`, Selettore Core (stesso stile di S070).
 - **Segmented control**, cinque voci: **Telemetria · Comandi · Discovery · Stato &
   Risorse · Amministrazione** (stesso stile del selettore vista di `UX-S040`).
+  In modalità **base** solo **Telemetria · Comandi · Discovery** —
+  [`S125-simple-advanced-mode`](../S125-simple-advanced-mode/visual.md).
 
 ## Distinzione cross-cutting: comando immediato ≠ modifica Config
 

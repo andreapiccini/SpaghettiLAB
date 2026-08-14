@@ -64,5 +64,6 @@ deselezionati di default. Sei flussi di recovery guidato dedicati, mai un "ripro
 condiviso. Pattern unico di conferma distruttiva (device ID/scope/conseguenze
 prima della conferma, digitare il nome per azioni multi-Core) applicato a tutte e
 cinque le operazioni di S124. `backend-behavior.md` cita S121/S122/S123/S124 punto
-per punto (tutte ⬜ TODO). **Questo era l'ultimo task della roadmap UX — tutte le 11
-schermate sono ora documentate.**
+per punto (tutte ⬜ TODO). **Tab Interfaccia e filtro base/avanzata: UX-S125
+(aggiornamento successivo del visual).** **Questo era l'ultimo task delle 11
+schermate — tutte documentate.**

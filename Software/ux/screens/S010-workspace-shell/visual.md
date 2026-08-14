@@ -77,6 +77,8 @@ l'indicatore Core attivo:
   40%, `cursor: not-allowed`, nessun hover.
 - Un separatore verticale sottile (1px, `color.border`, alto 24px) fra i pulsanti
   undo/redo e l'indicatore Core, per non farli sembrare parte dello stesso gruppo.
+- **Menu overflow (`⋮`)**: prima riga = switch "Modalità avanzata" (persistito,
+  default base). Spec completa: [`S125-simple-advanced-mode`](../S125-simple-advanced-mode/visual.md).
 
 ## 3. Command palette
 
