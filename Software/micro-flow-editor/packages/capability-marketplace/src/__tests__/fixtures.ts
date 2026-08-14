@@ -18,4 +18,9 @@ export function manifestFixture(overrides: Partial<MarketplacePackManifest> = {}
   };
 }
 
+/** `manifestFixture()` plus the `kind` an index entry must declare (S104) — for tests that go through `parseMarketplaceIndexJson`, which the plain `manifestFixture()` never satisfies on its own. */
+export function packIndexEntryFixture(overrides: Partial<MarketplacePackManifest> = {}): MarketplacePackManifest & { readonly kind: string } {
+  return { kind: "firmware-capability-pack", ...manifestFixture(overrides) };
+}
+
 export const CORE_CONTEXT = { coreVariant: "core-a", resourceProfile: 1, protocolVersion: 1, configWireVersion: 4 };

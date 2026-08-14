@@ -23,7 +23,7 @@ function manifest(overrides: Partial<MarketplacePackManifest> = {}): Marketplace
 
 describe("forged marketplace metadata threat test — S124 § Verifiche", () => {
   it("never resolves a pack whose signature the trust verifier rejects — no default-trust fallback", () => {
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [manifest()] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [manifest()] };
     const result = resolveDependencies([{ typeId: "block.forged", kind: "block", requiredBy: ["node-1"] }], catalog, CORE_CONTEXT, { trustVerifier: () => false });
 
     expect(result.kind).toBe("FAILED");
@@ -31,7 +31,7 @@ describe("forged marketplace metadata threat test — S124 § Verifiche", () => 
   });
 
   it("never resolves a pack at all when no trust verifier is supplied — unverifiable is never treated as trusted", () => {
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [manifest()] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [manifest()] };
     const result = resolveDependencies([{ typeId: "block.forged", kind: "block", requiredBy: ["node-1"] }], catalog, CORE_CONTEXT);
 
     expect(result.kind).toBe("FAILED");
@@ -39,7 +39,7 @@ describe("forged marketplace metadata threat test — S124 § Verifiche", () => 
 
   it("rejects a pack claiming ABI/protocol compatibility it doesn't actually declare correctly, even when trusted", () => {
     const forgedAbi = manifest({ abiCompat: { protocolVersion: 99, configWireVersion: 99 } });
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [forgedAbi] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [forgedAbi] };
     const result = resolveDependencies([{ typeId: "block.forged", kind: "block", requiredBy: ["node-1"] }], catalog, CORE_CONTEXT, { trustVerifier: () => true });
 
     expect(result.kind).toBe("FAILED");

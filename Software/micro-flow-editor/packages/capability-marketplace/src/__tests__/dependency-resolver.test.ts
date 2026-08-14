@@ -8,7 +8,7 @@ const trustAll = () => true;
 
 describe("resolveDependencies — S101 § Verifiche", () => {
   it("resolves a missing Kalman Block to the correct pack/artifact with an explicit reason", () => {
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [manifestFixture()] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [manifestFixture()] };
     const required: readonly RequiredArtifact[] = [{ typeId: "block.kalman", kind: "block", requiredBy: ["block-1"] }];
 
     const result = resolveDependencies(required, catalog, CORE_CONTEXT, { trustVerifier: trustAll });
@@ -30,7 +30,7 @@ describe("resolveDependencies — S101 § Verifiche", () => {
     });
     // Only an incompatible (too-old) version of the dependency exists in the marketplace.
     const transportTooOld = manifestFixture({ packId: "pack.transport-rtu", version: 1, providedTypes: { blockTypeIds: [], ruleTypeIds: [], moduleDriverTypeIds: ["driver.rtu"] } });
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [modbus, transportTooOld] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [modbus, transportTooOld] };
     const required: readonly RequiredArtifact[] = [{ typeId: "rule.modbus-read", kind: "rule", requiredBy: ["rule-1"] }];
 
     const result = resolveDependencies(required, catalog, CORE_CONTEXT, { trustVerifier: trustAll });
@@ -43,7 +43,7 @@ describe("resolveDependencies — S101 § Verifiche", () => {
   });
 
   it("fails with NO_PROVIDER, motivated, when no pack in the marketplace provides the required type", () => {
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [] };
     const required: readonly RequiredArtifact[] = [{ typeId: "block.unknown", kind: "block", requiredBy: ["block-9"] }];
 
     const result = resolveDependencies(required, catalog, CORE_CONTEXT, { trustVerifier: trustAll });
@@ -55,7 +55,7 @@ describe("resolveDependencies — S101 § Verifiche", () => {
   });
 
   it("fails an untrusted pack rather than silently installing it", () => {
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [manifestFixture()] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [manifestFixture()] };
     const required: readonly RequiredArtifact[] = [{ typeId: "block.kalman", kind: "block", requiredBy: ["block-1"] }];
 
     const result = resolveDependencies(required, catalog, CORE_CONTEXT, { trustVerifier: () => false });
@@ -67,7 +67,7 @@ describe("resolveDependencies — S101 § Verifiche", () => {
   it("fails two mutually conflicting selected packs", () => {
     const a = manifestFixture({ packId: "pack.a", version: 1, providedTypes: { blockTypeIds: ["block.a"], ruleTypeIds: [], moduleDriverTypeIds: [] }, conflicts: [{ packId: "pack.b", minVersion: 1 }] });
     const b = manifestFixture({ packId: "pack.b", version: 1, providedTypes: { blockTypeIds: ["block.b"], ruleTypeIds: [], moduleDriverTypeIds: [] } });
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [a, b] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [a, b] };
     const required: readonly RequiredArtifact[] = [
       { typeId: "block.a", kind: "block", requiredBy: ["block-1"] },
       { typeId: "block.b", kind: "block", requiredBy: ["block-2"] },
@@ -80,7 +80,7 @@ describe("resolveDependencies — S101 § Verifiche", () => {
   });
 
   it("is deterministic across repeated runs with the same inputs", () => {
-    const catalog: MarketplaceCatalog = { indexHash: "h", packs: [manifestFixture({ version: 1 }), manifestFixture({ version: 2 })] };
+    const catalog: MarketplaceCatalog = { indexHash: "h", profiles: [], skipped: [], packs: [manifestFixture({ version: 1 }), manifestFixture({ version: 2 })] };
     const required: readonly RequiredArtifact[] = [{ typeId: "block.kalman", kind: "block", requiredBy: ["block-1"] }];
 
     const first = resolveDependencies(required, catalog, CORE_CONTEXT, { trustVerifier: trustAll });

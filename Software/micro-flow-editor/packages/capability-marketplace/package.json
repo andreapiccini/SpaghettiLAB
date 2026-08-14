@@ -14,7 +14,9 @@
   "dependencies": {
     "@spaghettilab/domain": "*",
     "@spaghettilab/protocol-sdk": "*",
-    "@spaghettilab/catalog-model": "*"
+    "@spaghettilab/catalog-model": "*",
+    "@spaghettilab/device-profile-authoring-model": "*",
+    "@spaghettilab/device-profile-package": "*"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.10",

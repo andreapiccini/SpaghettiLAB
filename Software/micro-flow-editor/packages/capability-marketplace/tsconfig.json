@@ -4,7 +4,7 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "references": [{ "path": "../domain" }, { "path": "../protocol-sdk" }, { "path": "../catalog-model" }],
+  "references": [{ "path": "../domain" }, { "path": "../protocol-sdk" }, { "path": "../catalog-model" }, { "path": "../device-profile-authoring-model" }, { "path": "../device-profile-package" }],
   "include": ["src"],
   "exclude": ["src/**/__tests__/**"]
 }

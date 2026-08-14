@@ -4,6 +4,7 @@ import {
   resolveDependencies,
   type CoreCompatibilityContext,
   type DependencyResolutionResult,
+  type MarketplaceCatalog,
   type MarketplacePackManifest,
   type PackTrustKind,
 } from "@spaghettilab/capability-marketplace";
@@ -48,7 +49,7 @@ export function MarketplaceTab({ bindingId }: { readonly bindingId: CoreBindingI
   const { session } = useSession();
   const { getSnapshot, listDeviceProfiles } = useCoreSessions();
   const [subTab, setSubTab] = useState<SubTabId>("disponibili");
-  const [catalog, setCatalog] = useState<{ readonly indexHash: string; readonly packs: readonly MarketplacePackManifest[] } | null>(null);
+  const [catalog, setCatalog] = useState<MarketplaceCatalog | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [kindFilter, setKindFilter] = useState<ArtifactKindId | null>(null);

@@ -36,4 +36,18 @@ describe("computeRequiredArtifacts", () => {
     const result = computeRequiredArtifacts(used, installedModuleDrivers);
     expect(result).toEqual([{ typeId: "block.kalman", kind: "block", requiredBy: ["block-1", "block-2"] }]);
   });
+
+  describe("S104 — device-profile kind", () => {
+    it("requires a profileId@version not present in the caller-supplied installed set", () => {
+      const used: readonly UsedType[] = [{ typeId: "ina219-raw@1", kind: "device-profile", usedBy: "module-3" }];
+      const result = computeRequiredArtifacts(used, installedModuleDrivers);
+      expect(result).toEqual([{ typeId: "ina219-raw@1", kind: "device-profile", requiredBy: ["module-3"] }]);
+    });
+
+    it("omits a profileId@version LIST_DEVICE_PROFILES already reports as installed", () => {
+      const used: readonly UsedType[] = [{ typeId: "ina219-raw@1", kind: "device-profile", usedBy: "module-3" }];
+      const result = computeRequiredArtifacts(used, installedModuleDrivers, undefined, new Set(["ina219-raw@1"]));
+      expect(result).toEqual([]);
+    });
+  });
 });

@@ -1,6 +1,9 @@
 import type { CatalogIndex } from "@spaghettilab/catalog-model";
 
-export type UsedType = { readonly typeId: string; readonly kind: "block" | "rule" | "module-driver"; readonly usedBy: string };
+/** `"device-profile"` added by S104 — a `typeId` of this kind is a `profileId@version` string (matching `DeviceProfileSummary.profileId`+`version` on the wire), not a bare `profileId`: a Module never pins a version, but `ProjectV1.deviceProfilePackages` does, and two different versions of the same profile are not interchangeable for install-readiness purposes. */
+export type RequiredArtifactKind = "block" | "rule" | "module-driver" | "device-profile";
+
+export type UsedType = { readonly typeId: string; readonly kind: RequiredArtifactKind; readonly usedBy: string };
 
 /**
  * The **required artifacts** view — deliberately distinct from
@@ -11,7 +14,7 @@ export type UsedType = { readonly typeId: string; readonly kind: "block" | "rule
  */
 export type RequiredArtifact = {
   readonly typeId: string;
-  readonly kind: "block" | "rule" | "module-driver";
+  readonly kind: RequiredArtifactKind;
   /** Node ids (or another caller-chosen label) that reference this type — for showing "why is this needed" without re-deriving it later. */
   readonly requiredBy: readonly string[];
 };
@@ -28,13 +31,30 @@ export type RequiredArtifact = {
  * therefore caller-supplied and optional: omitting it means every `block`/
  * `rule` usage is conservatively treated as "not yet confirmed installed"
  * (required), never silently assumed present.
+ *
+ * `device-profile` (S104) checks against `installedDeviceProfileIds` —
+ * genuinely wire-backed (`LIST_DEVICE_PROFILES`'s `DeviceProfileSummary`
+ * list, real per-Core install state), so a caller building this set from
+ * `CoreSession.listDeviceProfiles()` gets an accurate answer, not a
+ * conservative guess. Still caller-supplied and optional for the same
+ * reason as `installedBlockRuleTypeIds`: this package does no I/O itself.
  */
-export function computeRequiredArtifacts(used: readonly UsedType[], installedModuleDrivers: CatalogIndex, installedBlockRuleTypeIds?: ReadonlySet<string>): readonly RequiredArtifact[] {
+export function computeRequiredArtifacts(
+  used: readonly UsedType[],
+  installedModuleDrivers: CatalogIndex,
+  installedBlockRuleTypeIds?: ReadonlySet<string>,
+  installedDeviceProfileIds?: ReadonlySet<string>,
+): readonly RequiredArtifact[] {
   const installedModuleDriverIds = new Set(installedModuleDrivers.moduleDrivers.map((d) => d.typeId));
 
   const byTypeAndKind = new Map<string, RequiredArtifact>();
   for (const u of used) {
-    const isInstalled = u.kind === "module-driver" ? installedModuleDriverIds.has(u.typeId) : (installedBlockRuleTypeIds?.has(u.typeId) ?? false);
+    const isInstalled =
+      u.kind === "module-driver"
+        ? installedModuleDriverIds.has(u.typeId)
+        : u.kind === "device-profile"
+          ? (installedDeviceProfileIds?.has(u.typeId) ?? false)
+          : (installedBlockRuleTypeIds?.has(u.typeId) ?? false);
     if (isInstalled) continue;
 
     const key = `${u.kind}:${u.typeId}`;
