@@ -21,3 +21,18 @@ export async function getConnectionProfile(id: string): Promise<ConnectionProfil
   if (raw === null) return undefined;
   return JSON.parse(raw) as ConnectionProfile;
 }
+
+/** Every profile this browser has ever saved — the Credenziali tab's (UI-S120) only way to enumerate them, since none of this is per-Project. */
+export async function listConnectionProfiles(): Promise<readonly ConnectionProfile[]> {
+  const keys = await localStorageAdapter.keys(PREFIX);
+  const profiles: ConnectionProfile[] = [];
+  for (const key of keys) {
+    const raw = await localStorageAdapter.get(key);
+    if (raw) profiles.push(JSON.parse(raw) as ConnectionProfile);
+  }
+  return profiles;
+}
+
+export async function removeConnectionProfile(id: string): Promise<void> {
+  await localStorageAdapter.remove(PREFIX + id);
+}

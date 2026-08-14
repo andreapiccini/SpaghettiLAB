@@ -34,6 +34,7 @@
     { "path": "../protocol-sdk" },
     { "path": "../project-store" },
     { "path": "../react-flow-adapter" },
+    { "path": "../security-recovery" },
     { "path": "../system-automation-graph" },
     { "path": "../telemetry-buffer" }
   ],

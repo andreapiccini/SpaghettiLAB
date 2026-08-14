@@ -38,6 +38,7 @@
     "@spaghettilab/project-store": "*",
     "@spaghettilab/protocol-sdk": "*",
     "@spaghettilab/react-flow-adapter": "*",
+    "@spaghettilab/security-recovery": "*",
     "@spaghettilab/system-automation-graph": "*",
     "@spaghettilab/telemetry-buffer": "*",
     "@xyflow/react": "^12.11.2",
