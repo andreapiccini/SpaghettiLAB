@@ -54,6 +54,7 @@ export function LeftRail() {
                 <button
                   key={item.id}
                   type="button"
+                  data-tour-target={`rail-${item.id}`}
                   onClick={() => navigate(item.id)}
                   title={expanded ? undefined : item.label}
                   className={`group relative mb-1 flex h-10 w-full items-center gap-3 rounded-slsm px-3 font-body text-sm ${active ? "bg-brand-blue/10 text-brand-blue" : "text-ink-muted hover:bg-surface-raised"}`}

@@ -10,6 +10,9 @@ type ChromeCopy = {
   readonly modeAdvanced: string;
   readonly modeCurrent: string;
   readonly modeAdvancedHelp: string;
+  readonly tourReplay: string;
+  readonly tourReplayAction: string;
+  readonly tourReplayHelp: string;
   readonly comingSoon: string;
   readonly comingSoonBody: string;
   readonly languageHelp: string;
@@ -26,6 +29,9 @@ const IT: ChromeCopy = {
   modeAdvanced: "avanzata",
   modeCurrent: "Modalità",
   modeAdvancedHelp: "Authoring profili, marketplace OTA, automazione multi-Core",
+  tourReplay: "Tutorial introduttivo",
+  tourReplayAction: "Rivedi il tutorial",
+  tourReplayHelp: "La guida mostrata alla prima apertura, con le zone principali della shell.",
   comingSoon: "Non ancora disponibile",
   comingSoonBody: "La categoria è riservata. Quando servirà, si aggiunge qui senza cambiare la shell.",
   languageHelp: "Nome e bandiera della lingua della chrome. Le schermate già scritte restano com'erano finché non opt-in.",
@@ -64,6 +70,9 @@ const EN: ChromeCopy = {
   modeAdvanced: "advanced",
   modeCurrent: "Mode",
   modeAdvancedHelp: "Profile authoring, OTA marketplace, multi-Core automation",
+  tourReplay: "Introductory tour",
+  tourReplayAction: "Replay the tour",
+  tourReplayHelp: "The guide shown on first launch, covering the shell's main zones.",
   comingSoon: "Not available yet",
   comingSoonBody: "This category is reserved. When it is needed it can be added here without changing the shell.",
   languageHelp: "Chrome language, shown with name and flag. Existing screens stay as authored until they opt in.",

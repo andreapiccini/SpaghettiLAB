@@ -93,12 +93,13 @@ export function TopBar() {
       </div>
       <div className="flex items-center gap-2">
         <ChromeStatus />
-        <button type="button" className="rounded-slpill bg-brand-blue px-4 py-1.5 font-body-strong text-sm text-white hover:bg-brand-blue-dark">
+        <button type="button" data-tour-target="topbar-deploy" className="rounded-slpill bg-brand-blue px-4 py-1.5 font-body-strong text-sm text-white hover:bg-brand-blue-dark">
           Deploy
         </button>
         <div className="relative" ref={menuRef}>
           <button
             type="button"
+            data-tour-target="topbar-menu"
             className="flex h-9 w-9 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised"
             aria-label="Menu"
             aria-expanded={menuOpen}

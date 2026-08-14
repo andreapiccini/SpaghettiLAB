@@ -13,12 +13,14 @@ import { CapabilityMarketplaceScreen } from "./components/capability-marketplace
 import { CrossCoreAutomationScreen } from "./components/cross-core-automation/CrossCoreAutomationScreen.js";
 import { SettingsSecurityScreen } from "./components/settings-security/SettingsSecurityScreen.js";
 import { SettingsModal } from "./components/settings-modal/SettingsModal.js";
+import { TourOverlay } from "./components/shell/TourOverlay.js";
 import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { LocaleProvider } from "./state/locale-context.js";
 import { NodeRedRuntimeProvider } from "./state/node-red-runtime-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
 import { SettingsModalProvider } from "./state/settings-modal-context.js";
+import { TourProvider } from "./state/tour-context.js";
 import { UiModeProvider, useUiMode } from "./state/ui-mode-context.js";
 
 const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: string }> = {
@@ -131,10 +133,13 @@ export default function App() {
         <SettingsModalProvider>
           <NodeRedRuntimeProvider>
             <SessionProvider>
-              <CoreSessionsProvider>
-                <AppContent />
-                <SettingsModal />
-              </CoreSessionsProvider>
+              <TourProvider>
+                <CoreSessionsProvider>
+                  <AppContent />
+                  <SettingsModal />
+                  <TourOverlay />
+                </CoreSessionsProvider>
+              </TourProvider>
             </SessionProvider>
           </NodeRedRuntimeProvider>
         </SettingsModalProvider>
