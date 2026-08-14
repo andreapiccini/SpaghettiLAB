@@ -6,6 +6,9 @@ same message-oriented WebSocket shape React Flow already uses
 (WebSocketProtocolTransport: raw request envelopes in, kind-byte + envelope
 out). Bind 127.0.0.1 only.
 
+HTTP:
+  GET /list          JSON {cores: [...]}  (CORS *, used by Safari via Vite)
+
 WebSocket paths:
   /list              text JSON {cores: [...]} then close
   /core/<device_id>  binary Protocol V1 session
@@ -45,6 +48,14 @@ RESPONSE_WAIT_S = 8.0
 # is CONFLICT for the whole replay window (~30 s on Core V1).
 IDENTIFY_CORRELATION = 0x71C0FFEE
 EMPTY_MAP_PAYLOAD = b"\xa0"
+
+
+def _bridge_path(path: str) -> str:
+    """Strip query string and optional Vite proxy prefix `/usb-bridge`."""
+    path = path.split("?", 1)[0]
+    if path.startswith("/usb-bridge"):
+        path = path[len("/usb-bridge") :] or "/"
+    return path
 
 
 def encode_usb_frame(kind: int, envelope: bytes) -> bytes:
@@ -311,7 +322,7 @@ def make_handler(bridge: UsbBridge):
         if path is None:
             request = getattr(websocket, "request", None)
             path = request.path if request is not None else "/"
-        path = path.split("?", 1)[0]
+        path = _bridge_path(path)
         try:
             if path in ("/", "/list"):
                 document = await asyncio.to_thread(bridge.cores_document)
@@ -344,6 +355,47 @@ def make_handler(bridge: UsbBridge):
     return handler
 
 
+def make_process_request(bridge: UsbBridge):
+    """Serve GET /list as plain HTTP so Safari can fetch via the Vite proxy."""
+
+    async def process_request(connection: Any, request: Any) -> Any:
+        from websockets.datastructures import Headers
+        from websockets.http11 import Response
+
+        del connection
+        upgrade = request.headers.get("Upgrade", "")
+        if str(upgrade).lower() == "websocket":
+            return None
+        path = _bridge_path(getattr(request, "path", "/"))
+        method = str(getattr(request, "method", "GET")).upper()
+        cors = [
+            ("Access-Control-Allow-Origin", "*"),
+            ("Access-Control-Allow-Methods", "GET, OPTIONS"),
+            ("Access-Control-Allow-Headers", "*"),
+        ]
+        if method == "OPTIONS":
+            return Response(204, "No Content", Headers(cors))
+        if path in ("/", "/list") and method == "GET":
+            document = await asyncio.to_thread(bridge.cores_document)
+            body = json.dumps(document).encode()
+            return Response(
+                200,
+                "OK",
+                Headers(
+                    [
+                        ("Content-Type", "application/json"),
+                        ("Content-Length", str(len(body))),
+                        ("Connection", "close"),
+                        *cors,
+                    ]
+                ),
+                body,
+            )
+        return None
+
+    return process_request
+
+
 async def run_server(listen: str) -> None:
     from websockets.asyncio.server import serve
 
@@ -351,7 +403,13 @@ async def run_server(listen: str) -> None:
     port = int(port_s)
     bridge = UsbBridge()
     await asyncio.to_thread(bridge.refresh)
-    async with serve(make_handler(bridge), host, port, max_size=4096):
+    async with serve(
+        make_handler(bridge),
+        host,
+        port,
+        max_size=4096,
+        process_request=make_process_request(bridge),
+    ):
         logger.info(
             "USB bridge on ws://%s:%s  (Safari: keep make monitor closed)",
             host,

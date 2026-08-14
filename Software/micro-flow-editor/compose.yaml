@@ -5,6 +5,8 @@ services:
   micro-flow-editor:
     build: .
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:${MICRO_FLOW_EDITOR_PORT:-5173}:5173"
     volumes:

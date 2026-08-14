@@ -27,6 +27,7 @@ from tools.usb_bridge import (
     UsbBridge,
     encode_usb_frame,
     make_handler,
+    make_process_request,
     pop_usb_frame,
 )
 
@@ -144,7 +145,13 @@ class BridgeSessionTest(unittest.TestCase):
                 connection=serial,
                 write_lock=threading.Lock(),
             )
-            async with serve(make_handler(bridge), "127.0.0.1", 0, max_size=4096) as server:
+            async with serve(
+                make_handler(bridge),
+                "127.0.0.1",
+                0,
+                max_size=4096,
+                process_request=make_process_request(bridge),
+            ) as server:
                 port = server.sockets[0].getsockname()[1]
                 origin = f"ws://127.0.0.1:{port}"
                 async with ws_connect(f"{origin}/list") as ws:
@@ -166,6 +173,42 @@ class BridgeSessionTest(unittest.TestCase):
                 status = decode_get_status_response(payload)
                 self.assertEqual(status.device_id, DEVICE_ID)
                 self.assertEqual(status.device_name, "BridgeCore")
+
+        with mock.patch(
+            "tools.usb_bridge.serial_ports",
+            return_value=["/dev/cu.usbmodem-fake"],
+        ):
+            _run(scenario())
+
+    def test_http_list(self) -> None:
+        async def scenario() -> None:
+            import urllib.request
+
+            serial = FakeSerial()
+            bridge = UsbBridge()
+            bridge.cores[DEVICE_ID_HEX] = BoundCore(
+                device_id_hex=DEVICE_ID_HEX,
+                device_name="BridgeCore",
+                version="test",
+                port="/dev/cu.usbmodem-fake",
+                connection=serial,
+                write_lock=threading.Lock(),
+            )
+            async with serve(
+                make_handler(bridge),
+                "127.0.0.1",
+                0,
+                max_size=4096,
+                process_request=make_process_request(bridge),
+            ) as server:
+                port = server.sockets[0].getsockname()[1]
+
+                def fetch() -> dict:
+                    with urllib.request.urlopen(f"http://127.0.0.1:{port}/list") as resp:
+                        return json.loads(resp.read())
+
+                document = await asyncio.to_thread(fetch)
+                self.assertEqual(document["cores"][0]["deviceIdHex"], DEVICE_ID_HEX)
 
         with mock.patch(
             "tools.usb_bridge.serial_ports",

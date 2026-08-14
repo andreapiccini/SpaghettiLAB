@@ -167,10 +167,11 @@ cd Software/micro-flow-editor
 make up-d
 ```
 
-That starts the host USB bridge (`ws://127.0.0.1:8766`, needed in Safari for
-Core via cavo) and then Docker Compose. `docker compose up -d` alone does not
-start the bridge: Docker on macOS cannot open `/dev/cu.usbmodem*`. Close
-`make monitor` first. Chrome can keep using Web Serial without the bridge.
+That starts the host USB bridge (`127.0.0.1:8766`) and then Docker Compose.
+Safari never opens that port itself: React Flow proxies `/usb-bridge` from
+`http://127.0.0.1:5173`. `docker compose up -d` alone does not start the
+bridge: Docker on macOS cannot open `/dev/cu.usbmodem*`. Close `make monitor`
+first. Chrome can keep using Web Serial without the bridge.
 
 First start builds the image (installs npm dependencies inside the
 container) and can take a minute or two. Subsequent starts are fast.

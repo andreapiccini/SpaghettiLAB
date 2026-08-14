@@ -5,6 +5,12 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
+function usbBridgeProxyTarget(): string {
+  return existsSync("/.dockerenv")
+    ? "http://host.docker.internal:8766"
+    : "http://127.0.0.1:8766";
+}
+
 /** Host-only: Docker on macOS cannot open USB serial. `make up-d` starts the same script. */
 function spaghettiUsbBridge(): Plugin {
   return {
@@ -27,6 +33,15 @@ export default defineConfig({
     // tree is bind-mounted from the host into the container.
     watch: {
       usePolling: true,
+    },
+    // Safari talks only to :5173. Docker Vite forwards to the host USB bridge.
+    proxy: {
+      "/usb-bridge": {
+        target: usbBridgeProxyTarget(),
+        changeOrigin: true,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/usb-bridge/, "") || "/",
+      },
     },
   },
 });

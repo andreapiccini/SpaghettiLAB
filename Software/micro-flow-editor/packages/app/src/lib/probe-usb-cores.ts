@@ -56,52 +56,36 @@ function mergeUsbCores(...groups: readonly (readonly FoundUsbCore[])[]): FoundUs
 
 /** Probe the localhost USB bridge (`make usb-bridge`). Empty if it is not running. */
 export async function probeUsbBridgeCores(): Promise<readonly FoundUsbCore[]> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (cores: readonly FoundUsbCore[]) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(cores);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(usbBridgeListUrl(), { signal: controller.signal });
+    if (!response.ok) return [];
+    const document = (await response.json()) as {
+      cores?: readonly {
+        deviceIdHex?: string;
+        deviceName?: string;
+        version?: string;
+      }[];
     };
-    const socket = new WebSocket(usbBridgeListUrl());
-    const timer = setTimeout(() => {
-      socket.close();
-      finish([]);
-    }, 800);
-    socket.addEventListener("message", (event) => {
-      try {
-        const document = JSON.parse(typeof event.data === "string" ? event.data : "") as {
-          cores?: readonly {
-            deviceIdHex?: string;
-            deviceName?: string;
-            version?: string;
-          }[];
-        };
-        const cores: FoundUsbCore[] = [];
-        for (const item of document.cores ?? []) {
-          const deviceIdHex = item.deviceIdHex?.toLowerCase();
-          if (!deviceIdHex) continue;
-          cores.push({
-            source: "bridge",
-            url: usbBridgeCoreUrl(deviceIdHex),
-            deviceIdHex,
-            deviceName: item.deviceName?.trim() ?? "",
-            version: item.version ?? "",
-          });
-        }
-        finish(cores);
-      } catch {
-        finish([]);
-      }
-      socket.close();
-    });
-    socket.addEventListener("error", () => {
-      socket.close();
-      finish([]);
-    });
-    socket.addEventListener("close", () => finish([]));
-  });
+    const cores: FoundUsbCore[] = [];
+    for (const item of document.cores ?? []) {
+      const deviceIdHex = item.deviceIdHex?.toLowerCase();
+      if (!deviceIdHex) continue;
+      cores.push({
+        source: "bridge",
+        url: usbBridgeCoreUrl(deviceIdHex),
+        deviceIdHex,
+        deviceName: item.deviceName?.trim() ?? "",
+        version: item.version ?? "",
+      });
+    }
+    return cores;
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Web Serial ports plus localhost USB bridge, Web Serial first if both see the same Core. */
