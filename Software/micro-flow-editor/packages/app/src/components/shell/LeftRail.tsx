@@ -4,6 +4,7 @@ import { isScreenVisibleInMode } from "../../lib/ui-mode.js";
 import type { ScreenId } from "../../state/session-context.js";
 import { useSession } from "../../state/session-context.js";
 import { useUiMode } from "../../state/ui-mode-context.js";
+import { IconTooltip } from "./IconTooltip.js";
 
 type RailItem = { readonly id: ScreenId; readonly label: string; readonly icon: typeof Cable };
 
@@ -54,10 +55,11 @@ export function LeftRail() {
                   key={item.id}
                   type="button"
                   onClick={() => navigate(item.id)}
-                  className={`mb-1 flex h-10 w-full items-center gap-3 rounded-slsm px-3 font-body text-sm ${active ? "bg-brand-blue/10 text-brand-blue" : "text-ink-muted hover:bg-surface-raised"}`}
+                  title={expanded ? undefined : item.label}
+                  className={`group relative mb-1 flex h-10 w-full items-center gap-3 rounded-slsm px-3 font-body text-sm ${active ? "bg-brand-blue/10 text-brand-blue" : "text-ink-muted hover:bg-surface-raised"}`}
                 >
                   <Icon size={18} className="shrink-0" />
-                  {expanded && <span className="truncate">{item.label}</span>}
+                  {expanded ? <span className="truncate">{item.label}</span> : <IconTooltip label={item.label} />}
                 </button>
               );
             })}

@@ -237,7 +237,7 @@ function ProcessingGraphScreenInner() {
             <ReactFlow nodeTypes={PROCESSING_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onNodeClick={onNodeClick} onInit={setRf} fitView>
               <Background gap={20} color="#E1E4EB" />
               <Controls position="bottom-left" />
-              <MiniMap position="bottom-right" nodeColor={(n) => PROCESSING_NODE_KIND_CONFIG[(n.data as ProcessingNodeUiData).kind]?.colorVar ?? "#8A8F99"} />
+              {domainNodes.length > 0 && <MiniMap position="bottom-right" pannable zoomable className="!rounded-slsm !border !border-border-strong !shadow-e1" nodeColor={(n) => PROCESSING_NODE_KIND_CONFIG[(n.data as ProcessingNodeUiData).kind]?.colorVar ?? "#8A8F99"} />}
             </ReactFlow>
 
             {domainNodes.length === 0 && !dropPreview && (

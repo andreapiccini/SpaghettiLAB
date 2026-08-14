@@ -209,7 +209,7 @@ function GraphTabInner({ linkMeta, setLinkMeta }: { readonly linkMeta: ReadonlyM
         <ReactFlow nodeTypes={CROSS_CORE_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onConnect={onConnect} deleteKeyCode={["Backspace", "Delete"]} fitView>
           <Background gap={20} color="#E1E4EB" />
           <Controls position="bottom-left" />
-          <MiniMap position="bottom-right" nodeColor={(n) => (n.data as CrossCoreRfNodeData).colorVar} />
+          {graphState.nodes.length > 0 && <MiniMap position="bottom-right" pannable zoomable className="!rounded-slsm !border !border-border-strong !shadow-e1" nodeColor={(n) => (n.data as CrossCoreRfNodeData).colorVar} />}
         </ReactFlow>
 
         {staleLinks.length > 0 && (

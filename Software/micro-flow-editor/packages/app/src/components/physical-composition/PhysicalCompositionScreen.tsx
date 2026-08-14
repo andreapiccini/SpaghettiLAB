@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useCoreSessions } from "../../state/core-sessions-context.js";
 import { useSession } from "../../state/session-context.js";
 import { CoreSelector } from "../catalog-topology/CoreSelector.js";
+import { IconTooltip } from "../shell/IconTooltip.js";
 import { DiscoveryTray } from "./DiscoveryTray.js";
 import { NodeInspector, type InspectorMode } from "./NodeInspector.js";
 import { NODE_KIND_CONFIG } from "./node-kinds.js";
@@ -231,14 +232,16 @@ function PhysicalCompositionScreenInner() {
             {TOOLBAR_ITEMS.map(({ kind, icon: Icon }) => {
               const config = NODE_KIND_CONFIG[kind];
               return (
-                <button key={kind} type="button" title={`+ ${config.label}`} onClick={() => setInspector({ kind: "create", nodeKind: kind })} className="flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
+                <button key={kind} type="button" title={`+ ${config.label}`} onClick={() => setInspector({ kind: "create", nodeKind: kind })} className="group relative flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
                   <Icon size={18} />
+                  <IconTooltip label={`+ ${config.label}`} />
                 </button>
               );
             })}
             <div className="mx-auto h-px w-6 bg-border" />
-            <button type="button" title="Libreria blocchi" onClick={() => setLibraryOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
+            <button type="button" title="Libreria blocchi" onClick={() => setLibraryOpen(true)} className="group relative flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
               <Library size={18} />
+              <IconTooltip label="Libreria blocchi" />
             </button>
           </div>
 
@@ -246,7 +249,8 @@ function PhysicalCompositionScreenInner() {
             <ReactFlow nodeTypes={PHYSICAL_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onNodeClick={onNodeClick} fitView>
               <Background gap={20} color="#E1E4EB" />
               <Controls position="bottom-left" />
-              <MiniMap position="bottom-right" nodeColor={(n) => NODE_KIND_CONFIG[(n.data as PhysicalNodeData).kind]?.colorVar ?? "#8A8F99"} />
+              {/* An empty minimap is just a blank white rectangle — with no nodes to preview it reads as a rendering glitch, not a UI element, especially once the Inspector panel narrows the canvas. */}
+              {domainNodes.length > 0 && <MiniMap position="bottom-right" pannable zoomable className="!rounded-slsm !border !border-border-strong !shadow-e1" nodeColor={(n) => NODE_KIND_CONFIG[(n.data as PhysicalNodeData).kind]?.colorVar ?? "#8A8F99"} />}
             </ReactFlow>
 
             <div className="absolute bottom-0 left-0 right-0 flex h-10 items-center gap-2 border-t border-border bg-surface px-4">
