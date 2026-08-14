@@ -13,6 +13,7 @@ import { CapabilityMarketplaceScreen } from "./components/capability-marketplace
 import { CrossCoreAutomationScreen } from "./components/cross-core-automation/CrossCoreAutomationScreen.js";
 import { SettingsSecurityScreen } from "./components/settings-security/SettingsSecurityScreen.js";
 import { SettingsModal } from "./components/settings-modal/SettingsModal.js";
+import { NextStepHint } from "./components/shell/NextStepHint.js";
 import { TourOverlay } from "./components/shell/TourOverlay.js";
 import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
@@ -138,6 +139,7 @@ export default function App() {
                   <AppContent />
                   <SettingsModal />
                   <TourOverlay />
+                  <NextStepHint />
                 </CoreSessionsProvider>
               </TourProvider>
             </SessionProvider>

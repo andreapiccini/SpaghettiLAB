@@ -1,38 +1,11 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { tourSteps } from "../../lib/tour-steps.js";
+import { useTargetRect } from "../../lib/use-target-rect.js";
 import { useLocale } from "../../state/locale-context.js";
 import { useTour } from "../../state/tour-context.js";
 
 const PADDING = 12;
-
-function useTargetRect(target: string | undefined): DOMRect | null {
-  const [rect, setRect] = useState<DOMRect | null>(null);
-
-  useEffect(() => {
-    function measure() {
-      if (!target) {
-        setRect(null);
-        return;
-      }
-      const el = document.querySelector(`[data-tour-target="${target}"]`);
-      setRect(el ? el.getBoundingClientRect() : null);
-    }
-    window.addEventListener("resize", measure);
-    // Deferred rather than an immediate synchronous call — the target may not
-    // have painted yet on the very first tick after a step change, so this
-    // measures on the next frame(s) instead of guessing it's already there.
-    const raf1 = requestAnimationFrame(measure);
-    const raf2 = requestAnimationFrame(() => requestAnimationFrame(measure));
-    return () => {
-      window.removeEventListener("resize", measure);
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-    };
-  }, [target]);
-
-  return rect;
-}
 
 /**
  * First-launch shell tour: dims everything except the current target (an SVG
