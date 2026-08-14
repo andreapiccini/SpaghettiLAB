@@ -4,8 +4,8 @@ import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-g
 import type { CoreBindingId, CoreBindingRecord, GraphNode, GraphState } from "@spaghettilab/domain";
 import { isModuleNodeData, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
 import { findCatalogEntryById, shippedTypeIds, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
-import { addGraphNodeCommand, deviceGraphLens, nodeChangesToCommands, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
-import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Node, type NodeChange, type ReactFlowInstance } from "@xyflow/react";
+import { addGraphEdgeCommand, addGraphNodeCommand, deviceGraphLens, edgeChangesToCommands, nodeChangesToCommands, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
+import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Connection, type EdgeChange, type Node, type NodeChange, type ReactFlowInstance } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { CircleAlert, PlayCircle, Workflow } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
@@ -110,6 +110,26 @@ function ProcessingGraphScreenInner() {
     const committable = changes.filter((c) => !(c.type === "position" && c.dragging === true));
     const commands = nodeChangesToCommands(committable, deviceGraphLens(bindingIndex));
     for (const command of commands) execute(command);
+  }
+
+  function onEdgesChange(changes: EdgeChange[]) {
+    if (!execute || bindingIndex < 0) return;
+    const commands = edgeChangesToCommands(changes, deviceGraphLens(bindingIndex));
+    for (const command of commands) execute(command);
+  }
+
+  function onConnect(connection: Connection) {
+    if (!execute || bindingIndex < 0 || !connection.source || !connection.target) return;
+    const edgeId = `dpe-${Date.now()}-${Math.round(Math.random() * 1e6)}`;
+    execute(
+      addGraphEdgeCommand(deviceGraphLens(bindingIndex), {
+        id: edgeId,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle ?? undefined,
+        targetHandle: connection.targetHandle ?? undefined,
+      }),
+    );
   }
 
   function onNodeClick(_: unknown, node: Node<ProcessingNodeUiData>) {
@@ -234,7 +254,7 @@ function ProcessingGraphScreenInner() {
           <ProcessingBlockPalette onPlace={(entry) => placeFromCatalog(entry)} />
 
           <div className="relative flex-1" onDragOver={onCanvasDragOver} onDragLeave={() => setDropPreview(null)} onDrop={onCanvasDrop}>
-            <ReactFlow nodeTypes={PROCESSING_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onNodeClick={onNodeClick} onInit={setRf} fitView>
+            <ReactFlow nodeTypes={PROCESSING_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={onNodeClick} onInit={setRf} deleteKeyCode={["Backspace", "Delete"]} fitView>
               <Background gap={20} color="#E1E4EB" />
               <Controls position="bottom-left" />
               {domainNodes.length > 0 && <MiniMap position="bottom-right" pannable zoomable className="!rounded-slsm !border !border-border-strong !shadow-e1" nodeColor={(n) => PROCESSING_NODE_KIND_CONFIG[(n.data as ProcessingNodeUiData).kind]?.colorVar ?? "#8A8F99"} />}
