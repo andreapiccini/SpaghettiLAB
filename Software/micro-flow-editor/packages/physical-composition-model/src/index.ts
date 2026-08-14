@@ -12,6 +12,7 @@ export {
 export { PhysicalCompositionErrorCode } from "./errors.js";
 export { PowerAdmission, RailAssurance, requiresPowerAcknowledgement } from "./power.js";
 export { validateComposition, type ModuleTransport, type TransportOf } from "./validate-composition.js";
+export { parseW1RomHex, W1_ROM_BYTE_LENGTH } from "./w1-rom.js";
 export {
   moduleFromAcceptedDiscovery,
   previewDiscoveryAccept,

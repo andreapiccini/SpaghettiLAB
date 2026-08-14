@@ -39,7 +39,7 @@ finale end-to-end).
 | ✅ | [S061 — Modello authoring ed editor istruzioni](tasks/S061-profile-authoring-instructions.md) | Un profilo si descrive interamente con le istruzioni catalogate disponibili. |
 | ✅ | [S062 — Budget locale, import/export e resolver](tasks/S062-profile-budget-export-resolver.md) | Il profilo è verificato localmente, scambiabile e risolto in uno dei sei esiti previsti. |
 | ✅ | [S063 — Installazione, catalogo e sorgenti profilo](tasks/S063-profile-install-catalog-sources.md) | Un sensore compatibile viene installato e istanziato come Module senza OTA. |
-| ⬜ | [S064 — Famiglie Port complete nei profili](tasks/S064-profile-port-transports.md) | I2C/SPI/UART/GPIO/ADC/W1 si descrivono e si legano in Studio; 1-Wire arriva col firmware 393. |
+| ✅ | [S064 — Famiglie Port complete nei profili](tasks/S064-profile-port-transports.md) | I2C/SPI/UART/GPIO/ADC/W1 si descrivono e si legano in Studio; 1-Wire arriva col firmware 393. |
 | | **S070 — Processing graph e compilatore Config** | |
 | ✅ | [S071 — Authoring e validazione del processing graph](tasks/S071-processing-graph-authoring.md) | Il grafo locale rifiuta cicli, riferimenti dangling ed edge cross-Core. |
 | ✅ | [S072 — Compilatore Config deterministico](tasks/S072-config-compiler.md) | Il grafo validato compila in Config canonico, deterministico, senza dettagli React Flow. |

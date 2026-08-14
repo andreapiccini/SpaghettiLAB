@@ -1,5 +1,5 @@
 import type { DeviceProfileDraft } from "@spaghettilab/device-profile-authoring-model";
-import { PortCapability, PortTransport } from "@spaghettilab/device-profile-authoring-model";
+import { DeviceProfileOpcode, PortCapability, PortTransport } from "@spaghettilab/device-profile-authoring-model";
 import type { DeviceProfileSummary, GetResourcesResponse } from "@spaghettilab/protocol-sdk";
 import { describe, expect, it } from "vitest";
 import { exportProfilePackage } from "../package.js";
@@ -50,6 +50,28 @@ describe("resolveProfileInstall — S062 § Verifiche", () => {
     const pkg = exportProfilePackage(draft(), "andrea");
     const result = resolveProfileInstall(pkg, baseContext);
     expect(result.kind).toBe(InstallResolution.PROFILE_INSTALL_REQUIRED);
+  });
+
+  it("FIRMWARE_UPDATE_REQUIRED when the Core's known opcodes omit 23–25 (firmware without 393)", () => {
+    const pkg = exportProfilePackage(
+      draft({
+        transport: PortTransport.W1,
+        requiredCapabilities: PortCapability.W1,
+        initOps: [],
+        sampleOps: [
+          { op: "W1_WRITE_READ", src: 0, dst: 1, readLength: 2, writeLength: 1, timeoutMs: 20 },
+          { op: "UART_READ", dst: 0, length: 4, timeoutMs: 50 },
+          { op: "WAIT_GPIO", dst: 0, attempts: 5, intervalMs: 10, expectedLevel: 1 },
+          { op: "EMIT_FIELD", src: 1, fieldId: 1 },
+          { op: "EMIT_RECORD" },
+        ],
+      }),
+      "andrea",
+    );
+    const knownWithout393 = new Set<number>(Object.values(DeviceProfileOpcode).filter((op) => op < 23));
+    const result = resolveProfileInstall(pkg, { ...baseContext, availableCapabilities: PortCapability.W1, knownOpcodes: knownWithout393 });
+    expect(result.kind).toBe(InstallResolution.FIRMWARE_UPDATE_REQUIRED);
+    expect(result.missingOpcodes).toEqual([23, 24, 25]);
   });
 
   it("FIRMWARE_UPDATE_REQUIRED proposes a Capability Pack and never attempts a data install", () => {

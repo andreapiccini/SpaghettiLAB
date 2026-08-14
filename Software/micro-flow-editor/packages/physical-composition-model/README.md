@@ -45,7 +45,7 @@ first — matching `@spaghettilab/domain`'s `validateProjectV1` precedent. A rai
 requiring acknowledgement (`requiresPowerAcknowledgement`) fails validation unless its
 Module's node ID is in the caller-supplied `acknowledgedModuleNodeIds` set.
 
-Transport (I2C vs SPI) has **no wire field at the generic Module Driver level** —
+Transport (I2C vs SPI vs 1-Wire) has **no wire field at the generic Module Driver level** —
 `catalog-model`'s `ModuleDriverEntry` is only `{typeId, commandCount}`. `TransportOf` is
 a caller-supplied classifier, the same "caller-supplied, not invented" pattern
 `@spaghettilab/editor-model`'s `checkHandleCompatibility` uses for
@@ -96,7 +96,9 @@ effect to model: it is simply never accepted, so there is no function for it.
 - **Port has no attributes beyond a numeric ID.** Anything Port-related beyond that ID
   (name, electrical description) is out of scope by construction — there is nothing to
   read it from.
-- **Transport (I2C/SPI) is not on the wire at the generic Module Driver level.** It does
+- **Transport (I2C/SPI/1-Wire) is not on the wire at the generic Module Driver level.** It does
   exist at the Device Profile level (`GET_DEVICE_PROFILE`'s `transport` field) — see
   `validate-composition.ts`'s `TransportOf` note above for the distinction and why
   `catalog-model` not yet indexing it is the actual current gap, not the wire itself.
+  Instance 1-Wire ROM is `ModuleEndpoint.w1Rom` (8-byte hex, firmware `w1_rom`), never
+  a field of the shared Device Profile.

@@ -60,6 +60,21 @@ struct actually has: `profileId`/`version` (identity), `transport`/`requiredCapa
 not offer `bool`/`text`/`bytes` sample fields, matching what the firmware struct
 actually has today, not what a future MVP might add.
 
+## Port families (firmware 393 / S064)
+
+Same matrix as `Firmware/core/roadmap/393-device-profile-port-transports`. UART baud and
+pinout stay on the Port/DTS, never in the profile. Sample fields stay RAW
+(`int64`/`uint64`); no CAN/USB.
+
+| Famiglia Port | Capability | Opcode profilo | Binding istanza |
+|---|---|---|---|
+| I2C | `CAP_I2C` | `I2C_WRITE` / `READ` / `WRITE_READ` | `i2c_address` |
+| SPI | `CAP_SPI` | `SPI_TRANSCEIVE` (`imm3` = mode 0..3) | `spi_cs`, `spi_frequency_hz` |
+| UART | `CAP_UART` | `UART_WRITE` / `UART_READ_UNTIL` / `UART_READ` | nessuno (linee/baud sono del Port/DTS) |
+| GPIO | `DIGITAL_INPUT` / `OUTPUT` | `GPIO_GET` / `GPIO_SET` / `WAIT_GPIO` | nessuno (una linea per Port) |
+| ADC | `CAP_ADC` | `ADC_READ` | `adc_channel` |
+| 1-Wire | `CAP_W1` | `W1_WRITE_READ` | `w1_rom` (8 byte, Config di istanza) |
+
 ## Validation (`validate-profile.ts`)
 
 `validateDeviceProfile()` checks a draft the way the firmware's own

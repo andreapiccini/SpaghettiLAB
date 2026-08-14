@@ -130,6 +130,35 @@ describe("validateComposition — S050 § Verifiche", () => {
     if (!result.ok) expect(result.error.some((e) => e.code === "physical-composition.transport_mismatch")).toBe(true);
   });
 
+  it("flags a transport mismatch when a caller-classified 1-Wire driver has no ROM", () => {
+    const nodes = [moduleNode("m1", { driverTypeId: "declarative-device" })];
+    const result = validateComposition(nodes, topology(), {
+      transportOf: (typeId) => (typeId === "declarative-device" ? "w1" : undefined),
+      acknowledgedModuleNodeIds: new Set(["m1"]),
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.some((e) => e.code === "physical-composition.transport_mismatch")).toBe(true);
+  });
+
+  it("accepts two 1-Wire Modules on the same Port with distinct ROMs", () => {
+    const nodes = [
+      moduleNode("m1", { endpoint: { w1Rom: "28ff641f0000003d" } }),
+      moduleNode("m2", { endpoint: { w1Rom: "28ff641f0000003e" } }),
+    ];
+    const result = validateComposition(nodes, topology(), { acknowledgedModuleNodeIds: new Set(["m1", "m2"]) });
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects two Modules on the same Port sharing a 1-Wire ROM as an endpoint collision", () => {
+    const nodes = [
+      moduleNode("m1", { endpoint: { w1Rom: "28ff641f0000003d" } }),
+      moduleNode("m2", { endpoint: { w1Rom: "28ff641f0000003d" } }),
+    ];
+    const result = validateComposition(nodes, topology(), { acknowledgedModuleNodeIds: new Set(["m1", "m2"]) });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.filter((e) => e.code === "physical-composition.endpoint_collision")).toHaveLength(2);
+  });
+
   it("passive (UNMANAGED) power requires an explicit acknowledgement", () => {
     const nodes = [moduleNode("m1", { railId: 1001, endpoint: { address: 0x10 } })];
     const withoutAck = validateComposition(nodes, topology());

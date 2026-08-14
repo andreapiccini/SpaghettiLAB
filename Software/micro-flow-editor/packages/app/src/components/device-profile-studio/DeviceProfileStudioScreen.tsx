@@ -1,10 +1,10 @@
 import { normalizeTopologyPages, type TopologyIndex } from "@spaghettilab/catalog-model";
 import { computeBudget, PortTransport, type DeviceProfileDraft, type Instruction, type SampleField } from "@spaghettilab/device-profile-authoring-model";
-import { bytesEqual, encodeDeviceProfileCbor, instantiateModuleFromProfile, sha256 } from "@spaghettilab/device-profile-install";
+import { bytesEqual, encodeDeviceProfileCbor, instantiateModuleFromProfile, sha256, type ModuleInstantiationChoice } from "@spaghettilab/device-profile-install";
 import { exportProfilePackage, importProfilePackageJson, resolveProfileInstall, type DeviceProfilePackage, type InstallResolutionResult } from "@spaghettilab/device-profile-package";
 import type { CoreBindingId, CoreBindingRecord } from "@spaghettilab/domain";
 import { setDeviceProfilePackages } from "@spaghettilab/domain";
-import type { ElectricalMode } from "@spaghettilab/physical-composition-model";
+import { parseW1RomHex, type ElectricalMode, type ModuleEndpoint } from "@spaghettilab/physical-composition-model";
 import type { DeviceProfileSummary } from "@spaghettilab/protocol-sdk";
 import { addGraphNodeCommand, physicalGraphLens } from "@spaghettilab/react-flow-adapter";
 import { Download, Upload } from "lucide-react";
@@ -226,6 +226,7 @@ export function DeviceProfileStudioScreen() {
       {instantiateOpen && selected && bindingIndex >= 0 && visibleInstalledSummary && (
         <InstantiateDialog
           topology={topologyIndex}
+          transport={draft.transport}
           onCancel={() => setInstantiateOpen(false)}
           onConfirm={(choice) => {
             if (!execute || !visibleResolution || visibleResolution.kind !== "READY" || !visibleInstalledSummary) return;
@@ -241,15 +242,38 @@ export function DeviceProfileStudioScreen() {
   );
 }
 
-function InstantiateDialog({ topology, onCancel, onConfirm }: { readonly topology: TopologyIndex | null; readonly onCancel: () => void; readonly onConfirm: (choice: { portId: number; bayId: number; railId: number; electricalMode: ElectricalMode }) => void }) {
+function InstantiateDialog({
+  topology,
+  transport,
+  onCancel,
+  onConfirm,
+}: {
+  readonly topology: TopologyIndex | null;
+  readonly transport: number;
+  readonly onCancel: () => void;
+  readonly onConfirm: (choice: ModuleInstantiationChoice) => void;
+}) {
   const firstFlow = topology?.flows[0];
   const firstBay = firstFlow?.bays[0];
   const [portId, setPortId] = useState(firstFlow?.portId ?? -1);
   const [bayId, setBayId] = useState(firstBay?.bayId ?? -1);
   const [railId, setRailId] = useState(firstBay?.rails[0]?.railId ?? -1);
   const [electricalMode, setElectricalMode] = useState<ElectricalMode>("input-output");
+  const [addressDraft, setAddressDraft] = useState("");
+  const [chipSelectDraft, setChipSelectDraft] = useState("");
+  const [w1RomDraft, setW1RomDraft] = useState("");
   const flow = topology?.flows.find((f) => f.portId === portId);
   const bay = flow?.bays.find((b) => b.bayId === bayId);
+  const w1RomParsed = w1RomDraft.trim() === "" ? undefined : parseW1RomHex(w1RomDraft);
+  const w1RomInvalid = transport === PortTransport.W1 && (w1RomDraft.trim() === "" || w1RomParsed === undefined);
+  const canConfirm = portId !== -1 && bayId !== -1 && railId !== -1 && !w1RomInvalid;
+
+  function endpointOf(): ModuleEndpoint | undefined {
+    if (transport === PortTransport.I2C && addressDraft !== "") return { address: Number(addressDraft) };
+    if (transport === PortTransport.SPI && chipSelectDraft !== "") return { chipSelect: Number(chipSelectDraft) };
+    if (transport === PortTransport.W1 && w1RomParsed) return { w1Rom: w1RomParsed };
+    return undefined;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(20,23,31,.35)]" onClick={onCancel}>
@@ -288,11 +312,36 @@ function InstantiateDialog({ topology, onCancel, onConfirm }: { readonly topolog
           <option value="output-only">output-only</option>
           <option value="input-output">input-output</option>
         </select>
+        {transport === PortTransport.I2C && (
+          <>
+            <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="inst-i2c">
+              Indirizzo I2C (i2c_address)
+            </label>
+            <input id="inst-i2c" type="number" value={addressDraft} onChange={(e) => setAddressDraft(e.target.value)} className="mb-4 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" />
+          </>
+        )}
+        {transport === PortTransport.SPI && (
+          <>
+            <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="inst-spi">
+              Chip-select SPI (spi_cs)
+            </label>
+            <input id="inst-spi" type="number" value={chipSelectDraft} onChange={(e) => setChipSelectDraft(e.target.value)} className="mb-4 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" />
+          </>
+        )}
+        {transport === PortTransport.W1 && (
+          <>
+            <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="inst-w1">
+              ROM 1-Wire (w1_rom)
+            </label>
+            <input id="inst-w1" value={w1RomDraft} placeholder="28FF641F0000003D" onChange={(e) => setW1RomDraft(e.target.value)} className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" style={{ borderColor: w1RomInvalid && w1RomDraft.trim() !== "" ? "var(--color-error)" : undefined }} />
+            <p className="mb-4 mt-1 font-body text-xs text-ink-faint">8 byte hex — binding di questa istanza, non del profilo condiviso.</p>
+          </>
+        )}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onCancel} className="rounded-slsm px-4 py-2 font-body text-sm text-ink-muted hover:bg-surface-raised">
             Annulla
           </button>
-          <button type="button" onClick={() => onConfirm({ portId, bayId, railId, electricalMode })} disabled={portId === -1 || bayId === -1 || railId === -1} className="rounded-slsm bg-brand-blue px-4 py-2 font-body-strong text-sm text-white hover:bg-brand-blue-dark disabled:opacity-50">
+          <button type="button" onClick={() => onConfirm({ portId, bayId, railId, electricalMode, endpoint: endpointOf() })} disabled={!canConfirm} className="rounded-slsm bg-brand-blue px-4 py-2 font-body-strong text-sm text-white hover:bg-brand-blue-dark disabled:opacity-50">
             Instanzia
           </button>
         </div>

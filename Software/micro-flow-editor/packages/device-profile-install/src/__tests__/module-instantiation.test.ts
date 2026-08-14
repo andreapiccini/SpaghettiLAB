@@ -27,6 +27,19 @@ describe("instantiateModuleFromProfile — S063 point 2", () => {
     });
   });
 
+  it("carries the 8-byte 1-Wire ROM as instance endpoint.w1Rom, not a per-sensor driver", () => {
+    const installed: DeviceProfileSummary = { profileId: "sensor.ds18b20", version: 1, hash: new Uint8Array([1]) };
+    const module = instantiateModuleFromProfile(installed, {
+      portId: 1,
+      bayId: 100,
+      railId: 1000,
+      electricalMode: "input-only",
+      endpoint: { w1Rom: "28ff641f0000003d" },
+    });
+    expect(module.driverTypeId).toBe(DECLARATIVE_DEVICE_DRIVER_TYPE_ID);
+    expect(module.endpoint).toEqual({ w1Rom: "28ff641f0000003d" });
+  });
+
   it("defaults properties to an empty object when omitted", () => {
     const installed: DeviceProfileSummary = { profileId: "sensor.example", version: 1, hash: new Uint8Array() };
     const module = instantiateModuleFromProfile(installed, { portId: 1, bayId: 1, railId: 1, electricalMode: "output-only" });

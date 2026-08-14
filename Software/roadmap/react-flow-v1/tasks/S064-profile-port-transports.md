@@ -1,6 +1,6 @@
 # S064 — Device Profile: famiglie Port complete (1-Wire, UART_READ, SPI mode, WAIT_GPIO)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** S063, firmware [393](../../../../Firmware/core/roadmap/393-device-profile-port-transports/README.md)
 
 ## Obiettivo
@@ -8,7 +8,8 @@
 Lo Studio e l'authoring model dichiarano già `PortTransport.W1` / `PortCapability.W1`
 (`transport.ts`, da `port.h`). Firmware [393](../../../../Firmware/core/roadmap/393-device-profile-port-transports/README.md)
 ha aggiunto opcode 23–25 e `SPI_TRANSCEIVE.imm3`. L'authoring model e il selettore
-step dello Studio sono allineati; resta il campo Config Inspector `w1_rom`.
+step dello Studio sono allineati. Il campo Config Inspector `w1_rom` è sul Module
+`declarative-device` (8 byte hex, binding di istanza).
 
 ## Implementazione richiesta
 
@@ -41,5 +42,5 @@ step dello Studio sono allineati; resta il campo Config Inspector `w1_rom`.
 
 - [x] Opcode e binding 1-Wire nel modello authoring.
 - [x] `UART_READ`, `WAIT_GPIO`, SPI mode 0..3 nel modello e nello Studio (categorie step).
-- [ ] Studio: campo Config Inspector `w1_rom` (8 byte hex) su `declarative-device`.
+- [x] Studio: campo Config Inspector `w1_rom` (8 byte hex) su `declarative-device`.
 - [x] Matrice Port documentata; niente famiglie fuori da Port.

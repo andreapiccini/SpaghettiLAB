@@ -1,6 +1,7 @@
 import type { CatalogIndex, ProfileIndex, TopologyIndex } from "@spaghettilab/catalog-model";
+import { DECLARATIVE_DEVICE_DRIVER_TYPE_ID } from "@spaghettilab/device-profile-install";
 import type { DomainError, GraphNode } from "@spaghettilab/domain";
-import { PowerAdmission, RailAssurance, requiresPowerAcknowledgement, validateComposition, type ElectricalMode, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
+import { PowerAdmission, RailAssurance, parseW1RomHex, requiresPowerAcknowledgement, validateComposition, type ElectricalMode, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
@@ -56,6 +57,7 @@ export function NodeInspector({
 }) {
   const [comment, setComment] = useState(mode.kind === "edit" ? mode.comment : (mode.prefillComment ?? ""));
   const [data, setData] = useState<PhysicalCompositionNodeData>(mode.kind === "edit" ? mode.data : ({ ...defaultDataFor(mode.nodeKind), ...mode.prefillData } as PhysicalCompositionNodeData));
+  const [w1RomDraft, setW1RomDraft] = useState(() => (mode.kind === "edit" && mode.data.kind === "module" ? (mode.data.endpoint?.w1Rom ?? "") : ""));
   const nodeId = mode.kind === "edit" ? mode.nodeId : "__draft__";
   const config = NODE_KIND_CONFIG[data.kind];
 
@@ -68,7 +70,10 @@ export function NodeInspector({
   }, [data, topology, existingNodes, nodeId, acknowledgedModuleNodeIds]);
 
   const collisionErrors = errors.filter((e) => e.code === "physical-composition.endpoint_collision" || e.code === "physical-composition.module_key_conflict");
-  const canSave = data.kind !== "module" || errors.length === 0;
+  const w1RomParsed = w1RomDraft.trim() === "" ? undefined : parseW1RomHex(w1RomDraft);
+  const w1RomInvalid = w1RomDraft.trim() !== "" && w1RomParsed === undefined;
+  const canSave = (data.kind !== "module" || errors.length === 0) && !w1RomInvalid;
+  const showW1Rom = data.kind === "module" && (data.driverTypeId === DECLARATIVE_DEVICE_DRIVER_TYPE_ID || Boolean(data.endpoint?.w1Rom) || w1RomDraft !== "");
 
   const selectedFlow = data.kind === "module" ? topology?.flows.find((f) => f.portId === data.portId) : undefined;
   const selectedBay = selectedFlow?.bays.find((b) => b.bayId === (data as { bayId?: number }).bayId);
@@ -213,15 +218,61 @@ export function NodeInspector({
                 <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-addr">
                   Indirizzo (I2C)
                 </label>
-                <input id="ni-addr" type="number" value={data.endpoint?.address ?? ""} onChange={(e) => patchModule({ endpoint: { ...data.endpoint, address: e.target.value === "" ? undefined : Number(e.target.value), chipSelect: undefined } })} className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" style={{ borderColor: collisionErrors.length > 0 ? "var(--color-error)" : undefined }} />
+                <input
+                  id="ni-addr"
+                  type="number"
+                  value={data.endpoint?.address ?? ""}
+                  onChange={(e) => {
+                    setW1RomDraft("");
+                    patchModule({ endpoint: { address: e.target.value === "" ? undefined : Number(e.target.value) } });
+                  }}
+                  className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none"
+                  style={{ borderColor: collisionErrors.length > 0 ? "var(--color-error)" : undefined }}
+                />
               </div>
               <div className="flex-1">
                 <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-cs">
                   Chip-select (SPI)
                 </label>
-                <input id="ni-cs" type="number" value={data.endpoint?.chipSelect ?? ""} onChange={(e) => patchModule({ endpoint: { ...data.endpoint, chipSelect: e.target.value === "" ? undefined : Number(e.target.value), address: undefined } })} className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none" />
+                <input
+                  id="ni-cs"
+                  type="number"
+                  value={data.endpoint?.chipSelect ?? ""}
+                  onChange={(e) => {
+                    setW1RomDraft("");
+                    patchModule({ endpoint: { chipSelect: e.target.value === "" ? undefined : Number(e.target.value) } });
+                  }}
+                  className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none"
+                />
               </div>
             </div>
+
+            {showW1Rom && (
+              <div className="mb-4">
+                <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-w1rom">
+                  ROM 1-Wire (w1_rom)
+                </label>
+                <input
+                  id="ni-w1rom"
+                  value={w1RomDraft}
+                  placeholder="28FF641F0000003D"
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setW1RomDraft(next);
+                    if (next.trim() === "") {
+                      patchModule({ endpoint: { ...data.endpoint, w1Rom: undefined } });
+                      return;
+                    }
+                    const canonical = parseW1RomHex(next);
+                    if (canonical) patchModule({ endpoint: { w1Rom: canonical } });
+                  }}
+                  className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none"
+                  style={{ borderColor: w1RomInvalid || collisionErrors.length > 0 ? "var(--color-error)" : undefined }}
+                />
+                <p className="mt-1 font-body text-xs text-ink-faint">8 byte hex, spazi o due punti ammessi — binding di istanza, non del profilo.</p>
+                {w1RomInvalid && <p className="mt-1 font-body text-xs text-error">Servono esattamente 8 byte (16 cifre hex).</p>}
+              </div>
+            )}
 
             <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-mode">
               Modalità elettrica

@@ -1,10 +1,10 @@
 import type { TopologyIndex } from "@spaghettilab/catalog-model";
 import { domainError, err, ok, type DomainError, type GraphNode, type Result } from "@spaghettilab/domain";
-import { isModuleNodeData, type ModuleNodeData, type PhysicalCompositionNodeData } from "./entities.js";
+import { isModuleNodeData, type ModuleEndpoint, type ModuleNodeData, type PhysicalCompositionNodeData } from "./entities.js";
 import { PhysicalCompositionErrorCode } from "./errors.js";
 import { requiresPowerAcknowledgement } from "./power.js";
 
-export type ModuleTransport = "i2c" | "spi";
+export type ModuleTransport = "i2c" | "spi" | "w1";
 
 /**
  * `@spaghettilab/catalog-model`'s `ModuleDriverEntry` (the generic Module
@@ -27,6 +27,13 @@ function moduleNodes(
   nodes: readonly GraphNode<"physical-composition", string, PhysicalCompositionNodeData>[],
 ): ModuleNode[] {
   return nodes.filter((n): n is ModuleNode => isModuleNodeData(n.data));
+}
+
+function endpointIdentity(endpoint: ModuleEndpoint | undefined): string | undefined {
+  if (endpoint?.address !== undefined) return `i2c:${endpoint.address}`;
+  if (endpoint?.chipSelect !== undefined) return `spi:${endpoint.chipSelect}`;
+  if (endpoint?.w1Rom !== undefined) return `w1:${endpoint.w1Rom}`;
+  return undefined;
 }
 
 function failure(code: string, node: ModuleNode, remediation: string): DomainError {
@@ -83,6 +90,8 @@ export function validateComposition(
       errors.push(failure(PhysicalCompositionErrorCode.TRANSPORT_MISMATCH, node, `driver "${m.driverTypeId}" is classified as I2C and requires an address`));
     } else if (transport === "spi" && m.endpoint?.chipSelect === undefined) {
       errors.push(failure(PhysicalCompositionErrorCode.TRANSPORT_MISMATCH, node, `driver "${m.driverTypeId}" is classified as SPI and requires a chip-select`));
+    } else if (transport === "w1" && m.endpoint?.w1Rom === undefined) {
+      errors.push(failure(PhysicalCompositionErrorCode.TRANSPORT_MISMATCH, node, `driver "${m.driverTypeId}" is classified as 1-Wire and requires an 8-byte ROM (w1_rom)`));
     }
 
     if (requiresPowerAcknowledgement(rail.assurance) && !acknowledged.has(node.id)) {
@@ -102,11 +111,11 @@ export function validateComposition(
   return errors.length > 0 ? err(errors) : ok(undefined);
 }
 
-/** Two Modules sharing an endpoint identity (I2C address / SPI chip-select) on the same Port collide; distinct addresses on the same Port are explicitly valid (S050 § Verifiche). A Module with neither `address` nor `chipSelect` set has no endpoint identity to collide on and is skipped here — that gap is `TRANSPORT_MISMATCH`'s job, not this one's. */
+/** Two Modules sharing an endpoint identity (I2C address / SPI chip-select / 1-Wire ROM) on the same Port collide; distinct identities on the same Port are explicitly valid (S050 § Verifiche). A Module with no identity set is skipped here — that gap is `TRANSPORT_MISMATCH`'s job, not this one's. */
 function findEndpointCollisions(modules: readonly ModuleNode[]): DomainError[] {
   const byPortAndKey = new Map<string, ModuleNode[]>();
   for (const node of modules) {
-    const key = node.data.endpoint?.address ?? node.data.endpoint?.chipSelect;
+    const key = endpointIdentity(node.data.endpoint);
     if (key === undefined) continue;
     const groupKey = `${node.data.portId}:${key}`;
     const group = byPortAndKey.get(groupKey) ?? [];

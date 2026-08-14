@@ -3,7 +3,7 @@ import { PortTransport } from "@spaghettilab/device-profile-authoring-model";
 import { describe, expect, it } from "vitest";
 import { MAX_PACKAGE_IMPORT_BYTES, exportProfilePackage, exportProfilePackageJson, importProfilePackageJson } from "../package.js";
 
-function draft(): DeviceProfileDraft {
+function draft(overrides: Partial<DeviceProfileDraft> = {}): DeviceProfileDraft {
   return {
     profileId: "sensor.example",
     version: 1,
@@ -22,6 +22,7 @@ function draft(): DeviceProfileDraft {
     sampleSchemaId: "sensor.example.sample",
     sampleSchemaVersion: 1,
     sampleFields: [{ fieldId: 1, type: "uint64", name: "value" }],
+    ...overrides,
   };
 }
 
@@ -30,6 +31,22 @@ describe("exportProfilePackage — S062 point 2", () => {
     const pkg = exportProfilePackage(draft(), "andrea");
     // I2C_WRITE=1, I2C_READ=2, EMIT_FIELD=21, EMIT_RECORD=22
     expect(pkg.opcodeDependencies).toEqual([1, 2, 21, 22]);
+  });
+
+  it("includes opcode 23 for a 1-Wire draft with W1_WRITE_READ", () => {
+    const pkg = exportProfilePackage(
+      draft({
+        transport: PortTransport.W1,
+        initOps: [],
+        sampleOps: [
+          { op: "W1_WRITE_READ", src: 0, dst: 1, readLength: 2, writeLength: 1, timeoutMs: 20 },
+          { op: "EMIT_FIELD", src: 1, fieldId: 1 },
+          { op: "EMIT_RECORD" },
+        ],
+      }),
+      "andrea",
+    );
+    expect(pkg.opcodeDependencies).toEqual([21, 22, 23]);
   });
 
   it("a profile exported and reimported produces the same hash", () => {

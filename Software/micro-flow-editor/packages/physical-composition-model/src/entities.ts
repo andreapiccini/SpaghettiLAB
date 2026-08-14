@@ -60,10 +60,17 @@ export type ExternalDeviceNodeData = {
 /** Whether a Module only reads, only writes, or does both — a real composition can be any of the three (S050 point 6). */
 export type ElectricalMode = "input-only" | "output-only" | "input-output";
 
-/** `address` (e.g. I2C) and `chipSelect` (e.g. SPI) are mutually exclusive in practice but both optional here — see `power.ts`'s note on transport not existing on the wire; nothing forces a driver to declare either. */
+/**
+ * Instance bus binding — mutually exclusive in practice, all optional here.
+ * `address` is I2C (`i2c_address`), `chipSelect` is SPI (`spi_cs`), `w1Rom` is
+ * the 8-byte 1-Wire ROM (`w1_rom`) as 16 lowercase hex chars (see `parseW1RomHex`).
+ * Transport is not on the generic Module Driver wire — see `validate-composition.ts`.
+ */
 export type ModuleEndpoint = {
   readonly address?: number;
   readonly chipSelect?: number;
+  /** Canonical 16-char lowercase hex (`SPAGHETTI_ENDPOINT_VALUE_MAX` = 8). */
+  readonly w1Rom?: string;
 };
 
 /**
