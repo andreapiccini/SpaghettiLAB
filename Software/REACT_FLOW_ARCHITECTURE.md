@@ -55,14 +55,20 @@ nativo non è il flusso di lavoro. Token e URL restano nello store host, mai in
 
 ### Physical Composition Graph
 
-Descrive ciò che è fisicamente collegato a un Core:
+Descrive ciò che è fisicamente collegato a un Core. La Backbone è la catena di Bay
+universali, non un PCB con slot predefiniti:
 
 ```text
-Backbone → Power → Connector/Bay IN → Core → Bay OUT/Connector
+[Bay] — [Bay] — [Bay]     ← Backbone
+   │        │        │
+ Module   Core    Module     (funzione = Module, non tipo di Bay)
 ```
 
-Contiene Core, Flow, Function Bay, rail, Module, Connector, sensore/attuatore esterno,
-indirizzo e label. Deve rispettare la topologia e le capability dichiarate dal Core.
+Contiene Core, Flow, Bay, rail/Power Lane, Module, Connector, sensore/attuatore
+esterno, indirizzo e label. Deve rispettare la topologia e le capability dichiarate
+dal Core. Input/output restano riferiti al Core: i lati FRONT/REAR di una Bay non
+sono IN/OUT permanenti. Hardware:
+[`Hardware/HARDWARE_SYSTEM_ARCHITECTURE.md`](../Hardware/HARDWARE_SYSTEM_ARCHITECTURE.md).
 
 ### Device Processing Graph
 
