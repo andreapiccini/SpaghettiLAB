@@ -24,8 +24,8 @@ già verificate.
 ## Idea generale
 
 SpaghettiLAB è un sistema componibile nel quale una **Backbone** collega fisicamente
-un **Core**, uno o più **Interface Module**, i relativi **Connector** e il sottosistema
-di alimentazione.
+uno o più **Core**, gli **Interface Module** di campo, gli eventuali **Link Module**
+verso host e rete, i relativi **Connector** e il sottosistema di alimentazione.
 
 Il sistema non richiede un modulo hardware diverso per ogni sensore commerciale. Un
 sensore o attuatore esterno viene collegato attraverso:
@@ -67,7 +67,7 @@ La base fisica passiva sulla quale vengono inseriti gli altri elementi. La Backb
 - realizza i collegamenti fra Core e Bay;
 - distribuisce massa e le alimentazioni disponibili;
 - rende la composizione compatta e sostituibile senza cablaggi interni fra ogni modulo;
-- espone le posizioni previste per Core, Function Bay e Power Bay.
+- espone le posizioni previste per Core Bay, Function Bay, Link Bay e Power Bay.
 
 La prima famiglia prevista è una **Compact Backbone**, destinata sia a piccoli nodi
 autonomi sia a composizioni più estese.
@@ -82,13 +82,25 @@ Il Core è l'elemento di calcolo e comunicazione del sistema. Termina i Flow fun
 configura e utilizza le interfacce disponibili e comunica con il software esterno.
 
 Il Core non deve contenere fisicamente ogni possibile interfaccia per sensori e
-attuatori. Queste funzioni appartengono agli Interface Module montati nelle Bay.
+attuatori. Queste funzioni appartengono agli Interface Module montati nelle Function
+Bay. Radio e USB sul modulo Core restano valide: Wi‑Fi e/o Bluetooth sul micro **non
+vengono rimossi** da questa estensione. Un Link Module nella Link Bay è un'interfaccia
+**in più**, non un sostituto. Togliere radio da un micro con poca RAM è una decisione
+futura di variante Core, non un requisito di questa architettura.
 
 Un Core può avere almeno:
 
 - un Flow orientato dal campo verso il Core;
 - un Flow orientato dal Core verso il campo;
-- il collegamento al sottosistema Power della Backbone.
+- il collegamento al sottosistema Power della Backbone;
+- se avanzano sul micro, tre GPIO spare sul **Link bus** (non richiesti dal bare
+  minimum).
+
+L'ESP32-C3 è la board **bare minimum**: benchmark di RAM, flash, radio e pin per il
+nodo più piccolo. Port di campo, USB Serial/JTAG e pin di strapping/flash restano
+quelli del minimo. I tre `LINK` si prendono solo da ciò che su quel micro **avanza**.
+Una variante più ricca può esporre gli stessi tre ruoli su GPIO diversi; non può
+pretendere pin che sul C3 minimo sono già occupati.
 
 Varianti future del Core possono esporre un numero diverso di Flow, senza cambiare il
 significato dei termini.
@@ -143,25 +155,32 @@ La Bay più vicina al campo è distinta da quella più vicina al Core attraverso
 posizione nel Flow. L'ordine deve rimanere identificabile anche se la direzione
 elettrica del Flow cambia.
 
-Esistono due ruoli principali:
+Esistono quattro ruoli principali:
 
-- **Function Bay**, per un Interface Module;
+- **Core Bay**, posizione in cui si inserisce un Core;
+- **Function Bay**, per un Interface Module verso il campo;
+- **Link Bay**, per un Link Module verso host, manutenzione o rete;
 - **Power Bay**, per un Power Module appartenente al Power Flow.
 
 La stessa forma meccanica può essere riutilizzata dove compatibile, ma questo non rende
-automaticamente intercambiabili Function Module e Power Module.
+automaticamente intercambiabili Core, Interface Module, Link Module e Power Module. Una
+Backbone può avere più Core Bay: i Core sulla stessa Backbone si vedono attraverso il
+Link bus, non attraverso i Function Flow.
 
 ### Module
 
 Module è il termine generale per un elemento funzionale sostituibile inserito in una
 Bay. In questa architettura le categorie fisiche principali sono:
 
-- **Interface Module**, inserito in una Function Bay;
+- **Interface Module**, inserito in una Function Bay (campo: I2C, UART, GPIO, …);
+- **Link Module**, inserito in una Link Bay (host/rete: USB‑C, RS‑232, Ethernet,
+  Wi‑Fi, Bluetooth, …);
 - **Power Module**, inserito in una Power Bay.
 
-Il Core è un elemento sostituibile della composizione ma mantiene il nome Core, perché
-ha il ruolo specifico di elaborazione e terminazione dei Flow. Connector ed External
-Device non vengono chiamati Module.
+Il Core è un elemento sostituibile inserito in una Core Bay ma mantiene il nome Core,
+perché ha il ruolo specifico di elaborazione e terminazione dei Flow. Connector ed
+External Device non vengono chiamati Module. Un Link Module non è un Interface Module:
+il primo parla con host o con altri Core, il secondo con il campo.
 
 ### Bay Interconnect
 
@@ -250,8 +269,8 @@ Interface Module IN
       │
  Function Bay / Input Flow
       │
-     Core
-      │
+ Core Bay / Core ←──── Link bus (LINK1..3) ────→ Link Bay / Link Module
+      │                                            (USB-C, RS-232, ETH, Wi-Fi, BLE)
  Function Bay / Output Flow
       │
 Interface Module OUT
@@ -260,12 +279,13 @@ Interface Module OUT
       │
 External Device
 
-Power Input → Power Bay(s) → rail distribuite alle Function Bay
+Power Input → Power Bay(s) → rail distribuite alle Function Bay e alle Link Bay
 ```
 
 La rappresentazione mostra le responsabilità, non la disposizione geometrica
 definitiva. Il Power Flow può essere collocato sulla stessa Backbone compatta senza
-essere elettricamente confuso con Input Flow e Output Flow.
+essere elettricamente confuso con Input Flow, Output Flow o Link bus. Una Backbone
+può avere più Core Bay; il Link bus le collega fra loro e alle Link Bay.
 
 ## Composizioni minime previste
 
@@ -300,10 +320,13 @@ funzioni siano correlate localmente: possono essere configurate separatamente.
 
 ### Sistema distribuito
 
-Backbone diverse costituiscono nodi autonomi. Per esempio, una composizione può
-acquisire una temperatura e un'altra pilotare un display. I due Core comunicano
-attraverso il livello software; non è necessario un collegamento fisico diretto fra le
-due Backbone.
+Backbone diverse costituiscono nodi autonomi. I Core su Backbone **diverse** comunicano
+attraverso il livello software (BLE, Wi‑Fi, MQTT, Node‑RED); non è obbligatorio un
+cavo fra due Backbone.
+
+Più Core sulla **stessa** Backbone comunicano sul Link bus. React Flow assegna master,
+slave e protocollo quando rileva o quando l'utente inserisce un secondo Core. Non è un
+ruolo saldato sul PCB.
 
 ## Contratto logico del Bay Interconnect
 
@@ -375,6 +398,107 @@ Una modifica deve produrre una nuova revisione dichiarata del contratto meccanic
 elettrico. Non deve rendere apparentemente compatibili moduli che in realtà usano
 pinout diversi.
 
+## Link bus, Core Bay e Link Bay
+
+Estensione della Backbone, non un cambio del firmware Core V1. I radio sul micro
+restano. Il Link bus usa **tre GPIO che sul Core avanzano**, quelli che il sistema
+minimo non sta utilizzando, e li porta in parallelo a tutte le Core Bay e Link Bay
+della stessa Backbone.
+
+### Benchmark: ESP32-C3 bare minimum
+
+Core V1 ESP32-C3 è il riferimento del nodo più piccolo. Su quella board:
+
+- GPIO3 e GPIO4 restano Port 0 (I2C di campo) e, in manutenzione, UART locale — **non
+  sono spare** e **non** vanno sulla Link Bay;
+- USB Serial/JTAG resta sul micro;
+- flash e strapping restano riservati.
+
+I tre pin `LINK1..3` sono gli altri GPIO ancora liberi su quel minimo. Se sul C3 non
+ce ne sono tre usabili, la Link Bay non entra nel sistema minimo: resta un'estensione
+per Backbone/Core che dichiarano gli spare. Varianti più grandi (più SRAM, più GPIO)
+si misurano comunque contro questo pavimento: il minimo deve continuare a stare in
+piedi senza Link Bay.
+
+### Scelta di progetto
+
+Il Link bus **non** è il Maintenance Link della Port 0 e **non** è `CORE1..5` del
+Function Flow. È un terzo gruppo di contatti del connettore Core Bay, alimentato
+dalle stesse power lane delle Function Bay.
+
+Un Link Module USB‑C o RS‑232 può offrire manutenzione cablata **in baia**, usando
+proprio questi spare (UART sui GPIO liberi). È un percorso in più rispetto a USB
+Serial/JTAG e rispetto a GPIO3/GPIO4. Lo stesso bus, quando React Flow rileva un
+secondo Core, diventa il collegamento fra Core.
+
+Questa estensione **non** riassegna GPIO3/GPIO4 nel firmware. Finché una board non
+dichiara tre GPIO spare nel DTS, la Link Bay può esistere in meccanica ma il
+firmware del minimo non la guida.
+
+### Contratto logico (punto di partenza, non pinout di produzione)
+
+Ogni Core Bay e ogni Link Bay vede gli stessi tre segnali più alimentazione presa
+dalle power lane, con lo stesso selettore `VCC` delle Function Bay:
+
+```text
+GND · VCC · LINK1 · LINK2 · LINK3
+```
+
+| Contatto | Ruolo logico | Note |
+|---|---|---|
+| `GND` | massa comune | la stessa del resto della Backbone |
+| `VCC` | rail scelta in baia | identica alle Function Bay; Ethernet/Wi‑Fi devono dichiarare corrente, la UI rifiuta una rail insufficiente |
+| `LINK1` | UART A | TX del Core sul bus spare, non GPIO3 |
+| `LINK2` | UART B | RX del Core sul bus spare, non GPIO4 |
+| `LINK3` | ATTN | open‑drain: presenza modulo, richiesta attenzione, wake. Non è alimentazione |
+
+I tre `LINK` sono un bus parallelo: tutte le Core Bay e le Link Bay di una Backbone
+sono sullo stesso net. Non è una daisy‑chain punto‑punto. All'accensione ogni Core
+tiene `LINK1`/`LINK2` in alta impedenza con pull‑up; nessuno guida il bus finché la
+Config (scelta in React Flow) non assegna un ruolo.
+
+### Chi decide master, slave e protocollo
+
+Il PCB non ha un master. React Flow, quando rileva o quando l'utente inserisce un
+secondo Core sulla stessa Backbone, chiede:
+
+- quale Core è master del Link bus;
+- quale protocollo usare su quel bus;
+- che fare di un eventuale Link Module USB‑C/RS‑232 già inserito (console sul master,
+  oppure rilasciare il bus).
+
+Un solo Core alla volta guida `LINK1`/`LINK2`. Gli altri restano in ascolto. Cambiare
+ruolo è un deploy di Config, non un ponticello.
+
+### Modi d'uso previsti
+
+**Un Core, Link Module USB‑C (blocco consigliato per primo) o RS‑232.** Full‑duplex
+su `LINK1`/`LINK2`, `LINK3` segnala presenza. Manutenzione in baia sui GPIO spare,
+non al posto di GPIO3/GPIO4. USB‑C porta un ponte USB‑UART sul modulo; RS‑232 porta
+il transceiver di livello. Il Core vede UART su pin che il minimo non usava. CC/PD e
+RS‑232 restano sul modulo.
+
+**Due o più Core, senza dongle.** Il master eletto parla con gli slave. Il payload è
+lo stesso Protocol V1 CBOR; sul filo c'è solo un involucro corto (indirizzo di slot,
+lunghezza, CRC). Non si inventa un secondo modello applicativo.
+
+**Link Module Wi‑Fi, Ethernet o Bluetooth.** Coprocessore sullo stesso UART. Non è il
+PHY nativo (RMII, SDIO, USB device) sui tre pin. Il Core pubblica record scegliendo
+l'interfaccia in React Flow: radio sul micro, oppure questo modulo. Le due cose
+possono coesistere.
+
+USB‑C/RS‑232 e un secondo Core sullo stesso bus pieno‑duplex collidono se entrambi
+guidano TX. La UI non consente quella combinazione senza aver eletto un master e
+aver messo il dongle in ascolto sul master.
+
+### Cosa non è
+
+- Non è una Function Bay: niente Connector di campo su questi tre pin.
+- Non sostituisce USB Serial/JTAG sul modulo Core: il recovery cablato sul micro resta.
+- Non toglie Wi‑Fi o Bluetooth dal firmware V1.
+- Non usa `FIELD1..3`, né `CORE1..5`, né GPIO3/GPIO4 (Port 0 / Maintenance Link del minimo).
+- Non è obbligatoria sul bare minimum: il C3 deve funzionare senza Link Bay.
+
 ## Distribuzione Power
 
 Il Power Flow è separato dai Function Flow ma serve l'intera composizione.
@@ -387,7 +511,8 @@ Power Bay 0 / stage 0
 Power Bay 1 / stage 1
     │
     ├── rail A ──┬── selector Function Bay IN
-    │            └── selector Function Bay OUT
+    │            ├── selector Function Bay OUT
+    │            └── selector Link Bay
     │
     └── rail B ── stessi possibili utilizzatori
 ```
@@ -398,7 +523,7 @@ alimentato. Fissa invece questi principi:
 1. i Power Module possono essere concatenati per stadi;
 2. ogni stadio riceve dal Power Flow e può passare un'uscita allo stadio successivo;
 3. le uscite dichiarate come rail vengono distribuite dalla Backbone;
-4. ogni Function Bay sceglie localmente la rail destinata al proprio `VCC`;
+4. ogni Function Bay e ogni Link Bay sceglie localmente la rail destinata al proprio `VCC`;
 5. la disponibilità di una rail non implica automaticamente che tensione e corrente
    siano adatte al modulo inserito;
 6. una futura Backbone controllata può verificare o commutare la selezione, mentre una
@@ -419,6 +544,11 @@ Per collegare un nuovo dispositivo esterno si procede concettualmente così:
 9. il software associa Bay, interfaccia, dispositivo e label;
 10. il Core configura e usa i segnali previsti dalla combinazione compatibile.
 
+Per aggiungere manutenzione cablata o una radio/porta host extra: si inserisce un
+Link Module nella Link Bay, si sceglie la rail, e in React Flow si seleziona
+l'interfaccia di pubblicazione. Per un secondo Core sulla stessa Backbone: si inserisce
+nella Core Bay libera; React Flow chiede master, slave e protocollo sul Link bus.
+
 Per un sensore supportato da un'interfaccia generica non è necessario creare un nuovo
 Interface Module: possono bastare un Connector/adattatore e un profilo software del
 dispositivo.
@@ -431,11 +561,15 @@ I nomi canonici devono essere usati con questo significato:
 |---|---|---|
 | Backbone | Base e distribuzione passiva della composizione | Un sensore o il Core |
 | Core | Calcolo, comunicazione e terminazione dei Flow | L'intera composizione |
+| Core Bay | Posizione Backbone che riceve un Core | Una Function Bay o una radio |
+| Link bus | Tre GPIO **spare** del Core (quelli che il minimo non usa), comuni a Core Bay e Link Bay | GPIO3/GPIO4, Port di campo, `CORE1..5`, USB del micro |
+| Link Bay | Posizione Backbone per un Link Module | Una Function Bay verso il campo |
+| Link Module | USB‑C, RS‑232, Ethernet, Wi‑Fi, Bluetooth o analoghi verso host/rete | Un Interface Module di campo |
 | Flow | Percorso fisico ordinato di segnali o power | Un singolo pin o una schermata software |
 | Bay | Posizione fisica ordinata | Il protocollo o il dispositivo collegato |
 | Module | Elemento funzionale sostituibile inserito in una Bay | Il Core, il Connector o l'External Device |
 | Bay Interconnect | Contatti e accoppiamento fra Backbone e Module | Il connettore del sensore esterno |
-| Interface Module | Adattamento elettrico riusabile | Necessariamente uno specifico sensore |
+| Interface Module | Adattamento elettrico riusabile verso il campo | Un dongle USB o una radio host |
 | Connector | Terminazione/pinout/cavo verso il campo | L'adattamento elettrico completo |
 | External Device | Sensore, attuatore o display esterno | Un modulo SpaghettiLAB obbligatorio |
 | Power Module | Uno stadio del Power Flow | L'intero sistema di alimentazione in ogni caso |
@@ -449,7 +583,9 @@ Per evitare ambiguità:
 - un Module è un elemento inserito nel sistema, mentre l'External Device può essere un
   prodotto di terze parti collegato tramite Connector;
 - il nome commerciale di un sensore non deve diventare il nome dell'Interface Module
-  quando l'interfaccia è riusabile.
+  quando l'interfaccia è riusabile;
+- un Link Module non si chiama Interface Module;
+- master/slave del Link bus è Config, non serigrafia sul PCB.
 
 ## Compatibilità fra elementi
 
@@ -459,6 +595,7 @@ La compatibilità completa richiede contemporaneamente:
 - revisione e pinout dei connettori compatibili;
 - Flow e direzione compatibili;
 - segnali del Core compatibili con l'Interface Module;
+- ruoli Link bus assegnati in Config se c'è più di un Core;
 - rail selezionata compatibile con il modulo e con l'External Device;
 - Connector e pinout esterno corretti;
 - configurazione software coerente.
@@ -482,7 +619,13 @@ Le seguenti scelte devono rimanere aperte fino ai prototipi e alle verifiche:
 - limiti elettrici e meccanismi di protezione;
 - possibilità di rilevare presenza, tipo o orientamento dei moduli;
 - dimensioni della Compact Backbone e numero di Bay delle varianti;
-- meccanismo di fissaggio e gestione ordinata dei cavi esterni.
+- meccanismo di fissaggio e gestione ordinata dei cavi esterni;
+- quale terna GPIO **spare** di ogni variante Core finisce su `LINK1..3` (sul C3:
+  solo pin non usati da Port 0, USB, flash, strapping; il minimo può omettere la
+  terna);
+- baud e involucro esatto del link multi‑Core (il payload resta Protocol V1);
+- primo Link Module da prototipare: USB‑C UART è la scelta di progetto; RS‑232 e
+  Ethernet/Wi‑Fi/BLE sono la stessa baia, PHY diversi.
 
 Queste voci non impediscono di usare l'architettura generale. Impediscono invece di
 trattare il primo pinout o la prima meccanica come uno standard definitivo prima di
