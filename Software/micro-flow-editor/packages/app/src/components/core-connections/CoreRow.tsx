@@ -1,21 +1,46 @@
+import { diffConfigs, isConfigDiffEmpty } from "@spaghettilab/config-deployment";
+import { decodeConfigCbor, dryRunConfig } from "@spaghettilab/config-decompiler";
+import type { GraphState } from "@spaghettilab/domain";
 import { CloudOff, Cpu } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { DEFAULT_ENERGY, DISABLED_MQTT } from "../../lib/default-config-policy.js";
 import { motionTokens } from "../../lib/motion-tokens.js";
 import type { CoreRowState } from "../../state/core-sessions-context.js";
 import { useCoreSessions } from "../../state/core-sessions-context.js";
+import { useSession } from "../../state/session-context.js";
+import { ConfigDiffView } from "../deploy-diff/ConfigDiffView.js";
 import { rowActionLabel, sessionBadgeStyle, syncBadge } from "./session-badge.js";
 
 const TRANSITIONAL = new Set(["CONNECTING", "AUTHENTICATING", "SYNCHRONIZING", "VALIDATING", "APPLYING", "UPDATING", "REBOOTING", "TRIAL"]);
+const EMPTY_PHYSICAL: GraphState<"physical-composition"> = { layer: "physical-composition", nodes: [], edges: [] };
+const EMPTY_PROCESSING: GraphState<"device-processing"> = { layer: "device-processing", nodes: [], edges: [] };
 
-export function CoreRow({ row, onConnect }: { readonly row: CoreRowState; readonly onConnect: () => void }) {
-  const { cancel } = useCoreSessions();
+export function CoreRow({ row, bindingIndex, onConnect }: { readonly row: CoreRowState; readonly bindingIndex: number; readonly onConnect: () => void }) {
+  const { cancel, getSnapshot } = useCoreSessions();
+  const { session } = useSession();
   const [expanded, setExpanded] = useState(false);
   const hasError = row.error !== null && row.sessionState === "DISCONNECTED";
   const badge = sessionBadgeStyle(row.sessionState);
   const action = rowActionLabel(row.sessionState, row.stale, row.syncRelationship, hasError);
   const showStale = row.sessionState === "DISCONNECTED" && row.stale && !hasError;
   const isErrorLike = row.sessionState === "ERROR" || row.sessionState === "CONFLICT" || hasError;
+
+  // Recomputed fresh from the live Config snapshot + current graphs, not `row.syncRelationship`
+  // (which is a point-in-time classification from connect() and goes stale the moment the user
+  // edits the project afterwards) — same reasoning Deploy & Diff's own candidate list documents.
+  const diff = useMemo(() => {
+    if (!expanded || !session) return null;
+    const snapshot = getSnapshot(row.binding.bindingId);
+    if (!snapshot?.config) return null;
+    const liveDecoded = decodeConfigCbor(snapshot.config.configBytes);
+    if (!liveDecoded.ok) return null;
+    const physicalGraph = session.stack.current.physicalGraphs[bindingIndex] ?? EMPTY_PHYSICAL;
+    const processingGraph = session.stack.current.deviceGraphs[bindingIndex] ?? EMPTY_PROCESSING;
+    const dryRun = dryRunConfig({ physicalGraph, processingGraph, mqtt: DISABLED_MQTT, connectivity: 0, energy: DEFAULT_ENERGY });
+    if (!dryRun.compiled) return null;
+    return diffConfigs(liveDecoded.value, dryRun.compiled);
+  }, [expanded, session, getSnapshot, row.binding.bindingId, bindingIndex]);
 
   function handleAction() {
     if (action === "Connetti" || action === "Riconnetti") {
@@ -99,7 +124,17 @@ export function CoreRow({ row, onConnect }: { readonly row: CoreRowState; readon
         {expanded && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={motionTokens.duration.base} className="overflow-hidden">
             <div className="mt-3 border-t border-border pt-3 font-body text-sm text-ink-muted">
-              {row.error ? <p className="text-error">{typeof row.error === "string" ? row.error : row.error.remediation}</p> : <p>Relazione: {row.syncRelationship ?? "n/d"} — dettaglio strutturato non ancora disponibile per questo esito (UI-S080/UI-S100 lo estendono).</p>}
+              {row.error ? (
+                <p className="text-error">{typeof row.error === "string" ? row.error : row.error.remediation}</p>
+              ) : diff ? (
+                isConfigDiffEmpty(diff) ? (
+                  <p>Relazione: {row.syncRelationship ?? "n/d"} — il Config live e quello ricompilato dal progetto sono in realtà identici in questo momento (la classificazione di sync risale al connect, il progetto potrebbe essere cambiato da allora).</p>
+                ) : (
+                  <ConfigDiffView diff={diff} />
+                )
+              ) : (
+                <p>Relazione: {row.syncRelationship ?? "n/d"} — nessun Config live disponibile per calcolare il dettaglio.</p>
+              )}
             </div>
           </motion.div>
         )}

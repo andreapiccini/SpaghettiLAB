@@ -145,6 +145,14 @@ export class CoreSession {
           // happens inside sync() on the next read, not here (S030 point 7:
           // "reconnect e reboot invalidano soltanto stato effimero necessario").
           this._state = "SYNCHRONIZING";
+          // Re-read immediately — without this, a reboot detected while READY
+          // left the session parked at SYNCHRONIZING forever: nothing else in
+          // this class (or any caller) ever moved it forward again. sync()
+          // itself sets READY on success or ERROR on failure, either of which
+          // is a real terminal state a caller can act on; the rejection is
+          // caught here only because this loop has no caller to propagate it
+          // to — sync() has already recorded the failure in `_state`.
+          void this.sync().catch(() => {});
         }
       }
     } catch {
@@ -164,6 +172,17 @@ export class CoreSession {
     // continuity with the architecture's own state diagram.
     this._state = "AUTHENTICATING";
     this._state = "SYNCHRONIZING";
+    await this.sync();
+  }
+
+  /**
+   * The actual read sequence — shared by `connect()`'s first sync and by
+   * `consumeEvents()`'s automatic re-sync after a mid-session reboot. Always
+   * leaves `_state` at a real terminal value (READY or ERROR), never stuck
+   * at SYNCHRONIZING, since nothing else in this class moves it off that
+   * state on its own.
+   */
+  private async sync(): Promise<void> {
     try {
       const [status, capabilities, features] = await Promise.all([
         this.client.getStatus(),

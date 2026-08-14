@@ -42,10 +42,11 @@ export function CoreConnectionsScreen() {
       ) : (
         <div className="flex-1 overflow-auto p-6">
           <div className="flex flex-col gap-3">
-            {rows.map((row) => (
+            {rows.map((row, bindingIndex) => (
               <CoreRow
                 key={row.binding.bindingId}
                 row={row}
+                bindingIndex={bindingIndex}
                 onConnect={() =>
                   void reconnectCoreBinding(row.binding, connect).catch((cause: unknown) => {
                     fail(row.binding.bindingId, cause instanceof Error ? cause.message : String(cause));

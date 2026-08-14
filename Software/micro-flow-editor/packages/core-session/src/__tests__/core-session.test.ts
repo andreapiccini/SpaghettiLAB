@@ -258,6 +258,22 @@ describe("CoreSession — reboot mid-READY", () => {
 
     expect(session.state).toBe("SYNCHRONIZING");
   });
+
+  it("re-syncs on its own back to READY instead of staying parked at SYNCHRONIZING forever", async () => {
+    const { session, responder, transport } = makeSession();
+    await runToCompletion(() => session.connect(), responder);
+    expect(session.state).toBe("READY");
+
+    transport.deliverEvent(fakeStatusEvent(2, 2n, 0, 0, DEVICE_ID));
+    // No caller awaits the background re-sync this triggers — poll it home the
+    // same way runToCompletion() does for an awaited one, just without a promise handle.
+    for (let i = 0; i < 2000 && session.state !== "READY"; i++) {
+      await Promise.resolve();
+      responder.drain();
+    }
+
+    expect(session.state).toBe("READY");
+  });
 });
 
 describe("CoreSession — onRecordEvent()", () => {
