@@ -37,7 +37,7 @@ export function ProcessingNode({ data, selected }: NodeProps & { readonly data: 
         outline: selected ? "2px solid var(--color-brand-blue)" : "1px solid var(--color-border)",
       }}
     >
-      {hasTarget && <Handle type="target" position={Position.Top} id="0" style={HANDLE_STYLE} />}
+      {hasTarget && <Handle type="target" position={Position.Left} id="0" style={HANDLE_STYLE} />}
       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-slsm" style={{ backgroundColor: `color-mix(in srgb, ${config.colorVar} 12%, transparent)` }}>
         <Icon size={14} style={{ color: config.colorVar }} />
       </div>
@@ -45,7 +45,7 @@ export function ProcessingNode({ data, selected }: NodeProps & { readonly data: 
         <div className="truncate font-body text-sm font-semibold text-ink">{data.label}</div>
         <div className="truncate font-body text-xs text-ink-faint">{data.subtitle}</div>
       </div>
-      {hasSource && <Handle type="source" position={Position.Bottom} id="0" style={HANDLE_STYLE} />}
+      {hasSource && <Handle type="source" position={Position.Right} id="0" style={HANDLE_STYLE} />}
     </div>
   );
 }
