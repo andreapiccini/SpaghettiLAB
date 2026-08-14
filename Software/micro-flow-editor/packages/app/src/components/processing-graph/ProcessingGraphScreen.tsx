@@ -84,6 +84,7 @@ function ProcessingGraphScreenInner() {
 
   const domainRfNodes = useMemo(() => toProcessingNodes(graphState, authoringMetadata, new Set(errorsByNode.keys()), moduleLabel), [graphState, authoringMetadata, errorsByNode, moduleLabel]);
   const edges = useMemo(() => toReactFlowEdges(graphState), [graphState]);
+  const processingNodeLabel = useCallback((id: string) => domainRfNodes.find((n) => n.id === id)?.data.label ?? id, [domainRfNodes]);
 
   // Purely derived from positions + edges already on the canvas — never part of
   // the domain graph or authoringMetadata, so these never generate a command.
@@ -347,6 +348,8 @@ function ProcessingGraphScreenInner() {
               mode={inspector}
               moduleOptions={moduleOptions}
               existingNodes={domainNodes}
+              existingEdges={graphState.edges}
+              nodeLabel={processingNodeLabel}
               knownModuleNodeIds={knownModuleNodeIds}
               onSave={handleSave}
               onDelete={inspector.kind === "edit" ? handleDelete : undefined}
