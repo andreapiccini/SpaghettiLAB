@@ -20,6 +20,7 @@ import { PROCESSING_NODE_TYPES } from "./ProcessingNode.js";
 import { toProcessingNodes, type ProcessingNodeUiData } from "./to-nodes.js";
 import { TRIGGER_GROUP_NODE_TYPES, type TriggerGroupNodeData } from "./TriggerGroupNode.js";
 import { computeTriggerGroups } from "./trigger-groups.js";
+import { PROCESSING_EDGE_TYPES } from "./DeletableEdge.js";
 
 const NODE_TYPES = { ...PROCESSING_NODE_TYPES, ...TRIGGER_GROUP_NODE_TYPES };
 
@@ -83,7 +84,7 @@ function ProcessingGraphScreenInner() {
   const warningCount = dryRun?.issues.filter((i) => i.severity === "warning").length ?? 0;
 
   const domainRfNodes = useMemo(() => toProcessingNodes(graphState, authoringMetadata, new Set(errorsByNode.keys()), moduleLabel), [graphState, authoringMetadata, errorsByNode, moduleLabel]);
-  const edges = useMemo(() => toReactFlowEdges(graphState), [graphState]);
+  const edges = useMemo(() => toReactFlowEdges(graphState).map((edge) => ({ ...edge, type: "deletable" })), [graphState]);
   const processingNodeLabel = useCallback((id: string) => domainRfNodes.find((n) => n.id === id)?.data.label ?? id, [domainRfNodes]);
 
   // Purely derived from positions + edges already on the canvas — never part of
@@ -304,6 +305,7 @@ function ProcessingGraphScreenInner() {
               // same trigger id) is its on-canvas representation now, not a separate node next
               // to it. Filtered only from the render; localNodes/the domain graph still has it.
               nodes={[...groupNodes, ...localNodes.filter((n) => !groupedTriggerIds.has(n.id))] as unknown as Node<ProcessingNodeUiData>[]}
+              edgeTypes={PROCESSING_EDGE_TYPES}
               edges={localEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
@@ -311,7 +313,7 @@ function ProcessingGraphScreenInner() {
               onNodeClick={onNodeClick}
               onInit={setRf}
               deleteKeyCode={["Backspace", "Delete"]}
-              defaultEdgeOptions={{ interactionWidth: 24, style: { stroke: "var(--color-ink-faint)", strokeWidth: 1.5 } }}
+              defaultEdgeOptions={{ type: "deletable", interactionWidth: 24, style: { stroke: "var(--color-ink-faint)", strokeWidth: 1.5 } }}
               fitView
             >
               <Background gap={20} color="#E1E4EB" />
