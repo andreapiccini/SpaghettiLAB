@@ -244,28 +244,33 @@ function ProcessingGraphScreenInner() {
       let position = container ? { x: change.position.x + container.x, y: change.position.y + container.y } : change.position;
 
       if (isContainer) {
-        // Dragging the trigger must move every member with it, unchanged
-        // relative to the trigger — event-containers.ts sizes the box purely
-        // from that relative offset, so shifting the trigger without shifting
-        // its members the same amount would resize the box instead of just
-        // moving it. Sizing only ever reacts to a member being added or moved
-        // on its own (the branch below, gated on `!isContainer`).
+        // React Flow reports the dashed-box origin, not the trigger's stored
+        // position (padding + header up/left of the inner node). Writing the
+        // box into localNodes and leaving members unmoved grows width/height
+        // instead of translating. Convert, apply the same delta to members,
+        // and on drop commit members even when this frame's delta is 0.
         const info = containerByTriggerId.get(change.id);
+        const triggerPosition = {
+          x: change.position.x + NODE_PADDING,
+          y: change.position.y + NODE_PADDING + EVENT_CONTAINER_HEADER_HEIGHT,
+        };
         const oldPos = livePositions.get(change.id);
-        if (info && oldPos && (position.x !== oldPos.x || position.y !== oldPos.y)) {
-          const delta = { x: position.x - oldPos.x, y: position.y - oldPos.y };
+        if (info && oldPos) {
+          const delta = { x: triggerPosition.x - oldPos.x, y: triggerPosition.y - oldPos.y };
+          const moved = delta.x !== 0 || delta.y !== 0;
           for (const memberId of info.memberIds) {
             const memberPos = livePositions.get(memberId);
             if (!memberPos) continue;
+            if (!moved && change.dragging !== false) continue;
             carriedChanges.push({
               id: memberId,
               type: "position",
-              position: { x: memberPos.x + delta.x, y: memberPos.y + delta.y },
+              position: moved ? { x: memberPos.x + delta.x, y: memberPos.y + delta.y } : memberPos,
               dragging: change.dragging,
             });
           }
         }
-        return { ...change, position };
+        return { ...change, position: triggerPosition };
       }
 
       // Only resolve collisions/attachment once a drag settles (dragging === false)
