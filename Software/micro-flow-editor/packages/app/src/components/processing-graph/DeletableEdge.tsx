@@ -1,4 +1,4 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, type EdgeProps } from "@xyflow/react";
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useReactFlow, type EdgeProps } from "@xyflow/react";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -7,6 +7,11 @@ import { useState } from "react";
  * control at the midpoint. Click deletes via React Flow's `deleteElements`,
  * which goes through `onEdgesChange` → `removeGraphEdgeCommand`. Keyboard
  * Backspace/Delete still work on a selected edge (`deleteKeyCode` on the pane).
+ *
+ * Routed with `getSmoothStepPath` rather than a bezier: every segment is
+ * strictly horizontal or vertical, joined only where one meets the other, and
+ * only that join is ever curved (a rounded corner) — never a free diagonal or
+ * an S-curve.
  */
 export function DeletableEdge({
   id,
@@ -22,13 +27,14 @@ export function DeletableEdge({
 }: EdgeProps) {
   const [hovered, setHovered] = useState(false);
   const { deleteElements } = useReactFlow();
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     targetX,
     targetY,
     sourcePosition,
     targetPosition,
+    borderRadius: 10,
   });
   const showDelete = hovered || selected;
 

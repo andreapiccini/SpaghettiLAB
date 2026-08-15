@@ -5,7 +5,7 @@ import type { CoreBindingId, CoreBindingRecord, GraphNode, GraphState } from "@s
 import { isModuleNodeData, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
 import { findCatalogEntryById, shippedTypeIds, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
 import { addGraphEdgeCommand, addGraphNodeCommand, deviceGraphLens, edgeChangesToCommands, nodeChangesToCommands, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
-import { applyEdgeChanges, applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Connection, type EdgeChange, type Node, type NodeChange, type ReactFlowInstance } from "@xyflow/react";
+import { applyEdgeChanges, applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Connection, type Edge, type EdgeChange, type Node, type NodeChange, type ReactFlowInstance } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { CircleAlert, PlayCircle, Workflow } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
@@ -13,16 +13,28 @@ import { useSession } from "../../state/session-context.js";
 import { DEFAULT_ENERGY, DISABLED_MQTT } from "../../lib/default-config-policy.js";
 import { CoreSelector } from "../catalog-topology/CoreSelector.js";
 import { PROCESSING_BLOCK_MIME, nextSpawnPosition, nodeDataFromCatalogEntry, snapToGrid } from "./catalog-to-node.js";
+import { PROCESSING_EDGE_TYPES } from "./DeletableEdge.js";
 import { NodeInspector, type ProcessingInspectorMode } from "./NodeInspector.js";
+import { EVENT_CONTAINER_NODE_TYPES, type EventContainerNodeData } from "./EventContainerNode.js";
+import { computeEventContainers, type EventContainer } from "./event-containers.js";
+import { NODE_PADDING, EVENT_CONTAINER_HEADER_HEIGHT } from "./layout-constants.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
+import { containerAtPosition, resolveSiblingOverlap } from "./node-overlap.js";
 import { ProcessingBlockPalette } from "./ProcessingBlockPalette.js";
 import { PROCESSING_NODE_TYPES } from "./ProcessingNode.js";
 import { toProcessingNodes, type ProcessingNodeUiData } from "./to-nodes.js";
-import { TRIGGER_GROUP_NODE_TYPES, type TriggerGroupNodeData } from "./TriggerGroupNode.js";
-import { computeTriggerGroups } from "./trigger-groups.js";
-import { PROCESSING_EDGE_TYPES } from "./DeletableEdge.js";
 
-const NODE_TYPES = { ...PROCESSING_NODE_TYPES, ...TRIGGER_GROUP_NODE_TYPES };
+/** The member with no outgoing edge to another member — where a chained-in block attaches next. Zero members means the trigger itself is the attachment point. */
+function chainTailId(container: EventContainer, edges: GraphState<"device-processing">["edges"]): string {
+  const members = new Set(container.memberIds);
+  for (const id of container.memberIds) {
+    const hasDownstreamMember = edges.some((e) => e.source === id && members.has(e.target));
+    if (!hasDownstreamMember) return id;
+  }
+  return container.triggerId;
+}
+
+const NODE_TYPES = { ...PROCESSING_NODE_TYPES, ...EVENT_CONTAINER_NODE_TYPES };
 
 const EMPTY_GRAPH: GraphState<"device-processing"> = { layer: "device-processing", nodes: [], edges: [] };
 const EMPTY_PHYSICAL_GRAPH: GraphState<"physical-composition"> = { layer: "physical-composition", nodes: [], edges: [] };
@@ -57,6 +69,13 @@ function ProcessingGraphScreenInner() {
   const [hashHex, setHashHex] = useState<string | null>(null);
   const [rf, setRf] = useState<ReactFlowInstance<Node<ProcessingNodeUiData>> | null>(null);
   const [dropPreview, setDropPreview] = useState<{ x: number; y: number } | null>(null);
+  const [overlapWarning, setOverlapWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!overlapWarning) return;
+    const timer = setTimeout(() => setOverlapWarning(null), 4000);
+    return () => clearTimeout(timer);
+  }, [overlapWarning]);
 
   const graphState: GraphState<"device-processing"> = (bindingIndex >= 0 ? session?.stack.current.deviceGraphs[bindingIndex] : undefined) ?? EMPTY_GRAPH;
   const physicalGraphState: GraphState<"physical-composition"> = (bindingIndex >= 0 ? session?.stack.current.physicalGraphs[bindingIndex] : undefined) ?? EMPTY_PHYSICAL_GRAPH;
@@ -84,32 +103,11 @@ function ProcessingGraphScreenInner() {
   const warningCount = dryRun?.issues.filter((i) => i.severity === "warning").length ?? 0;
 
   const domainRfNodes = useMemo(() => toProcessingNodes(graphState, authoringMetadata, new Set(errorsByNode.keys()), moduleLabel), [graphState, authoringMetadata, errorsByNode, moduleLabel]);
-  const edges = useMemo(() => toReactFlowEdges(graphState).map((edge) => ({ ...edge, type: "deletable" })), [graphState]);
+  // "deletable" (DeletableEdge.tsx) renders every edge with getSmoothStepPath —
+  // horizontal/vertical segments joined by rounded corners only, never a free
+  // diagonal — plus a hover trash control.
+  const edges = useMemo<Edge[]>(() => toReactFlowEdges(graphState).map((edge) => ({ ...edge, type: "deletable" })), [graphState]);
   const processingNodeLabel = useCallback((id: string) => domainRfNodes.find((n) => n.id === id)?.data.label ?? id, [domainRfNodes]);
-
-  // Purely derived from positions + edges already on the canvas — never part of
-  // the domain graph or authoringMetadata, so these never generate a command.
-  const triggerGroups = useMemo(() => computeTriggerGroups(graphState, authoringMetadata), [graphState, authoringMetadata]);
-  const groupedTriggerIds = useMemo(() => new Set(triggerGroups.map((g) => g.triggerId)), [triggerGroups]);
-  // The group node's own id is the trigger's real domain id (not a "group-" prefix) — it's
-  // the trigger's on-canvas representation now, not a decoration next to it, so onNodeClick's
-  // existing `domainNodes.find(n => n.id === node.id)` lookup already resolves it correctly.
-  const groupNodes = useMemo<Node<TriggerGroupNodeData>[]>(
-    () =>
-      triggerGroups.map((group) => ({
-        id: group.triggerId,
-        type: "trigger-group",
-        position: { x: group.x, y: group.y },
-        style: { width: group.width, height: group.height },
-        draggable: false,
-        selectable: false,
-        connectable: false,
-        focusable: false,
-        zIndex: -1,
-        data: { label: group.label },
-      })),
-    [triggerGroups],
-  );
 
   const [localNodes, setLocalNodes] = useState<Node<ProcessingNodeUiData>[]>(domainRfNodes);
   const [syncedFrom, setSyncedFrom] = useState(domainRfNodes);
@@ -118,16 +116,95 @@ function ProcessingGraphScreenInner() {
     setLocalNodes(domainRfNodes);
   }
 
-  // Same "local mirror" reasoning as `localNodes` above — `edges` is a controlled
-  // prop, so without this a click's transient `selected` change (never written
-  // back into `graphState`) would just be dropped on the next unrelated re-render,
-  // making edges look unselectable.
-  const [localEdges, setLocalEdges] = useState(edges);
+  // Purely derived from positions + edges already on the canvas — never part of
+  // the domain graph or authoringMetadata, so these never generate a command.
+  // livePositions comes from localNodes (updates every drag frame, not just on
+  // drop), so a container grows/shrinks live while the trigger or a member is
+  // still being dragged.
+  const livePositions = useMemo(() => new Map(localNodes.map((n) => [n.id, n.position])), [localNodes]);
+  const eventContainers = useMemo(() => computeEventContainers(graphState, authoringMetadata, livePositions), [graphState, authoringMetadata, livePositions]);
+  const containerByTriggerId = useMemo(() => new Map(eventContainers.map((c) => [c.triggerId, c])), [eventContainers]);
+  const containerByMemberId = useMemo(() => {
+    const map = new Map<string, (typeof eventContainers)[number]>();
+    for (const container of eventContainers) for (const memberId of container.memberIds) map.set(memberId, container);
+    return map;
+  }, [eventContainers]);
+  // The container node's own id is the trigger's real domain id (not a "container-" prefix) —
+  // it's the trigger's on-canvas representation now, not a decoration next to it, so
+  // onNodeClick's existing `domainNodes.find(n => n.id === node.id)` lookup already
+  // resolves it correctly.
+  const containerNodes = useMemo<Node<EventContainerNodeData>[]>(
+    () =>
+      eventContainers.map((container) => {
+        const triggerData = domainNodes.find((n) => n.id === container.triggerId)?.data;
+        return {
+          id: container.triggerId,
+          type: "event-container",
+          position: { x: container.x, y: container.y },
+          // CSS style only, deliberately no top-level width/height props: those
+          // put React Flow in a "controlled dimensions" mode where it reconciles
+          // our declared size against what its own ResizeObserver measures on the
+          // real DOM node, dispatching a "dimensions" change whenever they
+          // disagree — and since this container's size changes every render
+          // (member positions move it), the two would fight forever (an infinite
+          // loop of correction events instead of settling). CSS-only sizing has
+          // no such reconciliation: the box just renders at whatever size the
+          // style says, no measurement contract to disagree about.
+          style: { width: container.width, height: container.height },
+          // Draggable/selectable — this is the trigger's own real node, anchored
+          // at its own stored position (event-containers.ts), so it moves like
+          // any other node and carries its members along (handled manually in
+          // onNodesChange, since React Flow only reports the dragged node itself).
+          draggable: true,
+          selectable: true,
+          connectable: false,
+          focusable: true,
+          zIndex: -1,
+          data: { label: container.label, kind: triggerData?.kind === "schedule" ? "schedule" : "event-source" },
+        };
+      }),
+    [eventContainers, domainNodes],
+  );
+  // Real React Flow children: relative-to-container position + parentId, so
+  // dragging the container (or a sibling member) behaves natively instead of
+  // the old floating-box-behind-independent-nodes hack. Deliberately no
+  // `extent: 'parent'` clamp: that requires React Flow to know the parent's
+  // measured size, which — combined with a container whose size changes every
+  // render — is what caused the dimension-reconciliation infinite loop (see
+  // the container node's own comment above). Containment is instead enforced
+  // by this screen's own onNodesChange/placeFromCatalog logic (the
+  // attachLowerBound clamp, resolveSiblingOverlap), which already needs to run
+  // regardless since a fresh attach has no parentId yet on the frame it lands.
+  // localNodes itself always stays absolute (synced from authoringMetadata via
+  // domainRfNodes) — the relative conversion only happens here, at render
+  // time, never stored.
+  const renderedNodes = useMemo<Node<ProcessingNodeUiData>[]>(() => {
+    const rest = localNodes
+      .filter((n) => !containerByTriggerId.has(n.id))
+      .map((n) => {
+        const container = containerByMemberId.get(n.id);
+        if (!container) return n;
+        return {
+          ...n,
+          parentId: container.triggerId,
+          position: { x: n.position.x - container.x, y: n.position.y - container.y },
+        };
+      });
+    return [...containerNodes, ...rest] as unknown as Node<ProcessingNodeUiData>[];
+  }, [containerNodes, localNodes, containerByTriggerId, containerByMemberId]);
+
+  // Edges from the hidden trigger into its members are membership, shown by
+  // the dashed area — drawing them would point at a node that is not on the canvas.
+  const [localEdges, setLocalEdges] = useState<Edge[]>(edges);
   const [edgesSyncedFrom, setEdgesSyncedFrom] = useState(edges);
   if (edges !== edgesSyncedFrom) {
     setEdgesSyncedFrom(edges);
     setLocalEdges(edges);
   }
+  const visibleEdges = useMemo(
+    () => localEdges.filter((e) => !containerByTriggerId.has(e.source) && !containerByTriggerId.has(e.target)),
+    [localEdges, containerByTriggerId],
+  );
 
   useEffect(() => {
     if (!session || bindingIndex < 0 || !execute) return;
@@ -146,9 +223,93 @@ function ProcessingGraphScreenInner() {
   }, [bindingIndex, session?.stack.current.deviceGraphs.length]);
 
   function onNodesChange(changes: NodeChange<Node<ProcessingNodeUiData>>[]) {
-    setLocalNodes((nds) => applyNodeChanges(changes, nds));
+    const newEdgeCommands: ReturnType<typeof addGraphEdgeCommand>[] = [];
+    // Synthetic position changes for members carried along by a container drag
+    // — React Flow only emits an event for the dragged node itself (the
+    // container), never for the children it's visually moving with it.
+    const carriedChanges: NodeChange<Node<ProcessingNodeUiData>>[] = [];
+
+    // React Flow reports a member's dragged position relative to its container
+    // (parentId); localNodes/authoringMetadata always store absolute canvas
+    // positions, so translate back before either touches them.
+    const absoluteChanges = changes.map((change) => {
+      if (change.type !== "position" || !change.position) return change;
+      const isContainer = containerByTriggerId.has(change.id);
+      const container = containerByMemberId.get(change.id);
+      let position = container ? { x: change.position.x + container.x, y: change.position.y + container.y } : change.position;
+
+      if (isContainer) {
+        // Dragging the trigger must move every member with it, unchanged
+        // relative to the trigger — event-containers.ts sizes the box purely
+        // from that relative offset, so shifting the trigger without shifting
+        // its members the same amount would resize the box instead of just
+        // moving it. Sizing only ever reacts to a member being added or moved
+        // on its own (the branch below, gated on `!isContainer`).
+        const info = containerByTriggerId.get(change.id);
+        const oldPos = livePositions.get(change.id);
+        if (info && oldPos && (position.x !== oldPos.x || position.y !== oldPos.y)) {
+          const delta = { x: position.x - oldPos.x, y: position.y - oldPos.y };
+          for (const memberId of info.memberIds) {
+            const memberPos = livePositions.get(memberId);
+            if (!memberPos) continue;
+            carriedChanges.push({
+              id: memberId,
+              type: "position",
+              position: { x: memberPos.x + delta.x, y: memberPos.y + delta.y },
+              dragging: change.dragging,
+            });
+          }
+        }
+        return { ...change, position };
+      }
+
+      // Only resolve collisions/attachment once a drag settles (dragging === false)
+      // — mid-drag frames track the pointer exactly, matching how React Flow
+      // behaves elsewhere.
+      if (change.dragging === false) {
+        // Only a Block can be chained this way — it's the only kind with both a
+        // target and a source Handle (ProcessingNode.tsx); Rule has neither, and
+        // a Schedule/Event-source is itself always a container, never a member.
+        const isChainableBlock = domainNodes.find((n) => n.id === change.id)?.data.kind === "block";
+        let attachLowerBound: { x: number; y: number } | undefined;
+        if (!container && isChainableBlock) {
+          // Dropped inside a dashed container with no real connection yet — attach
+          // it to the end of that trigger's chain (or straight to the trigger if
+          // the container is still empty) instead of leaving it merely overlapping.
+          const target = containerAtPosition(position, eventContainers);
+          if (target) {
+            newEdgeCommands.push(
+              addGraphEdgeCommand(deviceGraphLens(bindingIndex), {
+                id: `dpe-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+                source: chainTailId(target, graphState.edges),
+                target: change.id,
+                sourceHandle: "0",
+                targetHandle: "0",
+              }),
+            );
+            setOverlapWarning(`Collegato a «${target.label}».`);
+            // Never above/left of the trigger's own anchor — event-containers.ts
+            // only ever grows a container to the right/down, so a position outside
+            // this quadrant would render at a negative offset from the container,
+            // outside the dashed box. Passed through to resolveSiblingOverlap below
+            // too, so pushing it clear of an existing member can't undo this.
+            attachLowerBound = { x: target.x + NODE_PADDING, y: target.y + NODE_PADDING + EVENT_CONTAINER_HEADER_HEIGHT };
+            position = { x: Math.max(position.x, attachLowerBound.x), y: Math.max(position.y, attachLowerBound.y) };
+          }
+        }
+        const siblings = localNodes
+          .filter((n) => !containerByTriggerId.has(n.id))
+          .map((n) => ({ id: n.id, position: n.id === change.id ? position : n.position }));
+        position = resolveSiblingOverlap(change.id, position, siblings, attachLowerBound);
+      }
+
+      return { ...change, position };
+    });
+    const allChanges = [...absoluteChanges, ...carriedChanges];
+    setLocalNodes((nds) => applyNodeChanges(allChanges, nds));
     if (!execute || bindingIndex < 0) return;
-    const committable = changes.filter((c) => !(c.type === "position" && c.dragging === true));
+    for (const command of newEdgeCommands) execute(command);
+    const committable = allChanges.filter((c) => !(c.type === "position" && c.dragging === true));
     const commands = nodeChangesToCommands(committable, deviceGraphLens(bindingIndex));
     for (const command of commands) execute(command);
   }
@@ -180,12 +341,45 @@ function ProcessingGraphScreenInner() {
     if (domainNode) setInspector({ kind: "edit", nodeId: node.id, data: domainNode.data, comment: meta?.comment ?? "" });
   }
 
-  function placeFromCatalog(entry: ProcessingCatalogEntry, position = nextSpawnPosition(domainNodes.length)) {
+  function placeFromCatalog(entry: ProcessingCatalogEntry, requestedPosition = nextSpawnPosition(domainNodes.length)) {
     if (!execute || bindingIndex < 0) return;
     const data = nodeDataFromCatalogEntry(entry, moduleOptions[0]?.id);
     if (!data) return;
+
     const id = `dp-${Date.now()}-${Math.round(Math.random() * 1e6)}`;
+
+    // Same attachment handling as an existing block being dragged (onNodesChange):
+    // a new Block dropped inside a dashed container has no edge yet, so chain it
+    // onto that trigger (or its last member) instead of leaving it merely
+    // overlapping. Only a Block can be chained this way — see onNodesChange.
+    let position = requestedPosition;
+    let attachEdgeCommand: ReturnType<typeof addGraphEdgeCommand> | undefined;
+    let attachLowerBound: { x: number; y: number } | undefined;
+    if (data.kind === "block") {
+      const target = containerAtPosition(position, eventContainers);
+      if (target) {
+        attachEdgeCommand = addGraphEdgeCommand(deviceGraphLens(bindingIndex), {
+          id: `dpe-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+          source: chainTailId(target, graphState.edges),
+          target: id,
+          sourceHandle: "0",
+          targetHandle: "0",
+        });
+        setOverlapWarning(`Collegato a «${target.label}».`);
+        attachLowerBound = { x: target.x + NODE_PADDING, y: target.y + NODE_PADDING + EVENT_CONTAINER_HEADER_HEIGHT };
+        position = { x: Math.max(position.x, attachLowerBound.x), y: Math.max(position.y, attachLowerBound.y) };
+      }
+    }
+    position = resolveSiblingOverlap(
+      "",
+      position,
+      localNodes.filter((n) => !containerByTriggerId.has(n.id)).map((n) => ({ id: n.id, position: n.position })),
+      attachLowerBound,
+    );
+
+    // The node must exist before an edge can reference its id as a target.
     execute(addGraphNodeCommand(deviceGraphLens(bindingIndex), { layer: "device-processing", id, data }));
+    if (attachEdgeCommand) execute(attachEdgeCommand);
     execute({
       kind: "UpdateAuthoringMetadata",
       apply: (project) => ({
@@ -298,15 +492,17 @@ function ProcessingGraphScreenInner() {
           <div className="relative flex-1" onDragOver={onCanvasDragOver} onDragLeave={() => setDropPreview(null)} onDrop={onCanvasDrop}>
             <ReactFlow
               nodeTypes={NODE_TYPES}
-              // TriggerGroupNode reads its own `data` shape at runtime regardless of this
-              // component's single node-data generic — ReactFlow itself is happy to render
-              // heterogeneous node types side by side, TypeScript just needs the cast.
-              // A grouped trigger's own card is skipped here — the dashed box (id'd with the
-              // same trigger id) is its on-canvas representation now, not a separate node next
-              // to it. Filtered only from the render; localNodes/the domain graph still has it.
-              nodes={[...groupNodes, ...localNodes.filter((n) => !groupedTriggerIds.has(n.id))] as unknown as Node<ProcessingNodeUiData>[]}
               edgeTypes={PROCESSING_EDGE_TYPES}
-              edges={localEdges}
+              // EventContainerNode reads its own `data` shape at runtime regardless of this
+              // component's single node-data generic — ReactFlow itself is happy to render
+              // heterogeneous node types side by side, TypeScript just needs the cast (done
+              // inside `renderedNodes`). A contained trigger's own card is skipped from the
+              // render — the dashed container (id'd with the same trigger id) is its on-canvas
+              // representation now, not a separate node next to it; localNodes/the domain
+              // graph still has it. Container nodes are listed first, a React Flow requirement
+              // for `parentId` children to resolve.
+              nodes={renderedNodes}
+              edges={visibleEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
@@ -340,6 +536,12 @@ function ProcessingGraphScreenInner() {
                   backgroundColor: "color-mix(in srgb, var(--color-brand-blue) 8%, transparent)",
                 }}
               />
+            )}
+
+            {overlapWarning && (
+              <div className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2 rounded-slpill bg-surface px-3 py-1.5 font-body text-sm text-ink shadow-e1" style={{ outline: "1px solid var(--color-warning)" }}>
+                {overlapWarning}
+              </div>
             )}
 
             <div className="absolute bottom-0 left-0 right-0 flex h-10 items-center gap-2 border-t border-border bg-surface px-4">
