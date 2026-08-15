@@ -141,15 +141,20 @@ function ProcessingGraphScreenInner() {
           id: container.triggerId,
           type: "event-container",
           position: { x: container.x, y: container.y },
-          // CSS style only, deliberately no top-level width/height props: those
-          // put React Flow in a "controlled dimensions" mode where it reconciles
-          // our declared size against what its own ResizeObserver measures on the
-          // real DOM node, dispatching a "dimensions" change whenever they
-          // disagree — and since this container's size changes every render
-          // (member positions move it), the two would fight forever (an infinite
-          // loop of correction events instead of settling). CSS-only sizing has
-          // no such reconciliation: the box just renders at whatever size the
-          // style says, no measurement contract to disagree about.
+          // Both the top-level width/height (so React Flow treats this parent
+          // node as already measured and never hides it behind its
+          // ResizeObserver-driven `visibility: hidden` first-paint guard — a
+          // node with children referencing it via parentId gets this guard
+          // regardless of `extent`) and the CSS style (so the DOM element
+          // actually renders at that size) are required — one without the
+          // other leaves the container either permanently invisible (no
+          // top-level props) or fighting a perpetual "dimensions" correction
+          // loop (a value here that disagrees with the measured DOM size).
+          // event-containers.ts rounds x/y/width/height to whole pixels so the
+          // declared value always agrees with what the browser actually
+          // renders, closing that loop.
+          width: container.width,
+          height: container.height,
           style: { width: container.width, height: container.height },
           // Draggable/selectable — this is the trigger's own real node, anchored
           // at its own stored position (event-containers.ts), so it moves like

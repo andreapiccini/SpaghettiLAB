@@ -2,6 +2,7 @@ import type { AuthoringMetadata, GraphState } from "@spaghettilab/domain";
 import { isBlockNodeData, isRuleNodeData, moduleReferenceOf, type DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
 import { findCatalogEntriesByTypeId } from "@spaghettilab/processing-block-catalog";
 import type { Node } from "@xyflow/react";
+import { NODE_HEIGHT, NODE_WIDTH } from "./layout-constants.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 
 export type ProcessingNodeUiData = {
@@ -27,6 +28,14 @@ export function toProcessingNodes(graphState: GraphState<"device-processing">, a
       type: "processing",
       position: meta?.position ?? { x: 0, y: 0 },
       selected: meta?.selected ?? false,
+      // Explicit top-level dimensions (React Flow's own ResizeObserver corrects
+      // these once the DOM settles) — any node that becomes a container's child
+      // (parentId, see ProcessingGraphScreen) renders `visibility: hidden` until
+      // React Flow considers it measured; a plain top-level node never hits that
+      // gate, which is why this went unnoticed until blocks started getting
+      // reparented into event containers.
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
       data: {
         domainId: node.id,
         kind: data.kind,
