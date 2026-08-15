@@ -51,7 +51,26 @@ function subtitleFor(data: DeviceProcessingNodeData, moduleLabel: (moduleNodeId:
   const moduleRef = moduleReferenceOf(data);
   if (data.kind === "schedule") return `${moduleLabel(data.moduleNodeId)} · ogni ${data.periodMs}ms${data.enabled ? "" : " · disabilitato"}`;
   if (data.kind === "event-source") return moduleLabel(data.moduleNodeId);
-  if (isBlockNodeData(data)) return findCatalogEntriesByTypeId(data.blockTypeId)[0]?.label ?? (data.blockTypeId || "—");
-  if (isRuleNodeData(data)) return findCatalogEntriesByTypeId(data.ruleTypeId)[0]?.label ?? (data.ruleTypeId || "—");
+  if (isBlockNodeData(data)) return configuredSubtitle(data.blockTypeId, data.properties) ?? findCatalogEntriesByTypeId(data.blockTypeId)[0]?.label ?? (data.blockTypeId || "—");
+  if (isRuleNodeData(data)) return configuredSubtitle(data.ruleTypeId, data.properties) ?? findCatalogEntriesByTypeId(data.ruleTypeId)[0]?.label ?? (data.ruleTypeId || "—");
   return moduleRef ?? "—";
+}
+
+/**
+ * A live preview of what a Block/Rule actually does, read straight from its
+ * configured `properties` — so "IF Condition" on the canvas reads "> 30"
+ * instead of the generic catalog label, without opening the Inspector.
+ * GET_CATALOG has no field schema (NodeInspector.tsx's own `PropertiesEditor`
+ * comment), so this can only cover typeIds whose real field_id meaning is
+ * known from firmware source — currently just `threshold`
+ * (`Firmware/core/spaghetti_rules/threshold/threshold.h`): field_id 3/4 are
+ * the hysteresis band's LOWER/UPPER bounds. Every other typeId still falls
+ * back to the plain catalog label.
+ */
+function configuredSubtitle(typeId: string, properties: Readonly<Record<string, unknown>>): string | undefined {
+  if (typeId !== "threshold") return undefined;
+  const lower = properties["3"];
+  const upper = properties["4"];
+  if (typeof lower !== "bigint" || typeof upper !== "bigint") return undefined;
+  return lower === upper ? `soglia ${upper}` : `${lower} … ${upper}`;
 }
