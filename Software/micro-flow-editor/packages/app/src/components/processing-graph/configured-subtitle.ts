@@ -1,3 +1,5 @@
+import { formatThresholdRuleExpr } from "./threshold-rule-fields.js";
+
 /**
  * Live canvas subtitle from a Block/Rule's configured `properties`.
  * Catalog labels stay on the node title; this line is what the block *does*
@@ -5,7 +7,8 @@
  *
  * Field meaning comes from firmware schemas — GET_CATALOG still has none.
  * Block `threshold` (`spaghetti_blocks/blocks_logic.c`): field 1 = `level`,
- * `out = in >= level`. Rule `threshold` (`threshold.h`): fields 3/4 = LOWER/UPPER.
+ * `out = in >= level`. Rule `threshold` (`threshold.h`): fields 3/4 = LOWER/UPPER,
+ * 8 = GPIO level when the condition is true.
  */
 
 export function formatConfiguredSubtitle(
@@ -64,10 +67,7 @@ function formatBlock(typeId: string, properties: Readonly<Record<string, unknown
 
 function formatRule(typeId: string, properties: Readonly<Record<string, unknown>>): string | undefined {
   if (typeId !== "threshold") return undefined;
-  const lower = propText(properties["3"]);
-  const upper = propText(properties["4"]);
-  if (lower === undefined || upper === undefined) return undefined;
-  return lower === upper ? `≥ ${upper}` : `${lower} … ${upper}`;
+  return formatThresholdRuleExpr(properties);
 }
 
 function formatGenericProperties(properties: Readonly<Record<string, unknown>>): string | undefined {

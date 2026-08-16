@@ -1,7 +1,7 @@
 import { encodeConfigCbor, sha256 } from "@spaghettilab/config-compiler";
 import { dryRunConfig, type DryRunResult } from "@spaghettilab/config-decompiler";
 import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
-import type { CoreBindingId, CoreBindingRecord, GraphNode, GraphState } from "@spaghettilab/domain";
+import type { CoreBindingRecord, GraphNode, GraphState } from "@spaghettilab/domain";
 import { isModuleNodeData, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
 import { findCatalogEntryById, shippedTypeIds, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
 import { addGraphEdgeCommand, addGraphNodeCommand, deviceGraphLens, edgeChangesToCommands, nodeChangesToCommands, removeGraphEdgeCommand, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
@@ -76,10 +76,10 @@ export function ProcessingGraphScreen() {
 
 function ProcessingGraphScreenInner() {
   const { session, execute, navigate } = useSession();
+  const { configuredPorts, pinMapOf, protocolFor, selectedBindingId, setSelectedBindingId } = usePortProtocol();
   const bindings = session?.stack.current.coreBindings ?? [];
 
-  const [selectedId, setSelectedId] = useState<CoreBindingId | null>(bindings[0]?.bindingId ?? null);
-  const selected: CoreBindingRecord | null = bindings.find((b) => b.bindingId === selectedId) ?? bindings[0] ?? null;
+  const selected: CoreBindingRecord | null = bindings.find((b) => b.bindingId === selectedBindingId) ?? bindings[0] ?? null;
   const bindingIndex = selected ? bindings.findIndex((b) => b.bindingId === selected.bindingId) : -1;
 
   const [inspector, setInspector] = useState<ProcessingInspectorMode | null>(null);
@@ -110,7 +110,6 @@ function ProcessingGraphScreenInner() {
   const projectAuthoringMetadata = session?.stack.current.authoringMetadata;
   const authoringMetadata = useMemo(() => projectAuthoringMetadata ?? {}, [projectAuthoringMetadata]);
 
-  const { configuredPorts, pinMapOf, protocolFor } = usePortProtocol();
   const moduleOptions = useMemo(() => {
     const fromModules = moduleNodes
       .filter((n) => isModuleNodeData(n.data))
@@ -699,7 +698,7 @@ function ProcessingGraphScreenInner() {
     <div className="flex h-full flex-col">
       <div className="flex h-14 shrink-0 items-center gap-3 overflow-hidden border-b border-border bg-surface px-4">
         <div className="shrink-0">
-          <CoreSelector bindings={bindings} selected={selected} onSelect={(b) => setSelectedId(b.bindingId)} />
+          <CoreSelector bindings={bindings} selected={selected} onSelect={(b) => setSelectedBindingId(b.bindingId)} />
         </div>
         <h1 className="min-w-0 flex-1 truncate font-heading text-lg font-semibold text-ink">Processing Graph</h1>
         <button type="button" onClick={() => void handleDryRun()} disabled={running} className="flex shrink-0 items-center gap-1.5 rounded-slpill border border-border-strong px-3 py-1.5 font-body text-sm text-ink disabled:opacity-50">

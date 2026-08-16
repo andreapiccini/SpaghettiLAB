@@ -1,3 +1,4 @@
+import type { CoreBindingId } from "@spaghettilab/domain";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, createContext, type ReactNode } from "react";
 import {
   DIALECT_LABEL,
@@ -26,6 +27,7 @@ export type PortAuthoringSnapshot = {
   readonly savedPortIds: readonly number[];
   readonly cardPositions: Readonly<Record<string, PortCardPosition>>;
   readonly portCapabilities?: Readonly<Record<string, number>>;
+  readonly selectedBindingId?: string;
 };
 
 type PortProtocolContextValue = {
@@ -44,6 +46,8 @@ type PortProtocolContextValue = {
   readonly setCardPosition: (portId: number, position: PortCardPosition) => void;
   readonly capabilitiesOf: (portId: number) => number | undefined;
   readonly rememberCapabilities: (portId: number, capabilities: number) => void;
+  readonly selectedBindingId: CoreBindingId | null;
+  readonly setSelectedBindingId: (bindingId: CoreBindingId | null) => void;
 };
 
 const PortProtocolContext = createContext<PortProtocolContextValue | undefined>(undefined);
@@ -63,6 +67,7 @@ export function parsePortAuthoringSnapshot(raw: unknown): PortAuthoringSnapshot 
       savedPortIds: parsed.savedPortIds ?? [],
       cardPositions: parsed.cardPositions ?? {},
       portCapabilities: parsed.portCapabilities ?? {},
+      selectedBindingId: typeof parsed.selectedBindingId === "string" ? parsed.selectedBindingId : undefined,
     };
   } catch {
     return undefined;
@@ -87,6 +92,9 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
   const [savedPortIds, setSavedPortIds] = useState<readonly number[]>(stored.savedPortIds);
   const [cardPositions, setCardPositions] = useState<Readonly<Record<string, PortCardPosition>>>(stored.cardPositions);
   const [portCapabilities, setPortCapabilities] = useState<Readonly<Record<number, number>>>(() => capsFromSnapshot(stored));
+  const [selectedBindingId, setSelectedBindingId] = useState<CoreBindingId | null>(
+    () => (stored.selectedBindingId as CoreBindingId | undefined) ?? null,
+  );
   const skipPersist = useRef(true);
 
   if (hydratedFor !== projectId) {
@@ -97,6 +105,7 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
     setSavedPortIds(next.savedPortIds);
     setCardPositions(next.cardPositions);
     setPortCapabilities(capsFromSnapshot(next));
+    setSelectedBindingId((next.selectedBindingId as CoreBindingId | undefined) ?? null);
     skipPersist.current = true;
   }
 
@@ -210,6 +219,7 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
         savedPortIds,
         cardPositions,
         portCapabilities: Object.fromEntries(Object.entries(portCapabilities).map(([key, value]) => [key, value])),
+        selectedBindingId: selectedBindingId ?? undefined,
       };
       execute({
         kind: "PersistPortAuthoring",
@@ -226,7 +236,7 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
       });
     }, 250);
     return () => window.clearTimeout(handle);
-  }, [cardPositions, execute, pinMaps, portCapabilities, projectId, protocols, savedPortIds]);
+  }, [cardPositions, execute, pinMaps, portCapabilities, projectId, protocols, savedPortIds, selectedBindingId]);
 
   const value = useMemo(
     () => ({
@@ -245,8 +255,10 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
       setCardPosition,
       capabilitiesOf,
       rememberCapabilities,
+      selectedBindingId,
+      setSelectedBindingId,
     }),
-    [pinMapOf, setPinMap, protocols, upsertProtocol, protocolFor, bindProtocol, createBlankProtocol, createFromPreset, createFromIntegrated, savePort, configuredPorts, cardPositionOf, setCardPosition, capabilitiesOf, rememberCapabilities],
+    [pinMapOf, setPinMap, protocols, upsertProtocol, protocolFor, bindProtocol, createBlankProtocol, createFromPreset, createFromIntegrated, savePort, configuredPorts, cardPositionOf, setCardPosition, capabilitiesOf, rememberCapabilities, selectedBindingId],
   );
 
   return <PortProtocolContext.Provider value={value}>{children}</PortProtocolContext.Provider>;

@@ -16,6 +16,7 @@ import { pinCaption, pinLetter, selectableSignalsForPort, signalsForRole, type C
 import { usePortProtocol } from "../../state/port-protocol-context.js";
 import { catalogEntryForNode, propertiesOf } from "./catalog-entry-for-node.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
+import { withThresholdFirmwareFields } from "./threshold-rule-fields.js";
 
 function TypeIdSelect({
   id,
@@ -89,6 +90,9 @@ function withFieldDefaults(data: DeviceProcessingNodeData): DeviceProcessingNode
   const defaults = defaultPropertiesFromFields(entry.fields);
   if (data.kind === "block") return { ...data, properties: { ...defaults, ...data.properties } };
   if (data.kind === "event-source") return { ...data, properties: { ...defaults, ...data.properties } };
+  if (data.kind === "rule") {
+    return { ...data, properties: withThresholdFirmwareFields({ ...defaults, ...data.properties }) };
+  }
   return data;
 }
 
@@ -304,8 +308,18 @@ export function NodeInspector({
             <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-ruletype">
               Rule
             </label>
-            <TypeIdSelect id="ni-ruletype" kind="rule" value={data.ruleTypeId} onChange={(ruleTypeId) => patch({ ruleTypeId })} />
-            <CatalogNotes entry={findCatalogEntriesByTypeId(data.ruleTypeId).find((e) => e.nodeKind === "rule")} />
+            <TypeIdSelect
+              id="ni-ruletype"
+              kind="rule"
+              value={data.ruleTypeId}
+              onChange={(ruleTypeId, entry) =>
+                patch({
+                  ruleTypeId,
+                  properties: withThresholdFirmwareFields(defaultPropertiesFromFields(entry?.fields ?? [])),
+                })
+              }
+            />
+            <CatalogNotes entry={catalogEntry} />
 
             <NamedOrNumericModuleRef
               title="Sorgente (quale Module/campo legge)"
@@ -329,8 +343,23 @@ export function NodeInspector({
               onChange={(moduleNodeId, numericId) => patch({ commandTarget: moduleNodeId ? { moduleNodeId, commandId: numericId } : undefined })}
             />
 
-            <p className="mb-2 font-body text-xs text-ink-faint">Proprietà per field_id numerico, stessa limitazione del Block: nessuno schema per nome esiste ancora.</p>
-            <PropertiesEditor properties={data.properties} onChange={(properties) => patch({ properties })} />
+            {namedFields.length > 0 ? (
+              <CatalogFieldsEditor
+                fields={namedFields}
+                properties={data.properties}
+                lineOptions={lineOptions}
+                onChange={(properties) =>
+                  patch({
+                    properties: data.ruleTypeId === "threshold" ? withThresholdFirmwareFields(properties) : properties,
+                  })
+                }
+              />
+            ) : (
+              <>
+                <p className="mb-2 font-body text-xs text-ink-faint">Proprietà per field_id numerico, stessa limitazione del Block: nessuno schema per nome esiste ancora.</p>
+                <PropertiesEditor properties={data.properties} onChange={(properties) => patch({ properties })} />
+              </>
+            )}
           </>
         )}
 

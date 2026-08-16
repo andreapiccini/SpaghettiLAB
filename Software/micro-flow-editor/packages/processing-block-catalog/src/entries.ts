@@ -1086,6 +1086,20 @@ export const PROCESSING_BLOCK_CATALOG: readonly ProcessingCatalogEntry[] = [
     runtime: "core-rule",
     availability: "shipped",
     typeId: "threshold",
-    notes: "Rule firmware `threshold` (source field + command target). IF/Execute Command AppBlocks atterrano qui.",
+    fields: [
+      sel("op", "Quando la misura è", [
+        { value: "gte", label: "≥  maggiore o uguale" },
+        { value: "gt", label: ">  maggiore" },
+        { value: "lte", label: "≤  minore o uguale" },
+        { value: "lt", label: "<  minore" },
+        { value: "eq", label: "=  uguale" },
+      ], "gte"),
+      { id: "level", label: "Soglia", type: "number", default: 0 },
+      sel("action", "allora il GPIO", [
+        { value: "high", label: "Va alto" },
+        { value: "low", label: "Va basso" },
+      ], "high"),
+    ],
+    notes: "Soglia firmware (campi 3/4/8). Il GPIO può solo andare alto o basso — non diventa input.",
   }),
 ];

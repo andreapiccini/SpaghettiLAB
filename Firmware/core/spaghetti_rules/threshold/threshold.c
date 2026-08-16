@@ -178,7 +178,7 @@ static int threshold_validate_config(const struct spaghetti_property_set *config
 	if ((lower == NULL) || (upper == NULL) ||
 	    (lower->type != SPAGHETTI_VALUE_INT64) ||
 	    (upper->type != SPAGHETTI_VALUE_INT64) ||
-	    (lower->data.signed_integer >= upper->data.signed_integer)) {
+	    (lower->data.signed_integer > upper->data.signed_integer)) {
 		return -EINVAL;
 	}
 

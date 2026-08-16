@@ -1,5 +1,5 @@
 import { normalizeCatalogPages, normalizeProfilePages, normalizeTopologyPages, type CatalogIndex, type ProfileIndex, type TopologyIndex } from "@spaghettilab/catalog-model";
-import { contentHash, createPhysicalCompositionGraph, deployableSnapshot, type CoreBindingId, type CoreBindingRecord, type GraphNode, type GraphState } from "@spaghettilab/domain";
+import { contentHash, createPhysicalCompositionGraph, deployableSnapshot, type CoreBindingRecord, type GraphNode, type GraphState } from "@spaghettilab/domain";
 import { moduleFromAcceptedDiscovery, previewDiscoveryAccept, validateComposition, type DiscoveryAcceptChoice, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
 import type { AcceptDiscoveryRequest, DiscoveryCandidate } from "@spaghettilab/protocol-sdk";
 import { addGraphNodeCommand, nodeChangesToCommands, physicalGraphLens, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
@@ -55,11 +55,13 @@ export function PhysicalCompositionScreen() {
 function PhysicalCompositionScreenInner() {
   const { session, execute, navigate } = useSession();
   const { rows, getSnapshot, getClient, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery } = useCoreSessions();
-  const { configuredPorts, protocolFor, cardPositionOf, setCardPosition, rememberCapabilities } = usePortProtocol();
+  const { configuredPorts, protocolFor, cardPositionOf, setCardPosition, rememberCapabilities, selectedBindingId, setSelectedBindingId } = usePortProtocol();
   const bindings = session?.stack.current.coreBindings ?? [];
 
-  const [selectedId, setSelectedId] = useState<CoreBindingId | null>(bindings[0]?.bindingId ?? null);
-  const selected: CoreBindingRecord | null = bindings.find((b) => b.bindingId === selectedId) ?? bindings[0] ?? null;
+  const selected: CoreBindingRecord | null = bindings.find((b) => b.bindingId === selectedBindingId) ?? bindings[0] ?? null;
+  if (selected && selected.bindingId !== selectedBindingId) {
+    setSelectedBindingId(selected.bindingId);
+  }
   const bindingIndex = selected ? bindings.findIndex((b) => b.bindingId === selected.bindingId) : -1;
   const row = rows.find((r) => r.binding.bindingId === selected?.bindingId);
   const snapshot = selected ? getSnapshot(selected.bindingId) : undefined;
@@ -163,7 +165,10 @@ function PhysicalCompositionScreenInner() {
 
   const [portLocalNodes, setPortLocalNodes] = useState<Node<ConfiguredPortNodeData>[]>([]);
   const portSyncKey = canvasPorts.map((p) => `${p.portId}:${p.protocolName ?? ""}:${p.dialect ?? ""}:${p.fromCore ? "c" : "m"}:${p.pins.length}:${p.fields.map((f) => `${f.id}:${f.label}:${f.spec.kind}`).join(",")}:${p.pins.map((pin) => `${pin.peripheral}${pin.signal}${pin.label}`).join("|")}`).join(";");
-  const [syncedPortKey, setSyncedPortKey] = useState(portSyncKey);
+  // `null` until the first paint so leaving the screen and coming back
+  // rebuilds the Core's port cards. Initializing from `portSyncKey` skipped
+  // that rebuild (key already matched) and left an empty canvas.
+  const [syncedPortKey, setSyncedPortKey] = useState<string | null>(null);
   if (portSyncKey !== syncedPortKey) {
     setSyncedPortKey(portSyncKey);
     setPortLocalNodes((prev) => {
@@ -289,7 +294,7 @@ function PhysicalCompositionScreenInner() {
     <div className="flex h-full flex-col">
       <div className="flex h-14 shrink-0 items-center gap-3 overflow-hidden border-b border-border bg-surface px-4">
         <div className="shrink-0">
-          <CoreSelector bindings={bindings} selected={selected} onSelect={(b) => setSelectedId(b.bindingId)} />
+          <CoreSelector bindings={bindings} selected={selected} onSelect={(b) => setSelectedBindingId(b.bindingId)} />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-heading text-[28px] font-bold leading-none text-ink">Physical Composition</h1>

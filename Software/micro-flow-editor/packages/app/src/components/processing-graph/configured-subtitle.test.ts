@@ -14,7 +14,11 @@ describe("formatConfiguredSubtitle", () => {
 
   it("formats a Rule threshold band from firmware fields 3/4", () => {
     expect(formatConfiguredSubtitle("rule", "threshold", { "3": 10n, "4": 20n }, "temp")).toBe("temp 10 … 20");
-    expect(formatConfiguredSubtitle("rule", "threshold", { "3": 30n, "4": 30n })).toBe("≥ 30");
+    expect(formatConfiguredSubtitle("rule", "threshold", { "3": 30n, "4": 30n })).toBe("> 30 → alto");
+  });
+
+  it("formats a Rule threshold with operator and GPIO action", () => {
+    expect(formatConfiguredSubtitle("rule", "threshold", { op: "gte", level: 30n, action: "low" })).toBe("≥ 30 → basso");
   });
 
   it("returns undefined when the block has no configured properties yet", () => {

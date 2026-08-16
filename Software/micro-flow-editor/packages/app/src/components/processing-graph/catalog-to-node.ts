@@ -1,5 +1,6 @@
 import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
 import { defaultPropertiesFromFields, isPlaceableOnDeviceGraph, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
+import { withThresholdFirmwareFields } from "./threshold-rule-fields.js";
 
 export const PROCESSING_BLOCK_MIME = "application/x-spaghettilab-processing-block";
 
@@ -37,7 +38,14 @@ export function nodeDataFromCatalogEntry(entry: ProcessingCatalogEntry, firstMod
         properties: defaultPropertiesFromFields(entry.fields ?? []),
       };
     case "rule":
-      return { kind: "rule", ruleTypeId: entry.typeId ?? "", properties: {} };
+      return {
+        kind: "rule",
+        ruleTypeId: entry.typeId ?? "",
+        properties:
+          entry.typeId === "threshold"
+            ? withThresholdFirmwareFields(defaultPropertiesFromFields(entry.fields ?? []))
+            : defaultPropertiesFromFields(entry.fields ?? []),
+      };
   }
 }
 
