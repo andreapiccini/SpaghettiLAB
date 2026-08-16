@@ -1,5 +1,6 @@
 import {
   Bell,
+  Cpu,
   Download,
   KeyRound,
   Keyboard,
@@ -28,6 +29,7 @@ export const SETTINGS_CATEGORY_ICONS: Record<SettingsCategoryId, LucideIcon> = {
   backup: Download,
   "import-export": Download,
   nodered: Workflow,
+  "core-catalog": Cpu,
   updates: RefreshCw,
   editor: LayoutGrid,
   keyboard: Keyboard,

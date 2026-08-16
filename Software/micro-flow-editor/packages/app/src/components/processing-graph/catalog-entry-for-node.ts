@@ -12,15 +12,27 @@ export function catalogEntryForNode(data: DeviceProcessingNodeData): ProcessingC
     if (byId) return byId;
   }
   if (data.kind === "block") {
-    const entries = findCatalogEntriesByTypeId(data.blockTypeId);
-    return entries.find((entry) => entry.nodeKind === "block") ?? entries[0];
+    return pickCatalogEntry(findCatalogEntriesByTypeId(data.blockTypeId), "block");
   }
   if (data.kind === "rule") {
-    const entries = findCatalogEntriesByTypeId(data.ruleTypeId);
-    return entries.find((entry) => entry.nodeKind === "rule") ?? entries[0];
+    return pickCatalogEntry(findCatalogEntriesByTypeId(data.ruleTypeId), "rule");
   }
   if (data.kind === "event-source") return findCatalogEntryById("native.event-source");
   return findCatalogEntryById("native.schedule");
+}
+
+function pickCatalogEntry(
+  entries: readonly ProcessingCatalogEntry[],
+  kind: "block" | "rule",
+): ProcessingCatalogEntry | undefined {
+  const ofKind = entries.filter((entry) => entry.nodeKind === kind);
+  return (
+    ofKind.find((entry) => entry.availability === "shipped" && (entry.fields?.length ?? 0) > 0) ??
+    ofKind.find((entry) => entry.availability === "shipped") ??
+    ofKind.find((entry) => (entry.fields?.length ?? 0) > 0) ??
+    ofKind[0] ??
+    entries[0]
+  );
 }
 
 export function propertiesOf(data: DeviceProcessingNodeData): Readonly<Record<string, unknown>> {

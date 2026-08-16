@@ -1,4 +1,4 @@
-import type { CatalogIndex, ProfileIndex, TopologyIndex } from "@spaghettilab/catalog-model";
+import type { TopologyIndex } from "@spaghettilab/catalog-model";
 import { ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
@@ -58,8 +58,6 @@ export function PortSetupTray({
   open,
   request,
   topology,
-  catalog,
-  profiles = null,
   extraPortIds = [],
   placedPortIds = [],
   topologyLoading = false,
@@ -69,8 +67,6 @@ export function PortSetupTray({
   readonly open: boolean;
   readonly request: PortSetupRequest | null;
   readonly topology: TopologyIndex | null;
-  readonly catalog: CatalogIndex | null;
-  readonly profiles?: ProfileIndex | null;
   readonly extraPortIds?: readonly number[];
   readonly placedPortIds?: readonly number[];
   readonly topologyLoading?: boolean;
@@ -186,8 +182,6 @@ export function PortSetupTray({
                 compatible={compatible}
                 currentDialect={current?.dialect && compatible.includes(current.dialect) ? current.dialect : undefined}
                 currentModuleId={current?.integratedModuleId}
-                catalogDrivers={catalog?.moduleDrivers ?? []}
-                installedProfiles={profiles?.profiles ?? []}
                 onCustom={(dialect) => {
                   ensureCustom(dialect);
                 }}
@@ -230,8 +224,6 @@ function DialectStep({
   compatible,
   currentDialect,
   currentModuleId,
-  catalogDrivers,
-  installedProfiles,
   onCustom,
   onIntegrated,
   onNext,
@@ -240,8 +232,6 @@ function DialectStep({
   readonly compatible: readonly DialectKind[];
   readonly currentDialect?: DialectKind;
   readonly currentModuleId?: string;
-  readonly catalogDrivers: readonly { readonly typeId: string; readonly commandCount: number }[];
-  readonly installedProfiles: readonly { readonly profileId: string; readonly version: number }[];
   readonly onCustom: (dialect: DialectKind) => void;
   readonly onIntegrated: (moduleId: string) => void;
   readonly onNext: (mode: ProtocolMode) => void;
@@ -260,8 +250,6 @@ function DialectStep({
       mode={mode}
       dialect={dialect}
       integratedModuleId={moduleId}
-      catalogDrivers={catalogDrivers}
-      installedProfiles={installedProfiles}
       onMode={setMode}
       onDialect={(next) => {
         setDialect(next);

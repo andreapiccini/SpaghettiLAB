@@ -72,8 +72,9 @@ export function ConfiguredPortNode({ data, selected }: NodeProps & { readonly da
   return (
     <motion.div initial={{ opacity: 0, scale: 0.92, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={motionTokens.spring.bouncy} className="group">
       <div
-        className={`w-72 overflow-hidden rounded-sllg bg-surface shadow-e1 transition-[box-shadow,outline] group-hover:shadow-e2 ${selected ? "" : "outline outline-1 outline-[var(--color-border)]"}`}
+        className={`w-72 overflow-hidden bg-surface shadow-e1 transition-[box-shadow,outline] group-hover:shadow-e2 ${selected ? "" : "outline outline-1 outline-[var(--color-border)]"}`}
         style={{
+          borderRadius: "20px 2px 20px 2px",
           outline: selected ? "2px solid var(--color-brand-blue)" : undefined,
         }}
       >

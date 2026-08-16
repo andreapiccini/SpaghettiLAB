@@ -9,7 +9,8 @@ import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-g
  *
  * - input only  → closed (more rounded) on the right
  * - output only → closed (more rounded) on the left
- * - both/none   → even rounding
+ * - both/none   → even rounding on the remaining corners
+ * Top-right and bottom-left are always sharper than the rest — the canvas block mark.
  */
 export type NodePortLayout = {
   readonly hasInput: boolean;
@@ -28,13 +29,15 @@ export function portsForKind(kind: DeviceProcessingNodeData["kind"]): NodePortLa
   }
 }
 
-const CLOSED = 20;
-const OPEN = 8;
+const CLOSED = 28;
+const OPEN = 12;
+/** Sharper top-right and bottom-left than the other corners — the canvas block's mark. */
+const MARK = 2;
 
 export function nodeShellRadius(ports: NodePortLayout): string {
   const left = ports.hasInput ? OPEN : CLOSED;
   const right = ports.hasOutput ? OPEN : CLOSED;
-  return `${left}px ${right}px ${right}px ${left}px`;
+  return `${left}px ${MARK}px ${right}px ${MARK}px`;
 }
 
 export const SOURCE_HANDLE_STYLE: CSSProperties = {

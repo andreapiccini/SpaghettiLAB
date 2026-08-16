@@ -615,15 +615,35 @@ function ProcessingGraphScreenInner() {
     setInspector({ kind: "edit", nodeId: id, data, comment: entry.label });
   }
 
+  function persistNode(nodeId: string, data: DeviceProcessingNodeData, comment: string) {
+    if (!execute || bindingIndex < 0) return;
+    const lens = deviceGraphLens(bindingIndex);
+    execute(updateGraphNodeCommand(lens, { layer: "device-processing", id: nodeId, data }));
+    execute({
+      kind: "UpdateAuthoringMetadata",
+      apply: (project) => ({
+        ok: true,
+        value: {
+          ...project,
+          authoringMetadata: {
+            ...project.authoringMetadata,
+            [nodeId]: { ...project.authoringMetadata[nodeId], comment },
+          },
+        },
+      }),
+    });
+  }
+
+  function handleApply(data: DeviceProcessingNodeData, comment: string) {
+    if (inspector?.kind !== "edit") return;
+    persistNode(inspector.nodeId, data, comment);
+  }
+
   function handleSave(data: DeviceProcessingNodeData, comment: string) {
     if (!execute || bindingIndex < 0) return;
     const lens = deviceGraphLens(bindingIndex);
     if (inspector?.kind === "edit") {
-      execute(updateGraphNodeCommand(lens, { layer: "device-processing", id: inspector.nodeId, data }));
-      execute({
-        kind: "UpdateAuthoringMetadata",
-        apply: (project) => ({ ok: true, value: { ...project, authoringMetadata: { ...project.authoringMetadata, [inspector.nodeId]: { ...project.authoringMetadata[inspector.nodeId], comment } } } }),
-      });
+      persistNode(inspector.nodeId, data, comment);
     } else if (inspector) {
       const id = `dp-${Date.now()}-${Math.round(Math.random() * 1e6)}`;
       execute(addGraphNodeCommand(lens, { layer: "device-processing", id, data }));
@@ -800,6 +820,7 @@ function ProcessingGraphScreenInner() {
               nodeLabel={processingNodeLabel}
               knownModuleNodeIds={knownModuleNodeIds}
               onSave={handleSave}
+              onApply={handleApply}
               onDelete={inspector.kind === "edit" ? handleDelete : undefined}
               onClose={() => setInspector(null)}
             />

@@ -1,4 +1,4 @@
-import { Activity, Blocks, Boxes, Cable, Cpu, GitCompareArrows, PanelLeftClose, PanelLeftOpen, Settings, Share2, Store, Workflow } from "lucide-react";
+import { Activity, Blocks, Boxes, Cable, Cpu, GitCompareArrows, PanelLeftClose, PanelLeftOpen, Share2, Shield, Store, Workflow } from "lucide-react";
 import { useState } from "react";
 import { isScreenVisibleInMode } from "../../lib/ui-mode.js";
 import type { ScreenId } from "../../state/session-context.js";
@@ -28,7 +28,7 @@ const GROUPS: readonly { readonly items: readonly RailItem[] }[] = [
     items: [
       { id: "capability-marketplace", label: "Capability Marketplace", icon: Store },
       { id: "cross-core-automation", label: "Automazioni", icon: Share2 },
-      { id: "settings-security", label: "Settings", icon: Settings },
+      { id: "settings-security", label: "Sicurezza", icon: Shield },
     ],
   },
 ];

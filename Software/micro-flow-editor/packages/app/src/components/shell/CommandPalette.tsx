@@ -1,4 +1,4 @@
-import { Activity, Boxes, Cable, FileCode, GitCompareArrows, Network, Redo2, Save, Search, Settings, Share2, SlidersHorizontal, Store, Undo2, Workflow, type LucideIcon } from "lucide-react";
+import { Activity, Boxes, Cable, FileCode, GitCompareArrows, Network, Redo2, Save, Search, Settings, Share2, Shield, SlidersHorizontal, Store, Undo2, Workflow, type LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { isScreenVisibleInMode } from "../../lib/ui-mode.js";
@@ -76,7 +76,7 @@ export function CommandPalette() {
         ["runtime-diagnostics", "Runtime & Diagnostics", Activity],
         ["capability-marketplace", "Capability Marketplace & OTA", Store],
         ["cross-core-automation", "Automazioni", Share2],
-        ["settings-security", "Settings, Security & Recovery", Settings],
+        ["settings-security", "Sicurezza e recupero", Shield],
       ] as const
     )
       .filter(([id]) => isScreenVisibleInMode(id, mode))

@@ -402,8 +402,6 @@ function PhysicalCompositionScreenInner() {
             open={portSetup !== null}
             request={portSetup}
             topology={topologyIndex}
-            catalog={catalogIndex}
-            profiles={visibleProfileIndex}
             extraPortIds={[]}
             placedPortIds={configuredPorts.map((p) => p.portId)}
             topologyLoading={topologyLoading}

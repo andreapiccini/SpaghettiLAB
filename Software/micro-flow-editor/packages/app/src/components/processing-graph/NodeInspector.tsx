@@ -15,6 +15,7 @@ import { motionTokens } from "../../lib/motion-tokens.js";
 import { pinCaption, pinLetter, selectableSignalsForPort, signalsForRole, type CustomProtocol, type PortPinMap } from "../../lib/port-protocol-mock.js";
 import { usePortProtocol } from "../../state/port-protocol-context.js";
 import { catalogEntryForNode, propertiesOf } from "./catalog-entry-for-node.js";
+import { commentAfterCatalogChange } from "./catalog-to-node.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 import { withThresholdFirmwareFields } from "./threshold-rule-fields.js";
 
@@ -91,7 +92,11 @@ function withFieldDefaults(data: DeviceProcessingNodeData): DeviceProcessingNode
   if (data.kind === "block") return { ...data, properties: { ...defaults, ...data.properties } };
   if (data.kind === "event-source") return { ...data, properties: { ...defaults, ...data.properties } };
   if (data.kind === "rule") {
-    return { ...data, properties: withThresholdFirmwareFields({ ...defaults, ...data.properties }) };
+    const merged = { ...defaults, ...data.properties };
+    return {
+      ...data,
+      properties: data.ruleTypeId === "threshold" ? withThresholdFirmwareFields(merged) : merged,
+    };
   }
   return data;
 }
@@ -104,6 +109,7 @@ export function NodeInspector({
   nodeLabel,
   knownModuleNodeIds,
   onSave,
+  onApply,
   onDelete,
   onClose,
 }: {
@@ -114,6 +120,7 @@ export function NodeInspector({
   readonly nodeLabel: (nodeId: string) => string;
   readonly knownModuleNodeIds: ReadonlySet<string>;
   readonly onSave: (data: DeviceProcessingNodeData, comment: string) => void;
+  readonly onApply?: (data: DeviceProcessingNodeData, comment: string) => void;
   readonly onDelete?: () => void;
   readonly onClose: () => void;
 }) {
@@ -124,7 +131,10 @@ export function NodeInspector({
   const nodeId = mode.kind === "edit" ? mode.nodeId : "__draft__";
   const config = PROCESSING_NODE_KIND_CONFIG[data.kind];
   const catalogEntry = catalogEntryForNode(data);
-  const namedFields = catalogEntry?.fields ?? [];
+  const namedFields =
+    data.kind === "rule" && data.ruleTypeId === "threshold"
+      ? (catalogEntry?.fields ?? findCatalogEntryById("rule.threshold")?.fields ?? [])
+      : (catalogEntry?.fields ?? []);
   const showModulePicker = data.kind === "schedule" || (data.kind === "event-source" && catalogEntry?.needsModule !== false);
   const authoringType = Boolean(data.kind === "block" && data.blockTypeId.startsWith("ab."));
   const { protocolFor, pinMapOf } = usePortProtocol();
@@ -156,6 +166,14 @@ export function NodeInspector({
 
   function patch(partial: Partial<DeviceProcessingNodeData>) {
     setData({ ...data, ...partial } as DeviceProcessingNodeData);
+  }
+
+  function applyCatalogChange(next: DeviceProcessingNodeData, entry: ProcessingCatalogEntry | undefined) {
+    const nextComment = commentAfterCatalogChange(comment, catalogEntry?.label, entry?.label);
+    const resolved = withFieldDefaults(next);
+    setData(resolved);
+    if (nextComment !== comment) setComment(nextComment);
+    onApply?.(resolved, nextComment);
   }
 
   const incoming = existingEdges.filter((e) => e.target === nodeId);
@@ -201,11 +219,15 @@ export function NodeInspector({
               value={data.catalogEntryId ?? "native.event-source"}
               onChange={(e) => {
                 const entry = findCatalogEntryById(e.target.value);
-                patch({
-                  catalogEntryId: entry?.id,
-                  moduleNodeId: entry?.needsModule === false ? "" : data.moduleNodeId,
-                  properties: defaultPropertiesFromFields(entry?.fields ?? []),
-                });
+                applyCatalogChange(
+                  {
+                    ...data,
+                    catalogEntryId: entry?.id,
+                    moduleNodeId: entry?.needsModule === false ? "" : data.moduleNodeId,
+                    properties: defaultPropertiesFromFields(entry?.fields ?? []),
+                  } as DeviceProcessingNodeData,
+                  entry,
+                );
               }}
               className="mb-4 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-body text-sm outline-none"
             >
@@ -268,11 +290,15 @@ export function NodeInspector({
               value={data.blockTypeId}
               catalogEntryId={data.catalogEntryId}
               onChange={(blockTypeId, entry) =>
-                patch({
-                  blockTypeId,
-                  catalogEntryId: entry?.id,
-                  properties: defaultPropertiesFromFields(entry?.fields ?? []),
-                })
+                applyCatalogChange(
+                  {
+                    ...data,
+                    blockTypeId,
+                    catalogEntryId: entry?.id,
+                    properties: defaultPropertiesFromFields(entry?.fields ?? []),
+                  } as DeviceProcessingNodeData,
+                  entry,
+                )
               }
             />
             <CatalogNotes entry={catalogEntry} />
@@ -313,10 +339,17 @@ export function NodeInspector({
               kind="rule"
               value={data.ruleTypeId}
               onChange={(ruleTypeId, entry) =>
-                patch({
-                  ruleTypeId,
-                  properties: withThresholdFirmwareFields(defaultPropertiesFromFields(entry?.fields ?? [])),
-                })
+                applyCatalogChange(
+                  {
+                    ...data,
+                    ruleTypeId,
+                    properties:
+                      ruleTypeId === "threshold"
+                        ? withThresholdFirmwareFields(defaultPropertiesFromFields(entry?.fields ?? []))
+                        : defaultPropertiesFromFields(entry?.fields ?? []),
+                  } as DeviceProcessingNodeData,
+                  entry,
+                )
               }
             />
             <CatalogNotes entry={catalogEntry} />
@@ -354,7 +387,7 @@ export function NodeInspector({
                   })
                 }
               />
-            ) : (
+            ) : data.ruleTypeId === "threshold" ? null : (
               <>
                 <p className="mb-2 font-body text-xs text-ink-faint">Proprietà per field_id numerico, stessa limitazione del Block: nessuno schema per nome esiste ancora.</p>
                 <PropertiesEditor properties={data.properties} onChange={(properties) => patch({ properties })} />

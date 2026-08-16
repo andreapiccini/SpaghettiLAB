@@ -7,6 +7,7 @@ import { ImportExportTab } from "../settings-security/ImportExportTab.js";
 import { PermissionsTab } from "../settings-security/PermissionsTab.js";
 import { RecoveryTab } from "../settings-security/RecoveryTab.js";
 import { ComingSoonPane } from "./ComingSoonPane.js";
+import { CoreCatalogPane } from "./panes/CoreCatalogPane.js";
 import { GeneralPane } from "./panes/GeneralPane.js";
 import { LanguagePane } from "./panes/LanguagePane.js";
 import { NodeRedPane } from "./panes/NodeRedPane.js";
@@ -28,6 +29,7 @@ export const SETTINGS_PANES: Record<SettingsCategoryId, ComponentType> = {
   backup: BackupVersionsTab,
   "import-export": ImportExportTab,
   nodered: NodeRedPane,
+  "core-catalog": CoreCatalogPane,
   updates: () => <Planned categoryId="updates" />,
   editor: () => <Planned categoryId="editor" />,
   keyboard: () => <Planned categoryId="keyboard" />,

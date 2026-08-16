@@ -39,7 +39,7 @@ export function SettingsSecurityScreen() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface px-4">
-        <h1 className="font-heading text-lg font-semibold text-ink">Settings, Security & Recovery</h1>
+        <h1 className="font-heading text-lg font-semibold text-ink">Sicurezza e recupero</h1>
       </div>
 
       <div className="flex shrink-0 flex-wrap gap-1 border-b border-border bg-surface px-4">

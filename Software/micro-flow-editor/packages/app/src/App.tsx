@@ -29,7 +29,7 @@ const SCREEN_TITLES: Record<string, { readonly title: string; readonly task: str
   "runtime-diagnostics": { title: "Runtime & Diagnostics", task: "UI-S090" },
   "capability-marketplace": { title: "Capability Marketplace & OTA", task: "UI-S100" },
   "cross-core-automation": { title: "Cross-Core Automation", task: "UI-S110" },
-  "settings-security": { title: "Settings, Security & Recovery", task: "UI-S120" },
+  "settings-security": { title: "Sicurezza e recupero", task: "UI-S120" },
 };
 
 function AppContent() {

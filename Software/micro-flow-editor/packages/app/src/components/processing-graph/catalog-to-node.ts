@@ -49,6 +49,18 @@ export function nodeDataFromCatalogEntry(entry: ProcessingCatalogEntry, firstMod
   }
 }
 
+/** Keep a custom name; follow the catalog when the label was still the previous type. */
+export function commentAfterCatalogChange(
+  currentComment: string,
+  previousLabel: string | undefined,
+  nextLabel: string | undefined,
+): string {
+  if (!nextLabel) return currentComment;
+  const trimmed = currentComment.trim();
+  if (trimmed === "" || trimmed === previousLabel) return nextLabel;
+  return currentComment;
+}
+
 export function snapToGrid(value: number, grid = 20): number {
   return Math.round(value / grid) * grid;
 }
