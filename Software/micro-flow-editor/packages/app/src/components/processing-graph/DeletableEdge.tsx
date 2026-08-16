@@ -1,20 +1,36 @@
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useReactFlow, type EdgeProps } from "@xyflow/react";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { BaseEdge, EdgeLabelRenderer, Position, useNodes, useReactFlow, type EdgeProps } from "@xyflow/react";
+import { Unlink } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  leadFromHandle,
+  obstacleRectsForEdge,
+  pathMidpoint,
+  roundedOrthogonalPath,
+  routeOrthogonal,
+  simplifyAxisAligned,
+  type Point,
+} from "./orthogonal-route.js";
+
+function handleSide(position: Position): "left" | "right" | "top" | "bottom" {
+  if (position === Position.Left) return "left";
+  if (position === Position.Right) return "right";
+  if (position === Position.Top) return "top";
+  return "bottom";
+}
 
 /**
- * Processing Graph edge: hovering the wire (or selecting it) shows a trash
- * control at the midpoint. Click deletes via React Flow's `deleteElements`,
- * which goes through `onEdgesChange` → `removeGraphEdgeCommand`. Keyboard
- * Backspace/Delete still work on a selected edge (`deleteKeyCode` on the pane).
+ * Processing Graph edge: hovering the wire (or selecting it) shows a broken-link
+ * control on the midpoint. Pointer down is stopped so the first click deletes
+ * (React Flow would otherwise select the edge and swallow the click). Keyboard
+ * Backspace/Delete still works on a selected edge (`deleteKeyCode` on the pane).
  *
- * Routed with `getSmoothStepPath` rather than a bezier: every segment is
- * strictly horizontal or vertical, joined only where one meets the other, and
- * only that join is ever curved (a rounded corner) — never a free diagonal or
- * an S-curve.
+ * Routed as a handful of horizontal/vertical segments with rounded corners
+ * only at 90° joins — never a grid staircase or a free diagonal.
  */
 export function DeletableEdge({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -22,31 +38,43 @@ export function DeletableEdge({
   sourcePosition,
   targetPosition,
   style,
-  markerEnd,
   selected,
 }: EdgeProps) {
   const [hovered, setHovered] = useState(false);
   const { deleteElements } = useReactFlow();
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    borderRadius: 10,
-  });
+  const nodes = useNodes();
+
+  const { edgePath, labelX, labelY } = useMemo(() => {
+    const start: Point = { x: sourceX, y: sourceY };
+    const end: Point = { x: targetX, y: targetY };
+    const leadStart = leadFromHandle(start, handleSide(sourcePosition));
+    const leadEnd = leadFromHandle(end, handleSide(targetPosition));
+    const obstacles = obstacleRectsForEdge(nodes, source, target);
+    const mid = routeOrthogonal(leadStart, leadEnd, obstacles);
+    const points = simplifyAxisAligned([start, ...mid, end]);
+    const path = roundedOrthogonalPath(points);
+    const label = pathMidpoint(points);
+    return { edgePath: path, labelX: label.x, labelY: label.y };
+  }, [nodes, source, target, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition]);
+
   const showDelete = hovered || selected;
+  const stroke = showDelete ? "var(--color-brand-blue)" : typeof style?.stroke === "string" ? style.stroke : "var(--color-ink-faint)";
+  const markerId = `edge-arrow-${id}`;
 
   return (
     <>
+      <defs>
+        <marker id={markerId} viewBox="0 0 8 8" markerWidth={7} markerHeight={7} refX={7} refY={4} orient="auto">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill={stroke} />
+        </marker>
+      </defs>
       <BaseEdge
         id={id}
         path={edgePath}
-        markerEnd={markerEnd}
+        markerEnd={`url('#${markerId}')`}
         style={{
           ...style,
-          stroke: showDelete ? "var(--color-brand-blue)" : style?.stroke,
+          stroke,
         }}
       />
       <path
@@ -55,6 +83,7 @@ export function DeletableEdge({
         stroke="transparent"
         strokeWidth={24}
         className="react-flow__edge-interaction"
+        style={{ pointerEvents: "stroke" }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       />
@@ -65,24 +94,27 @@ export function DeletableEdge({
             position: "absolute",
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
             pointerEvents: "all",
-            width: 28,
-            height: 28,
+            zIndex: 1001,
           }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
         >
           {showDelete && (
             <button
               type="button"
-              aria-label="Elimina collegamento"
+              aria-label="Scollega"
               className="flex h-7 w-7 items-center justify-center rounded-full border border-border-strong bg-surface text-ink-muted shadow-e1 hover:border-error hover:text-error"
+              onPointerDown={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 void deleteElements({ edges: [{ id }] });
               }}
             >
-              <Trash2 size={14} />
+              <Unlink size={14} />
             </button>
           )}
         </div>

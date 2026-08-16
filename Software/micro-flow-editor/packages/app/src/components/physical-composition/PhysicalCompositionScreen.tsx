@@ -3,20 +3,24 @@ import { contentHash, createPhysicalCompositionGraph, deployableSnapshot, type C
 import { moduleFromAcceptedDiscovery, previewDiscoveryAccept, validateComposition, type DiscoveryAcceptChoice, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
 import type { AcceptDiscoveryRequest, DiscoveryCandidate } from "@spaghettilab/protocol-sdk";
 import { addGraphNodeCommand, nodeChangesToCommands, physicalGraphLens, removeGraphNodeCommand, toReactFlowEdges, updateGraphNodeCommand } from "@spaghettilab/react-flow-adapter";
-import { applyNodeChanges, Background, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Node, type NodeChange } from "@xyflow/react";
+import { applyNodeChanges, Background, Controls, ReactFlow, ReactFlowProvider, type Node, type NodeChange } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { CircleAlert, Cpu, Library, Plug, Radar, Rows3, Thermometer, Zap } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { CircleAlert, Plug, Plus, Radar, type LucideIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCoreSessions } from "../../state/core-sessions-context.js";
+import { declaredPortsOf, resizePinMap, summarizeConfiguredPort } from "../../lib/port-protocol-mock.js";
+import { usePortProtocol } from "../../state/port-protocol-context.js";
 import { useSession } from "../../state/session-context.js";
 import { CoreSelector } from "../catalog-topology/CoreSelector.js";
-import { IconTooltip } from "../shell/IconTooltip.js";
 import { DiscoveryTray } from "./DiscoveryTray.js";
 import { NodeInspector, type InspectorMode } from "./NodeInspector.js";
-import { NODE_KIND_CONFIG } from "./node-kinds.js";
+import { PortSetupTray } from "./PortSetupTray.js";
+import type { PortSetupRequest } from "./port-setup-types.js";
+import { isPortCardId, portCardId, toConfiguredPortNode, type ConfiguredPortNodeData } from "./ConfiguredPortNode.js";
 import { PHYSICAL_NODE_TYPES } from "./PhysicalNode.js";
-import { BlockLibraryPanel } from "./BlockLibraryPanel.js";
 import { toPhysicalNodes, type PhysicalNodeData } from "./to-nodes.js";
+
+type CanvasNode = Node<PhysicalNodeData> | Node<ConfiguredPortNodeData>;
 
 const EMPTY_GRAPH: GraphState<"physical-composition"> = { layer: "physical-composition", nodes: [], edges: [] };
 
@@ -31,14 +35,6 @@ function nextSpawnPosition(existingNodeCount: number, perRow = 4, colStep = 260,
   const row = Math.floor(existingNodeCount / perRow);
   return { x: 80 + col * colStep, y: 80 + row * rowStep };
 }
-
-const TOOLBAR_ITEMS: readonly { readonly kind: PhysicalCompositionNodeData["kind"]; readonly icon: typeof Rows3 }[] = [
-  { kind: "backbone", icon: Rows3 },
-  { kind: "power-source", icon: Zap },
-  { kind: "connector", icon: Plug },
-  { kind: "external-device", icon: Thermometer },
-  { kind: "module", icon: Cpu },
-];
 
 /**
  * `ux/screens/S050-physical-composition/{visual,ui-behavior,backend-behavior}.md`.
@@ -58,7 +54,8 @@ export function PhysicalCompositionScreen() {
 
 function PhysicalCompositionScreenInner() {
   const { session, execute, navigate } = useSession();
-  const { rows, getSnapshot, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery } = useCoreSessions();
+  const { rows, getSnapshot, getClient, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery } = useCoreSessions();
+  const { configuredPorts, protocolFor } = usePortProtocol();
   const bindings = session?.stack.current.coreBindings ?? [];
 
   const [selectedId, setSelectedId] = useState<CoreBindingId | null>(bindings[0]?.bindingId ?? null);
@@ -69,10 +66,24 @@ function PhysicalCompositionScreenInner() {
 
   const [inspector, setInspector] = useState<InspectorMode | null>(null);
   const [discoveryOpen, setDiscoveryOpen] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [portSetup, setPortSetup] = useState<PortSetupRequest | null>(null);
   const [candidates, setCandidates] = useState<readonly DiscoveryCandidate[]>([]);
   const [acknowledged, setAcknowledged] = useState<ReadonlySet<string>>(new Set());
   const [profileIndex, setProfileIndex] = useState<ProfileIndex | null>(null);
+  const [liveTopology, setLiveTopology] = useState<TopologyIndex | null>(null);
+  const [topologyLoading, setTopologyLoading] = useState(false);
+
+  const reloadTopology = useCallback(() => {
+    if (!selected || row?.sessionState !== "READY") return;
+    const client = getClient(selected.bindingId);
+    if (!client) return;
+    setTopologyLoading(true);
+    client
+      .getFullTopology(16)
+      .then((flows) => setLiveTopology(normalizeTopologyPages([{ flows, nextCursor: 0 }], true)))
+      .catch(() => setLiveTopology(null))
+      .finally(() => setTopologyLoading(false));
+  }, [selected, row?.sessionState, getClient]);
 
   useEffect(() => {
     if (!selected || row?.sessionState !== "READY") return;
@@ -83,10 +94,18 @@ function PhysicalCompositionScreenInner() {
     listDeviceProfiles(selected.bindingId)
       ?.then((list) => !cancelled && setProfileIndex(normalizeProfilePages([{ profiles: list, nextCursor: 0 }], true)))
       .catch(() => !cancelled && setProfileIndex(null));
+    setTopologyLoading(true);
+    getClient(selected.bindingId)
+      ?.getFullTopology(16)
+      .then((flows) => !cancelled && setLiveTopology(normalizeTopologyPages([{ flows, nextCursor: 0 }], true)))
+      .catch(() => !cancelled && setLiveTopology(null))
+      .finally(() => {
+        if (!cancelled) setTopologyLoading(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [selected, row?.sessionState, listDiscoveryCandidates, listDeviceProfiles]);
+  }, [selected, row?.sessionState, listDiscoveryCandidates, listDeviceProfiles, getClient]);
 
   // Gated at read time instead of reset synchronously in the effect above (would
   // trip `react-hooks/set-state-in-effect`) — switching to a Core that isn't READY
@@ -95,7 +114,18 @@ function PhysicalCompositionScreenInner() {
   const visibleProfileIndex = row?.sessionState === "READY" ? profileIndex : null;
 
   const catalogIndex: CatalogIndex | null = useMemo(() => (snapshot?.catalog ? normalizeCatalogPages([snapshot.catalog], true) : null), [snapshot]);
-  const topologyIndex: TopologyIndex | null = useMemo(() => (snapshot?.topology ? normalizeTopologyPages([snapshot.topology], true) : null), [snapshot]);
+  const snapshotTopology: TopologyIndex | null = useMemo(() => (snapshot?.topology ? normalizeTopologyPages([snapshot.topology], true) : null), [snapshot]);
+  const topologyIndex = (liveTopology?.flows.length ?? 0) >= (snapshotTopology?.flows.length ?? 0) ? liveTopology ?? snapshotTopology : snapshotTopology;
+  const declaredPorts = useMemo(() => declaredPortsOf(topologyIndex), [topologyIndex]);
+  const canvasPorts = useMemo(
+    () =>
+      configuredPorts.map((saved) => {
+        const meta = declaredPorts.find((d) => d.portId === saved.portId) ?? { portId: saved.portId, signalCount: saved.pins.length || 5, fromCore: false };
+        const map = resizePinMap({ portId: saved.portId, pins: saved.pins }, meta.signalCount);
+        return summarizeConfiguredPort(saved.portId, map, protocolFor({ portId: saved.portId }), meta);
+      }),
+    [configuredPorts, declaredPorts, protocolFor],
+  );
 
   const graphState: GraphState<"physical-composition"> = (bindingIndex >= 0 ? session?.stack.current.physicalGraphs[bindingIndex] : undefined) ?? EMPTY_GRAPH;
   const domainNodes = graphState.nodes as readonly GraphNode<"physical-composition", string, PhysicalCompositionNodeData>[];
@@ -126,6 +156,24 @@ function PhysicalCompositionScreenInner() {
     setLocalNodes(domainRfNodes);
   }
 
+  const [portLocalNodes, setPortLocalNodes] = useState<Node<ConfiguredPortNodeData>[]>([]);
+  const portSyncKey = canvasPorts.map((p) => `${p.portId}:${p.protocolName ?? ""}:${p.dialect ?? ""}:${p.fromCore ? "c" : "m"}:${p.pins.length}:${p.fields.map((f) => `${f.id}:${f.label}:${f.spec.kind}`).join(",")}:${p.pins.map((pin) => `${pin.peripheral}${pin.signal}${pin.label}`).join("|")}`).join(";");
+  const [syncedPortKey, setSyncedPortKey] = useState(portSyncKey);
+  if (portSyncKey !== syncedPortKey) {
+    setSyncedPortKey(portSyncKey);
+    setPortLocalNodes((prev) => {
+      const byId = new Map(prev.map((n) => [n.id, n]));
+      return canvasPorts.map((summary, i) =>
+        toConfiguredPortNode(summary, i, byId.get(portCardId(summary.portId)), (portId, pinIndex) => {
+          setInspector(null);
+          setPortSetup({ kind: "pin", portId, pinIndex });
+        }),
+      );
+    });
+  }
+
+  const displayNodes: CanvasNode[] = useMemo(() => [...localNodes, ...portLocalNodes], [localNodes, portLocalNodes]);
+
   const contentDigest = useMemo(() => {
     const g = createPhysicalCompositionGraph<string, string, unknown>();
     for (const n of graphState.nodes) g.addNode(n);
@@ -152,15 +200,23 @@ function PhysicalCompositionScreenInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bindingIndex, session?.stack.current.physicalGraphs.length]);
 
-  function onNodesChange(changes: NodeChange<Node<PhysicalNodeData>>[]) {
-    setLocalNodes((nds) => applyNodeChanges(changes, nds));
+  function onNodesChange(changes: NodeChange<CanvasNode>[]) {
+    const domainChanges = changes.filter((c) => !("id" in c) || !isPortCardId(c.id));
+    const portChanges = changes.filter((c): c is NodeChange<CanvasNode> & { id: string } => "id" in c && isPortCardId(c.id));
+    if (domainChanges.length > 0) setLocalNodes((nds) => applyNodeChanges(domainChanges as NodeChange<Node<PhysicalNodeData>>[], nds));
+    if (portChanges.length > 0) setPortLocalNodes((nds) => applyNodeChanges(portChanges as NodeChange<Node<ConfiguredPortNodeData>>[], nds));
     if (!execute || bindingIndex < 0) return;
-    const committable = changes.filter((c) => !(c.type === "position" && c.dragging === true));
+    const committable = domainChanges.filter((c) => !(c.type === "position" && c.dragging === true));
     const commands = nodeChangesToCommands(committable, physicalGraphLens(bindingIndex));
     for (const command of commands) execute(command);
   }
 
-  function onNodeClick(_: unknown, node: Node<PhysicalNodeData>) {
+  function onNodeClick(_: unknown, node: CanvasNode) {
+    if (node.type === "configured-port") {
+      setInspector(null);
+      setPortSetup({ kind: "pin", portId: (node.data as ConfiguredPortNodeData).portId });
+      return;
+    }
     const domainNode = domainNodes.find((n) => n.id === node.id);
     const meta = authoringMetadata[node.id];
     if (domainNode) setInspector({ kind: "edit", nodeId: node.id, data: domainNode.data, comment: meta?.comment ?? "" });
@@ -208,7 +264,10 @@ function PhysicalCompositionScreenInner() {
     setCandidates((prev) => prev.filter((c) => c.id !== candidate.id));
   }
 
-  const subtitle = selected ? `${domainNodes.length} elementi · ${collisionCount} conflitti` : "Nessun Core";
+  const noPorts = configuredPorts.length === 0;
+  const subtitle = !selected
+    ? "Nessun Core"
+    : `${declaredPorts.length} ${declaredPorts.length === 1 ? "porta letta" : "porte lette"} dal Core${configuredPorts.length > 0 ? ` · ${configuredPorts.length} sul canvas` : ""} · ${collisionCount} conflitti`;
 
   return (
     <div className="flex h-full flex-col">
@@ -216,7 +275,20 @@ function PhysicalCompositionScreenInner() {
         <div className="shrink-0">
           <CoreSelector bindings={bindings} selected={selected} onSelect={(b) => setSelectedId(b.bindingId)} />
         </div>
-        <h1 className="min-w-0 flex-1 truncate font-heading text-lg font-semibold text-ink">Physical Composition</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate font-heading text-[28px] font-bold leading-none text-ink">Physical Composition</h1>
+          <p className="font-body text-xs text-ink-muted">{subtitle}</p>
+        </div>
+        {selected && (
+          <button
+            type="button"
+            onClick={() => setPortSetup({ kind: "pick" })}
+            className="flex shrink-0 items-center gap-1.5 rounded-slpill bg-brand-blue px-4 py-2 font-body-strong text-sm text-white hover:bg-brand-blue-dark"
+          >
+            <Plus size={16} />
+            Aggiungi Porta
+          </button>
+        )}
         {visibleCandidates.length > 0 && (
           <button type="button" onClick={() => setDiscoveryOpen(true)} className="flex shrink-0 items-center gap-1.5 rounded-slpill border border-border-strong px-3 py-1.5 font-body text-sm text-ink">
             <Radar size={14} />
@@ -229,40 +301,30 @@ function PhysicalCompositionScreenInner() {
             {collisionCount} indirizzi in conflitto
           </span>
         )}
-        <button type="button" onClick={() => navigate("deploy-diff")} className="shrink-0 rounded-slpill bg-brand-blue px-4 py-1.5 font-body-strong text-sm text-white hover:bg-brand-blue-dark">
-          Invia a Deploy
-        </button>
+        {selected && !noPorts && (
+          <button type="button" onClick={() => navigate("deploy-diff")} className="shrink-0 rounded-slpill bg-brand-blue px-4 py-1.5 font-body-strong text-sm text-white hover:bg-brand-blue-dark">
+            Invia a Deploy
+          </button>
+        )}
       </div>
 
       {!selected ? (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="font-body text-sm text-ink-faint">Nessun Core nel progetto — vai a Core Connections per connetterne uno.</p>
-        </div>
+        <EmptyHero icon={Plug} title="Nessun Core nel progetto" body="Connetti un Core per configurare le Porte di questo progetto." actionLabel="Vai a Core Connections" onAction={() => navigate("core-connections")} />
       ) : (
         <div className="relative flex flex-1 overflow-hidden">
-          <div className="flex flex-col gap-2 border-r border-border bg-surface p-2">
-            {TOOLBAR_ITEMS.map(({ kind, icon: Icon }) => {
-              const config = NODE_KIND_CONFIG[kind];
-              return (
-                <button key={kind} type="button" title={`+ ${config.label}`} onClick={() => setInspector({ kind: "create", nodeKind: kind })} className="group relative flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
-                  <Icon size={18} />
-                  <IconTooltip label={`+ ${config.label}`} />
-                </button>
-              );
-            })}
-            <div className="mx-auto h-px w-6 bg-border" />
-            <button type="button" title="Libreria blocchi" onClick={() => setLibraryOpen(true)} className="group relative flex h-10 w-10 items-center justify-center rounded-slsm text-ink-muted hover:bg-surface-raised">
-              <Library size={18} />
-              <IconTooltip label="Libreria blocchi" />
-            </button>
-          </div>
-
-          <div className="relative flex-1">
-            <ReactFlow nodeTypes={PHYSICAL_NODE_TYPES} nodes={localNodes} edges={edges} onNodesChange={onNodesChange} onNodeClick={onNodeClick} fitView>
+          {noPorts ? (
+            <EmptyHero
+              icon={Plug}
+              title="Nessuna porta sul canvas"
+              body={declaredPorts.length > 0 ? "Scegli una Porta dal menu (lette dal firmware), poi clicca i pin per i segnali." : "Nessuna Porta da GET_TOPOLOGY. Rileggi dal Core: il menu si riempie solo da lì."}
+              actionLabel="Aggiungi una Porta"
+              onAction={() => setPortSetup({ kind: "pick" })}
+            />
+          ) : (
+            <div className="relative flex-1">
+            <ReactFlow nodeTypes={PHYSICAL_NODE_TYPES} nodes={displayNodes} edges={edges} onNodesChange={onNodesChange} onNodeClick={onNodeClick} fitView>
               <Background gap={20} color="#E1E4EB" />
               <Controls position="bottom-left" />
-              {/* An empty minimap is just a blank white rectangle — with no nodes to preview it reads as a rendering glitch, not a UI element, especially once the Inspector panel narrows the canvas. */}
-              {domainNodes.length > 0 && <MiniMap position="bottom-right" pannable zoomable className="!rounded-slsm !border !border-border-strong !shadow-e1" nodeColor={(n) => NODE_KIND_CONFIG[(n.data as PhysicalNodeData).kind]?.colorVar ?? "#8A8F99"} />}
             </ReactFlow>
 
             <div className="absolute bottom-0 left-0 right-0 flex h-10 items-center gap-2 border-t border-border bg-surface px-4">
@@ -270,7 +332,8 @@ function PhysicalCompositionScreenInner() {
               <span className="font-body text-xs text-ink-muted">{subtitle}</span>
               <span className="ml-auto font-mono text-xs text-ink-faint">content: {contentDigest}</span>
             </div>
-          </div>
+            </div>
+          )}
 
           {inspector && (
             <NodeInspector
@@ -293,21 +356,73 @@ function PhysicalCompositionScreenInner() {
                 });
               }}
               onClose={() => setInspector(null)}
+              discoveryCandidates={visibleCandidates}
+              onOpenDiscovery={() => setDiscoveryOpen(true)}
+              onConfigurePort={(portId) => setPortSetup({ kind: "pin", portId, moduleNodeId: inspector.kind === "edit" ? inspector.nodeId : undefined })}
             />
           )}
 
-          <DiscoveryTray open={discoveryOpen} candidates={visibleCandidates} topology={topologyIndex} existingNodes={domainNodes} onAccept={(c, choice) => void handleAcceptDiscovery(c, choice)} onReject={(id) => setCandidates((prev) => prev.filter((c) => c.id !== id))} onClose={() => setDiscoveryOpen(false)} />
-
-          <BlockLibraryPanel
-            open={libraryOpen}
-            onPick={(preset) => {
-              setLibraryOpen(false);
-              setInspector({ kind: "create", nodeKind: "external-device", prefillComment: preset.name, prefillData: { kind: "external-device", description: preset.description } });
+          <DiscoveryTray
+            open={discoveryOpen}
+            candidates={visibleCandidates}
+            topology={topologyIndex}
+            existingNodes={domainNodes}
+            onAccept={(c, choice) => void handleAcceptDiscovery(c, choice)}
+            onReject={(id) => setCandidates((prev) => prev.filter((c) => c.id !== id))}
+            onClose={() => setDiscoveryOpen(false)}
+            onConfigureManually={(portId) => {
+              setDiscoveryOpen(false);
+              setPortSetup(portId !== undefined && portId >= 0 ? { kind: "pin", portId } : { kind: "pick" });
             }}
-            onClose={() => setLibraryOpen(false)}
+          />
+
+          <PortSetupTray
+            key={portSetup ? `${portSetup.kind}-${portSetup.kind === "pick" ? "add" : `${portSetup.portId}-${portSetup.kind === "pin" ? portSetup.pinIndex ?? "any" : "proto"}`}` : "closed"}
+            open={portSetup !== null}
+            request={portSetup}
+            topology={topologyIndex}
+            catalog={catalogIndex}
+            profiles={visibleProfileIndex}
+            extraPortIds={[]}
+            placedPortIds={configuredPorts.map((p) => p.portId)}
+            topologyLoading={topologyLoading}
+            onReloadTopology={reloadTopology}
+            onClose={() => setPortSetup(null)}
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function EmptyHero({
+  icon: Icon,
+  title,
+  body,
+  actionLabel,
+  onAction,
+}: {
+  readonly icon: LucideIcon;
+  readonly title: string;
+  readonly body: string;
+  readonly actionLabel: string;
+  readonly onAction: () => void;
+}) {
+  return (
+    <div className="relative flex flex-1 flex-col items-center justify-center gap-3 overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-brand-cyan-glow) 10%, transparent), transparent 60%), radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--color-brand-purple-glow) 10%, transparent), transparent 60%)",
+        }}
+      />
+      <Icon size={48} className="relative text-ink-faint" />
+      <h2 className="relative font-heading text-lg font-semibold text-ink">{title}</h2>
+      <p className="relative max-w-md text-center font-body text-sm text-ink-muted">{body}</p>
+      <button type="button" onClick={onAction} className="relative mt-2 rounded-slpill bg-brand-blue px-4 py-2 font-body-strong text-sm text-white hover:bg-brand-blue-dark">
+        {actionLabel}
+      </button>
     </div>
   );
 }

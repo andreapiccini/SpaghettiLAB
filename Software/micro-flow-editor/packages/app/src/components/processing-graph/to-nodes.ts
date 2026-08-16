@@ -1,7 +1,9 @@
 import type { AuthoringMetadata, GraphState } from "@spaghettilab/domain";
 import { isBlockNodeData, isRuleNodeData, moduleReferenceOf, type DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
-import { findCatalogEntriesByTypeId } from "@spaghettilab/processing-block-catalog";
+import { formatFieldsSubtitle } from "@spaghettilab/processing-block-catalog";
 import type { Node } from "@xyflow/react";
+import { catalogEntryForNode, propertiesOf } from "./catalog-entry-for-node.js";
+import { formatConfiguredSubtitle } from "./configured-subtitle.js";
 import { NODE_HEIGHT, NODE_WIDTH } from "./layout-constants.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 
@@ -19,7 +21,18 @@ export type ProcessingNodeUiData = {
  * resolves every node against `EditorModel` (S042), which only knows Module
  * Driver/Device Profile `typeId`s, not Schedule/Event source/Block/Rule.
  */
-export function toProcessingNodes(graphState: GraphState<"device-processing">, authoringMetadata: Readonly<Record<string, AuthoringMetadata>>, errorNodeIds: ReadonlySet<string>, moduleLabel: (moduleNodeId: string) => string): Node<ProcessingNodeUiData>[] {
+export function toProcessingNodes(
+  graphState: GraphState<"device-processing">,
+  authoringMetadata: Readonly<Record<string, AuthoringMetadata>>,
+  errorNodeIds: ReadonlySet<string>,
+  moduleLabel: (moduleNodeId: string) => string,
+  fieldLabel: (moduleNodeId: string, fieldId: number) => string = (_moduleNodeId, fieldId) => String(fieldId),
+): Node<ProcessingNodeUiData>[] {
+  const titles = new Map<string, string>();
+  for (const node of graphState.nodes) {
+    titles.set(node.id, canvasTitle(node.data as DeviceProcessingNodeData, authoringMetadata[node.id]));
+  }
+
   return graphState.nodes.map((node) => {
     const meta = authoringMetadata[node.id];
     const data = node.data as DeviceProcessingNodeData;
@@ -39,38 +52,62 @@ export function toProcessingNodes(graphState: GraphState<"device-processing">, a
       data: {
         domainId: node.id,
         kind: data.kind,
-        label: meta?.comment && meta.comment.trim() !== "" ? meta.comment : PROCESSING_NODE_KIND_CONFIG[data.kind].label,
-        subtitle: subtitleFor(data, moduleLabel),
+        label: titles.get(node.id) ?? PROCESSING_NODE_KIND_CONFIG[data.kind].label,
+        subtitle: subtitleFor(node.id, data, graphState, titles, moduleLabel, fieldLabel),
         hasError: errorNodeIds.has(node.id),
       },
     };
   });
 }
 
-function subtitleFor(data: DeviceProcessingNodeData, moduleLabel: (moduleNodeId: string) => string): string {
-  const moduleRef = moduleReferenceOf(data);
-  if (data.kind === "schedule") return `${moduleLabel(data.moduleNodeId)} · ogni ${data.periodMs}ms${data.enabled ? "" : " · disabilitato"}`;
-  if (data.kind === "event-source") return moduleLabel(data.moduleNodeId);
-  if (isBlockNodeData(data)) return configuredSubtitle(data.blockTypeId, data.properties) ?? findCatalogEntriesByTypeId(data.blockTypeId)[0]?.label ?? (data.blockTypeId || "—");
-  if (isRuleNodeData(data)) return configuredSubtitle(data.ruleTypeId, data.properties) ?? findCatalogEntriesByTypeId(data.ruleTypeId)[0]?.label ?? (data.ruleTypeId || "—");
-  return moduleRef ?? "—";
+function canvasTitle(data: DeviceProcessingNodeData, meta: AuthoringMetadata | undefined): string {
+  if (meta?.comment && meta.comment.trim() !== "") return meta.comment.trim();
+  const entry = catalogEntryForNode(data);
+  if (entry) return entry.label;
+  return PROCESSING_NODE_KIND_CONFIG[data.kind].label;
 }
 
-/**
- * A live preview of what a Block/Rule actually does, read straight from its
- * configured `properties` — so "IF Condition" on the canvas reads "> 30"
- * instead of the generic catalog label, without opening the Inspector.
- * GET_CATALOG has no field schema (NodeInspector.tsx's own `PropertiesEditor`
- * comment), so this can only cover typeIds whose real field_id meaning is
- * known from firmware source — currently just `threshold`
- * (`Firmware/core/spaghetti_rules/threshold/threshold.h`): field_id 3/4 are
- * the hysteresis band's LOWER/UPPER bounds. Every other typeId still falls
- * back to the plain catalog label.
- */
-function configuredSubtitle(typeId: string, properties: Readonly<Record<string, unknown>>): string | undefined {
-  if (typeId !== "threshold") return undefined;
-  const lower = properties["3"];
-  const upper = properties["4"];
-  if (typeof lower !== "bigint" || typeof upper !== "bigint") return undefined;
-  return lower === upper ? `soglia ${upper}` : `${lower} … ${upper}`;
+function subtitleFor(
+  nodeId: string,
+  data: DeviceProcessingNodeData,
+  graphState: GraphState<"device-processing">,
+  titles: ReadonlyMap<string, string>,
+  moduleLabel: (moduleNodeId: string) => string,
+  fieldLabel: (moduleNodeId: string, fieldId: number) => string,
+): string {
+  const entry = catalogEntryForNode(data);
+  const placedId = data.kind === "block" || data.kind === "event-source" ? data.catalogEntryId : undefined;
+  const placed = placedId ? entry : undefined;
+  const fromFields = placed?.fields?.length ? formatFieldsSubtitle(placed.fields, propertiesOf(data)) : undefined;
+
+  if (data.kind === "schedule") return `${moduleLabel(data.moduleNodeId)} · ogni ${data.periodMs}ms${data.enabled ? "" : " · disabilitato"}`;
+  if (data.kind === "event-source") {
+    const module = data.moduleNodeId.trim() !== "" ? moduleLabel(data.moduleNodeId) : undefined;
+    return [fromFields, module].filter((part): part is string => Boolean(part)).join(" · ") || entry?.subtitle || "—";
+  }
+  if (isBlockNodeData(data)) {
+    const input = incomingLabel(nodeId, graphState, titles);
+    if (fromFields) return input ? `${input} ${fromFields}` : fromFields;
+    return formatConfiguredSubtitle("block", data.blockTypeId, data.properties, input) ?? entry?.subtitle ?? entry?.label ?? (data.blockTypeId !== "" ? data.blockTypeId : "—");
+  }
+  if (isRuleNodeData(data)) {
+    const source = data.sourceReference
+      ? `${moduleLabel(data.sourceReference.moduleNodeId)}.${fieldLabel(data.sourceReference.moduleNodeId, data.sourceReference.fieldId)}`
+      : undefined;
+    return formatConfiguredSubtitle("rule", data.ruleTypeId, data.properties, source) ?? entry?.subtitle ?? entry?.label ?? "—";
+  }
+  return moduleReferenceOf(data) ?? "—";
+}
+
+function incomingLabel(nodeId: string, graphState: GraphState<"device-processing">, titles: ReadonlyMap<string, string>): string | undefined {
+  const names = [
+    ...new Set(
+      graphState.edges
+        .filter((edge) => edge.target === nodeId)
+        .map((edge) => titles.get(edge.source)?.trim())
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ];
+  if (names.length === 0) return undefined;
+  return names.join(", ");
 }

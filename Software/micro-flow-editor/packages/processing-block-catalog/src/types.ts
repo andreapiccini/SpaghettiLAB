@@ -5,9 +5,9 @@
  * `type_id` values remain the runtime authority: a shipped entry's `typeId` must
  * match a `SPAGHETTI_BLOCK_DRIVER_DEFINE` / rule driver, never an invented UI name.
  *
- * AppBlocks Library blocks that have a SpaghettiLAB analog are mapped here
- * (Features tab is a later dump). Vendor-only hardware and unbounded loops are
- * omitted, not faked as Core drivers.
+ * AppBlocks Library blocks are mapped here with named inspector `fields`.
+ * Planned `ab.*` typeIds are authoring-only until Config/firmware maps them.
+ * Vendor-only hardware is omitted, not faked as Core drivers.
  */
 
 export type ProcessingCatalogCategoryId =
@@ -43,6 +43,17 @@ export type ProcessingAvailability = "shipped" | "pack" | "planned" | "unavailab
 
 export type ProcessingNodeKind = "schedule" | "event-source" | "block" | "rule";
 
+export type CatalogFieldType = "text" | "textarea" | "number" | "checkbox" | "select";
+
+export type CatalogField = {
+  readonly id: string;
+  readonly label: string;
+  readonly type: CatalogFieldType;
+  readonly placeholder?: string;
+  readonly options?: readonly { readonly value: string; readonly label: string }[];
+  readonly default?: string | number | boolean;
+};
+
 export type ProcessingCatalogEntry = {
   readonly id: string;
   readonly label: string;
@@ -57,6 +68,14 @@ export type ProcessingCatalogEntry = {
   readonly typeId?: string;
   readonly packId?: string;
   readonly notes: string;
+  /**
+   * Named inspector fields (AppBlocks-style). When present, the Inspector
+   * shows these instead of raw firmware field_id rows. Values live in
+   * `properties` and are authoring-only until config/firmware maps them.
+   */
+  readonly fields?: readonly CatalogField[];
+  /** Event-source/schedule: false = no Module picker (e.g. On Boot). Default true. */
+  readonly needsModule?: boolean;
 };
 
 export type ProcessingCatalogCategory = {

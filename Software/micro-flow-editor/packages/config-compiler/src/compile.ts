@@ -247,6 +247,9 @@ export function compileConfig(input: CompileConfigInput, options: CompileConfigO
     // README correction); RuleNodeData.sourceReference is compiled separately, below.
     const targetKey = targetNode.data.kind === "block" ? blockKeyOf.get(edge.target) : undefined;
     if (targetKey === undefined) {
+      // Authoring nest: Schedule/Event-source → Event-source is a dashed-box
+      // grouping, not a Config edge (`target_key` is always a Block).
+      if (targetNode.data.kind === "schedule" || targetNode.data.kind === "event-source") continue;
       errors.push(failure(ConfigCompilerErrorCode.DANGLING_MODULE_REFERENCE, ["edges", edge.id], edge.target, `edge "${edge.id}"'s target is not a compiled Block`));
       continue;
     }

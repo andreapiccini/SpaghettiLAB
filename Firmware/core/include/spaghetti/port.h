@@ -362,6 +362,51 @@ int spaghetti_port_adc_read(
 	k_timeout_t timeout);
 
 /**
+ * @brief Drive one indexed digital output line on the connector.
+ *
+ * `spaghetti_port_set_output()` above drives a Port's single primary digital
+ * line (Relay's model: one Port, one purpose). A Flow's five raw signals can
+ * carry more than one independently-driveable digital line on the same
+ * connector — this is the indexed counterpart, mirroring
+ * @ref spaghetti_port_adc_read's channel model exactly, for drivers that
+ * pick which signal index (0..4) they own via their own Module config.
+ *
+ * @param[in] port Port borrowed for this call and never retained.
+ * @param[in] channel Logical connector signal index in 0..4.
+ * @param[in] high True requests a high electrical level; false requests low.
+ *
+ * @retval 0 The output reached the requested level.
+ * @retval -EINVAL @p port is NULL.
+ * @retval -ENOTSUP No digital-output line is wired at @p channel.
+ * @retval -ENODEV The GPIO controller is unavailable.
+ * @retval -EIO The GPIO driver rejected the write.
+ */
+int spaghetti_port_digital_output_set(
+	const struct spaghetti_port *port,
+	uint8_t channel,
+	bool high);
+
+/**
+ * @brief Read one indexed digital input line on the connector.
+ *
+ * Indexed counterpart of @ref spaghetti_port_get_input, same reasoning as
+ * @ref spaghetti_port_digital_output_set above.
+ *
+ * @param[in] port Borrowed firmware-lifetime Port.
+ * @param[in] channel Logical connector signal index in 0..4.
+ * @param[out] out_high Written only on success.
+ *
+ * @retval 0 Level copied.
+ * @retval -EINVAL @p port or @p out_high is NULL.
+ * @retval -ENOTSUP No digital-input line is wired at @p channel.
+ * @retval -ENODEV GPIO controller is unavailable.
+ */
+int spaghetti_port_digital_input_get(
+	const struct spaghetti_port *port,
+	uint8_t channel,
+	bool *out_high);
+
+/**
  * @brief Perform a bounded 1-Wire write/read against one ROM identity.
  *
  * @param[in] port Borrowed firmware-lifetime Port.

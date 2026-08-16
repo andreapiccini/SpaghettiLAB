@@ -35,6 +35,36 @@
 			i2c = <&i2c0>;
 			status = "okay";
 		};
+
+		/*
+		 * A second connector exposing five raw digital signal lines on
+		 * ESP32-C3 SuperMini breakout pins 0, 1, 5, 6, 7 — every
+		 * production pin reference here is the SuperMini's own labeled
+		 * breakout pin, chosen deliberately excluding the pins already
+		 * wired above (GPIO3/GPIO4, I2C0) and GPIO2/GPIO8/GPIO9 (ESP32-C3
+		 * strapping pins, sampled by the boot ROM at reset to select
+		 * flash voltage/download mode — safe to use as GPIO once running,
+		 * but risky to wire to anything that could hold them low across a
+		 * reset). Each line is both an input-gpios and output-gpios entry
+		 * at the same signal index: the physical pin is bidirectional,
+		 * which direction is actually used is a Module driver's own
+		 * choice (its declared required_capabilities), not fixed here.
+		 */
+		port1: port@1 {
+			compatible = "spaghettilab,port";
+			reg = <1>;
+			input-gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>,
+				      <&gpio0 1 GPIO_ACTIVE_HIGH>,
+				      <&gpio0 5 GPIO_ACTIVE_HIGH>,
+				      <&gpio0 6 GPIO_ACTIVE_HIGH>,
+				      <&gpio0 7 GPIO_ACTIVE_HIGH>;
+			output-gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>,
+				       <&gpio0 1 GPIO_ACTIVE_HIGH>,
+				       <&gpio0 5 GPIO_ACTIVE_HIGH>,
+				       <&gpio0 6 GPIO_ACTIVE_HIGH>,
+				       <&gpio0 7 GPIO_ACTIVE_HIGH>;
+			status = "okay";
+		};
 	};
 
 	spaghetti_flows {
@@ -47,6 +77,16 @@
 			reg = <0>;
 			port = <&port0>;
 			direction = "field-to-core";
+			signal-count = <5>;
+			function-bay-count = <0>;
+			status = "okay";
+		};
+
+		flow1: flow@1 {
+			compatible = "spaghettilab,flow";
+			reg = <1>;
+			port = <&port1>;
+			direction = "bidirectional";
 			signal-count = <5>;
 			function-bay-count = <0>;
 			status = "okay";

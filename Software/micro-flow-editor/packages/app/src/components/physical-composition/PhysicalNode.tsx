@@ -1,4 +1,5 @@
 import type { NodeProps } from "@xyflow/react";
+import { ConfiguredPortNode } from "./ConfiguredPortNode.js";
 import { NODE_KIND_CONFIG } from "./node-kinds.js";
 import type { PhysicalNodeData } from "./to-nodes.js";
 
@@ -37,4 +38,4 @@ export function PhysicalNode({ data, selected }: NodeProps & { readonly data: Ph
   );
 }
 
-export const PHYSICAL_NODE_TYPES = { physical: PhysicalNode };
+export const PHYSICAL_NODE_TYPES = { physical: PhysicalNode, "configured-port": ConfiguredPortNode };

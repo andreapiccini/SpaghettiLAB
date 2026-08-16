@@ -40,6 +40,9 @@ target_sources(app PRIVATE
   spaghetti_modules/ina219/ina219.c
   spaghetti_modules/relay/relay.c
   spaghetti_modules/declarative_device/declarative_device.c
+  spaghetti_modules/digital_input_trigger/digital_input_trigger.c
+  spaghetti_modules/digital_line_set/digital_line_set.c
+  spaghetti_modules/on_boot/on_boot.c
   spaghetti_rules/threshold/threshold.c
   spaghetti_blocks/blocks_math.c
   spaghetti_blocks/blocks_bitwise.c
@@ -193,6 +196,9 @@ target_include_directories(app PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/ina219
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/relay
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/declarative_device
+  ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/digital_input_trigger
+  ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/digital_line_set
+  ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_modules/on_boot
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_rules/threshold
   ${CMAKE_CURRENT_SOURCE_DIR}/spaghetti_blocks
 )

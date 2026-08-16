@@ -34,6 +34,10 @@ struct spaghetti_port {
 	const struct device *w1;
 	const struct gpio_dt_spec *output;
 	const struct gpio_dt_spec *input;
+	const struct gpio_dt_spec *digital_outputs;
+	uint8_t digital_output_count;
+	const struct gpio_dt_spec *digital_inputs;
+	uint8_t digital_input_count;
 #if defined(CONFIG_ADC)
 	const struct adc_dt_spec *adc_channels;
 	uint8_t adc_channel_count;
@@ -77,6 +81,30 @@ struct spaghetti_port_controller_lock {
 	BUILD_ASSERT(SPAGHETTI_PORT_CAPS(node_id) != 0U, \
 		     "Spaghetti Port must declare at least one transport");
 
+/*
+ * output-gpios/input-gpios are phandle-arrays ("mapped to connector signal
+ * indices" per the binding), one Flow always carries exactly five raw
+ * signals (topology.c's own BUILD_ASSERT), so a Port's digital lines can be
+ * more than the one primary line spaghetti_port_set_output()/get_input()
+ * drive — SPAGHETTI_PORT_GPIO_ELEM/_ARRAY/_COUNT below build the full
+ * per-signal-index array (spaghetti_port_digital_output_set/input_get,
+ * mirroring the existing adc_channels/adc_channel_count + channel-indexed
+ * spaghetti_port_adc_read pattern already used for ADC on the same Port).
+ */
+#define SPAGHETTI_PORT_GPIO_ELEM(idx, node_id, prop) \
+	GPIO_DT_SPEC_GET_BY_IDX(node_id, prop, idx)
+
+#define SPAGHETTI_PORT_GPIO_ARRAY(node_id, prop) \
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), \
+		((const struct gpio_dt_spec[]){ \
+			LISTIFY(DT_PROP_LEN(node_id, prop), \
+				SPAGHETTI_PORT_GPIO_ELEM, (,), node_id, prop) \
+		}), (NULL))
+
+#define SPAGHETTI_PORT_GPIO_COUNT(node_id, prop) \
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, prop), \
+		((uint8_t)DT_PROP_LEN(node_id, prop)), (0U))
+
 #define SPAGHETTI_PORT_DEFINE(node_id) \
 	{ \
 		.id = DT_REG_ADDR(node_id), \
@@ -91,6 +119,10 @@ struct spaghetti_port_controller_lock {
 			(DEVICE_DT_GET(DT_PHANDLE(node_id, w1))), (NULL)), \
 		.output = NULL, \
 		.input = NULL, \
+		.digital_outputs = SPAGHETTI_PORT_GPIO_ARRAY(node_id, output_gpios), \
+		.digital_output_count = SPAGHETTI_PORT_GPIO_COUNT(node_id, output_gpios), \
+		.digital_inputs = SPAGHETTI_PORT_GPIO_ARRAY(node_id, input_gpios), \
+		.digital_input_count = SPAGHETTI_PORT_GPIO_COUNT(node_id, input_gpios), \
 		.adc_channels = NULL, \
 		.adc_channel_count = 0U, \
 		.transport_active = false, \
@@ -118,9 +150,20 @@ static bool timeout_is_forever(k_timeout_t timeout)
 
 static bool transport_is_shareable(enum spaghetti_port_transport transport)
 {
+	/*
+	 * GPIO and ADC are channel-indexed transports (digital_outputs/
+	 * digital_inputs/adc_channels, addressed by signal index): distinct
+	 * Modules on distinct channels of the same Port do not contend for the
+	 * same wire, and module_manager.c's endpoints_conflict() already
+	 * rejects two Modules claiming the same GPIO_LINE/ADC_CHANNEL value.
+	 * Excluding them here would make it impossible for more than one
+	 * Module to ever use the connector's multiple lines at once.
+	 */
 	return (transport == SPAGHETTI_PORT_TRANSPORT_I2C) ||
 	       (transport == SPAGHETTI_PORT_TRANSPORT_SPI) ||
-	       (transport == SPAGHETTI_PORT_TRANSPORT_W1);
+	       (transport == SPAGHETTI_PORT_TRANSPORT_W1) ||
+	       (transport == SPAGHETTI_PORT_TRANSPORT_GPIO) ||
+	       (transport == SPAGHETTI_PORT_TRANSPORT_ADC);
 }
 
 static bool transport_capability_present(
@@ -775,6 +818,55 @@ int spaghetti_port_get_input(const struct spaghetti_port *port, bool *out_high)
 	}
 
 	value = gpio_pin_get_raw(port->input->port, port->input->pin);
+	if (value < 0) {
+		return value;
+	}
+
+	*out_high = value != 0;
+	return 0;
+}
+
+int spaghetti_port_digital_output_set(
+	const struct spaghetti_port *port,
+	uint8_t channel,
+	bool high)
+{
+	if (port == NULL) {
+		return -EINVAL;
+	}
+	if ((port->digital_outputs == NULL) ||
+	    (channel >= port->digital_output_count)) {
+		return -ENOTSUP;
+	}
+	if (!gpio_is_ready_dt(&port->digital_outputs[channel])) {
+		return -ENODEV;
+	}
+
+	return gpio_pin_set_raw(port->digital_outputs[channel].port,
+				 port->digital_outputs[channel].pin,
+				 high ? 1 : 0);
+}
+
+int spaghetti_port_digital_input_get(
+	const struct spaghetti_port *port,
+	uint8_t channel,
+	bool *out_high)
+{
+	int value;
+
+	if ((port == NULL) || (out_high == NULL)) {
+		return -EINVAL;
+	}
+	if ((port->digital_inputs == NULL) ||
+	    (channel >= port->digital_input_count)) {
+		return -ENOTSUP;
+	}
+	if (!gpio_is_ready_dt(&port->digital_inputs[channel])) {
+		return -ENODEV;
+	}
+
+	value = gpio_pin_get_raw(port->digital_inputs[channel].port,
+				  port->digital_inputs[channel].pin);
 	if (value < 0) {
 		return value;
 	}

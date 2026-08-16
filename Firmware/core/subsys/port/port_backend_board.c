@@ -15,10 +15,14 @@ int spaghetti_port_backend_select(
 	ARG_UNUSED(port_id);
 
 	/*
-	 * Core V1 wires I2C through static Devicetree pinctrl. Runtime mux is
-	 * not present, so only I2C may be selected and no pinctrl switch runs.
+	 * Core V1 wires I2C and digital GPIO lines through static Devicetree
+	 * pinctrl/gpio-cells — both are fixed per-Port wiring, not a runtime
+	 * mux, so both may be selected and neither needs a pinctrl switch here.
+	 * Anything else (SPI/UART/ADC/W1 sharing a runtime-switched bus) stays
+	 * unsupported until a board variant actually describes it.
 	 */
-	if (transport != SPAGHETTI_PORT_TRANSPORT_I2C) {
+	if ((transport != SPAGHETTI_PORT_TRANSPORT_I2C) &&
+	    (transport != SPAGHETTI_PORT_TRANSPORT_GPIO)) {
 		return -ENOTSUP;
 	}
 

@@ -1,7 +1,21 @@
 import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-graph-model";
-import { isPlaceableOnDeviceGraph, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
+import { defaultPropertiesFromFields, isPlaceableOnDeviceGraph, type ProcessingCatalogEntry } from "@spaghettilab/processing-block-catalog";
 
 export const PROCESSING_BLOCK_MIME = "application/x-spaghettilab-processing-block";
+
+let paletteDragNodeKind: DeviceProcessingNodeData["kind"] | undefined;
+
+export function beginPaletteDrag(kind: DeviceProcessingNodeData["kind"] | undefined): void {
+  paletteDragNodeKind = kind;
+}
+
+export function endPaletteDrag(): void {
+  paletteDragNodeKind = undefined;
+}
+
+export function peekPaletteDragKind(): DeviceProcessingNodeData["kind"] | undefined {
+  return paletteDragNodeKind;
+}
 
 export function nodeDataFromCatalogEntry(entry: ProcessingCatalogEntry, firstModuleId: string | undefined): DeviceProcessingNodeData | null {
   if (!isPlaceableOnDeviceGraph(entry) || entry.nodeKind === undefined) return null;
@@ -9,9 +23,19 @@ export function nodeDataFromCatalogEntry(entry: ProcessingCatalogEntry, firstMod
     case "schedule":
       return { kind: "schedule", moduleNodeId: firstModuleId ?? "", periodMs: 1000, enabled: true };
     case "event-source":
-      return { kind: "event-source", moduleNodeId: firstModuleId ?? "" };
+      return {
+        kind: "event-source",
+        moduleNodeId: entry.needsModule === false ? "" : (firstModuleId ?? ""),
+        catalogEntryId: entry.id,
+        properties: defaultPropertiesFromFields(entry.fields ?? []),
+      };
     case "block":
-      return { kind: "block", blockTypeId: entry.typeId ?? "", properties: {} };
+      return {
+        kind: "block",
+        blockTypeId: entry.typeId ?? "",
+        catalogEntryId: entry.id,
+        properties: defaultPropertiesFromFields(entry.fields ?? []),
+      };
     case "rule":
       return { kind: "rule", ruleTypeId: entry.typeId ?? "", properties: {} };
   }

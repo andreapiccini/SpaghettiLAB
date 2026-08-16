@@ -10,7 +10,9 @@ import { Clock, GitBranch, Radio, SlidersHorizontal, type LucideIcon } from "luc
  * collapse the UX's Trigger+Read into one node (no separate read-node/edge exists in
  * firmware), `block` is Elaborazione/Uscita depending on its (currently unexposed)
  * port descriptor, `rule` is always Logica/Uscita — a Rule has no output port at all,
- * structurally. Colors below are chosen to stay recognizable against the original
+ * structurally. `schedule` and `event-source` are nestable containers (dashed
+ * boxes): event-sources can sit inside a schedule, and a block dropped into
+ * the inner box belongs to both. Colors stay recognizable against the original
  * palette without claiming a five-category taxonomy the backend doesn't have.
  */
 export const PROCESSING_NODE_KIND_CONFIG: Record<DeviceProcessingNodeData["kind"], { readonly label: string; readonly colorVar: string; readonly icon: LucideIcon }> = {

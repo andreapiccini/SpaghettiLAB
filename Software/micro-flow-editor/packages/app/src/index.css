@@ -68,3 +68,10 @@ body {
   color: var(--color-ink);
   background: var(--color-surface);
 }
+
+/* Edge HTML labels (trash on a wire) must sit above the edge SVGs.
+ * Selected edges use z-index 1000; without this the stroke covers the
+ * button and the first click selects the edge instead of deleting. */
+.react-flow__edgelabel-renderer {
+  z-index: 1001;
+}

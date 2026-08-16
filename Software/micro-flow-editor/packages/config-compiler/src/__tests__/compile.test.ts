@@ -161,4 +161,25 @@ describe("compileConfig — S072 § Verifiche", () => {
       expect(() => JSON.parse(json.replace(/(\d+)n"/g, '$1"'))).not.toThrow();
     }
   });
+
+  it("ignores authoring nest edges whose target is an Event-source, not a Block", () => {
+    const input = baseInput({
+      physicalGraph: { layer: "physical-composition", nodes: [module("m1", 1), module("m2", 2)], edges: [] },
+      processingGraph: {
+        layer: "device-processing",
+        nodes: [
+          schedule("s1", "m1"),
+          { layer: "device-processing" as const, id: "btn", data: { kind: "event-source" as const, moduleNodeId: "m2" } },
+          block("b1", "scale_offset"),
+        ],
+        edges: [
+          { layer: "device-processing" as const, id: "nest", source: "s1", target: "btn", sourceHandle: "0", targetHandle: "0" },
+          { layer: "device-processing" as const, id: "e1", source: "s1", target: "b1", sourceHandle: "1", targetHandle: "0" },
+        ],
+      },
+    });
+    const result = compileConfig(input);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.edges).toHaveLength(1);
+  });
 });

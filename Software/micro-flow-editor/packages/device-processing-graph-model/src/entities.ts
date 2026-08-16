@@ -43,6 +43,9 @@ export type ScheduleNodeData = {
 export type EventSourceNodeData = {
   readonly kind: "event-source";
   readonly moduleNodeId: string;
+  /** Catalog row this trigger was placed from (`appblocks.interrupt`, …). */
+  readonly catalogEntryId?: string;
+  readonly properties?: Readonly<Record<string, unknown>>;
 };
 
 /**
@@ -59,6 +62,8 @@ export type BlockNodeData = {
   readonly minVersion?: number;
   readonly exactVersion?: number;
   readonly properties: Readonly<Record<string, unknown>>;
+  /** Catalog row this block was placed from, when it is not a firmware type_id alone. */
+  readonly catalogEntryId?: string;
 };
 
 /**
@@ -106,6 +111,8 @@ export function isRuleNodeData(data: DeviceProcessingNodeData): data is RuleNode
 }
 
 export function moduleReferenceOf(data: DeviceProcessingNodeData): string | undefined {
-  if (data.kind === "schedule" || data.kind === "event-source") return data.moduleNodeId;
+  if (data.kind === "schedule" || data.kind === "event-source") {
+    return data.moduleNodeId.trim() === "" ? undefined : data.moduleNodeId;
+  }
   return undefined;
 }

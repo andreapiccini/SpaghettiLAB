@@ -204,7 +204,7 @@ export class CoreSession {
       }
 
       const catalog = await this.readCatalog();
-      const topology = await this.client.getFullTopology().then((flows) => ({ flows, nextCursor: 0 }));
+      const topology = await this.client.getFullTopology(16).then((flows) => ({ flows, nextCursor: 0 }));
       const config = await this.client.getConfig();
       const resources = await this.client.getResources();
 

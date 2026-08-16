@@ -19,6 +19,7 @@ import { isScreenVisibleInMode } from "./lib/ui-mode.js";
 import { CoreSessionsProvider } from "./state/core-sessions-context.js";
 import { LocaleProvider } from "./state/locale-context.js";
 import { NodeRedRuntimeProvider } from "./state/node-red-runtime-context.js";
+import { PortProtocolProvider } from "./state/port-protocol-context.js";
 import { SessionProvider, useSession } from "./state/session-context.js";
 import { SettingsModalProvider } from "./state/settings-modal-context.js";
 import { TourProvider } from "./state/tour-context.js";
@@ -134,14 +135,16 @@ export default function App() {
         <SettingsModalProvider>
           <NodeRedRuntimeProvider>
             <SessionProvider>
-              <TourProvider>
-                <CoreSessionsProvider>
-                  <AppContent />
-                  <SettingsModal />
-                  <TourOverlay />
-                  <NextStepHint />
-                </CoreSessionsProvider>
-              </TourProvider>
+              <PortProtocolProvider>
+                <TourProvider>
+                  <CoreSessionsProvider>
+                    <AppContent />
+                    <SettingsModal />
+                    <TourOverlay />
+                    <NextStepHint />
+                  </CoreSessionsProvider>
+                </TourProvider>
+              </PortProtocolProvider>
             </SessionProvider>
           </NodeRedRuntimeProvider>
         </SettingsModalProvider>

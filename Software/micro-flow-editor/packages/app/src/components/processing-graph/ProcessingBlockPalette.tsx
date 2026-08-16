@@ -26,9 +26,9 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
-import { PROCESSING_BLOCK_MIME } from "./catalog-to-node.js";
+import { beginPaletteDrag, endPaletteDrag, PROCESSING_BLOCK_MIME } from "./catalog-to-node.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
 
 const CATEGORY_ICONS: Record<ProcessingCatalogCategoryId, LucideIcon> = {
@@ -52,11 +52,21 @@ const CATEGORY_ICONS: Record<ProcessingCatalogCategoryId, LucideIcon> = {
 
 const DEFAULT_OPEN: ReadonlySet<ProcessingCatalogCategoryId> = new Set(["trigger", "logic", "math", "filter", "time", "io"]);
 
-export function ProcessingBlockPalette({ onPlace }: { readonly onPlace: (entry: ProcessingCatalogEntry) => void }) {
+export function ProcessingBlockPalette() {
   const [query, setQuery] = useState("");
   const [openIds, setOpenIds] = useState<ReadonlySet<ProcessingCatalogCategoryId>>(DEFAULT_OPEN);
+  const [dragReminder, setDragReminder] = useState(false);
 
-  const filtered = useMemo(() => searchCatalog(query), [query]);
+  useEffect(() => {
+    if (!dragReminder) return;
+    const timer = setTimeout(() => setDragReminder(false), 4000);
+    return () => clearTimeout(timer);
+  }, [dragReminder]);
+
+  const filtered = useMemo(
+    () => searchCatalog(query).filter((e) => e.availability !== "unavailable"),
+    [query],
+  );
   const groups = useMemo(() => groupCatalogByCategory(filtered), [filtered]);
   const searching = query.trim() !== "";
 
@@ -101,7 +111,6 @@ export function ProcessingBlockPalette({ onPlace }: { readonly onPlace: (entry: 
                   <motion.span animate={{ rotate: open ? 0 : -90 }} transition={motionTokens.duration.base} className="text-ink-faint">
                     ▾
                   </motion.span>
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: category.color }} />
                   <span className="flex-1 truncate font-body text-sm font-semibold text-ink">{category.label}</span>
                   <span className="font-body text-xs text-ink-faint">{entries.length}</span>
                 </button>
@@ -114,21 +123,20 @@ export function ProcessingBlockPalette({ onPlace }: { readonly onPlace: (entry: 
                       transition={motionTokens.duration.base}
                       className="overflow-hidden"
                     >
-                      {entries.map((entry, entryIndex) => (
+                      {entries.map((entry, entryIndex) => {
+                        const kindConfig = entry.nodeKind ? PROCESSING_NODE_KIND_CONFIG[entry.nodeKind] : undefined;
+                        return (
                         <PaletteRow
                           key={entry.id}
                           entry={entry}
-                          // The UX category color is only a grouping label — a row's own swatch
-                          // uses the real placed-node color (PROCESSING_NODE_KIND_CONFIG) so it
-                          // actually previews what the block looks like on canvas, since a UX
-                          // category (e.g. "Logica e flusso") mixes several real node kinds
-                          // (block/rule) with different canvas colors.
-                          color={entry.nodeKind ? PROCESSING_NODE_KIND_CONFIG[entry.nodeKind].colorVar : category.color}
-                          icon={Icon}
+                          color={kindConfig?.colorVar ?? "#8A8F99"}
+                          icon={kindConfig?.icon ?? Icon}
                           delay={index * 0 + entryIndex * motionTokens.stagger.list}
-                          onPlace={onPlace}
+                          onClickRemind={() => setDragReminder(true)}
+                          onDragBegan={() => setDragReminder(false)}
                         />
-                      ))}
+                        );
+                      })}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -137,6 +145,11 @@ export function ProcessingBlockPalette({ onPlace }: { readonly onPlace: (entry: 
           })
         )}
       </div>
+      {dragReminder && (
+        <div className="mx-2 mb-3 rounded-slsm bg-surface-raised px-3 py-2 font-body text-xs text-ink" style={{ outline: "1px solid var(--color-brand-blue)" }}>
+          Per inserire il blocco, trascinalo sul canvas.
+        </div>
+      )}
     </div>
   );
 }
@@ -146,13 +159,15 @@ function PaletteRow({
   color,
   icon: Icon,
   delay,
-  onPlace,
+  onClickRemind,
+  onDragBegan,
 }: {
   readonly entry: ProcessingCatalogEntry;
   readonly color: string;
   readonly icon: LucideIcon;
   readonly delay: number;
-  readonly onPlace: (entry: ProcessingCatalogEntry) => void;
+  readonly onClickRemind: () => void;
+  readonly onDragBegan: () => void;
 }) {
   const placeable = isPlaceableOnDeviceGraph(entry);
   const badge = availabilityBadge(entry);
@@ -167,9 +182,9 @@ function PaletteRow({
       <button
         type="button"
         draggable={placeable}
-        title={entry.notes}
+        title={placeable ? "Trascina sul canvas per inserire" : entry.notes}
         onClick={() => {
-          if (placeable) onPlace(entry);
+          if (placeable) onClickRemind();
         }}
         onDragStart={(e: DragEvent<HTMLButtonElement>) => {
           if (!placeable) {
@@ -179,14 +194,20 @@ function PaletteRow({
           e.dataTransfer.setData(PROCESSING_BLOCK_MIME, entry.id);
           e.dataTransfer.effectAllowed = "copy";
           e.currentTarget.style.opacity = "0.6";
+          beginPaletteDrag(entry.nodeKind);
+          onDragBegan();
         }}
         onDragEnd={(e: DragEvent<HTMLButtonElement>) => {
           e.currentTarget.style.opacity = "";
+          endPaletteDrag();
         }}
-        className={`flex h-11 w-full items-center gap-2 rounded-slsm px-2 text-left ${placeable ? "cursor-grab hover:bg-surface-raised active:cursor-grabbing" : "cursor-not-allowed"}`}
+        className={`flex h-11 w-full items-center gap-2.5 rounded-lg px-2 text-left ${placeable ? "cursor-grab hover:bg-surface-raised active:cursor-grabbing" : "cursor-not-allowed"}`}
       >
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-slsm" style={{ backgroundColor: `${color}1F` }}>
-          <Icon size={14} style={{ color }} />
+        <div
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+          style={{ backgroundColor: placeable ? color : "#E1E4EB" }}
+        >
+          <Icon size={14} color={placeable ? "#fff" : "#8A8F99"} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate font-body text-sm text-ink">{entry.label}</div>

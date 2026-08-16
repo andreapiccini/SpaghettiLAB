@@ -6,3 +6,5 @@ export const NODE_WIDTH = 224;
 export const NODE_HEIGHT = 64;
 export const NODE_PADDING = 24;
 export const EVENT_CONTAINER_HEADER_HEIGHT = 32;
+/** Minimum gap between two processing-node cards — they must never share pixels. */
+export const NODE_GAP = 16;

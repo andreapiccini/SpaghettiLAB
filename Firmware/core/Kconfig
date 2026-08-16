@@ -138,6 +138,18 @@ module = SPAGHETTI_RELAY
 module-str = spaghetti_relay
 source "subsys/logging/Kconfig.template.log_config"
 
+module = SPAGHETTI_DIGITAL_INPUT_TRIGGER
+module-str = spaghetti_digital_input_trigger
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DIGITAL_LINE_SET
+module-str = spaghetti_digital_line_set
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_ON_BOOT
+module-str = spaghetti_on_boot
+source "subsys/logging/Kconfig.template.log_config"
+
 rsource "Kconfig.resources"
 rsource "subsys/connectivity/Kconfig"
 rsource "subsys/services/secure_workspace/Kconfig"
@@ -227,6 +239,40 @@ config SPAGHETTI_RELAY_MAX_INSTANCES
 	help
 	  Number of typed Relay contexts reserved in the driver-owned memory slab.
 	  Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_DIGITAL_INPUT_TRIGGER_MAX_INSTANCES
+	int "Maximum number of simultaneous Digital Input Trigger instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 5
+	help
+	  Number of typed Digital Input Trigger contexts reserved in the
+	  driver-owned memory slab. Allocation is non-blocking and does not use
+	  the heap. Defaults to the connector's five signal lines.
+
+config SPAGHETTI_DIGITAL_INPUT_TRIGGER_POLL_MS
+	int "Digital Input Trigger poll period in milliseconds"
+	range 5 1000
+	default 20
+	help
+	  Core V1 has no GPIO interrupt/ISR API wired through the Port layer, so
+	  the trigger edge is detected by periodic polling instead.
+
+config SPAGHETTI_DIGITAL_LINE_SET_MAX_INSTANCES
+	int "Maximum number of simultaneous Digital Line Set instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 5
+	help
+	  Number of typed Digital Line Set contexts reserved in the driver-owned
+	  memory slab. Allocation is non-blocking and does not use the heap.
+	  Defaults to the connector's five signal lines.
+
+config SPAGHETTI_ON_BOOT_MAX_INSTANCES
+	int "Maximum number of simultaneous On Boot instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 1
+	help
+	  Number of typed On Boot contexts reserved in the driver-owned memory
+	  slab. Allocation is non-blocking and does not use the heap.
 
 config SPAGHETTI_DECLARATIVE_DEVICE_MAX_INSTANCES
 	int "Maximum simultaneous declarative-device instances"

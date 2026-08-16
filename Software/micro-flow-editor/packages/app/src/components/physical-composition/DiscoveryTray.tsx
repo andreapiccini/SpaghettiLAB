@@ -23,6 +23,7 @@ export function DiscoveryTray({
   onAccept,
   onReject,
   onClose,
+  onConfigureManually,
 }: {
   readonly open: boolean;
   readonly candidates: readonly DiscoveryCandidate[];
@@ -31,6 +32,7 @@ export function DiscoveryTray({
   readonly onAccept: (candidate: DiscoveryCandidate, choice: DiscoveryAcceptChoice) => void;
   readonly onReject: (candidateId: number) => void;
   readonly onClose: () => void;
+  readonly onConfigureManually?: (portId?: number) => void;
 }) {
   return (
     <AnimatePresence>
@@ -44,15 +46,26 @@ export function DiscoveryTray({
           </div>
           <div className="flex-1 overflow-auto p-3">
             {candidates.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <div className="flex flex-col items-center gap-3 py-10 text-center">
                 <Radar size={40} className="text-ink-faint" />
-                <p className="font-body text-sm text-ink-muted">Nessun candidato al momento</p>
+                <p className="font-body text-sm text-ink-muted">Nessun hardware riconosciuto</p>
+                <p className="max-w-[240px] font-body text-xs text-ink-faint">Se hai collegato qualcosa, configuralo a mano: pin, protocollo, campi.</p>
+                {onConfigureManually && (
+                  <button type="button" onClick={() => onConfigureManually()} className="h-9 rounded-slsm bg-brand-blue px-4 font-body-strong text-sm text-white hover:bg-brand-blue-dark">
+                    Configura a mano
+                  </button>
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-3">
                 {candidates.map((c) => (
                   <CandidateCard key={c.id} candidate={c} topology={topology} existingNodes={existingNodes} onAccept={onAccept} onReject={onReject} />
                 ))}
+                {onConfigureManually && (
+                  <button type="button" onClick={() => onConfigureManually()} className="h-9 rounded-slsm border border-border-strong font-body text-sm text-ink hover:bg-surface-raised">
+                    Non è nessuno di questi — configura a mano
+                  </button>
+                )}
               </div>
             )}
           </div>

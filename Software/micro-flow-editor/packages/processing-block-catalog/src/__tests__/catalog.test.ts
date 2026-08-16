@@ -5,7 +5,6 @@ import {
   findCatalogEntryByAppblocksId,
   groupCatalogByCategory,
   isPlaceableOnDeviceGraph,
-  isPlaceableOnSystemAutomationGraph,
   searchCatalog,
   shippedTypeIds,
   systemAutomationCatalogEntries,
@@ -79,28 +78,81 @@ describe("processing-block-catalog", () => {
     }
   });
 
-  it("keeps host automations off the Core graph and on the System Automation Graph", () => {
-    expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("forloop")!)).toBe(false);
-    expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("lcd_set_screen")!)).toBe(false);
-    expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("sms_send")!)).toBe(false);
-    expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("http")!)).toBe(false);
-    expect(isPlaceableOnSystemAutomationGraph(findCatalogEntryByAppblocksId("http")!)).toBe(true);
-    expect(systemAutomationCatalogEntries().every((e) => e.runtime === "node-red")).toBe(true);
-    expect(systemAutomationCatalogEntries().length).toBeGreaterThan(0);
-  });
-
-  it("places Core analogs for IF, schedule, lookup and publish", () => {
-    expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("comparison")!)).toBe(true);
+  it("places included AppBlocks on the Core graph with named fields", () => {
+    const included = [
+      "system",
+      "network_changed",
+      "interrupt",
+      "debug",
+      "datetime",
+      "datetime_format",
+      "label",
+      "system_reboot",
+      "upgrade_firmware",
+      "digital_line_set",
+      "variable_changed",
+      "variable_set",
+      "command_triggered",
+      "bitwise",
+      "arithmetic",
+      "comparison",
+      "compound_condition",
+      "math_compound",
+      "forloop",
+      "command_trigger",
+      "timer_completed",
+      "time_interval",
+      "cron_event",
+      "timer_start",
+      "timer_stop",
+      "time_delay",
+      "table_insert",
+      "table",
+      "table_update",
+      "log_add",
+      "settings_init",
+      "http_server_endpoint",
+      "ser_data_arrival",
+      "socket_data_arrival",
+      "socket_event",
+      "sms_recv",
+      "ser_data_send",
+      "sms_send",
+      "socket_connect",
+      "socket",
+      "mqtt_sub",
+      "mqtt_change",
+      "http",
+      "mqtt_pub",
+      "lcd_text_widget",
+      "lcd_image_widget",
+      "lcd_menu",
+      "lcd_set_screen",
+    ] as const;
+    for (const id of included) {
+      const entry = findCatalogEntryByAppblocksId(id);
+      expect(entry, id).toBeDefined();
+      expect(isPlaceableOnDeviceGraph(entry!), id).toBe(true);
+    }
+    expect(findCatalogEntryByAppblocksId("system")!.fields).toBeUndefined();
+    expect(findCatalogEntryByAppblocksId("debug")!.fields?.some((f) => f.id === "message")).toBe(true);
+    expect(findCatalogEntryByAppblocksId("time_interval")!.nodeKind).toBe("event-source");
     expect(findCatalogEntryByAppblocksId("comparison")!.typeId).toBe("threshold");
-    expect(findCatalogEntryByAppblocksId("time_interval")!.nodeKind).toBe("schedule");
     expect(findCatalogEntryByAppblocksId("table")!.typeId).toBe("lookup_table");
     expect(findCatalogEntryByAppblocksId("mqtt_pub")!.typeId).toBe("publish_field");
   });
 
-  it("keeps Features-tab items unavailable until that dump arrives", () => {
-    expect(findCatalogEntryByAppblocksId("debug")!.runtime).toBe("feature");
-    expect(findCatalogEntryByAppblocksId("variable_set")!.runtime).toBe("feature");
-    expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("debug")!)).toBe(false);
+  it("hides the excluded AppBlocks from the Core graph", () => {
+    for (const id of ["keypad", "keypad_released", "pat", "beep", "modbus_slave_register", "modbus_response", "modbus_timeout", "modbus_write"] as const) {
+      const entry = findCatalogEntryByAppblocksId(id);
+      expect(entry, id).toBeDefined();
+      expect(isPlaceableOnDeviceGraph(entry!), id).toBe(false);
+    }
+  });
+
+  it("keeps remaining host automations off the Core graph", () => {
+    expect(isPlaceableOnDeviceGraph(findCatalogEntryByAppblocksId("http_server_response")!)).toBe(false);
+    expect(systemAutomationCatalogEntries().every((e) => e.runtime === "node-red")).toBe(true);
   });
 
   it("groups by the declared category order and search is case-insensitive", () => {

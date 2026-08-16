@@ -2,9 +2,12 @@ import type { CatalogIndex, ProfileIndex, TopologyIndex } from "@spaghettilab/ca
 import { DECLARATIVE_DEVICE_DRIVER_TYPE_ID } from "@spaghettilab/device-profile-install";
 import type { DomainError, GraphNode } from "@spaghettilab/domain";
 import { PowerAdmission, RailAssurance, parseW1RomHex, requiresPowerAcknowledgement, validateComposition, type ElectricalMode, type PhysicalCompositionNodeData } from "@spaghettilab/physical-composition-model";
+import type { DiscoveryCandidate } from "@spaghettilab/protocol-sdk";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
+import { assignedPinCount } from "../../lib/port-protocol-mock.js";
 import { motionTokens } from "../../lib/motion-tokens.js";
+import { usePortProtocol } from "../../state/port-protocol-context.js";
 import { NODE_KIND_CONFIG } from "./node-kinds.js";
 
 export type InspectorMode =
@@ -43,6 +46,9 @@ export function NodeInspector({
   onDelete,
   onAcknowledge,
   onClose,
+  discoveryCandidates = [],
+  onOpenDiscovery,
+  onConfigurePort,
 }: {
   readonly mode: InspectorMode;
   readonly topology: TopologyIndex | null;
@@ -54,6 +60,9 @@ export function NodeInspector({
   readonly onDelete?: () => void;
   readonly onAcknowledge: () => void;
   readonly onClose: () => void;
+  readonly discoveryCandidates?: readonly DiscoveryCandidate[];
+  readonly onOpenDiscovery?: () => void;
+  readonly onConfigurePort?: (portId: number) => void;
 }) {
   const [comment, setComment] = useState(mode.kind === "edit" ? mode.comment : (mode.prefillComment ?? ""));
   const [data, setData] = useState<PhysicalCompositionNodeData>(mode.kind === "edit" ? mode.data : ({ ...defaultDataFor(mode.nodeKind), ...mode.prefillData } as PhysicalCompositionNodeData));
@@ -145,6 +154,28 @@ export function NodeInspector({
 
         {data.kind === "module" && (
           <>
+            <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-port">
+              Port
+            </label>
+            <select id="ni-port" value={data.portId} onChange={(e) => patchModule({ portId: Number(e.target.value), bayId: -1, railId: -1 })} className="mb-4 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none">
+              <option value={-1}>—</option>
+              {(topology?.flows ?? []).map((f) => (
+                <option key={f.flowId} value={f.portId}>
+                  Port {f.portId} (Flow {f.flowId})
+                </option>
+              ))}
+            </select>
+
+            {data.portId >= 0 && (
+              <PortPathCard
+                portId={data.portId}
+                moduleNodeId={mode.kind === "edit" ? mode.nodeId : undefined}
+                candidates={discoveryCandidates.filter((c) => c.portId === data.portId)}
+                onOpenDiscovery={onOpenDiscovery}
+                onConfigurePort={onConfigurePort}
+              />
+            )}
+
             <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-driver">
               Driver
             </label>
@@ -176,18 +207,6 @@ export function NodeInspector({
                 </select>
               </>
             )}
-
-            <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-port">
-              Port
-            </label>
-            <select id="ni-port" value={data.portId} onChange={(e) => patchModule({ portId: Number(e.target.value), bayId: -1, railId: -1 })} className="mb-4 w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none">
-              <option value={-1}>—</option>
-              {(topology?.flows ?? []).map((f) => (
-                <option key={f.flowId} value={f.portId}>
-                  Port {f.portId} (Flow {f.flowId})
-                </option>
-              ))}
-            </select>
 
             <label className="mb-1 block font-body text-xs font-semibold text-ink-muted" htmlFor="ni-bay">
               Bay
@@ -310,5 +329,55 @@ export function NodeInspector({
         </button>
       </div>
     </motion.div>
+  );
+}
+
+function PortPathCard({
+  portId,
+  moduleNodeId,
+  candidates,
+  onOpenDiscovery,
+  onConfigurePort,
+}: {
+  readonly portId: number;
+  readonly moduleNodeId?: string;
+  readonly candidates: readonly DiscoveryCandidate[];
+  readonly onOpenDiscovery?: () => void;
+  readonly onConfigurePort?: (portId: number) => void;
+}) {
+  const { pinMapOf, protocolFor } = usePortProtocol();
+  const pins = assignedPinCount(pinMapOf(portId));
+  const protocol = protocolFor({ moduleNodeId, portId });
+  const recognized = candidates.length > 0;
+
+  return (
+    <div className="mb-4 rounded-slmd border border-border bg-surface-raised p-3">
+      <p className="font-body text-xs font-semibold text-ink-muted">Cosa c’è su questa Porta</p>
+      {recognized ? (
+        <p className="mt-1 font-body text-sm text-ink">
+          Il Core ha rilevato {candidates.length === 1 ? "un candidato" : `${candidates.length} candidati`}. Accettalo se è giusto.
+        </p>
+      ) : (
+        <p className="mt-1 font-body text-sm text-ink">Nessun hardware riconosciuto. Configura pin e protocollo a mano.</p>
+      )}
+      {(pins > 0 || protocol) && (
+        <p className="mt-1 font-body text-xs text-ink-faint">
+          {pins > 0 ? `${pins} pin assegnati` : "Nessun pin"}
+          {protocol ? ` · ${protocol.name}` : ""}
+        </p>
+      )}
+      <div className="mt-2 flex flex-col gap-1.5">
+        {recognized && onOpenDiscovery && (
+          <button type="button" onClick={onOpenDiscovery} className="h-8 rounded-slsm bg-brand-blue font-body-strong text-xs text-white hover:bg-brand-blue-dark">
+            Vedi candidati
+          </button>
+        )}
+        {onConfigurePort && (
+          <button type="button" onClick={() => onConfigurePort(portId)} className={`h-8 rounded-slsm font-body text-xs ${recognized ? "border border-border-strong text-ink hover:bg-surface" : "bg-brand-blue font-body-strong text-white hover:bg-brand-blue-dark"}`}>
+            {recognized ? "Non è quello — configura a mano" : "Assegna pin e protocollo"}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
