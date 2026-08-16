@@ -28,8 +28,15 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
+import { usePortProtocol } from "../../state/port-protocol-context.js";
 import { beginPaletteDrag, endPaletteDrag, PROCESSING_BLOCK_MIME } from "./catalog-to-node.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
+
+function catalogEntryNeedsConfiguredPort(entry: ProcessingCatalogEntry): boolean {
+  if (entry.needsModule === false) return false;
+  if (entry.nodeKind === "schedule" || entry.nodeKind === "event-source" || entry.nodeKind === "rule") return true;
+  return Boolean(entry.fields?.some((field) => field.id === "line"));
+}
 
 const CATEGORY_ICONS: Record<ProcessingCatalogCategoryId, LucideIcon> = {
   system: Bell,
@@ -53,6 +60,8 @@ const CATEGORY_ICONS: Record<ProcessingCatalogCategoryId, LucideIcon> = {
 const DEFAULT_OPEN: ReadonlySet<ProcessingCatalogCategoryId> = new Set(["trigger", "logic", "math", "filter", "time", "io"]);
 
 export function ProcessingBlockPalette() {
+  const { configuredPorts } = usePortProtocol();
+  const portsConfigured = configuredPorts.length > 0;
   const [query, setQuery] = useState("");
   const [openIds, setOpenIds] = useState<ReadonlySet<ProcessingCatalogCategoryId>>(DEFAULT_OPEN);
   const [dragReminder, setDragReminder] = useState(false);
@@ -132,6 +141,7 @@ export function ProcessingBlockPalette() {
                           color={kindConfig?.colorVar ?? "#8A8F99"}
                           icon={kindConfig?.icon ?? Icon}
                           delay={index * 0 + entryIndex * motionTokens.stagger.list}
+                          portsConfigured={portsConfigured}
                           onClickRemind={() => setDragReminder(true)}
                           onDragBegan={() => setDragReminder(false)}
                         />
@@ -159,6 +169,7 @@ function PaletteRow({
   color,
   icon: Icon,
   delay,
+  portsConfigured,
   onClickRemind,
   onDragBegan,
 }: {
@@ -166,11 +177,13 @@ function PaletteRow({
   readonly color: string;
   readonly icon: LucideIcon;
   readonly delay: number;
+  readonly portsConfigured: boolean;
   readonly onClickRemind: () => void;
   readonly onDragBegan: () => void;
 }) {
-  const placeable = isPlaceableOnDeviceGraph(entry);
-  const badge = availabilityBadge(entry);
+  const needsPort = catalogEntryNeedsConfiguredPort(entry);
+  const placeable = isPlaceableOnDeviceGraph(entry) && (!needsPort || portsConfigured);
+  const badge = !portsConfigured && needsPort ? "serve una Porta" : availabilityBadge(entry);
 
   return (
     <motion.div
@@ -182,7 +195,7 @@ function PaletteRow({
       <button
         type="button"
         draggable={placeable}
-        title={placeable ? "Trascina sul canvas per inserire" : entry.notes}
+        title={placeable ? "Trascina sul canvas per inserire" : needsPort && !portsConfigured ? "Configura prima una Porta in Composizione fisica." : entry.notes}
         onClick={() => {
           if (placeable) onClickRemind();
         }}

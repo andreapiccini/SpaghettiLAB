@@ -18,6 +18,7 @@ import {
   numericIdForGroup,
   pinCaption,
   pinColor,
+  pinLetter,
   SIGNALS_FOR,
   SIGNAL_PALETTE,
   contentForInstalledDriver,
@@ -37,6 +38,7 @@ describe("port-protocol-mock", () => {
     expect(map.portId).toBe(2);
     expect(map.pins).toHaveLength(5);
     expect(assignedPinCount(map)).toBe(0);
+    expect(map.pins.map((p) => pinLetter(p.pinIndex))).toEqual(["A", "B", "C", "D", "E"]);
   });
 
   it("loads the INA219 preset as named read fields", () => {
@@ -145,8 +147,8 @@ describe("port-protocol-mock", () => {
     };
     const protocol = protocolFromIntegrated("preset.ina219", "p1")!;
     const signals = selectableSignalsForPort(map, protocol);
-    expect(signalsForRole(signals, "source").map((s) => s.label)).toEqual(["Bus voltage", "Shunt voltage", "Current", "Power", "PIR", "ADC CH · pin 4"]);
-    expect(signalsForRole(signals, "command").map((s) => s.label)).toEqual(["PWM PWM · pin 5"]);
+    expect(signalsForRole(signals, "source").map((s) => s.label)).toEqual(["Bus voltage", "Shunt voltage", "Current", "Power", "PIR", "ADC CH · D"]);
+    expect(signalsForRole(signals, "command").map((s) => s.label)).toEqual(["PWM PWM · E"]);
     expect(signals.find((s) => s.label === "PIR")?.numericId).toBe(pinSignalNumericId(3));
   });
 

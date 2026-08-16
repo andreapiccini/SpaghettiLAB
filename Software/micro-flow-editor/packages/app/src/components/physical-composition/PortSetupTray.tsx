@@ -26,6 +26,7 @@ import {
   peripheralOfDialect,
   pinCaption,
   pinColor,
+  pinLetter,
   protocolFromIntegrated,
   protocolWithDialect,
   takenSignals,
@@ -501,7 +502,7 @@ function PinSignalEditor({
                 type="button"
                 onClick={() => selectPin(p.pinIndex)}
                 className="flex flex-col items-center gap-1"
-                title={used ? `Togli ${p.signal || pinCaption(p)} dal pin ${p.pinIndex}` : `Pin ${p.pinIndex}`}
+                title={used ? `Togli ${p.signal || pinCaption(p)} da ${pinLetter(p.pinIndex)}` : pinLetter(p.pinIndex)}
               >
                 <span
                   className="block h-7 w-7 rounded-full"
@@ -510,7 +511,7 @@ function PinSignalEditor({
                     boxShadow: active ? `0 0 0 3px var(--color-brand-blue)` : used ? `0 0 0 3px color-mix(in srgb, ${color} 28%, transparent)` : "0 0 0 1px var(--color-border-strong)",
                   }}
                 />
-                <span className="font-mono text-[10px] text-ink-muted">{p.pinIndex}</span>
+                <span className="font-mono text-[10px] text-ink-muted">{pinLetter(p.pinIndex)}</span>
                 <span className="h-3 font-mono text-[9px]" style={{ color: used ? color : "transparent" }}>
                   {used ? p.signal || pinCaption(p).slice(0, 4) : "·"}
                 </span>
@@ -522,7 +523,7 @@ function PinSignalEditor({
 
       {!focus ? (
       <div>
-        <p className="mb-2 font-body text-xs font-semibold text-ink-muted">Funzione — pin {pin.pinIndex}</p>
+        <p className="mb-2 font-body text-xs font-semibold text-ink-muted">Funzione — {pinLetter(pin.pinIndex)}</p>
         <div className="flex flex-wrap gap-1.5">
           {PERIPHERAL_ORDER.map((key) => {
             const selected = pin.peripheral === key;
@@ -549,7 +550,7 @@ function PinSignalEditor({
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <p className="font-body text-xs font-semibold text-ink-muted">
-              {PERIPHERAL_LABEL[focus]} — pin {pin.pinIndex}
+              {PERIPHERAL_LABEL[focus]} — {pinLetter(pin.pinIndex)}
             </p>
             <button type="button" onClick={() => setFocus(null)} className="font-body text-xs text-brand-blue hover:underline">
               Cambia periferica
@@ -597,7 +598,7 @@ function PinSignalEditor({
                 <button
                   key={signal}
                   type="button"
-                  title={selected ? `Togli ${signal} da questo pin` : taken ? `${signal} sul pin ${holder?.pinIndex} — clicca per spostarlo qui` : signal}
+                  title={selected ? `Togli ${signal} da questo pin` : taken ? `${signal} su ${holder ? pinLetter(holder.pinIndex) : "?"} — clicca per spostarlo qui` : signal}
                   onClick={() => chooseSignal(signal)}
                   className="rounded-slpill px-3 py-1.5 font-mono text-xs"
                   style={{

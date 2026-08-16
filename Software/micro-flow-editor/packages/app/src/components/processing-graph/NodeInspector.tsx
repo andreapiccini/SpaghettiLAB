@@ -12,7 +12,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { motionTokens } from "../../lib/motion-tokens.js";
-import { pinCaption, selectableSignalsForPort, signalsForRole, type CustomProtocol, type PortPinMap } from "../../lib/port-protocol-mock.js";
+import { pinCaption, pinLetter, selectableSignalsForPort, signalsForRole, type CustomProtocol, type PortPinMap } from "../../lib/port-protocol-mock.js";
 import { usePortProtocol } from "../../state/port-protocol-context.js";
 import { catalogEntryForNode, propertiesOf } from "./catalog-entry-for-node.js";
 import { PROCESSING_NODE_KIND_CONFIG } from "./node-kinds.js";
@@ -136,7 +136,7 @@ export function NodeInspector({
       .pins.filter((pin) => pin.peripheral === "gpio")
       .map((pin) => ({
         value: linePortIds.length === 1 ? String(pin.pinIndex) : `${portId}:${pin.pinIndex}`,
-        label: pinCaption(pin) || `Porta ${portId} · GPIO ${pin.signal} · pin ${pin.pinIndex}`,
+        label: pinCaption(pin) || `Porta ${portId} · GPIO ${pin.signal} · ${pinLetter(pin.pinIndex)}`,
       })),
   );
 

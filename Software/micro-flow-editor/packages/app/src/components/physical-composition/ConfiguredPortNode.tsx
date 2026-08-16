@@ -13,6 +13,7 @@ import {
   isPowerPeripheral,
   pinCaption,
   pinColor,
+  pinLetter,
   type ConfiguredPortSummary,
   type LogicalPeripheral,
   type PinAssignment,
@@ -165,7 +166,7 @@ function PinPreview({
             <button
               key={pin.pinIndex}
               type="button"
-              title={used ? `Pin ${pin.pinIndex} · ${pinCaption(pin) || pin.signal}` : `Pin ${pin.pinIndex} libero`}
+              title={used ? `${pinLetter(pin.pinIndex)} · ${pinCaption(pin) || pin.signal}` : `${pinLetter(pin.pinIndex)} libero`}
               className="nodrag nopan flex flex-col items-center gap-0.5"
               onClick={(e) => {
                 e.stopPropagation();
@@ -179,7 +180,7 @@ function PinPreview({
                   boxShadow: used ? `0 0 0 3px color-mix(in srgb, ${color} 28%, transparent)` : "0 0 0 1px var(--color-border-strong)",
                 }}
               />
-              <span className="font-mono text-[10px] text-ink-muted">{pin.pinIndex}</span>
+              <span className="font-mono text-[10px] text-ink-muted">{pinLetter(pin.pinIndex)}</span>
               <span className="h-3 max-w-8 truncate font-mono text-[9px]" style={{ color: used ? color : "transparent" }}>
                 {caption}
               </span>
@@ -245,7 +246,7 @@ function CompositionPanel({ field, color }: { readonly field: ProtocolField; rea
 export function toConfiguredPortNode(
   summary: ConfiguredPortSummary,
   index: number,
-  existing?: Node<ConfiguredPortNodeData>,
+  existing?: Pick<Node<ConfiguredPortNodeData>, "position">,
   onPinClick?: (portId: number, pinIndex: number) => void,
 ): Node<ConfiguredPortNodeData> {
   return {

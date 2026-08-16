@@ -362,6 +362,12 @@ export function dialectSections(peripherals: readonly LogicalPeripheral[]): read
 /** Matches firmware `SPAGHETTI_FLOW_SIGNAL_COUNT` — never invent a wider connector. */
 export const DEFAULT_SIGNAL_COUNT = 5;
 
+/** Abstract Port letters — authoring never shows board pin numbers. */
+export function pinLetter(pinIndex: number): string {
+  if (pinIndex < 1) return "?";
+  return String.fromCharCode(64 + pinIndex);
+}
+
 export function emptyPin(pinIndex: number): PinAssignment {
   return { pinIndex, peripheral: "unused", signal: "", label: "" };
 }
@@ -841,7 +847,7 @@ function pinSignalRole(pin: PinAssignment): "source" | "command" | "both" | unde
 
 function pinSignalLabel(pin: PinAssignment): string {
   if (pin.label.trim() !== "") return pin.label.trim();
-  return `${PERIPHERAL_LABEL[pin.peripheral]} ${pin.signal} · pin ${pin.pinIndex}`;
+  return `${PERIPHERAL_LABEL[pin.peripheral]} ${pin.signal} · ${pinLetter(pin.pinIndex)}`;
 }
 
 export function selectableSignalsForPort(map?: PortPinMap, protocol?: CustomProtocol): readonly SelectableSignal[] {

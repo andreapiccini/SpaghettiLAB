@@ -16,7 +16,7 @@ import { DiscoveryTray } from "./DiscoveryTray.js";
 import { NodeInspector, type InspectorMode } from "./NodeInspector.js";
 import { PortSetupTray } from "./PortSetupTray.js";
 import type { PortSetupRequest } from "./port-setup-types.js";
-import { isPortCardId, portCardId, toConfiguredPortNode, type ConfiguredPortNodeData } from "./ConfiguredPortNode.js";
+import { isPortCardId, portCardId, portIdFromCardId, toConfiguredPortNode, type ConfiguredPortNodeData } from "./ConfiguredPortNode.js";
 import { PHYSICAL_NODE_TYPES } from "./PhysicalNode.js";
 import { toPhysicalNodes, type PhysicalNodeData } from "./to-nodes.js";
 
@@ -55,7 +55,7 @@ export function PhysicalCompositionScreen() {
 function PhysicalCompositionScreenInner() {
   const { session, execute, navigate } = useSession();
   const { rows, getSnapshot, getClient, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery } = useCoreSessions();
-  const { configuredPorts, protocolFor } = usePortProtocol();
+  const { configuredPorts, protocolFor, cardPositionOf, setCardPosition } = usePortProtocol();
   const bindings = session?.stack.current.coreBindings ?? [];
 
   const [selectedId, setSelectedId] = useState<CoreBindingId | null>(bindings[0]?.bindingId ?? null);
@@ -163,12 +163,15 @@ function PhysicalCompositionScreenInner() {
     setSyncedPortKey(portSyncKey);
     setPortLocalNodes((prev) => {
       const byId = new Map(prev.map((n) => [n.id, n]));
-      return canvasPorts.map((summary, i) =>
-        toConfiguredPortNode(summary, i, byId.get(portCardId(summary.portId)), (portId, pinIndex) => {
+      return canvasPorts.map((summary, i) => {
+        const existing = byId.get(portCardId(summary.portId));
+        const stored = cardPositionOf(summary.portId);
+        const seed = existing ?? (stored ? { position: stored } : undefined);
+        return toConfiguredPortNode(summary, i, seed, (portId, pinIndex) => {
           setInspector(null);
           setPortSetup({ kind: "pin", portId, pinIndex });
-        }),
-      );
+        });
+      });
     });
   }
 
@@ -204,7 +207,15 @@ function PhysicalCompositionScreenInner() {
     const domainChanges = changes.filter((c) => !("id" in c) || !isPortCardId(c.id));
     const portChanges = changes.filter((c): c is NodeChange<CanvasNode> & { id: string } => "id" in c && isPortCardId(c.id));
     if (domainChanges.length > 0) setLocalNodes((nds) => applyNodeChanges(domainChanges as NodeChange<Node<PhysicalNodeData>>[], nds));
-    if (portChanges.length > 0) setPortLocalNodes((nds) => applyNodeChanges(portChanges as NodeChange<Node<ConfiguredPortNodeData>>[], nds));
+    if (portChanges.length > 0) {
+      const next = applyNodeChanges(portChanges as NodeChange<Node<ConfiguredPortNodeData>>[], portLocalNodes);
+      setPortLocalNodes(next);
+      for (const change of portChanges) {
+        if (change.type === "position" && change.dragging === false && change.position) {
+          setCardPosition(portIdFromCardId(change.id), change.position);
+        }
+      }
+    }
     if (!execute || bindingIndex < 0) return;
     const committable = domainChanges.filter((c) => !(c.type === "position" && c.dragging === true));
     const commands = nodeChangesToCommands(committable, physicalGraphLens(bindingIndex));
