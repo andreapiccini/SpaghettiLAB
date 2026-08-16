@@ -1,5 +1,5 @@
 import { decodeOne, encodeArray, type CborValue } from "../cbor.js";
-import { encodeMap, optionalU32, requireArray, requireMap, requireU32, u32Field } from "../fields.js";
+import { encodeMap, optionalU32, requireArray, requireMap, requireU32, u32Field, type FieldPair } from "../fields.js";
 
 /** `GET_TOPOLOGY` (op 20) request — `cursor` default 0, `limit` default 2. */
 export type GetTopologyRequest = { readonly cursor?: number; readonly limit?: number };
@@ -39,6 +39,8 @@ export type TopologyFlow = {
   readonly direction: number;
   readonly signalCount: number;
   readonly bays: readonly TopologyBay[];
+  /** `spaghetti_port_capability` bits from DTS. Absent on older Cores. */
+  readonly capabilities?: number;
 };
 
 export type GetTopologyResponse = {
@@ -62,13 +64,15 @@ function encodeBay(b: TopologyBay): Uint8Array {
 }
 
 function encodeFlow(f: TopologyFlow): Uint8Array {
-  return encodeMap([
+  const pairs: FieldPair[] = [
     u32Field(0, f.id),
     u32Field(1, f.portId),
     u32Field(2, f.direction),
     u32Field(3, f.signalCount),
     [4, encodeArray(f.bays.map(encodeBay))],
-  ]);
+  ];
+  if (f.capabilities !== undefined) pairs.push(u32Field(5, f.capabilities));
+  return encodeMap(pairs);
 }
 
 export function encodeGetTopologyResponse(r: GetTopologyResponse): Uint8Array {
@@ -104,6 +108,7 @@ function decodeFlow(entry: CborValue): TopologyFlow {
     direction: requireU32(m, 2, "TopologyFlow"),
     signalCount: requireU32(m, 3, "TopologyFlow"),
     bays: requireArray(m, 4, "TopologyFlow").map(decodeBay),
+    ...(m.has(5) ? { capabilities: requireU32(m, 5, "TopologyFlow") } : {}),
   };
 }
 

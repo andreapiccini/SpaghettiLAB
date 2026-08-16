@@ -60,8 +60,12 @@ static const struct spaghetti_field_descriptor digital_input_trigger_config_fiel
 	},
 };
 
+/* schema_id must fit SPAGHETTI_SCHEMA_ID_SIZE (32), including NUL. */
+BUILD_ASSERT(sizeof("spaghetti.di_trig.config") <= SPAGHETTI_SCHEMA_ID_SIZE,
+	     "digital_input_trigger config schema_id is too long");
+
 static const struct spaghetti_schema_descriptor digital_input_trigger_config_schema = {
-	.schema_id = "spaghetti.digital_input_trigger.config",
+	.schema_id = "spaghetti.di_trig.config",
 	.version = 1U,
 	.fields = digital_input_trigger_config_fields,
 	.field_count = ARRAY_SIZE(digital_input_trigger_config_fields),

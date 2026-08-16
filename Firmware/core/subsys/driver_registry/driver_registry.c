@@ -157,12 +157,19 @@ int spaghetti_driver_registry_init(void)
 		int err = validate_one_driver(driver);
 
 		if (err < 0) {
+			LOG_ERR("invalid driver type_id=%s err=%d",
+				(driver != NULL) && (driver->type_id != NULL) ?
+					driver->type_id :
+					"(null)",
+				err);
 			return err;
 		}
 
 		STRUCT_SECTION_FOREACH(spaghetti_module_driver, other) {
 			if ((other != driver) &&
 			    (strcmp(driver->type_id, other->type_id) == 0)) {
+				LOG_ERR("duplicate driver type_id=%s",
+					driver->type_id);
 				return -EINVAL;
 			}
 		}
@@ -170,6 +177,7 @@ int spaghetti_driver_registry_init(void)
 	}
 
 	if (count == 0U) {
+		LOG_ERR("no module drivers registered");
 		return -EINVAL;
 	}
 

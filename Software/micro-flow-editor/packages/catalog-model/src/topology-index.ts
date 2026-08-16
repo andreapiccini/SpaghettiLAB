@@ -1,6 +1,10 @@
 import type { GetTopologyResponse } from "@spaghettilab/protocol-sdk";
 
-export type PortEntry = { readonly portId: number };
+export type PortEntry = {
+  readonly portId: number;
+  /** `spaghetti_port_capability` bits from GET_TOPOLOGY flow key 5. */
+  readonly capabilities?: number;
+};
 
 /** `assurance` is the raw value the Core reported (`ENFORCED`/`UNVERIFIED` per `REACT_FLOW_ARCHITECTURE.md`) — never normalized/coerced (S041 § Verifiche). */
 export type RailEntry = {
@@ -25,6 +29,7 @@ export type FlowEntry = {
   readonly direction: number;
   readonly signalCount: number;
   readonly bays: readonly FunctionBayEntry[];
+  readonly capabilities?: number;
 };
 
 export type TopologyIndex = {
@@ -43,10 +48,12 @@ export type TopologyIndex = {
 export function normalizeTopologyPages(pages: readonly GetTopologyResponse[], complete: boolean): TopologyIndex {
   const flowsById = new Map<number, FlowEntry>();
   const portIds = new Set<number>();
+  const portCaps = new Map<number, number>();
 
   for (const page of pages) {
     for (const flow of page.flows) {
       portIds.add(flow.portId);
+      if (flow.capabilities !== undefined) portCaps.set(flow.portId, flow.capabilities);
       flowsById.set(flow.id, {
         flowId: flow.id,
         portId: flow.portId,
@@ -64,11 +71,15 @@ export function normalizeTopologyPages(pages: readonly GetTopologyResponse[], co
             maxTotalMicroamps: rail.maxTotalMicroamps,
           })),
         })),
+        ...(flow.capabilities !== undefined ? { capabilities: flow.capabilities } : {}),
       });
     }
   }
 
   const flows = [...flowsById.values()].sort((a, b) => a.flowId - b.flowId);
-  const ports = [...portIds].sort((a, b) => a - b).map((portId) => ({ portId }));
+  const ports = [...portIds].sort((a, b) => a - b).map((portId) => ({
+    portId,
+    ...(portCaps.has(portId) ? { capabilities: portCaps.get(portId) } : {}),
+  }));
   return { flows, ports, complete };
 }

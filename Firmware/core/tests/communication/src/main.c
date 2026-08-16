@@ -151,6 +151,18 @@ size_t spaghetti_port_count(void)
 	return 1U;
 }
 
+const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id)
+{
+	ARG_UNUSED(id);
+	return NULL;
+}
+
+uint32_t spaghetti_port_capabilities(const struct spaghetti_port *port)
+{
+	ARG_UNUSED(port);
+	return 0U;
+}
+
 int spaghetti_module_manager_list_by_port(
 	spaghetti_port_id_t port_id,
 	struct spaghetti_module_snapshot *out,

@@ -169,6 +169,11 @@ with the same errno from `spaghetti_device_profile_validate_cbor()`.
   (switched limits checked). Absent hardware measurement is not simulated PASS.
 - One Port has one active transport; shared I2C/SPI/W1 allow multiple owners;
   incompatible transport changes return busy/reject.
+- `GET_TOPOLOGY` flow map (uint keys): `0=id`, `1=port_id`, `2=direction`,
+  `3=signal_count`, `4=bays[]`, `5=port_capabilities` (uint32,
+  `spaghetti_port_capability` bits from DTS). Key 5 is additive V1; hosts that
+  do not know it ignore it. A Core that omits key 5 has unknown pin mux — the
+  host must not invent peripherals for that Port.
 
 ## 11. Permission matrix
 

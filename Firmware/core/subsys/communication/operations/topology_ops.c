@@ -13,6 +13,7 @@
 #include <spaghetti/access_control.h>
 #include <spaghetti/config.h>
 #include <spaghetti/module_manager.h>
+#include <spaghetti/port.h>
 #include <spaghetti/power.h>
 #include <spaghetti/topology.h>
 
@@ -127,7 +128,11 @@ static int execute_get_topology(
 			if (flow == NULL) {
 				continue;
 			}
-			if (!zcbor_map_start_encode(state, 5U) ||
+
+			const uint32_t capabilities = spaghetti_port_capabilities(
+				spaghetti_port_get(flow->port_id));
+
+			if (!zcbor_map_start_encode(state, 6U) ||
 			    !zcbor_uint32_put(state, 0U) ||
 			    !zcbor_uint32_put(state, flow->id) ||
 			    !zcbor_uint32_put(state, 1U) ||
@@ -191,7 +196,9 @@ static int execute_get_topology(
 
 			if (!zcbor_list_end_encode(state,
 						   flow->function_bay_count) ||
-			    !zcbor_map_end_encode(state, 5U)) {
+			    !zcbor_uint32_put(state, 5U) ||
+			    !zcbor_uint32_put(state, capabilities) ||
+			    !zcbor_map_end_encode(state, 6U)) {
 				return -EMSGSIZE;
 			}
 			++written;

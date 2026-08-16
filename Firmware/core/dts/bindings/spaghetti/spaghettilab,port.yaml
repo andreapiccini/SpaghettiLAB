@@ -48,3 +48,18 @@ properties:
     type: phandle
     required: false
     description: Optional Zephyr 1-Wire controller wired to this shared Port
+
+  pwm:
+    type: phandle
+    required: false
+    description: Optional Zephyr PWM controller wired to this Port connector
+
+  dac:
+    type: phandle
+    required: false
+    description: Optional Zephyr DAC controller wired to this Port connector
+
+  can:
+    type: phandle
+    required: false
+    description: Optional Zephyr CAN controller wired to this Port connector

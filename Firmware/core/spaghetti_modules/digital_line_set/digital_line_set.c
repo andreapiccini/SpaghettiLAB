@@ -53,8 +53,12 @@ static const struct spaghetti_field_descriptor digital_line_set_config_fields[] 
 	},
 };
 
+/* schema_id must fit SPAGHETTI_SCHEMA_ID_SIZE (32), including NUL. */
+BUILD_ASSERT(sizeof("spaghetti.dline.config") <= SPAGHETTI_SCHEMA_ID_SIZE,
+	     "digital_line_set config schema_id is too long");
+
 static const struct spaghetti_schema_descriptor digital_line_set_config_schema = {
-	.schema_id = "spaghetti.digital_line_set.config",
+	.schema_id = "spaghetti.dline.config",
 	.version = 1U,
 	.fields = digital_line_set_config_fields,
 	.field_count = ARRAY_SIZE(digital_line_set_config_fields),

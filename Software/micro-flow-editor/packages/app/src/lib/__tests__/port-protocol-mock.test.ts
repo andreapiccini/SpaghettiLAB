@@ -6,6 +6,7 @@ import {
   commandTargetsOf,
   compatibleDialects,
   dialectSections,
+  hasConfigurablePins,
   fieldsForPeripheral,
   declaredPortsOf,
   defaultDirectDialect,
@@ -23,8 +24,11 @@ import {
   SIGNAL_PALETTE,
   contentForInstalledDriver,
   pinSignalNumericId,
+  peripheralsFromCapabilities,
+  PORT_CAP,
   selectableSignalsForPort,
   signalsForRole,
+  emptyLineSettings,
   protocolFromIntegrated,
   protocolFromPreset,
   sourceFieldsOf,
@@ -73,7 +77,7 @@ describe("port-protocol-mock", () => {
 
   it("does not reuse a signal color on another peripheral while the palette has unused hues", () => {
     const seen: string[] = [];
-    for (const peripheral of ["uart", "i2c", "spi", "can", "gpio", "adc", "pwm", "w1", "vcc", "gnd"] as const) {
+    for (const peripheral of ["uart", "i2c", "spi", "can", "gpio", "adc", "pwm", "dac", "w1", "vcc", "gnd"] as const) {
       for (const signal of SIGNALS_FOR[peripheral]) {
         const color = pinColor({ pinIndex: 1, peripheral, signal, label: "" });
         expect(seen).not.toContain(color);
@@ -129,20 +133,26 @@ describe("port-protocol-mock", () => {
     expect(isDirectOnly(["gpio", "vcc", "gnd"])).toBe(true);
     expect(isDirectOnly(["gpio", "uart"])).toBe(false);
     expect(defaultDirectDialect(["gpio"])).toBe("gpio");
-    expect(compatibleDialects([])).toContain("modbus-rtu");
+    expect(compatibleDialects([])).toEqual([]);
+    expect(compatibleDialects(["vcc", "gnd"])).toEqual([]);
+    expect(hasConfigurablePins([])).toBe(false);
+    expect(hasConfigurablePins(["vcc", "gnd"])).toBe(false);
+    expect(hasConfigurablePins(["i2c"])).toBe(true);
+    expect(dialectSections([])).toEqual([]);
     expect(dialectSections(["i2c", "uart"]).map((s) => s.peripheral)).toEqual(["i2c", "uart"]);
     expect(dialectSections(["uart"])[0]?.dialects).toEqual(["uart", "modbus-rtu", "at", "raw-serial"]);
+    expect(dialectSections(["i2c", "uart"], ["i2c"])).toEqual([{ peripheral: "i2c", dialects: ["i2c"] }]);
   });
 
-  it("exposes assigned GPIO/ADC/PWM pins as Processing Graph sources and commands", () => {
+  it("exposes assigned GPIO/ADC/PWM/DAC pins as Processing Graph sources and commands from settings", () => {
     const map = {
       portId: 0,
       pins: [
         { pinIndex: 1, peripheral: "i2c" as const, signal: "SDA", label: "" },
         { pinIndex: 2, peripheral: "i2c" as const, signal: "SCL", label: "" },
-        { pinIndex: 3, peripheral: "gpio" as const, signal: "IN", label: "PIR" },
-        { pinIndex: 4, peripheral: "adc" as const, signal: "CH", label: "" },
-        { pinIndex: 5, peripheral: "pwm" as const, signal: "PWM", label: "" },
+        { pinIndex: 3, peripheral: "gpio" as const, signal: "IO", label: "PIR", settings: emptyLineSettings("gpio") },
+        { pinIndex: 4, peripheral: "adc" as const, signal: "CH", label: "", settings: emptyLineSettings("adc") },
+        { pinIndex: 5, peripheral: "pwm" as const, signal: "PWM", label: "", settings: emptyLineSettings("pwm") },
       ],
     };
     const protocol = protocolFromIntegrated("preset.ina219", "p1")!;
@@ -150,6 +160,33 @@ describe("port-protocol-mock", () => {
     expect(signalsForRole(signals, "source").map((s) => s.label)).toEqual(["Bus voltage", "Shunt voltage", "Current", "Power", "PIR", "ADC CH · D"]);
     expect(signalsForRole(signals, "command").map((s) => s.label)).toEqual(["PWM PWM · E"]);
     expect(signals.find((s) => s.label === "PIR")?.numericId).toBe(pinSignalNumericId(3));
+
+    const withOutput = {
+      ...map,
+      pins: map.pins.map((pin) =>
+        pin.pinIndex === 3 ? { ...pin, label: "Relay", settings: { ...emptyLineSettings("gpio"), kind: "gpio" as const, direction: "output" as const } } : pin,
+      ),
+    };
+    const roles = selectableSignalsForPort(withOutput, protocol);
+    expect(signalsForRole(roles, "source").map((s) => s.label)).not.toContain("Relay");
+    expect(signalsForRole(roles, "command").map((s) => s.label)).toContain("Relay");
+
+    const withDac = {
+      portId: 0,
+      pins: [{ pinIndex: 1, peripheral: "dac" as const, signal: "DAC", label: "Vout", settings: emptyLineSettings("dac") }],
+    };
+    expect(signalsForRole(selectableSignalsForPort(withDac), "command").map((s) => s.label)).toEqual(["Vout"]);
+    expect(signalsForRole(selectableSignalsForPort(withDac), "source")).toEqual([]);
+  });
+
+  it("reads MCU peripherals from the Core capability mask, never inventing CAN", () => {
+    expect(peripheralsFromCapabilities(undefined)).toEqual(["vcc", "gnd"]);
+    expect(peripheralsFromCapabilities(PORT_CAP.I2C)).toEqual(["i2c", "vcc", "gnd"]);
+    expect(peripheralsFromCapabilities(PORT_CAP.DIGITAL_INPUT | PORT_CAP.DIGITAL_OUTPUT)).toEqual(["gpio", "vcc", "gnd"]);
+    expect(peripheralsFromCapabilities(PORT_CAP.I2C | PORT_CAP.ADC | PORT_CAP.DAC)).toEqual(["i2c", "adc", "dac", "vcc", "gnd"]);
+    expect(peripheralsFromCapabilities(PORT_CAP.I2C)).not.toContain("can");
+    expect(nextFreeSignal(defaultPinMap(0), "gpio")).toBe("IO");
+    expect(nextFreeSignal({ portId: 0, pins: [{ pinIndex: 1, peripheral: "gpio", signal: "IO", label: "" }] }, "gpio")).toBe("IO");
   });
 
   it("exposes installed Core driver content beyond typeId and command count", () => {
@@ -175,11 +212,13 @@ describe("port-protocol-mock", () => {
     const ports = declaredPortsOf({
       ports: [{ portId: 0 }, { portId: 1 }],
       flows: [
-        { flowId: 0, portId: 0, signalCount: 5 },
-        { flowId: 1, portId: 1, signalCount: 5 },
+        { flowId: 0, portId: 0, signalCount: 5, capabilities: PORT_CAP.I2C },
+        { flowId: 1, portId: 1, signalCount: 5, capabilities: PORT_CAP.DIGITAL_INPUT | PORT_CAP.DIGITAL_OUTPUT },
       ],
     });
     expect(ports.map((p) => p.portId)).toEqual([0, 1]);
     expect(ports.every((p) => p.fromCore && p.signalCount === 5)).toBe(true);
+    expect(ports[0]?.capabilities).toBe(PORT_CAP.I2C);
+    expect(ports[1]?.capabilities).toBe(PORT_CAP.DIGITAL_INPUT | PORT_CAP.DIGITAL_OUTPUT);
   });
 });

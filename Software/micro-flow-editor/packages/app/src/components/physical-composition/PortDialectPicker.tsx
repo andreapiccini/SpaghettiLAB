@@ -77,11 +77,17 @@ export function PortDialectPicker({
         <div className="flex flex-col gap-4">
           {modules.length === 0 && (
             <p className="font-body text-sm text-ink-muted">
-              Nessun modulo per questa periferica,{" "}
-              <button type="button" onClick={() => onMode("custom")} className="font-semibold text-brand-blue hover:underline">
-                crearne uno custom
-              </button>
-              .
+              {fromPins ? (
+                <>
+                  Nessun modulo per questa periferica,{" "}
+                  <button type="button" onClick={() => onMode("custom")} className="font-semibold text-brand-blue hover:underline">
+                    crearne uno custom
+                  </button>
+                  .
+                </>
+              ) : (
+                "Assegna prima i pin della Porta. Poi compariranno solo i moduli compatibili con quelle periferiche."
+              )}
             </p>
           )}
           {sections.map((section) => {
@@ -101,7 +107,7 @@ export function PortDialectPicker({
               </PeripheralSection>
             );
           })}
-          {catalogDrivers.length > 0 && (
+          {fromPins && catalogDrivers.length > 0 && (
             <section>
               <SectionHeading title="Dal Core" hint="Già presenti sul Core" />
               <div className="flex flex-col gap-1.5">

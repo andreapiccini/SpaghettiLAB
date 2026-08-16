@@ -55,7 +55,7 @@ export function PhysicalCompositionScreen() {
 function PhysicalCompositionScreenInner() {
   const { session, execute, navigate } = useSession();
   const { rows, getSnapshot, getClient, listDeviceProfiles, listDiscoveryCandidates, acceptDiscovery } = useCoreSessions();
-  const { configuredPorts, protocolFor, cardPositionOf, setCardPosition } = usePortProtocol();
+  const { configuredPorts, protocolFor, cardPositionOf, setCardPosition, rememberCapabilities } = usePortProtocol();
   const bindings = session?.stack.current.coreBindings ?? [];
 
   const [selectedId, setSelectedId] = useState<CoreBindingId | null>(bindings[0]?.bindingId ?? null);
@@ -117,6 +117,11 @@ function PhysicalCompositionScreenInner() {
   const snapshotTopology: TopologyIndex | null = useMemo(() => (snapshot?.topology ? normalizeTopologyPages([snapshot.topology], true) : null), [snapshot]);
   const topologyIndex = (liveTopology?.flows.length ?? 0) >= (snapshotTopology?.flows.length ?? 0) ? liveTopology ?? snapshotTopology : snapshotTopology;
   const declaredPorts = useMemo(() => declaredPortsOf(topologyIndex), [topologyIndex]);
+  useEffect(() => {
+    for (const port of declaredPorts) {
+      if (port.capabilities !== undefined) rememberCapabilities(port.portId, port.capabilities);
+    }
+  }, [declaredPorts, rememberCapabilities]);
   const canvasPorts = useMemo(
     () =>
       configuredPorts.map((saved) => {

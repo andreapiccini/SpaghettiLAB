@@ -97,6 +97,7 @@ describe("GET_TOPOLOGY", () => {
           portId: 0,
           direction: 1,
           signalCount: 5,
+          capabilities: 0x19,
           bays: [
             {
               id: 1,
@@ -112,6 +113,23 @@ describe("GET_TOPOLOGY", () => {
       nextCursor: 0,
     };
     expect(ops.decodeGetTopologyResponse(ops.encodeGetTopologyResponse(response))).toEqual(response);
+  });
+
+  it("decodes a flow that omits port capabilities (older Core)", () => {
+    const response: ops.GetTopologyResponse = {
+      flows: [
+        {
+          id: 1,
+          portId: 0,
+          direction: 1,
+          signalCount: 5,
+          bays: [],
+        },
+      ],
+      nextCursor: 0,
+    };
+    expect(ops.decodeGetTopologyResponse(ops.encodeGetTopologyResponse(response))).toEqual(response);
+    expect(ops.decodeGetTopologyResponse(ops.encodeGetTopologyResponse(response)).flows[0]?.capabilities).toBeUndefined();
   });
 });
 

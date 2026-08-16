@@ -4,13 +4,14 @@
  * until the Core can store a real pin↔signal map and field schema.
  */
 
-export type LogicalPeripheral = "unused" | "uart" | "i2c" | "spi" | "can" | "gpio" | "adc" | "pwm" | "w1" | "vcc" | "gnd";
+export type LogicalPeripheral = "unused" | "uart" | "i2c" | "spi" | "can" | "gpio" | "adc" | "pwm" | "dac" | "w1" | "vcc" | "gnd";
 
 export type PinAssignment = {
   readonly pinIndex: number;
   readonly peripheral: LogicalPeripheral;
   readonly signal: string;
   readonly label: string;
+  readonly settings?: PinLineSettings;
 };
 
 export type PortPinMap = {
@@ -27,10 +28,11 @@ export type MappingDataType = "int" | "uint" | "float" | "bool" | "string" | "by
 export type Endianness = "le" | "be";
 export type ProtocolMode = "custom" | "integrated";
 
-export type DialectKind = "gpio" | "adc" | "pwm" | "i2c" | "spi" | "uart" | "raw-serial" | "at" | "modbus-rtu" | "can" | "w1";
+export type DialectKind = "gpio" | "adc" | "pwm" | "dac" | "i2c" | "spi" | "uart" | "raw-serial" | "at" | "modbus-rtu" | "can" | "w1";
 
 export type AdcSettings = { readonly resolution: string; readonly rangeMin: string; readonly rangeMax: string };
 export type PwmSettings = { readonly frequencyHz: string };
+export type DacSettings = { readonly resolution: string; readonly rangeMin: string; readonly rangeMax: string };
 export type I2cSettings = { readonly address: string; readonly busHz: string; readonly registerWidth: "8" | "16"; readonly timeoutMs: string };
 export type SpiSettings = {
   readonly chipSelect: string;
@@ -85,6 +87,7 @@ export type DialectSettings =
   | { readonly kind: "gpio" }
   | ({ readonly kind: "adc" } & AdcSettings)
   | ({ readonly kind: "pwm" } & PwmSettings)
+  | ({ readonly kind: "dac" } & DacSettings)
   | ({ readonly kind: "i2c" } & I2cSettings)
   | ({ readonly kind: "spi" } & SpiSettings)
   | ({ readonly kind: "uart" } & SerialSettings)
@@ -114,6 +117,19 @@ export type PwmSpec = {
   readonly rangeMin: string;
   readonly rangeMax: string;
 };
+export type DacSpec = {
+  readonly kind: "dac";
+  readonly resolution: string;
+  readonly rangeMin: string;
+  readonly rangeMax: string;
+  readonly rawMin: string;
+  readonly rawMax: string;
+  readonly initial: string;
+  readonly safeState: string;
+};
+export type AdcLineSettings = AdcSpec & AdcSettings;
+export type PwmLineSettings = PwmSpec & PwmSettings & { readonly polarity: "high" | "low" };
+export type PinLineSettings = GpioSpec | AdcLineSettings | PwmLineSettings | DacSpec;
 export type I2cSpec = {
   readonly kind: "i2c";
   readonly register: string;
@@ -164,7 +180,7 @@ export type CanSpec = {
 };
 export type W1Spec = { readonly kind: "w1"; readonly command: string; readonly offset: string; readonly length: string };
 
-export type MappingSpec = GpioSpec | AdcSpec | PwmSpec | I2cSpec | SpiSpec | UartSpec | AtSpec | ModbusSpec | CanSpec | W1Spec;
+export type MappingSpec = GpioSpec | AdcSpec | PwmSpec | DacSpec | I2cSpec | SpiSpec | UartSpec | AtSpec | ModbusSpec | CanSpec | W1Spec;
 
 export type ProtocolField = {
   readonly id: string;
@@ -212,6 +228,7 @@ export const PERIPHERAL_LABEL: Record<LogicalPeripheral, string> = {
   gpio: "GPIO",
   adc: "ADC",
   pwm: "PWM",
+  dac: "DAC",
   w1: "1-Wire",
   vcc: "VCC",
   gnd: "GND",
@@ -223,9 +240,10 @@ export const SIGNALS_FOR: Record<LogicalPeripheral, readonly string[]> = {
   i2c: ["SDA", "SCL"],
   spi: ["MOSI", "MISO", "SCLK", "CS"],
   can: ["TX", "RX"],
-  gpio: ["IN", "OUT"],
+  gpio: ["IO"],
   adc: ["CH"],
   pwm: ["PWM"],
+  dac: ["DAC"],
   w1: ["DATA"],
   vcc: ["VCC"],
   gnd: ["GND"],
@@ -235,6 +253,7 @@ export const DIALECT_LABEL: Record<DialectKind, string> = {
   gpio: "GPIO",
   adc: "ADC",
   pwm: "PWM",
+  dac: "DAC",
   i2c: "I²C",
   spi: "SPI",
   uart: "UART",
@@ -249,6 +268,7 @@ export const DIALECT_BLURB: Record<DialectKind, string> = {
   gpio: "Linea digitale, senza protocollo",
   adc: "Conversione analogica, senza protocollo",
   pwm: "Uscita PWM, senza protocollo",
+  dac: "Conversione digitale-analogica, senza protocollo",
   i2c: "Mappa registri su bus I²C",
   spi: "Comandi e registri su SPI",
   uart: "Frame seriale (testo o binario)",
@@ -260,9 +280,9 @@ export const DIALECT_BLURB: Record<DialectKind, string> = {
 };
 
 export const BUS_DIALECTS: readonly DialectKind[] = ["i2c", "spi", "uart", "modbus-rtu", "at", "can", "w1", "raw-serial"];
-export const DIRECT_DIALECTS: readonly DialectKind[] = ["gpio", "adc", "pwm"];
+export const DIRECT_DIALECTS: readonly DialectKind[] = ["gpio", "adc", "pwm", "dac"];
 export const BUS_PERIPHERALS: readonly LogicalPeripheral[] = ["i2c", "spi", "uart", "can", "w1"];
-export const AUX_PERIPHERALS: readonly LogicalPeripheral[] = ["gpio", "adc", "pwm", "vcc", "gnd"];
+export const AUX_PERIPHERALS: readonly LogicalPeripheral[] = ["gpio", "adc", "pwm", "dac", "vcc", "gnd"];
 
 export const DIALECTS_FOR_PERIPHERAL: Record<LogicalPeripheral, readonly DialectKind[]> = {
   unused: [],
@@ -274,6 +294,7 @@ export const DIALECTS_FOR_PERIPHERAL: Record<LogicalPeripheral, readonly Dialect
   gpio: ["gpio"],
   adc: ["adc"],
   pwm: ["pwm"],
+  dac: ["dac"],
   vcc: [],
   gnd: [],
 };
@@ -311,7 +332,19 @@ export function takenSignals(map: PortPinMap, peripheral: LogicalPeripheral, exc
   return map.pins.filter((pin) => pin.peripheral === peripheral && pin.signal !== "" && pin.pinIndex !== exceptPinIndex).map((pin) => pin.signal);
 }
 
+export const LINE_SIGNAL: Partial<Record<LogicalPeripheral, string>> = {
+  gpio: "IO",
+  adc: "CH",
+  pwm: "PWM",
+  dac: "DAC",
+};
+
+export function isLinePeripheral(peripheral: LogicalPeripheral): peripheral is "gpio" | "adc" | "pwm" | "dac" {
+  return peripheral === "gpio" || peripheral === "adc" || peripheral === "pwm" || peripheral === "dac";
+}
+
 export function nextFreeSignal(map: PortPinMap, peripheral: LogicalPeripheral, exceptPinIndex?: number): string {
+  if (isLinePeripheral(peripheral)) return LINE_SIGNAL[peripheral] ?? "";
   const taken = new Set(takenSignals(map, peripheral, exceptPinIndex));
   return SIGNALS_FOR[peripheral].find((signal) => !taken.has(signal)) ?? "";
 }
@@ -349,14 +382,17 @@ export type DialectSection = {
 
 export function peripheralOfDialect(kind: DialectKind): LogicalPeripheral {
   if (kind === "modbus-rtu" || kind === "at" || kind === "raw-serial") return "uart";
-  if (kind === "gpio" || kind === "adc" || kind === "pwm" || kind === "i2c" || kind === "spi" || kind === "uart" || kind === "can" || kind === "w1") return kind;
+  if (kind === "gpio" || kind === "adc" || kind === "pwm" || kind === "dac" || kind === "i2c" || kind === "spi" || kind === "uart" || kind === "can" || kind === "w1") return kind;
   return "uart";
 }
 
-export function dialectSections(peripherals: readonly LogicalPeripheral[]): readonly DialectSection[] {
+export function dialectSections(
+  peripherals: readonly LogicalPeripheral[],
+  available?: readonly LogicalPeripheral[],
+): readonly DialectSection[] {
   const assigned = peripherals.filter((p) => DIALECTS_FOR_PERIPHERAL[p].some((d) => (BUS_DIALECTS as readonly DialectKind[]).includes(d)));
-  const source = assigned.length > 0 ? BUS_PERIPHERALS.filter((p) => assigned.includes(p)) : BUS_PERIPHERALS;
-  return source.map((peripheral) => ({ peripheral, dialects: DIALECTS_FOR_PERIPHERAL[peripheral] }));
+  const allowed = available ? assigned.filter((p) => available.includes(p)) : assigned;
+  return allowed.map((peripheral) => ({ peripheral, dialects: DIALECTS_FOR_PERIPHERAL[peripheral] }));
 }
 
 /** Matches firmware `SPAGHETTI_FLOW_SIGNAL_COUNT` — never invent a wider connector. */
@@ -397,10 +433,14 @@ export type DeclaredPort = {
   readonly flowId?: number;
   readonly signalCount: number;
   readonly fromCore: boolean;
+  readonly capabilities?: number;
 };
 
 export function declaredPortsOf(
-  topology: { readonly ports: readonly { readonly portId: number }[]; readonly flows: readonly { readonly portId: number; readonly flowId: number; readonly signalCount: number }[] } | null,
+  topology: {
+    readonly ports: readonly { readonly portId: number; readonly capabilities?: number }[];
+    readonly flows: readonly { readonly portId: number; readonly flowId: number; readonly signalCount: number; readonly capabilities?: number }[];
+  } | null,
   extraPortIds: readonly number[] = [],
 ): DeclaredPort[] {
   const byId = new Map<number, DeclaredPort>();
@@ -410,10 +450,21 @@ export function declaredPortsOf(
       flowId: flow.flowId,
       signalCount: flow.signalCount > 0 ? flow.signalCount : DEFAULT_SIGNAL_COUNT,
       fromCore: true,
+      ...(flow.capabilities !== undefined ? { capabilities: flow.capabilities } : {}),
     });
   }
   for (const port of topology?.ports ?? []) {
-    if (!byId.has(port.portId)) byId.set(port.portId, { portId: port.portId, signalCount: DEFAULT_SIGNAL_COUNT, fromCore: true });
+    if (!byId.has(port.portId)) {
+      byId.set(port.portId, {
+        portId: port.portId,
+        signalCount: DEFAULT_SIGNAL_COUNT,
+        fromCore: true,
+        ...(port.capabilities !== undefined ? { capabilities: port.capabilities } : {}),
+      });
+    } else if (port.capabilities !== undefined && byId.get(port.portId)?.capabilities === undefined) {
+      const current = byId.get(port.portId)!;
+      byId.set(port.portId, { ...current, capabilities: port.capabilities });
+    }
   }
   for (const id of extraPortIds) {
     if (Number.isInteger(id) && id >= 0 && !byId.has(id)) byId.set(id, { portId: id, signalCount: DEFAULT_SIGNAL_COUNT, fromCore: false });
@@ -430,7 +481,92 @@ export function assignedPeripherals(map: PortPinMap): readonly LogicalPeripheral
 }
 
 export function isDirectPeripheral(peripheral: LogicalPeripheral): boolean {
-  return peripheral === "gpio" || peripheral === "adc" || peripheral === "pwm";
+  return isLinePeripheral(peripheral);
+}
+
+/** Matches `spaghetti_port_capability` in `Firmware/core/include/spaghetti/port.h`. */
+export const PORT_CAP = {
+  I2C: 1 << 0,
+  SPI: 1 << 1,
+  UART: 1 << 2,
+  DIGITAL_INPUT: 1 << 3,
+  DIGITAL_OUTPUT: 1 << 4,
+  ADC: 1 << 5,
+  W1: 1 << 6,
+  PWM: 1 << 7,
+  DAC: 1 << 8,
+  CAN: 1 << 9,
+} as const;
+
+export function peripheralsFromCapabilities(capabilities: number | undefined): readonly LogicalPeripheral[] {
+  const out: LogicalPeripheral[] = [];
+  if (capabilities !== undefined) {
+    if (capabilities & PORT_CAP.UART) out.push("uart");
+    if (capabilities & PORT_CAP.I2C) out.push("i2c");
+    if (capabilities & PORT_CAP.SPI) out.push("spi");
+    if (capabilities & PORT_CAP.CAN) out.push("can");
+    if (capabilities & (PORT_CAP.DIGITAL_INPUT | PORT_CAP.DIGITAL_OUTPUT)) out.push("gpio");
+    if (capabilities & PORT_CAP.ADC) out.push("adc");
+    if (capabilities & PORT_CAP.PWM) out.push("pwm");
+    if (capabilities & PORT_CAP.DAC) out.push("dac");
+    if (capabilities & PORT_CAP.W1) out.push("w1");
+  }
+  out.push("vcc", "gnd");
+  return out;
+}
+
+export function gpioDirectionsFromCapabilities(capabilities: number | undefined): readonly ("input" | "output")[] {
+  if (capabilities === undefined) return ["input", "output"];
+  const dirs: ("input" | "output")[] = [];
+  if (capabilities & PORT_CAP.DIGITAL_INPUT) dirs.push("input");
+  if (capabilities & PORT_CAP.DIGITAL_OUTPUT) dirs.push("output");
+  return dirs.length > 0 ? dirs : ["input", "output"];
+}
+
+export function emptyLineSettings(kind: "gpio", capabilities?: number): GpioSpec;
+export function emptyLineSettings(kind: "adc", capabilities?: number): AdcLineSettings;
+export function emptyLineSettings(kind: "pwm", capabilities?: number): PwmLineSettings;
+export function emptyLineSettings(kind: "dac", capabilities?: number): DacSpec;
+export function emptyLineSettings(kind: "gpio" | "adc" | "pwm" | "dac", capabilities?: number): PinLineSettings;
+export function emptyLineSettings(kind: "gpio" | "adc" | "pwm" | "dac", capabilities?: number): PinLineSettings {
+  if (kind === "gpio") {
+    const dirs = gpioDirectionsFromCapabilities(capabilities);
+    return { kind: "gpio", direction: dirs[0] ?? "input", polarity: "high", pull: "none", debounceMs: "20", edge: "both", initial: "0", safeState: "0" };
+  }
+  if (kind === "adc") {
+    return { kind: "adc", rawMin: "0", rawMax: "4095", filter: "none", sampleHz: "10", resolution: "12", rangeMin: "0", rangeMax: "3300" };
+  }
+  if (kind === "pwm") {
+    return { kind: "pwm", dutyMin: "0", dutyMax: "100", initial: "0", safeState: "0", rangeMin: "0", rangeMax: "100", frequencyHz: "1000", polarity: "high" };
+  }
+  return { kind: "dac", resolution: "8", rangeMin: "0", rangeMax: "3300", rawMin: "0", rawMax: "255", initial: "0", safeState: "0" };
+}
+
+export function normalizePinAssignment(pin: PinAssignment): PinAssignment {
+  if (pin.peripheral === "gpio") {
+    const fallback = emptyLineSettings("gpio");
+    const existing = pin.settings?.kind === "gpio" ? pin.settings : { ...fallback, direction: pin.signal === "OUT" ? "output" : fallback.direction };
+    return { ...pin, signal: LINE_SIGNAL.gpio ?? "IO", settings: existing };
+  }
+  if (pin.peripheral === "adc") {
+    return { ...pin, signal: LINE_SIGNAL.adc ?? "CH", settings: pin.settings?.kind === "adc" ? pin.settings : emptyLineSettings("adc") };
+  }
+  if (pin.peripheral === "pwm") {
+    return { ...pin, signal: LINE_SIGNAL.pwm ?? "PWM", settings: pin.settings?.kind === "pwm" ? pin.settings : emptyLineSettings("pwm") };
+  }
+  if (pin.peripheral === "dac") {
+    return { ...pin, signal: LINE_SIGNAL.dac ?? "DAC", settings: pin.settings?.kind === "dac" ? pin.settings : emptyLineSettings("dac") };
+  }
+  return { pinIndex: pin.pinIndex, peripheral: pin.peripheral, signal: pin.signal, label: pin.label };
+}
+
+export function normalizePinMap(map: PortPinMap): PortPinMap {
+  return { portId: map.portId, pins: map.pins.map(normalizePinAssignment) };
+}
+
+export function gpioDirectionOf(pin: PinAssignment): "input" | "output" {
+  if (pin.settings?.kind === "gpio") return pin.settings.direction;
+  return pin.signal === "OUT" ? "output" : "input";
 }
 
 export function isDirectOnly(peripherals: readonly LogicalPeripheral[]): boolean {
@@ -438,10 +574,20 @@ export function isDirectOnly(peripherals: readonly LogicalPeripheral[]): boolean
   return core.length > 0 && core.every(isDirectPeripheral);
 }
 
-export function compatibleDialects(peripherals: readonly LogicalPeripheral[]): readonly DialectKind[] {
-  if (peripherals.length === 0) return BUS_DIALECTS;
-  if (isDirectOnly(peripherals)) return peripherals.flatMap((p) => DIALECTS_FOR_PERIPHERAL[p]);
-  return dialectSections(peripherals).flatMap((section) => section.dialects);
+export function compatibleDialects(
+  peripherals: readonly LogicalPeripheral[],
+  available?: readonly LogicalPeripheral[],
+): readonly DialectKind[] {
+  const core = peripherals.filter((p) => !isPowerPeripheral(p));
+  if (core.length === 0) return [];
+  if (isDirectOnly(peripherals)) {
+    return core.flatMap((p) => DIALECTS_FOR_PERIPHERAL[p]).filter((kind) => !available || available.includes(peripheralOfDialect(kind)));
+  }
+  return dialectSections(peripherals, available).flatMap((section) => section.dialects);
+}
+
+export function hasConfigurablePins(peripherals: readonly LogicalPeripheral[]): boolean {
+  return peripherals.some((p) => !isPowerPeripheral(p) && p !== "unused");
 }
 
 export function defaultDirectDialect(peripherals: readonly LogicalPeripheral[]): DialectKind | undefined {
@@ -481,6 +627,8 @@ export function emptySettings(kind: DialectKind): DialectSettings {
       return { kind, resolution: "12", rangeMin: "0", rangeMax: "3300" };
     case "pwm":
       return { kind, frequencyHz: "1000" };
+    case "dac":
+      return { kind, resolution: "8", rangeMin: "0", rangeMax: "3300" };
     case "i2c":
       return { kind, address: "0x40", busHz: "400000", registerWidth: "8", timeoutMs: "20" };
     case "spi":
@@ -508,6 +656,8 @@ export function emptySpec(kind: DialectKind): MappingSpec {
       return { kind, rawMin: "0", rawMax: "4095", filter: "none", sampleHz: "10" };
     case "pwm":
       return { kind, dutyMin: "0", dutyMax: "100", initial: "0", safeState: "0", rangeMin: "0", rangeMax: "100" };
+    case "dac":
+      return { kind, resolution: "8", rangeMin: "0", rangeMax: "3300", rawMin: "0", rawMax: "255", initial: "0", safeState: "0" };
     case "i2c":
       return { kind, register: "0x00", length: "2", signed: false, endian: "be", bitStart: "", bitEnd: "" };
     case "spi":
@@ -839,14 +989,13 @@ export function pinSignalNumericId(pinIndex: number): number {
 function pinSignalRole(pin: PinAssignment): "source" | "command" | "both" | undefined {
   if (!isDirectPeripheral(pin.peripheral)) return undefined;
   if (pin.peripheral === "adc") return "source";
-  if (pin.peripheral === "pwm") return "command";
-  if (pin.signal === "OUT") return "command";
-  if (pin.signal === "IN") return "source";
-  return "both";
+  if (pin.peripheral === "pwm" || pin.peripheral === "dac") return "command";
+  return gpioDirectionOf(pin) === "output" ? "command" : "source";
 }
 
 function pinSignalLabel(pin: PinAssignment): string {
   if (pin.label.trim() !== "") return pin.label.trim();
+  if (pin.peripheral === "gpio") return `GPIO ${gpioDirectionOf(pin) === "output" ? "OUT" : "IN"} · ${pinLetter(pin.pinIndex)}`;
   return `${PERIPHERAL_LABEL[pin.peripheral]} ${pin.signal} · ${pinLetter(pin.pinIndex)}`;
 }
 
@@ -921,7 +1070,7 @@ export const SIGNAL_PALETTE = [
   "#4B5563",
 ] as const;
 
-const SIGNAL_ASSIGN_ORDER: readonly LogicalPeripheral[] = ["uart", "i2c", "spi", "can", "gpio", "adc", "pwm", "w1", "vcc", "gnd"];
+const SIGNAL_ASSIGN_ORDER: readonly LogicalPeripheral[] = ["uart", "i2c", "spi", "can", "gpio", "adc", "pwm", "dac", "w1", "vcc", "gnd"];
 
 function assignUniqueSignalColors(): Record<LogicalPeripheral, Readonly<Record<string, string>>> {
   const out: Record<string, Record<string, string>> = { unused: {} };
@@ -945,9 +1094,10 @@ export const PERIPHERAL_COLOR: Record<LogicalPeripheral, string> = {
   i2c: SIGNAL_COLOR.i2c.SDA ?? "var(--color-brand-cyan-glow)",
   spi: SIGNAL_COLOR.spi.MOSI ?? "#E67E22",
   can: SIGNAL_COLOR.can.TX ?? "#2980B9",
-  gpio: SIGNAL_COLOR.gpio.IN ?? "#7F8C8D",
+  gpio: SIGNAL_COLOR.gpio.IO ?? "#7F8C8D",
   adc: SIGNAL_COLOR.adc.CH ?? "#27AE60",
   pwm: SIGNAL_COLOR.pwm.PWM ?? "#F39C12",
+  dac: SIGNAL_COLOR.dac.DAC ?? "#C0392B",
   w1: SIGNAL_COLOR.w1.DATA ?? "#9B59B6",
   vcc: SIGNAL_COLOR.vcc.VCC ?? "#C9A227",
   gnd: SIGNAL_COLOR.gnd.GND ?? "#4B5563",
@@ -1040,6 +1190,9 @@ export function compositionLines(field: ProtocolField): readonly { readonly labe
     case "pwm":
       lines.push({ label: "Duty", value: `${spec.dutyMin}–${spec.dutyMax}` }, { label: "Safe", value: spec.safeState });
       break;
+    case "dac":
+      lines.push({ label: "Range", value: `${spec.rangeMin}–${spec.rangeMax}` }, { label: "Risoluzione", value: spec.resolution }, { label: "Safe", value: spec.safeState });
+      break;
   }
   return lines.filter((line) => line.value.trim() !== "");
 }
@@ -1047,8 +1200,64 @@ export function compositionLines(field: ProtocolField): readonly { readonly labe
 export function pinCaption(pin: PinAssignment): string {
   if (pin.peripheral === "unused") return "";
   if (pin.label.trim() !== "") return pin.label.trim();
+  if (pin.peripheral === "gpio") return `GPIO_${gpioDirectionOf(pin) === "output" ? "OUT" : "IN"}`;
   if (pin.signal !== "") return `${PERIPHERAL_LABEL[pin.peripheral]}_${pin.signal}`;
   return PERIPHERAL_LABEL[pin.peripheral];
+}
+
+export function pinPreviewSignal(pin: PinAssignment): string {
+  if (pin.peripheral === "unused") return "";
+  if (pin.peripheral === "gpio") return gpioDirectionOf(pin) === "output" ? "OUT" : "IN";
+  return pin.signal || pinCaption(pin).slice(0, 4);
+}
+
+export function pinCompositionLines(pin: PinAssignment): readonly { readonly label: string; readonly value: string }[] {
+  const settings = pin.settings;
+  if (!settings) return [];
+  if (settings.kind === "gpio") {
+    return [
+      { label: "Pin", value: pinLetter(pin.pinIndex) },
+      { label: "Direzione", value: settings.direction },
+      { label: "Polarità", value: settings.polarity },
+      { label: "Pull", value: settings.pull },
+      { label: "Debounce", value: settings.debounceMs },
+      { label: "Edge", value: settings.edge },
+      ...(settings.direction === "output"
+        ? [
+            { label: "Iniziale", value: settings.initial },
+            { label: "Safe", value: settings.safeState },
+          ]
+        : []),
+    ].filter((line) => line.value.trim() !== "");
+  }
+  if (settings.kind === "adc") {
+    return [
+      { label: "Pin", value: pinLetter(pin.pinIndex) },
+      { label: "Risoluzione", value: settings.resolution },
+      { label: "Range", value: `${settings.rangeMin}–${settings.rangeMax}` },
+      { label: "Grezzo", value: `${settings.rawMin}–${settings.rawMax}` },
+      { label: "Filtro", value: settings.filter },
+      { label: "Sample", value: settings.sampleHz },
+    ].filter((line) => line.value.trim() !== "");
+  }
+  if (settings.kind === "pwm") {
+    return [
+      { label: "Pin", value: pinLetter(pin.pinIndex) },
+      { label: "Frequenza", value: settings.frequencyHz },
+      { label: "Polarità", value: settings.polarity },
+      { label: "Duty", value: `${settings.dutyMin}–${settings.dutyMax}` },
+      { label: "Iniziale", value: settings.initial },
+      { label: "Safe", value: settings.safeState },
+    ].filter((line) => line.value.trim() !== "");
+  }
+  return [
+    { label: "Pin", value: pinLetter(pin.pinIndex) },
+    { label: "Risoluzione", value: settings.resolution },
+    { label: "Range", value: `${settings.rangeMin}–${settings.rangeMax}` },
+    { label: "Grezzo", value: `${settings.rawMin}–${settings.rawMax}` },
+    { label: "Iniziale", value: settings.initial },
+    { label: "Safe", value: settings.safeState },
+  ].filter((line) => line.value.trim() !== "");
 }
 
 export function mappingCaption(field: ProtocolField): string {
@@ -1075,5 +1284,7 @@ export function mappingCaption(field: ProtocolField): string {
       return `${spec.sampleHz} Hz`;
     case "pwm":
       return `duty ${spec.dutyMin}–${spec.dutyMax}`;
+    case "dac":
+      return `${spec.rangeMin}–${spec.rangeMax}`;
   }
 }

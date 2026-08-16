@@ -52,10 +52,14 @@ describe("normalizeTopologyPages — order independence and Port collection", ()
   });
 
   it("collects distinct Port IDs referenced across flows, sorted", () => {
-    const flowOnPort2 = { ...flowWithRail(1, ENFORCED), portId: 2 };
-    const flowOnPort0 = { ...flowWithRail(2, ENFORCED), portId: 0 };
+    const flowOnPort2 = { ...flowWithRail(1, ENFORCED), portId: 2, capabilities: 1 };
+    const flowOnPort0 = { ...flowWithRail(2, ENFORCED), portId: 0, capabilities: 24 };
     const index = normalizeTopologyPages([page([flowOnPort2, flowOnPort0])], true);
-    expect(index.ports).toEqual([{ portId: 0 }, { portId: 2 }]);
+    expect(index.ports).toEqual([
+      { portId: 0, capabilities: 24 },
+      { portId: 2, capabilities: 1 },
+    ]);
+    expect(index.flows.find((flow) => flow.portId === 0)?.capabilities).toBe(24);
   });
 
   it("deduplicates the same flow reported on more than one page", () => {

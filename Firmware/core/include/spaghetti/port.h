@@ -45,6 +45,9 @@ enum spaghetti_port_capability {
 	SPAGHETTI_PORT_CAP_DIGITAL_OUTPUT = BIT(4), /**< Digital output line. */
 	SPAGHETTI_PORT_CAP_ADC = BIT(5), /**< ADC channel on the connector. */
 	SPAGHETTI_PORT_CAP_W1 = BIT(6), /**< 1-Wire controller. */
+	SPAGHETTI_PORT_CAP_PWM = BIT(7), /**< PWM output on the connector. */
+	SPAGHETTI_PORT_CAP_DAC = BIT(8), /**< DAC output on the connector. */
+	SPAGHETTI_PORT_CAP_CAN = BIT(9), /**< CAN controller on the connector. */
 };
 
 /**
@@ -121,6 +124,16 @@ const struct spaghetti_port *spaghetti_port_get(spaghetti_port_id_t id);
 bool spaghetti_port_has_capability(
 	const struct spaghetti_port *port,
 	uint32_t capabilities);
+
+/**
+ * @brief Return the capability bitmask advertised by a Port.
+ *
+ * The mask is the DTS-derived pin mux for that connector. Hosts read it from
+ * GET_TOPOLOGY flow key 5 and must not invent peripherals the Port lacks.
+ *
+ * @return Capability bits, or 0 if @p port is NULL.
+ */
+uint32_t spaghetti_port_capabilities(const struct spaghetti_port *port);
 
 /**
  * @brief Acquire a Port transport for one Module owner.

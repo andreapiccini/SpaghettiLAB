@@ -398,6 +398,9 @@ Port families the generic `declarative-device` Module can already execute
 
 Not Port families, not profile-installable: CAN, USB host, Ethernet, PWM.
 
+`GET_TOPOLOGY` flow key 5 is the Port's `spaghetti_port_capability` mask
+(DTS pin mux). The host must offer only those peripherals on that connector.
+
 ### Verify
 
 ```sh

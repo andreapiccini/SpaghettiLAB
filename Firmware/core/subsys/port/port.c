@@ -73,7 +73,13 @@ struct spaghetti_port_controller_lock {
 	 | COND_CODE_1(DT_NODE_HAS_PROP(node_id, io_channels), \
 		       (SPAGHETTI_PORT_CAP_ADC), (0U)) \
 	 | COND_CODE_1(DT_NODE_HAS_PROP(node_id, w1), \
-		       (SPAGHETTI_PORT_CAP_W1), (0U)))
+		       (SPAGHETTI_PORT_CAP_W1), (0U)) \
+	 | COND_CODE_1(DT_NODE_HAS_PROP(node_id, pwm), \
+		       (SPAGHETTI_PORT_CAP_PWM), (0U)) \
+	 | COND_CODE_1(DT_NODE_HAS_PROP(node_id, dac), \
+		       (SPAGHETTI_PORT_CAP_DAC), (0U)) \
+	 | COND_CODE_1(DT_NODE_HAS_PROP(node_id, can), \
+		       (SPAGHETTI_PORT_CAP_CAN), (0U)))
 
 #define SPAGHETTI_PORT_VALIDATE(node_id) \
 	BUILD_ASSERT(DT_REG_ADDR(node_id) <= UINT8_MAX, \
@@ -397,6 +403,15 @@ bool spaghetti_port_has_capability(
 	}
 
 	return (port->capabilities & capabilities) == capabilities;
+}
+
+uint32_t spaghetti_port_capabilities(const struct spaghetti_port *port)
+{
+	if (port == NULL) {
+		return 0U;
+	}
+
+	return port->capabilities;
 }
 
 int spaghetti_port_acquire(

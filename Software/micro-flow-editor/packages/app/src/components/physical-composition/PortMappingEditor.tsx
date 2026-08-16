@@ -193,6 +193,14 @@ function SettingsForm({ settings, onChange }: { readonly settings: DialectSettin
           <Text label="Frequenza (Hz)" value={settings.frequencyHz} onChange={(frequencyHz) => onChange({ ...settings, frequencyHz })} wide />
         </FormGrid>
       );
+    case "dac":
+      return (
+        <FormGrid>
+          <Text label="Risoluzione (bit)" value={settings.resolution} onChange={(resolution) => onChange({ ...settings, resolution })} />
+          <Text label="Range min" value={settings.rangeMin} onChange={(rangeMin) => onChange({ ...settings, rangeMin })} />
+          <Text label="Range max" value={settings.rangeMax} onChange={(rangeMax) => onChange({ ...settings, rangeMax })} wide />
+        </FormGrid>
+      );
     case "i2c":
       return <I2cSettingsForm settings={settings} onChange={onChange} />;
     case "spi":
@@ -353,6 +361,18 @@ function SpecForm({ spec, onChange }: { readonly spec: MappingSpec; readonly onC
           <Text label="Safe state" value={spec.safeState} onChange={(safeState) => onChange({ safeState })} />
           <Text label="Range proprietà min" value={spec.rangeMin} onChange={(rangeMin) => onChange({ rangeMin })} />
           <Text label="Range proprietà max" value={spec.rangeMax} onChange={(rangeMax) => onChange({ rangeMax })} />
+        </FormGrid>
+      );
+    case "dac":
+      return (
+        <FormGrid>
+          <Text label="Risoluzione (bit)" value={spec.resolution} onChange={(resolution) => onChange({ resolution })} />
+          <Text label="Range min" value={spec.rangeMin} onChange={(rangeMin) => onChange({ rangeMin })} />
+          <Text label="Range max" value={spec.rangeMax} onChange={(rangeMax) => onChange({ rangeMax })} />
+          <Text label="Grezzo min" value={spec.rawMin} onChange={(rawMin) => onChange({ rawMin })} />
+          <Text label="Grezzo max" value={spec.rawMax} onChange={(rawMax) => onChange({ rawMax })} />
+          <Text label="Valore iniziale" value={spec.initial} onChange={(initial) => onChange({ initial })} />
+          <Text label="Safe state" value={spec.safeState} onChange={(safeState) => onChange({ safeState })} />
         </FormGrid>
       );
     case "i2c":

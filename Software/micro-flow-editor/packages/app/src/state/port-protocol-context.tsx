@@ -4,6 +4,7 @@ import {
   DEFAULT_SIGNAL_COUNT,
   defaultPinMap,
   emptyProtocol,
+  normalizePinMap,
   protocolFromIntegrated,
   protocolFromPreset,
   resizePinMap,
@@ -24,6 +25,7 @@ export type PortAuthoringSnapshot = {
   readonly protocols: readonly CustomProtocol[];
   readonly savedPortIds: readonly number[];
   readonly cardPositions: Readonly<Record<string, PortCardPosition>>;
+  readonly portCapabilities?: Readonly<Record<string, number>>;
 };
 
 type PortProtocolContextValue = {
@@ -40,6 +42,8 @@ type PortProtocolContextValue = {
   readonly configuredPorts: readonly ConfiguredPortSummary[];
   readonly cardPositionOf: (portId: number) => PortCardPosition | undefined;
   readonly setCardPosition: (portId: number, position: PortCardPosition) => void;
+  readonly capabilitiesOf: (portId: number) => number | undefined;
+  readonly rememberCapabilities: (portId: number, capabilities: number) => void;
 };
 
 const PortProtocolContext = createContext<PortProtocolContextValue | undefined>(undefined);
@@ -58,6 +62,7 @@ export function parsePortAuthoringSnapshot(raw: unknown): PortAuthoringSnapshot 
       protocols: parsed.protocols ?? [],
       savedPortIds: parsed.savedPortIds ?? [],
       cardPositions: parsed.cardPositions ?? {},
+      portCapabilities: parsed.portCapabilities ?? {},
     };
   } catch {
     return undefined;
@@ -69,7 +74,7 @@ function snapshotFromProject(comment: string | undefined): PortAuthoringSnapshot
 }
 
 function emptySnapshot(): PortAuthoringSnapshot {
-  return { pinMaps: {}, protocols: [], savedPortIds: [], cardPositions: {} };
+  return { pinMaps: {}, protocols: [], savedPortIds: [], cardPositions: {}, portCapabilities: {} };
 }
 
 export function PortProtocolProvider({ children }: { readonly children: ReactNode }) {
@@ -81,6 +86,7 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
   const [protocols, setProtocols] = useState<readonly CustomProtocol[]>(stored.protocols);
   const [savedPortIds, setSavedPortIds] = useState<readonly number[]>(stored.savedPortIds);
   const [cardPositions, setCardPositions] = useState<Readonly<Record<string, PortCardPosition>>>(stored.cardPositions);
+  const [portCapabilities, setPortCapabilities] = useState<Readonly<Record<number, number>>>(() => capsFromSnapshot(stored));
   const skipPersist = useRef(true);
 
   if (hydratedFor !== projectId) {
@@ -90,12 +96,13 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
     setProtocols(next.protocols);
     setSavedPortIds(next.savedPortIds);
     setCardPositions(next.cardPositions);
+    setPortCapabilities(capsFromSnapshot(next));
     skipPersist.current = true;
   }
 
   const pinMapOf = useCallback((portId: number, pinCount = DEFAULT_SIGNAL_COUNT) => {
     const existing = pinMaps[portId];
-    return existing ? resizePinMap(existing, pinCount) : defaultPinMap(portId, pinCount);
+    return existing ? normalizePinMap(resizePinMap(existing, pinCount)) : defaultPinMap(portId, pinCount);
   }, [pinMaps]);
 
   const setPinMap = useCallback((map: PortPinMap) => {
@@ -165,6 +172,12 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
     setCardPositions((prev) => ({ ...prev, [String(portId)]: position }));
   }, []);
 
+  const capabilitiesOf = useCallback((portId: number) => portCapabilities[portId], [portCapabilities]);
+
+  const rememberCapabilities = useCallback((portId: number, capabilities: number) => {
+    setPortCapabilities((prev) => (prev[portId] === capabilities ? prev : { ...prev, [portId]: capabilities }));
+  }, []);
+
   const configuredPorts = useMemo(() => {
     const ids = new Set(savedPortIds);
     for (const map of Object.values(pinMaps)) {
@@ -178,7 +191,7 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
       .map((portId) =>
         summarizeConfiguredPort(
           portId,
-          pinMaps[portId] ?? defaultPinMap(portId),
+          pinMaps[portId] ? normalizePinMap(pinMaps[portId]!) : defaultPinMap(portId),
           protocols.find((p) => p.portId === portId && !p.moduleNodeId) ?? protocols.find((p) => p.portId === portId),
         ),
       );
@@ -196,6 +209,7 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
         protocols,
         savedPortIds,
         cardPositions,
+        portCapabilities: Object.fromEntries(Object.entries(portCapabilities).map(([key, value]) => [key, value])),
       };
       execute({
         kind: "PersistPortAuthoring",
@@ -212,7 +226,7 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
       });
     }, 250);
     return () => window.clearTimeout(handle);
-  }, [cardPositions, execute, pinMaps, projectId, protocols, savedPortIds]);
+  }, [cardPositions, execute, pinMaps, portCapabilities, projectId, protocols, savedPortIds]);
 
   const value = useMemo(
     () => ({
@@ -229,8 +243,10 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
       configuredPorts,
       cardPositionOf,
       setCardPosition,
+      capabilitiesOf,
+      rememberCapabilities,
     }),
-    [pinMapOf, setPinMap, protocols, upsertProtocol, protocolFor, bindProtocol, createBlankProtocol, createFromPreset, createFromIntegrated, savePort, configuredPorts, cardPositionOf, setCardPosition],
+    [pinMapOf, setPinMap, protocols, upsertProtocol, protocolFor, bindProtocol, createBlankProtocol, createFromPreset, createFromIntegrated, savePort, configuredPorts, cardPositionOf, setCardPosition, capabilitiesOf, rememberCapabilities],
   );
 
   return <PortProtocolContext.Provider value={value}>{children}</PortProtocolContext.Provider>;
@@ -239,9 +255,17 @@ export function PortProtocolProvider({ children }: { readonly children: ReactNod
 function mapsFromSnapshot(snapshot: PortAuthoringSnapshot): Readonly<Record<number, PortPinMap>> {
   const maps: Record<number, PortPinMap> = {};
   for (const [key, map] of Object.entries(snapshot.pinMaps)) {
-    maps[Number(key)] = map;
+    maps[Number(key)] = normalizePinMap(map);
   }
   return maps;
+}
+
+function capsFromSnapshot(snapshot: PortAuthoringSnapshot): Readonly<Record<number, number>> {
+  const caps: Record<number, number> = {};
+  for (const [key, value] of Object.entries(snapshot.portCapabilities ?? {})) {
+    if (typeof value === "number") caps[Number(key)] = value;
+  }
+  return caps;
 }
 
 export function usePortProtocol(): PortProtocolContextValue {

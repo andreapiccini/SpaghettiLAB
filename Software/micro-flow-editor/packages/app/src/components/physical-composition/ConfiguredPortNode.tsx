@@ -10,10 +10,13 @@ import {
   assignedPinCount,
   compositionLines,
   fieldsForPeripheral,
+  isLinePeripheral,
   isPowerPeripheral,
   pinCaption,
   pinColor,
+  pinCompositionLines,
   pinLetter,
+  pinPreviewSignal,
   type ConfiguredPortSummary,
   type LogicalPeripheral,
   type PinAssignment,
@@ -49,8 +52,11 @@ export function ConfiguredPortNode({ data, selected }: NodeProps & { readonly da
   const subtitle = [origin, `${data.pins.length} segnali`, data.flowId !== undefined ? `Flow ${data.flowId}` : undefined, protocol].filter(Boolean).join(" · ");
   const [openPeripheral, setOpenPeripheral] = useState<LogicalPeripheral | null>(null);
   const [openFieldId, setOpenFieldId] = useState<string | null>(null);
+  const [openPinIndex, setOpenPinIndex] = useState<number | null>(null);
   const quantities = openPeripheral ? fieldsForPeripheral(data.fields, openPeripheral, data.dialect) : [];
+  const linePins = openPeripheral ? data.pins.filter((pin) => pin.peripheral === openPeripheral && isLinePeripheral(pin.peripheral)) : [];
   const openField = quantities.find((f) => f.id === openFieldId);
+  const openPin = linePins.find((pin) => pin.pinIndex === openPinIndex);
 
   function togglePeripheral(peripheral: LogicalPeripheral) {
     if (openPeripheral === peripheral) {
@@ -60,6 +66,7 @@ export function ConfiguredPortNode({ data, selected }: NodeProps & { readonly da
     }
     setOpenPeripheral(peripheral);
     setOpenFieldId(null);
+    setOpenPinIndex(null);
   }
 
   return (
@@ -103,8 +110,29 @@ export function ConfiguredPortNode({ data, selected }: NodeProps & { readonly da
               <div className="mb-1.5 font-body text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
                 Grandezze · {PERIPHERAL_LABEL[openPeripheral]}
               </div>
-              {quantities.length === 0 ? (
+              {linePins.length === 0 && quantities.length === 0 ? (
                 <p className="font-body text-[11px] text-ink-faint">Nessuna grandezza su questa periferica.</p>
+              ) : linePins.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {linePins.map((pin) => (
+                    <button
+                      key={pin.pinIndex}
+                      type="button"
+                      className="nodrag nopan rounded-slpill px-2 py-0.5 font-body text-[10px] text-ink"
+                      style={{
+                        backgroundColor: openPinIndex === pin.pinIndex ? `color-mix(in srgb, ${PERIPHERAL_COLOR[openPeripheral]} 28%, transparent)` : `color-mix(in srgb, ${PORT_CARD_COLOR} 14%, transparent)`,
+                        outline: openPinIndex === pin.pinIndex ? `1px solid ${PERIPHERAL_COLOR[openPeripheral]}` : undefined,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenPinIndex(openPinIndex === pin.pinIndex ? null : pin.pinIndex);
+                        setOpenFieldId(null);
+                      }}
+                    >
+                      {pinLetter(pin.pinIndex)} · {pin.label || pinPreviewSignal(pin)}
+                    </button>
+                  ))}
+                </div>
               ) : (
                 <div className="flex flex-wrap gap-1">
                   {quantities.map((field) => (
@@ -126,8 +154,9 @@ export function ConfiguredPortNode({ data, selected }: NodeProps & { readonly da
                   ))}
                 </div>
               )}
-              <Reveal open={Boolean(openField)}>
+              <Reveal open={Boolean(openField) || Boolean(openPin)}>
                 {openField && <CompositionPanel field={openField} color={PERIPHERAL_COLOR[openPeripheral]} />}
+                {openPin && <PinCompositionPanel pin={openPin} color={PERIPHERAL_COLOR[openPeripheral]} />}
               </Reveal>
             </div>
           )}
@@ -161,7 +190,7 @@ function PinPreview({
         {pins.map((pin) => {
           const color = pinColor(pin);
           const used = pin.peripheral !== "unused";
-          const caption = used ? pin.signal || pinCaption(pin).slice(0, 4) : "·";
+          const caption = used ? pinPreviewSignal(pin) : "·";
           return (
             <button
               key={pin.pinIndex}
@@ -223,6 +252,23 @@ function PeripheralDot({
         {PERIPHERAL_LABEL[peripheral]}
       </span>
     </button>
+  );
+}
+
+function PinCompositionPanel({ pin, color }: { readonly pin: PinAssignment; readonly color: string }) {
+  const lines = pinCompositionLines(pin);
+  return (
+    <div className="mt-2 rounded-slmd bg-surface-sunken px-2.5 py-2">
+      <div className="mb-1 font-body text-[10px] font-semibold text-ink">{pinCaption(pin) || `${pinLetter(pin.pinIndex)}`}</div>
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+        {lines.map((line) => (
+          <div key={line.label} className="min-w-0">
+            <span className="font-body text-[9px] uppercase tracking-wide text-ink-faint">{line.label}</span>
+            <div className="truncate font-mono text-[10px] text-ink" style={{ color }}>{line.value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

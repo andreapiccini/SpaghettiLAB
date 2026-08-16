@@ -15,18 +15,24 @@ import {
   compatibleDialects,
   declaredPortsOf,
   defaultDirectDialect,
+  emptyLineSettings,
   emptyPin,
   emptyProtocol,
   exclusivePeripheralOf,
+  hasConfigurablePins,
+  INTEGRATED_MODULES,
   isDirectOnly,
   isExclusivePeripheral,
+  isLinePeripheral,
   nextFreeSignal,
   nextOpenPinIndex,
   nextRequiredSignal,
   peripheralOfDialect,
+  peripheralsFromCapabilities,
   pinCaption,
   pinColor,
   pinLetter,
+  pinPreviewSignal,
   protocolFromIntegrated,
   protocolWithDialect,
   takenSignals,
@@ -36,15 +42,17 @@ import {
   type DialectKind,
   type LogicalPeripheral,
   type PinAssignment,
+  type PinLineSettings,
   type PortPinMap,
   type ProtocolMode,
 } from "../../lib/port-protocol-mock.js";
 import { usePortProtocol } from "../../state/port-protocol-context.js";
+import { PinLineSettingsForm } from "./PinLineSettingsForm.js";
 import { PortDialectPicker } from "./PortDialectPicker.js";
 import { PortMappingEditor } from "./PortMappingEditor.js";
 import type { PortSetupRequest } from "./port-setup-types.js";
 
-const PERIPHERAL_ORDER: readonly LogicalPeripheral[] = ["uart", "i2c", "spi", "can", "gpio", "adc", "pwm", "w1", "vcc", "gnd", "unused"];
+const PERIPHERAL_ORDER: readonly LogicalPeripheral[] = ["uart", "i2c", "spi", "can", "gpio", "adc", "pwm", "dac", "w1", "vcc", "gnd", "unused"];
 
 export function PortSetupTray({
   open,
@@ -69,7 +77,7 @@ export function PortSetupTray({
   readonly onReloadTopology?: () => void;
   readonly onClose: () => void;
 }) {
-  const { pinMapOf, protocolFor, upsertProtocol, bindProtocol, savePort } = usePortProtocol();
+  const { pinMapOf, protocolFor, upsertProtocol, bindProtocol, savePort, capabilitiesOf } = usePortProtocol();
   const allDeclared = declaredPortsOf(topology, extraPortIds);
   const requestKey = !request ? "closed" : request.kind === "pick" ? "pick" : `${request.kind}-${request.portId}-${request.kind === "pin" ? (request.pinIndex ?? "") : ""}-${request.moduleNodeId ?? ""}`;
   const [wizard, setWizard] = useState<{ readonly key: string; readonly section: "pin" | "dialect" | "configure" }>({
@@ -87,8 +95,13 @@ export function PortSetupTray({
   const initialPin = request?.kind === "pin" ? request.pinIndex : undefined;
   const signalCount = portId >= 0 ? signalCountForPort(topology?.flows ?? [], portId) : 5;
   const peripherals = portId >= 0 ? assignedPeripherals(pinMapOf(portId, signalCount)) : [];
-  const compatible = compatibleDialects(peripherals);
+  const portCapabilities = portId >= 0 ? allDeclared.find((port) => port.portId === portId)?.capabilities ?? capabilitiesOf(portId) : undefined;
+  const availableOnPort = peripheralsFromCapabilities(portCapabilities);
+  const compatible = compatibleDialects(peripherals, availableOnPort);
   const current = portId >= 0 ? protocolFor({ moduleNodeId, portId }) : undefined;
+  if (section === "dialect" && !hasConfigurablePins(peripherals)) {
+    setSection("pin");
+  }
 
   function placeAndClose(id: number) {
     savePort(id);
@@ -109,6 +122,7 @@ export function PortSetupTray({
   }
 
   function advanceFromPins() {
+    if (!hasConfigurablePins(peripherals)) return;
     if (isDirectOnly(peripherals)) {
       const dialect = defaultDirectDialect(peripherals);
       if (dialect) ensureCustom(dialect);
@@ -158,8 +172,11 @@ export function PortSetupTray({
               <PinSignalEditor
                 portId={portId}
                 signalCount={signalCount}
+                capabilities={portCapabilities}
+                fromCore={allDeclared.find((port) => port.portId === portId)?.fromCore === true}
                 initialPinIndex={initialPin}
                 onAdvance={advanceFromPins}
+                onReload={onReloadTopology}
                 onDone={onClose}
               />
             )}
@@ -167,7 +184,7 @@ export function PortSetupTray({
               <DialectStep
                 peripherals={peripherals}
                 compatible={compatible}
-                currentDialect={current?.dialect}
+                currentDialect={current?.dialect && compatible.includes(current.dialect) ? current.dialect : undefined}
                 currentModuleId={current?.integratedModuleId}
                 catalogDrivers={catalog?.moduleDrivers ?? []}
                 installedProfiles={profiles?.profiles ?? []}
@@ -231,7 +248,10 @@ function DialectStep({
 }) {
   const [mode, setMode] = useState<ProtocolMode>("integrated");
   const [dialect, setDialect] = useState<DialectKind | undefined>(currentDialect && compatible.includes(currentDialect) ? currentDialect : undefined);
-  const [moduleId, setModuleId] = useState(currentModuleId);
+  const [moduleId, setModuleId] = useState(() => {
+    if (!currentModuleId) return undefined;
+    return INTEGRATED_MODULES.some((mod) => mod.id === currentModuleId && compatible.includes(mod.dialect)) ? currentModuleId : undefined;
+  });
 
   return (
     <PortDialectPicker
@@ -339,14 +359,20 @@ function PortPicker({
 function PinSignalEditor({
   portId,
   signalCount,
+  capabilities,
+  fromCore,
   initialPinIndex,
   onAdvance,
+  onReload,
   onDone,
 }: {
   readonly portId: number;
   readonly signalCount: number;
+  readonly capabilities?: number;
+  readonly fromCore?: boolean;
   readonly initialPinIndex?: number;
   readonly onAdvance: () => void;
+  readonly onReload?: () => void;
   readonly onDone: () => void;
 }) {
   const { pinMapOf, setPinMap, protocolFor, upsertProtocol } = usePortProtocol();
@@ -358,7 +384,10 @@ function PinSignalEditor({
   const pin = map.pins.find((p) => p.pinIndex === pinIndex) ?? map.pins[0];
   const assigned = assignedPinCount(map);
   const activePeripheral = focus ?? (pin && pin.peripheral !== "unused" ? pin.peripheral : null);
-  const signals = activePeripheral ? SIGNALS_FOR[activePeripheral] : [];
+  const available = peripheralsFromCapabilities(capabilities);
+  const offered = PERIPHERAL_ORDER.filter((key) => key === "unused" || available.includes(key));
+  const offeredAux = AUX_PERIPHERALS.filter((key) => available.includes(key));
+  const signals = activePeripheral && !isLinePeripheral(activePeripheral) ? SIGNALS_FOR[activePeripheral] : [];
   const usedSignals = activePeripheral ? takenSignals(map, activePeripheral, pin?.pinIndex) : [];
 
   function commitMap(nextMap: PortPinMap) {
@@ -371,15 +400,30 @@ function PinSignalEditor({
   }
 
   function advanceAfter(nextMap: PortPinMap, fromPin: number, peripheral: LogicalPeripheral) {
+    if (isLinePeripheral(peripheral)) {
+      setPinIndex(fromPin);
+      return;
+    }
     const moreSignals = nextFreeSignal(nextMap, peripheral) !== "";
     const nextPin = moreSignals ? nextOpenPinIndex(nextMap, fromPin) : undefined;
     if (nextPin !== undefined) setPinIndex(nextPin);
     else setPinIndex(fromPin);
   }
 
+  function assignmentFor(target: PinAssignment, peripheral: LogicalPeripheral, signal: string): PinAssignment {
+    const settings = isLinePeripheral(peripheral) ? emptyLineSettings(peripheral, capabilities) : undefined;
+    return {
+      pinIndex: target.pinIndex,
+      peripheral,
+      signal,
+      label: target.pinIndex === pin?.pinIndex ? target.label : "",
+      ...(settings ? { settings } : {}),
+    };
+  }
+
   function assignOnPin(target: PinAssignment, peripheral: LogicalPeripheral, signal: string) {
     if (signal === "" && peripheral !== "unused") return;
-    const nextMap = applyExclusivePin(map, { ...target, peripheral, signal, label: target.pinIndex === pin?.pinIndex ? target.label : "" });
+    const nextMap = applyExclusivePin(map, assignmentFor(target, peripheral, signal));
     commitMap(nextMap);
     if (peripheral !== "unused") advanceAfter(nextMap, target.pinIndex, peripheral);
   }
@@ -387,7 +431,7 @@ function PinSignalEditor({
   function choosePeripheral(key: LogicalPeripheral) {
     if (key === "unused") {
       if (!pin) return;
-      commitMap(applyExclusivePin(map, { ...pin, peripheral: "unused", signal: "", label: "" }));
+      commitMap(applyExclusivePin(map, emptyPin(pin.pinIndex)));
       setFocus(null);
       return;
     }
@@ -409,10 +453,11 @@ function PinSignalEditor({
         : map.pins.find((p) => p.peripheral === "unused") ?? pin;
     if (!target) return;
     if (target.peripheral === key && target.signal !== "" && target.pinIndex === pin?.pinIndex) {
+      if (isLinePeripheral(key)) return;
       const open = nextOpenPinIndex(map, target.pinIndex);
       const free = nextFreeSignal(map, key);
       if (open === undefined || free === "") return;
-      const nextMap = applyExclusivePin(map, { pinIndex: open, peripheral: key, signal: free, label: "" });
+      const nextMap = applyExclusivePin(map, assignmentFor({ pinIndex: open, peripheral: "unused", signal: "", label: "" }, key, free));
       commitMap(nextMap);
       advanceAfter(nextMap, open, key);
       return;
@@ -435,7 +480,7 @@ function PinSignalEditor({
     const target = map.pins.find((p) => p.pinIndex === index);
     if (!target) return;
     if (target.peripheral !== "unused") {
-      commitMap(applyExclusivePin(map, { ...target, peripheral: "unused", signal: "", label: "" }));
+      commitMap(applyExclusivePin(map, emptyPin(target.pinIndex)));
       return;
     }
     if (!focus) return;
@@ -454,7 +499,7 @@ function PinSignalEditor({
     const freed = holder
       ? { portId: map.portId, pins: map.pins.map((p) => (p.pinIndex === holder.pinIndex ? emptyPin(p.pinIndex) : p)) }
       : map;
-    const nextMap = applyExclusivePin(freed, { ...pin, peripheral: activePeripheral, signal, label: pin.label });
+    const nextMap = applyExclusivePin(freed, assignmentFor({ ...pin, label: pin.label }, activePeripheral, signal));
     commitMap(nextMap);
     advanceAfter(nextMap, pin.pinIndex, activePeripheral);
   }
@@ -464,14 +509,33 @@ function PinSignalEditor({
     commitMap(applyExclusivePin(map, { ...pin, label }));
   }
 
+  function patchSettings(settings: PinLineSettings) {
+    if (!pin) return;
+    commitMap(applyExclusivePin(map, { ...pin, settings }));
+  }
+
   if (!pin) return null;
 
   return (
     <div className="flex flex-col gap-4">
       <p className="font-body text-sm text-ink-muted">
-        {focus
-          ? `Clicca un pin libero per assegnarlo, o un segnale già messo per toglierlo. I pin liberi restano GPIO, ADC o PWM. ${signalCount} linee dal Core.`
-          : `Scegli la periferica, poi assegna i segnali sui pin. ${signalCount} linee dal Core.`}
+        {capabilities === undefined
+          ? fromCore
+            ? "Il Core ha questa Porta ma non ha inviato le periferiche del connettore. Aggiorna il firmware (GET_TOPOLOGY chiave 5) e rileggi. VCC e GND restano disponibili."
+            : "Le periferiche MCU arrivano dal firmware di questa Porta. VCC e GND restano disponibili."
+          : focus
+            ? `Clicca un pin libero per assegnarlo, o un segnale già messo per toglierlo. ${signalCount} linee dal Core.`
+            : `Scegli una periferica che il Core espone su questa Porta, poi assegna i segnali. ${signalCount} linee dal Core.`}
+      {capabilities !== undefined && (
+        <p className="font-body text-xs text-ink-faint">
+          Su questa Porta: {available.filter((key) => key !== "vcc" && key !== "gnd").map((key) => PERIPHERAL_LABEL[key]).join(", ") || "nessuna periferica MCU"}
+        </p>
+      )}
+      {capabilities === undefined && onReload && (
+        <button type="button" onClick={onReload} className="h-8 rounded-slsm border border-border-strong font-body text-xs text-ink hover:bg-surface-raised">
+          Rileggi periferiche dal Core
+        </button>
+      )}
       </p>
       {pendingPeripheral && exclusive && (
         <div className="rounded-slmd border border-border bg-surface-sunken p-3">
@@ -513,7 +577,7 @@ function PinSignalEditor({
                 />
                 <span className="font-mono text-[10px] text-ink-muted">{pinLetter(p.pinIndex)}</span>
                 <span className="h-3 font-mono text-[9px]" style={{ color: used ? color : "transparent" }}>
-                  {used ? p.signal || pinCaption(p).slice(0, 4) : "·"}
+                  {used ? pinPreviewSignal(p) : "·"}
                 </span>
               </button>
             );
@@ -525,7 +589,7 @@ function PinSignalEditor({
       <div>
         <p className="mb-2 font-body text-xs font-semibold text-ink-muted">Funzione — {pinLetter(pin.pinIndex)}</p>
         <div className="flex flex-wrap gap-1.5">
-          {PERIPHERAL_ORDER.map((key) => {
+          {offered.map((key) => {
             const selected = pin.peripheral === key;
             const color = PERIPHERAL_COLOR[key];
             return (
@@ -558,9 +622,9 @@ function PinSignalEditor({
           </div>
           {exclusive && (
             <div>
-              <p className="mb-1.5 font-body text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Altri pin — GPIO, ADC, PWM</p>
+              <p className="mb-1.5 font-body text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Altri pin — linee del Core</p>
               <div className="flex flex-wrap gap-1.5">
-                {AUX_PERIPHERALS.map((key) => {
+                {offeredAux.map((key) => {
                   const selected = pin.peripheral === key;
                   const color = PERIPHERAL_COLOR[key];
                   return (
@@ -621,15 +685,31 @@ function PinSignalEditor({
           <span className="mb-1 block font-body text-xs font-semibold text-ink-muted">Nome (opzionale)</span>
           <input
             value={pin.label}
-            placeholder={`${PERIPHERAL_LABEL[activePeripheral ?? pin.peripheral]}_${pin.signal || "…"}`}
+            placeholder={pinCaption(pin) || `${PERIPHERAL_LABEL[activePeripheral ?? pin.peripheral]}_${pin.signal || "…"}`}
             onChange={(e) => patchLabel(e.target.value)}
             className="w-full rounded-slsm border border-border-strong px-2 py-1.5 font-mono text-sm outline-none"
           />
         </label>
       )}
 
-      <p className="font-body text-xs text-ink-faint">{assigned === 0 ? "Nessun segnale assegnato." : `${assigned} di ${signalCount} assegnati.`}</p>
-      <button type="button" onClick={onAdvance} className="h-9 rounded-slsm bg-brand-blue font-body-strong text-sm text-white hover:bg-brand-blue-dark">
+      {pin.settings && isLinePeripheral(pin.peripheral) && (
+        <div>
+          <p className="mb-2 font-body text-xs font-semibold text-ink-muted">Impostazioni {PERIPHERAL_LABEL[pin.peripheral]} · {pinLetter(pin.pinIndex)}</p>
+          <PinLineSettingsForm settings={pin.settings} capabilities={capabilities} onChange={patchSettings} />
+        </div>
+      )}
+
+      <p className="font-body text-xs text-ink-faint">
+        {assigned === 0
+          ? "Nessun segnale assegnato. Scegli una periferica del Core prima di andare al protocollo."
+          : `${assigned} di ${signalCount} assegnati.`}
+      </p>
+      <button
+        type="button"
+        disabled={!hasConfigurablePins(assignedPeripherals(map))}
+        onClick={onAdvance}
+        className="h-9 rounded-slsm bg-brand-blue font-body-strong text-sm text-white hover:bg-brand-blue-dark disabled:opacity-40"
+      >
         Avanti
       </button>
       <button type="button" onClick={onDone} className="h-9 rounded-slsm border border-border-strong font-body text-sm text-ink hover:bg-surface-raised">
