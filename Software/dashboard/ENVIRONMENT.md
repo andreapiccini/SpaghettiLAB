@@ -17,7 +17,7 @@ o toolchain non allineata. L’ambiente deve essere **ripetibile** come
 
 Non esiste un’immagine Docker “ufficiale Google” per Flutter; lo standard de facto per
 CI è **[Cirrus Labs `flutter` Docker images](https://github.com/cirruslabs/docker-images-flutter)**
-(tag pinati, es. `3.24.5`). In parallelo **FVM** è lo strumento community più usato
+(tag pinati, es. `3.32.8`). In parallelo **FVM** è lo strumento community più usato
 per pinare la SDK nel repo (`.fvm/fvm_config.json` + `.fvmrc`).
 
 ## Cosa va in Docker (D011)
@@ -36,7 +36,8 @@ Software/dashboard/
 | Servizio | Comando | Uso |
 |---|---|---|
 | `dashboard-ci` | `flutter analyze && flutter test` (+ build web) | CI locale e remota |
-| `dashboard-dev-web` | `flutter run -d web-server --web-hostname=0.0.0.0` | Sviluppo UI in browser |
+| `dashboard-dev-web` | `flutter run -d web-server` + restart su file Dart | Browser `http://127.0.0.1:8080`. Un refresh **non** basta se Flutter non ha ricompilato: aspetta il log `restarting flutter` oppure `make dev-web` di nuovo. |
+| `mosquitto` | broker MQTT 1883 + WebSocket 9001 | Opzionale (`make broker`). Non usato da `make ci`. |
 
 Volume bind-mount del sorgente (come micro-flow-editor); cache `pub-cache` in volume
 nome per non riscaricare pacchetti ogni volta.
@@ -50,7 +51,7 @@ cd Software/dashboard
 docker compose run --rm dashboard-ci
 ```
 
-deve passare dopo D011/D080.
+deve passare dopo D011. SDK pinata: **3.32.8** in `.fvmrc`, `.fvm/fvm_config.json` e `FROM ghcr.io/cirruslabs/flutter:3.32.8`.
 
 ## Cosa NON va (bene) in Docker
 
@@ -92,13 +93,15 @@ docker compose up dashboard-dev-web
 # browser → http://127.0.0.1:8080
 ```
 
-**Nativo (telefono / desktop OS):**
+**Nativo (telefono / desktop OS)** — path documentato per D080, **non** eseguito nel gate Docker:
 
 ```sh
 cd Software/dashboard/app
 fvm flutter pub get
 fvm flutter run -d macos   # o chrome / android se configurato
 ```
+
+iOS richiede Xcode sull’host; Android l’SDK. Stessa pin **3.32.8**.
 
 **Prima di push:**
 

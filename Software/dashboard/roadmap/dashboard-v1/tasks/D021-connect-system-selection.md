@@ -1,6 +1,6 @@
 # D021 — Connect & system selection
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/connect/`
 
@@ -25,5 +25,5 @@ nome, nessun campo MQTT/PLC visibile).
 
 ## Fine task
 
-- [ ] Tre file spec completi.
-- [ ] Riga schermata in `DASHBOARD_ARCHITECTURE.md` marcata come specificata.
+- [x] Tre file spec completi.
+- [x] Riga schermata in `DASHBOARD_ARCHITECTURE.md` marcata come specificata.

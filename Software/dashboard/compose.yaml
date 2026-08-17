@@ -1,0 +1,34 @@
+services:
+  dashboard-ci:
+    build: .
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - dashboard-pub-cache:/pub-cache
+    environment:
+      PUB_CACHE: /pub-cache
+    command: ["bash", "/workspace/scripts/ci.sh"]
+
+  dashboard-dev-web:
+    build: .
+    working_dir: /workspace/app
+    volumes:
+      - .:/workspace
+      - dashboard-pub-cache:/pub-cache
+    environment:
+      PUB_CACHE: /pub-cache
+    ports:
+      - "127.0.0.1:8080:8080"
+    command: ["bash", "/workspace/scripts/dev-web.sh"]
+
+  # Optional. `make ci` does not start it. Bound to localhost only.
+  mosquitto:
+    image: eclipse-mosquitto:2.0.21
+    ports:
+      - "127.0.0.1:1883:1883"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+volumes:
+  dashboard-pub-cache:

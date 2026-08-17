@@ -1,6 +1,6 @@
 # D023 — Dashboard canvas (visual-first)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/canvas/`
 
@@ -27,5 +27,5 @@ personalizzabile. Canvas risolve il renderer via **registry** (D031), non hardco
 
 ## Fine task
 
-- [ ] Tre file spec completi.
-- [ ] Spec include almeno un widget animato documentato.
+- [x] Tre file spec completi.
+- [x] Spec include almeno un widget animato documentato.

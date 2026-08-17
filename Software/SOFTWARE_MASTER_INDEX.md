@@ -158,12 +158,11 @@ Dettaglio: [roadmap/app-v1/README.md](roadmap/app-v1/README.md)
 
 | Area | Done | Open |
 |---|---:|---:|
-| Documentazione architettura | 📄 scritta | approvazione D010 |
-| Implementazione codice | 0 | **19 task** |
+| Documentazione + HOST_API V1 | ✅ D010–D070 | — |
+| Implementazione codice | ✅ D011–D051 | — |
+| Gate | ✅ D080 2026-08-16 | fase 2 D200+ |
 
-**Task ancora ⬜:** `D010`–`D080` (tutti) — vedi tabella sotto § 6.2
-
-Doc già presente: architettura, theming, view modes, HOST_API bozza, ENVIRONMENT.md.
+**Fase 1 chiusa il 2026-08-16.** Next grafica: D200–D250.
 
 Dettaglio: [dashboard/roadmap/dashboard-v1/README.md](dashboard/roadmap/dashboard-v1/README.md)
 
@@ -172,21 +171,26 @@ Dettaglio: [dashboard/roadmap/dashboard-v1/README.md](dashboard/roadmap/dashboar
 | Area | Done | Open |
 |---|---:|---:|
 | Modello formale | ✅ E010 | — |
-| Implementazione | 0 | **9 task** |
+| Identity / RBAC | ✅ E020 · E021 · E050 | E051 |
+| Implementazione | 3 | **6 task** |
 
-**Task ancora ⬜:** `E020` · `E021` · `E070` · `E071` · `E050` · `E051` · `E060` · `E080` · `E081` · `E090`
+**Task ancora ⬜:** `E070` · `E071` · `E051` · `E060` · `E080` · `E081` · `E090`
 
 Dettaglio: [roadmap/ecosystem-access-v1/README.md](roadmap/ecosystem-access-v1/README.md)
 
-### 5.5 Dashboard fase 2+ (solo bozza, non task file)
+### 5.5 Dashboard fase 2 (`dashboard/roadmap/dashboard-v2/`)
 
-| ID | Tema |
-|---|---|
-| D110 | Adapter Protocol V1 sotto host |
-| D120 | Edge host Docker (Pi) |
-| D130 | Cloud host |
-| D200–D250 | View modes avanzati, Visual Pack SDK, marketplace pagamento |
-| E* | vedi sopra |
+| ID | Tema | Stato |
+|---|---|---|
+| D200 | Scene + editor placement 2D | ✅ |
+| D210 | Renderer schematic | ✅ |
+| D220 | Renderer top_down | ✅ |
+| D230 | first_person | ✅ (ritirato dal prodotto) |
+| D240 | SDK pack locale | ✅ |
+| D250 | marketplace reale + firma | ✅ |
+| D110 | Adapter Protocol V1 | ✅ |
+| D120 | EdgeHost MQTT | ✅ |
+| D130 | CloudHost HOST_API | ✅ |
 
 ---
 
@@ -210,41 +214,40 @@ Usare questa sezione in **revisione finale**: spuntare quando implementato + ver
 
 ### 6.2 Dashboard — fase 1 (UI + fake host)
 
-- [ ] D010 — Approvazione architettura e confini
-- [ ] D011 — Flutter scaffold + Docker/FVM + CI
-- [ ] D020 — Convenzione spec UX (9 schermate)
-- [ ] D021 — Spec connect
-- [ ] D022 — Spec overview
-- [ ] D023 — Spec canvas cards + animazioni
-- [ ] D024 — Spec widget picker
-- [ ] D025 — Spec point detail
-- [ ] D026 — Spec appearance
-- [ ] D029 — Spec marketplace shell
-- [ ] D027 — Spec settings
-- [ ] D028 — Spec stati trasversali
-- [ ] D030 — Domain + HostPort
-- [ ] D031 — ViewRenderer registry (solo cards)
-- [ ] D040 — Fake host fixture
-- [ ] D050 — Shell + ThemeProvider
-- [ ] D051 — Implementazione schermate
-- [ ] D070 — Congelamento HOST_API V1
-- [ ] D080 — **Gate fase 1 dashboard**
+- [x] D010 — Approvazione architettura e confini
+- [x] D011 — Flutter scaffold + Docker/FVM + CI
+- [x] D020 — Convenzione spec UX (9 schermate)
+- [x] D021 — Spec connect
+- [x] D022 — Spec overview
+- [x] D023 — Spec canvas cards + animazioni
+- [x] D024 — Spec widget picker
+- [x] D025 — Spec point detail
+- [x] D026 — Spec appearance
+- [x] D029 — Spec marketplace shell
+- [x] D027 — Spec settings
+- [x] D028 — Spec stati trasversali
+- [x] D030 — Domain + HostPort
+- [x] D031 — ViewRenderer registry (solo cards)
+- [x] D040 — Fake host fixture
+- [x] D050 — Shell + ThemeProvider
+- [x] D051 — Implementazione schermate
+- [x] D070 — Congelamento HOST_API V1
+- [x] D080 — **Gate fase 1 dashboard** (2026-08-16)
 
 ### 6.3 Dashboard — spec UX (sotto-task di D020–D029)
 
-Cartelle `dashboard/ux/screens/*/` — oggi **vuote** (solo placeholder). Ogni schermata
-richiede `visual.md` + `ui-behavior.md` + `host-behavior.md`:
+Cartelle `dashboard/ux/screens/*/` — tre file per schermata:
 
-- [ ] connect · overview · canvas · widget-picker · point-detail
-- [ ] appearance · marketplace · settings · states
+- [x] connect · overview · canvas · widget-picker · point-detail
+- [x] appearance · marketplace · settings · states
 
 ### 6.4 Ecosystem access & turnkey
 
-- [ ] E020 — Identity & tenancy API
-- [ ] E021 — Scope matrix enforcement host
+- [x] E020 — Identity & tenancy API
+- [x] E021 — Scope matrix enforcement host
 - [ ] E070 — Site Package manifest + compose profile
 - [ ] E071 — Activation wizard
-- [ ] E050 — Dashboard login + shell role-aware
+- [x] E050 — Dashboard login + shell role-aware
 - [ ] E051 — Site admin utenti
 - [ ] E060 — Node-RED auth scoped
 - [ ] E080 — Support Grant flow

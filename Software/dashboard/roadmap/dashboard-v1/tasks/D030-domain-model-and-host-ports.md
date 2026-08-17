@@ -1,6 +1,6 @@
 # D030 — Modello dominio e porte Host
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D010, D011
 **Blocca:** D031, D040, D051
 

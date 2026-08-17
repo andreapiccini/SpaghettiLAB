@@ -1,6 +1,6 @@
 # D020 — Inventario schermate e convenzione spec
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D010
 **Blocca:** D021–D029, D051
 
@@ -43,5 +43,5 @@ Documentare in `dashboard/ux/README.md`.
 
 ## Fine task
 
-- [ ] `dashboard/ux/README.md` aggiornato.
-- [ ] Nove cartelle schermata pronte.
+- [x] Convenzione documentata in `dashboard/ux/README.md`.
+- [x] Nove cartelle schermata pronte.

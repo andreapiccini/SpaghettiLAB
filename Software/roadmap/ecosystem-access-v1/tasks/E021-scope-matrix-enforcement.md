@@ -1,6 +1,6 @@
 # E021 — Scope matrix & enforcement
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE (2026-08-17) — FakeHost / MemoryHostApi
 **Dipende da:** E020
 **Blocca:** E050, E060, E080, E090
 
@@ -24,5 +24,7 @@ Enforcement **unico sul host**; estensione scope oltre S121 React Flow.
 
 ## Fine task
 
-- [ ] Matrice implementata su host reference.
-- [ ] Test enforcement verdi.
+- [x] Matrice `scopesForRole` + `FakeHost.requireScope`.
+- [x] Test enforcement (viewer/operator/admin/expiry).
+- [ ] Audit append-only su deny (E090).
+- [ ] Allineamento PERMISSION_SCOPES React Flow (doc-only finché lib condivisa).

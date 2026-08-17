@@ -1,6 +1,6 @@
 # D025 — Point detail & control
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/point-detail/`
 
@@ -24,4 +24,4 @@ placeholder.
 
 ## Fine task
 
-- [ ] Tre file spec completi.
+- [x] Tre file spec completi.

@@ -1,6 +1,6 @@
 # D031 — Registry ViewRenderer (hook pluggable)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D030
 **Blocca:** D040, D051 (canvas usa registry)
 
@@ -39,5 +39,5 @@ callbacks comando.
 
 ## Fine task
 
-- [ ] Registry + CardsRenderer.
-- [ ] Hook documentato verso `VIEW_MODES.md`.
+- [x] Registry + CardsRenderer.
+- [x] Hook documentato verso `VIEW_MODES.md`.

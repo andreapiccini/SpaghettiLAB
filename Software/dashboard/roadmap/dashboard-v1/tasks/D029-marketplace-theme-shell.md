@@ -1,6 +1,6 @@
 # D029 — Marketplace Visual Pack (shell)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/marketplace/`
 
@@ -25,5 +25,5 @@ tap Applica. Fase 1 fake; pagamento e pack developer reali = D240/D250.
 
 ## Fine task
 
-- [ ] Tre file spec.
-- [ ] Spec allineata a `VIEW_MODES.md` (due canali: marketplace + developer).
+- [x] Tre file spec.
+- [x] Spec allineata a `VIEW_MODES.md` (due canali: marketplace + developer).

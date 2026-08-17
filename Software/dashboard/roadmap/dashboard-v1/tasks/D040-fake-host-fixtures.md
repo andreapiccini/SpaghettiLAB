@@ -1,6 +1,6 @@
 # D040 — Fake host e fixture
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D030
 **Blocca:** D051
 

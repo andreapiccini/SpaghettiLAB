@@ -1,0 +1,30 @@
+import 'visual_pack.dart';
+
+/// Canonical local SDK example (D240). Same schema as `sdk/examples/local-walk.json`.
+Map<String, Object?> exampleLocalWalkPackJson() => {
+      'packId': 'sdk-example',
+      'name': 'Esempio SDK',
+      'version': '0.1.0',
+      'author': 'Developer',
+      'source': 'local',
+      'teaserViewMode': 'cards',
+      'blurb': 'Pack locale di esempio: tema viola sulle cards.',
+      'defaultViewMode': 'cards',
+      'supportedViewModes': ['cards'],
+      'appearance': {
+        'colors': {'accent': '#A78BFA'},
+        'background': {
+          'kind': 'gradient',
+          'colors': ['#1e1b4b', '#0F1114'],
+        },
+        'animationProfile': 'rich',
+        'brand': {'name': 'Esempio SDK', 'logoRef': null},
+        'menuStyle': 'bottomBar',
+        'displayMode': 'normal',
+        'typeDisplayScale': 1,
+        'radiusScale': 1,
+      },
+      'scenes': <Map<String, Object?>>[],
+    };
+
+VisualPack exampleLocalWalkPack() => VisualPack.parse(exampleLocalWalkPackJson());

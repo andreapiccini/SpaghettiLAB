@@ -1,6 +1,6 @@
 # D028 — Stati trasversali
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/states/`
 
@@ -22,5 +22,5 @@ Specificare componenti riusabili: caricamento, vuoto, offline, errore generico, 
 
 ## Fine task
 
-- [ ] Tre file spec completi.
-- [ ] Widget Flutter riusabili implementati in D051.
+- [x] Tre file spec completi.
+- [x] Widget Flutter riusabili implementati in D051.

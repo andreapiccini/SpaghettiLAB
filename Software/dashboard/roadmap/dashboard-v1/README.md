@@ -19,43 +19,42 @@ Focus prodotto: **grafica**. Automazioni = fuori (Node-RED / Config).
 | Stato | Task | Risultato |
 |---|---|---|
 | | **D010 — Fondazioni** | |
-| ⬜ | [D010 — Architettura e confini](tasks/D010-architecture-and-boundaries.md) | Grafica first; viste estendibili documentate. |
+| ✅ | [D010 — Architettura e confini](tasks/D010-architecture-and-boundaries.md) | Grafica first; viste estendibili documentate. |
 | | **D011 — Workspace** | |
-| ⬜ | [D011 — Scaffold Flutter + Docker/FVM + theme](tasks/D011-flutter-workspace-and-design-system.md) | App + CI container + dev web. |
+| ✅ | [D011 — Scaffold Flutter + Docker/FVM + theme](tasks/D011-flutter-workspace-and-design-system.md) | App + CI container + dev web. |
 | | **D020 — Spec UX** | |
-| ⬜ | [D020 — Inventario schermate](tasks/D020-screen-inventory-and-spec-format.md) | |
-| ⬜ | [D021 — Connect](tasks/D021-connect-system-selection.md) | |
-| ⬜ | [D022 — Overview](tasks/D022-system-overview.md) | |
-| ⬜ | [D023 — Canvas cards](tasks/D023-dashboard-canvas.md) | Widget + animazioni. |
-| ⬜ | [D024 — Widget picker](tasks/D024-widget-picker.md) | |
-| ⬜ | [D025 — Point detail](tasks/D025-point-detail-control.md) | |
-| ⬜ | [D026 — Appearance](tasks/D026-appearance-theme-editor.md) | |
-| ⬜ | [D029 — Marketplace Visual Pack (shell)](tasks/D029-marketplace-theme-shell.md) | Browse/apply pack. |
-| ⬜ | [D027 — Settings](tasks/D027-settings-display-modes.md) | |
-| ⬜ | [D028 — Stati](tasks/D028-cross-cutting-states.md) | |
+| ✅ | [D020 — Inventario schermate](tasks/D020-screen-inventory-and-spec-format.md) | |
+| ✅ | [D021 — Connect](tasks/D021-connect-system-selection.md) | |
+| ✅ | [D022 — Overview](tasks/D022-system-overview.md) | |
+| ✅ | [D023 — Canvas cards](tasks/D023-dashboard-canvas.md) | Widget + animazioni. |
+| ✅ | [D024 — Widget picker](tasks/D024-widget-picker.md) | |
+| ✅ | [D025 — Point detail](tasks/D025-point-detail-control.md) | |
+| ✅ | [D026 — Appearance](tasks/D026-appearance-theme-editor.md) | |
+| ✅ | [D029 — Marketplace Visual Pack (shell)](tasks/D029-marketplace-theme-shell.md) | Browse/apply pack. |
+| ✅ | [D027 — Settings](tasks/D027-settings-display-modes.md) | |
+| ✅ | [D028 — Stati](tasks/D028-cross-cutting-states.md) | |
 | | **D030 — Dominio** | |
-| ⬜ | [D030 — Dominio + HostPort](tasks/D030-domain-model-and-host-ports.md) | Appearance, ViewPreset, VisualPack; no Rule. |
-| ⬜ | [D031 — Registry renderer (hook)](tasks/D031-view-renderer-registry.md) | Interfaccia pluggable; solo CardsRenderer. |
-| ⬜ | [D040 — Fake host](tasks/D040-fake-host-fixtures.md) | Pompa + pack fake. |
+| ✅ | [D030 — Dominio + HostPort](tasks/D030-domain-model-and-host-ports.md) | Appearance, ViewPreset, VisualPack; no Rule. |
+| ✅ | [D031 — Registry renderer (hook)](tasks/D031-view-renderer-registry.md) | Interfaccia pluggable; solo CardsRenderer. |
+| ✅ | [D040 — Fake host](tasks/D040-fake-host-fixtures.md) | Pompa + pack fake. |
 | | **D050 — App** | |
-| ⬜ | [D050 — Shell + ThemeProvider](tasks/D050-app-shell-navigation.md) | |
-| ⬜ | [D051 — Schermate + fake](tasks/D051-screens-wired-to-fake-host.md) | |
+| ✅ | [D050 — Shell + ThemeProvider](tasks/D050-app-shell-navigation.md) | |
+| ✅ | [D051 — Schermate + fake](tasks/D051-screens-wired-to-fake-host.md) | |
 | | **D070 — Chiusura** | |
-| ⬜ | [D070 — HOST_API freeze](tasks/D070-host-api-freeze.md) | |
-| ⬜ | [D080 — Gate fase 1](tasks/D080-phase1-validation-gate.md) | |
+| ✅ | [D070 — HOST_API freeze](tasks/D070-host-api-freeze.md) | V1 2026-08-16 |
+| ✅ | [D080 — Gate fase 1](tasks/D080-phase1-validation-gate.md) | |
 
-## Dopo fase 1 (bozza D200 — grafica avanzata)
+## Dopo fase 1 — [fase 2 viste](../dashboard-v2/README.md)
 
 | Task | Tema |
 |---|---|
-| D200 | Scene model + binding editor (placement 2D) |
-| D210 | Renderer `schematic` (schema macchina) |
-| D220 | Renderer `top_down` (pianta / serra) |
+| ✅ D200 | Scene model + binding editor (placement 2D) |
+| ✅ D210 | Renderer `schematic` |
+| ✅ D220 | Renderer `top_down` |
 | D230 | Renderer `first_person` stilizzato (Rive / 2.5D) |
 | D240 | Visual Pack SDK developer + publish locale |
 | D250 | Marketplace reale (free/paid) + firma pack |
 | D110–D130 | Adapter Protocol V1, edge host, cloud |
-| **Turnkey, ruoli, Support Grant** | Host + dashboard + Node-RED | [E010–E090](../roadmap/ecosystem-access-v1/README.md) |
 
 ## Dipendenze
 

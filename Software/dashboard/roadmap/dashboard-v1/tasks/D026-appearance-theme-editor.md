@@ -1,6 +1,6 @@
 # D026 — Appearance & theme editor
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/appearance/`
 
@@ -26,5 +26,5 @@ con anteprima live sul canvas. Cuore della differenziazione vs Arduino Cloud.
 
 ## Fine task
 
-- [ ] Tre file spec completi.
-- [ ] Spec esclude qualsiasi editor regole/automazione.
+- [x] Tre file spec completi.
+- [x] Spec esclude qualsiasi editor regole/automazione.

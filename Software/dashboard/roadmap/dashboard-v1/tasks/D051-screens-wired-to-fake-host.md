@@ -1,6 +1,6 @@
 # D051 — Schermate collegate al fake host
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D021–D029, D027, D028, D040, D050
 
 ## Obiettivo
@@ -24,5 +24,5 @@ Implementare tutte le schermate — focus **grafica e personalizzazione**.
 
 ## Fine task
 
-- [ ] 9 schermate implementate.
-- [ ] Checklist D080 aggiornata.
+- [x] 9 schermate implementate.
+- [x] Checklist D080 aggiornata.

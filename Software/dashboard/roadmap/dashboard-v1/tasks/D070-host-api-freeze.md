@@ -1,6 +1,6 @@
 # D070 — Congelamento HOST_API
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE (2026-08-16)
 **Dipende da:** D051
 
 ## Obiettivo
@@ -22,4 +22,4 @@ Congelare contratto V1 allineato a dashboard **presentation-only**.
 
 ## Fine task
 
-- [ ] `HOST_API.md` V1 congelata + changelog.
+- [x] `HOST_API.md` V1 congelata + changelog.

@@ -1,6 +1,6 @@
 # D050 — Shell navigazione e routing
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D011
 **Blocca:** D051
 

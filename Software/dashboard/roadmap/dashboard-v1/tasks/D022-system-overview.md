@@ -1,6 +1,6 @@
 # D022 — System overview
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/overview/`
 
@@ -24,4 +24,4 @@ allarmi in evidenza.
 
 ## Fine task
 
-- [ ] Tre file spec completi.
+- [x] Tre file spec completi.

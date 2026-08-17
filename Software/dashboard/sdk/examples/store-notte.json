@@ -1,0 +1,24 @@
+{
+  "packId": "notte",
+  "name": "Notte",
+  "version": "1.0.0",
+  "author": "SpaghettiLAB",
+  "source": "marketplace",
+  "teaserViewMode": "cards",
+  "blurb": "Tema scuro firmato dallo store. Solo JSON + cards builtin.",
+  "installed": false,
+  "signed": true,
+  "keyId": "spaghetti-lab-dev",
+  "defaultViewMode": "cards",
+  "supportedViewModes": ["cards"],
+  "appearance": {
+    "colors": { "accent": "#7DD3FC" },
+    "background": {
+      "kind": "gradient",
+      "colors": ["#0f172a", "#020617"]
+    },
+    "animationProfile": "subtle",
+    "brand": { "name": "Notte", "logoRef": null }
+  },
+  "scenes": []
+}

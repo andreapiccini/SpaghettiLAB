@@ -40,7 +40,7 @@ Due modelli: **ecosistema** (progettista implementa) e **turnkey Site Package**
 - [View modes & Visual Pack](dashboard/design/VIEW_MODES.md)
 - [Theming](dashboard/design/THEMING.md)
 - [HOST_API](dashboard/HOST_API.md) · [Ambiente Docker/FVM](dashboard/ENVIRONMENT.md)
-- [Spec UX dashboard](dashboard/ux/README.md) — ⬜ da scrivere (task D020–D029)
+- [Spec UX dashboard](dashboard/ux/README.md) — ✅ 9 schermate
 
 ### Deployment e accessi
 
@@ -53,9 +53,10 @@ Due modelli: **ecosistema** (progettista implementa) e **turnkey Site Package**
 | React Flow S010–S080 | ✅ |
 | React Flow S092–S130 | ⬜ 11 task |
 | UX React Flow | ✅ doc |
-| Dashboard D010–D080 | ⬜ 19 task (doc architettura scritta) |
+| Dashboard D010–D080 | ✅ gate 2026-08-16 |
 | Ecosystem E010 | ✅ doc |
-| Ecosystem E020–E090 | ⬜ 9 task |
+| Ecosystem E020 · E021 · E050 | ✅ stub + login |
+| Ecosystem E051–E090 | ⬜ 6 task |
 
 Dettaglio e checklist completa: [**SOFTWARE_MASTER_INDEX.md § 6**](SOFTWARE_MASTER_INDEX.md#6-elenco-task-mancanti-checklist-revisione).
 

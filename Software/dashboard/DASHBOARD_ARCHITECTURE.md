@@ -34,7 +34,7 @@ partner, support grant) e accesso remoto sicuro:
 [`DEPLOYMENT_ACCESS_MODEL.md`](../DEPLOYMENT_ACCESS_MODEL.md) · roadmap
 [`ecosystem-access-v1`](../roadmap/ecosystem-access-v1/README.md).
 
-Fase 1 UI: **nessun login**; sessioni e RBAC = task E050+.
+Fase 1 UI aveva **nessun login**; da E050 la shell è role-aware (`HOST_IDENTITY_API.md`).
 
 ## Confini del sistema
 
@@ -108,17 +108,17 @@ Il dominio **non** contiene: regole automazione, MQTT, Node-RED, Protocol V1 IDs
 
 ## Schermate fase 1
 
-| Schermata | Slug | Ruolo |
-|---|---|---|
-| Connessione | `connect` | Host/sistema |
-| Panoramica | `overview` | Stato + accesso rapido |
-| Canvas | `canvas` | ViewMode `cards` + animazioni |
-| Widget picker | `widget-picker` | Punto → widget |
-| Dettaglio punto | `point-detail` | Valore + comando |
-| Aspetto | `appearance` | Tema / sfondo / motion |
-| Marketplace | `marketplace` | Browse/apply Visual Pack (shell) |
-| Impostazioni | `settings` | Kiosk, about |
-| Stati | `states` | Vuoto / offline / errore |
+| Schermata | Slug | Ruolo | Spec |
+|---|---|---|---|
+| Connessione | `connect` | Host/sistema | ✅ |
+| Panoramica | `overview` | Stato + accesso rapido | ✅ |
+| Canvas | `canvas` | ViewMode `cards` + animazioni | ✅ |
+| Widget picker | `widget-picker` | Punto → widget | ✅ |
+| Dettaglio punto | `point-detail` | Valore + comando | ✅ |
+| Aspetto | `appearance` | Tema / sfondo / motion | ✅ |
+| Marketplace | `marketplace` | Browse/apply Visual Pack (shell) | ✅ |
+| Impostazioni | `settings` | Kiosk, about | ✅ |
+| Stati | `states` | Vuoto / offline / errore | ✅ |
 
 Switcher ViewMode (schematic / top_down / …) = **fase 2+** (hook UI in overview/canvas).
 
@@ -128,11 +128,12 @@ Switcher ViewMode (schematic / top_down / …) = **fase 2+** (hook UI in overvie
 - `design/THEMING.md` — appearance e brand  
 - `design/VIEW_MODES.md` — viste, scene, Visual Pack, sicurezza pack  
 
-## Gate fase 1 (D080)
+## Gate fase 1 (D080) — chiuso 2026-08-16
 
-- Spec + implementazione schermate fase 1 con fake host  
-- Widget animato (pompa)  
-- Appearance editabile  
-- Marketplace shell (pack fake, almeno uno “visual”)  
-- Documentato: ViewMode estendibili (anche se runtime = solo `cards`)  
-- Build mobile + desktop + web; `HOST_API.md` V1  
+- Spec + implementazione schermate fase 1 con fake host
+- Widget animato (pompa)
+- Appearance editabile
+- Marketplace shell (pack fake, almeno uno “visual”)
+- Documentato: ViewMode estendibili (anche se runtime = solo `cards`)
+- Build web in Docker CI; nativo via FVM documentato in `ENVIRONMENT.md`
+- [`HOST_API.md`](HOST_API.md) **V1** congelata

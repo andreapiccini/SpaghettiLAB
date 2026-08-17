@@ -1,6 +1,6 @@
 # E020 — Identity & tenancy API
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE (2026-08-17) — spec + FakeHost stub
 **Dipende da:** E010 (doc)
 **Blocca:** E021, E050, E060, E080
 
@@ -26,5 +26,6 @@ Contratto Host per identità multi-tenant: org, site, utente, ruolo, sessione.
 
 ## Fine task
 
-- [ ] API spec scritta e reviewata.
-- [ ] FakeHost stub auth per dev dashboard (opzionale).
+- [x] API spec scritta (`HOST_IDENTITY_API.md`).
+- [x] FakeHost stub auth per dev dashboard.
+- [ ] JWT issuer di produzione e CRUD org/site/invite (E051).

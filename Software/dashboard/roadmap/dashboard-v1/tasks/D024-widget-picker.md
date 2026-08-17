@@ -1,6 +1,6 @@
 # D024 — Widget picker
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/widget-picker/`
 
@@ -24,4 +24,4 @@ widget aggiunto.
 
 ## Fine task
 
-- [ ] Tre file spec completi.
+- [x] Tre file spec completi.

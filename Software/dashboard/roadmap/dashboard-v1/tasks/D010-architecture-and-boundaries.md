@@ -1,6 +1,6 @@
 # D010 — Architettura e confini
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** —
 **Blocca:** D011, D020, D030
 

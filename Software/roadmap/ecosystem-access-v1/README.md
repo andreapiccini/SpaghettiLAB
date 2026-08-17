@@ -24,13 +24,13 @@ Permettere di vendere:
 | | **E010 — Modello formale** | Doc | |
 | ✅ | [E010 — Deployment & access model](../../DEPLOYMENT_ACCESS_MODEL.md) | Software | Modello congelato. |
 | | **E020 — Contratti host identity** | Host API | |
-| ⬜ | [E020 — Identity & tenancy API](tasks/E020-identity-tenancy-api.md) | Host | Org, Site, User, Role, JWT contract. |
-| ⬜ | [E021 — Scope matrix & enforcement](tasks/E021-scope-matrix-enforcement.md) | Host | Scope dashboard/host; enforcement unico. |
+| ✅ | [E020 — Identity & tenancy API](tasks/E020-identity-tenancy-api.md) | Host | Spec + FakeHost stub (JWT produzione = dopo). |
+| ✅ | [E021 — Scope matrix & enforcement](tasks/E021-scope-matrix-enforcement.md) | Host | `scopesForRole` + `FakeHost.requireScope`. |
 | | **E030 — Site Package turnkey** | Deploy | |
 | ⬜ | [E070 — Site Package manifest](tasks/E070-site-package-manifest.md) | Host + compose | Formato manifest + compose profile. |
 | ⬜ | [E071 — Activation wizard](tasks/E071-site-activation-wizard.md) | Host + dashboard | Primo avvio, site_admin, apply package. |
 | | **E040 — Dashboard auth UI** | Flutter | |
-| ⬜ | [E050 — Login & role-aware shell](tasks/E050-dashboard-login-rbac-shell.md) | Dashboard | Login, nav disabilitata per ruolo. |
+| ✅ | [E050 — Login & role-aware shell](tasks/E050-dashboard-login-rbac-shell.md) | Dashboard | Login, nav e comandi per scope. |
 | ⬜ | [E051 — Settings admin (site users)](tasks/E051-dashboard-site-admin-users.md) | Dashboard | site_admin: inviti utenti base. |
 | | **E050 — Node-RED access** | Node-RED | |
 | ⬜ | [E060 — Node-RED auth proxy](tasks/E060-nodered-auth-scoped-access.md) | Node-RED + host | Admin dietro host; deploy scoped. |

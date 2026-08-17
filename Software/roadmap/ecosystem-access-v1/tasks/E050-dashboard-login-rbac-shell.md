@@ -1,6 +1,6 @@
 # E050 — Dashboard login & role-aware shell
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE (2026-08-17)
 **Dipende da:** E021, dashboard D080 (fase 1 UI)
 **Blocca:** E051, E081
 
@@ -24,5 +24,5 @@ Login dashboard + navigazione che rispetta ruolo (viewer vs operator vs admin).
 
 ## Fine task
 
-- [ ] Login + shell role-aware.
-- [ ] Spec UX login.
+- [x] Login + shell role-aware (`HostPort.login` / scopes).
+- [x] Spec UX login e select-site.

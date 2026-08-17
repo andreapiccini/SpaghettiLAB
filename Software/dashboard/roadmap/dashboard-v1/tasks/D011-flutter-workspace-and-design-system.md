@@ -1,6 +1,6 @@
 # D011 — Scaffold Flutter, design system, ambiente Docker + CI
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D010
 **Blocca:** D050, D051
 

@@ -1,6 +1,6 @@
 # D027 — Settings & display modes
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE
 **Dipende da:** D020
 **Schermata:** `dashboard/ux/screens/settings/`
 
@@ -26,4 +26,4 @@ Impostazioni **sistema e display** — non editor grafico (quello è `appearance
 
 ## Fine task
 
-- [ ] Tre file spec completi.
+- [x] Tre file spec completi.
