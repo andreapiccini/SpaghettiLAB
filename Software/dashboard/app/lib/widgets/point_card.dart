@@ -14,12 +14,14 @@ class PointCard extends StatefulWidget {
     required this.appearance,
     this.style,
     this.onCommand,
+    this.compact = false,
   });
 
   final ExposurePoint point;
   final DashboardAppearance appearance;
   final CardStyle? style;
   final ValueChanged<Object>? onCommand;
+  final bool compact;
 
   @override
   State<PointCard> createState() => _PointCardState();
@@ -68,16 +70,19 @@ class _PointCardState extends State<PointCard> {
           accent: glow,
           radiusScale: appearance.radiusScale * recipe.radiusScale,
           backdrop: _backdrop(),
+          padding: widget.compact
+              ? const EdgeInsets.fromLTRB(12, 14, 10, 10)
+              : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (recipe.labelPlace == CardLabelPlace.top) ...[
                 _alongX(recipe.labelX, _title(theme)),
-                const SizedBox(height: TokenSpace.xs),
+                SizedBox(height: widget.compact ? 6 : TokenSpace.xs),
               ],
               Expanded(child: _body(theme, running)),
               if (recipe.labelPlace == CardLabelPlace.bottom) ...[
-                const SizedBox(height: TokenSpace.xs),
+                SizedBox(height: widget.compact ? 6 : TokenSpace.xs),
                 _alongX(recipe.labelX, _title(theme)),
               ],
             ],
@@ -88,11 +93,16 @@ class _PointCardState extends State<PointCard> {
   }
 
   Widget _title(ThemeData theme) {
+    final size = widget.compact ? _recipe.labelSize.clamp(14.0, 16.0) : _recipe.labelSize;
     return Text(
       point.label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleMedium?.copyWith(fontSize: _recipe.labelSize),
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontSize: size,
+        fontWeight: FontWeight.w700,
+        height: 1.0,
+      ),
     );
   }
 
@@ -111,7 +121,11 @@ class _PointCardState extends State<PointCard> {
   Widget? _backdrop() {
     final profile = appearance.animationProfile;
     final fx = switch (_effect) {
-      CardEffect.humidityDrops => HumidityDrops(percent: _asDouble(point.value), profile: profile),
+      CardEffect.humidityDrops => HumidityDrops(
+        percent: _asDouble(point.value),
+        profile: profile,
+        compact: widget.compact,
+      ),
       CardEffect.sprinkler => SprinklerFx(active: point.value == true, profile: profile),
       CardEffect.lightBulb when point.value == true => const _LightWash(),
       CardEffect.powerGlyph when point.value == true => const _LightWash(),
@@ -131,11 +145,12 @@ class _PointCardState extends State<PointCard> {
             value: _asDouble(point.value),
             unit: point.unit,
             max: point.unit == 'lux' ? 1000 : 40,
-            valueSize: _recipe.valueSize,
-            unitSize: _recipe.unitSize,
+            valueSize: widget.compact ? null : _recipe.valueSize,
+            unitSize: widget.compact ? null : _recipe.unitSize,
             showUnit: _recipe.showUnit,
             decimals: _recipe.decimals,
             valueColor: _valueColor(theme),
+            compact: widget.compact,
           ),
         );
       case CardEffect.sparkline:
@@ -157,19 +172,16 @@ class _PointCardState extends State<PointCard> {
       case CardEffect.pump:
         return _alongX(
           _recipe.bodyX,
-          Row(
-            children: [
-              PumpGlyph(key: const ValueKey('pump-glyph'), running: running, profile: appearance.animationProfile),
-              const SizedBox(width: TokenSpace.sm),
-              Expanded(
-                child: Text(
-                  running ? (_recipe.onText ?? 'In funzione') : (_recipe.offText ?? 'Ferma'),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ),
-              if (point.writable)
-                Switch.adaptive(value: running, onChanged: _onBool),
-            ],
+          _statusRow(
+            theme,
+            leading: PumpGlyph(
+              key: const ValueKey('pump-glyph'),
+              running: running,
+              profile: appearance.animationProfile,
+              size: widget.compact ? 28 : 52,
+            ),
+            text: running ? (_recipe.onText ?? 'In funzione') : (_recipe.offText ?? 'Ferma'),
+            trailing: point.writable ? _switch(running) : null,
           ),
         );
       case CardEffect.lightBulb:
@@ -178,60 +190,90 @@ class _PointCardState extends State<PointCard> {
         final on = point.value == true;
         return _alongX(
           _recipe.bodyX,
-          Row(
-            children: [
-              if (_effect != CardEffect.plainSwitch) ...[
-                LightBulbGlyph(
-                  on: on,
-                  profile: appearance.animationProfile,
-                  onIcon: _effect == CardEffect.powerGlyph ? Icons.power_settings_new_rounded : Icons.lightbulb_rounded,
-                  offIcon: _effect == CardEffect.powerGlyph ? Icons.power_settings_new_rounded : Icons.lightbulb_outline_rounded,
-                  glowColor: _effect == CardEffect.powerGlyph ? TokenColors.accent : const Color(0xFFF5C542),
-                ),
-                const SizedBox(width: TokenSpace.sm),
-              ],
-              Expanded(
-                child: Text(
-                  on ? (_recipe.onText ?? 'Accesa') : (_recipe.offText ?? 'Spenta'),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ),
-              Switch.adaptive(value: on, onChanged: _onBool),
-            ],
+          _statusRow(
+            theme,
+            leading: _effect == CardEffect.plainSwitch
+                ? null
+                : LightBulbGlyph(
+                    on: on,
+                    profile: appearance.animationProfile,
+                    size: widget.compact ? 28 : 48,
+                    onIcon: _effect == CardEffect.powerGlyph ? Icons.power_settings_new_rounded : Icons.lightbulb_rounded,
+                    offIcon: _effect == CardEffect.powerGlyph ? Icons.power_settings_new_rounded : Icons.lightbulb_outline_rounded,
+                    glowColor: _effect == CardEffect.powerGlyph ? TokenColors.accent : const Color(0xFFF5C542),
+                  ),
+            text: on ? (_recipe.onText ?? 'Accesa') : (_recipe.offText ?? 'Spenta'),
+            trailing: _switch(on),
           ),
         );
       case CardEffect.sprinkler:
         final on = point.value == true;
         return _alongX(
           _recipe.bodyX,
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  on ? (_recipe.onText ?? 'In funzione') : (_recipe.offText ?? 'Ferma'),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ),
-              Switch.adaptive(value: on, onChanged: _onBool),
-            ],
+          _statusRow(
+            theme,
+            text: on ? (_recipe.onText ?? 'In funzione') : (_recipe.offText ?? 'Ferma'),
+            trailing: _switch(on),
           ),
         );
       case CardEffect.statusPulse:
         final alarm = point.value == true || point.visualState == 'alarm';
         return _alongX(
           _recipe.bodyX,
-          Row(
-            children: [
-              _PulseDot(active: alarm, color: alarm ? TokenColors.error : TokenColors.ok),
-              const SizedBox(width: TokenSpace.sm),
-              Text(
-                alarm ? (_recipe.onText ?? 'Allarme') : (_recipe.offText ?? 'OK'),
-                style: theme.textTheme.bodyMedium,
-              ),
-            ],
+          _statusRow(
+            theme,
+            leading: _PulseDot(active: alarm, color: alarm ? TokenColors.error : TokenColors.ok),
+            text: alarm ? (_recipe.onText ?? 'Allarme') : (_recipe.offText ?? 'OK'),
           ),
         );
     }
+  }
+
+  Widget _statusRow(
+    ThemeData theme, {
+    Widget? leading,
+    required String text,
+    Widget? trailing,
+  }) {
+    return Row(
+      children: [
+        if (leading != null) ...[
+          leading,
+          SizedBox(width: widget.compact ? 6 : TokenSpace.sm),
+        ],
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontSize: widget.compact ? 12 : 14,
+              height: 1.1,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    );
+  }
+
+  Widget _switch(bool value) {
+    final scale = widget.compact ? 0.68 : 1.0;
+    return SizedBox(
+      width: 52 * scale,
+      height: 32 * scale,
+      child: Transform.scale(
+        scale: scale,
+        alignment: Alignment.center,
+        child: Switch.adaptive(
+          value: value,
+          onChanged: _onBool,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
+    );
   }
 
   Widget _numericValue(ThemeData theme) {
@@ -240,7 +282,7 @@ class _PointCardState extends State<PointCard> {
     final number = Text(
       _formatValue(point.value, recipe.decimals),
       style: theme.textTheme.displayLarge?.copyWith(
-        fontSize: recipe.valueSize,
+        fontSize: widget.compact ? recipe.valueSize.clamp(20.0, 26.0) : recipe.valueSize,
         height: 1,
         color: _valueColor(theme),
       ),
@@ -264,7 +306,7 @@ class _PointCardState extends State<PointCard> {
                   child: Text(
                     unit,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: recipe.unitSize,
+                      fontSize: widget.compact ? recipe.unitSize.clamp(10.0, 13.0) : recipe.unitSize,
                       height: 1,
                       fontWeight: FontWeight.w600,
                     ),
@@ -288,7 +330,7 @@ class _PointCardState extends State<PointCard> {
             Text(
               unit,
               style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: recipe.unitSize,
+                fontSize: widget.compact ? recipe.unitSize.clamp(10.0, 13.0) : recipe.unitSize,
                 height: 1,
                 fontWeight: FontWeight.w600,
               ),

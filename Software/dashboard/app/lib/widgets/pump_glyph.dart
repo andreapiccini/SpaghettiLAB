@@ -6,10 +6,11 @@ import 'package:flutter/material.dart';
 import '../theme/spaghetti_theme.dart';
 
 class PumpGlyph extends StatefulWidget {
-  const PumpGlyph({super.key, required this.running, required this.profile});
+  const PumpGlyph({super.key, required this.running, required this.profile, this.size = 52});
 
   final bool running;
   final AnimationProfile profile;
+  final double size;
 
   @override
   State<PumpGlyph> createState() => _PumpGlyphState();
@@ -61,7 +62,7 @@ class _PumpGlyphState extends State<PumpGlyph> with SingleTickerProviderStateMix
       child: RotationTransition(
         turns: _controller,
         child: CustomPaint(
-          size: const Size(52, 52),
+          size: Size.square(widget.size),
           painter: _ImpellerPainter(color: color, glow: widget.running),
         ),
       ),

@@ -12,10 +12,16 @@ bool _loopingFxEnabled() {
 }
 
 class HumidityDrops extends StatefulWidget {
-  const HumidityDrops({super.key, required this.percent, required this.profile});
+  const HumidityDrops({
+    super.key,
+    required this.percent,
+    required this.profile,
+    this.compact = false,
+  });
 
   final double percent;
   final AnimationProfile profile;
+  final bool compact;
 
   @override
   State<HumidityDrops> createState() => _HumidityDropsState();
@@ -49,6 +55,7 @@ class _HumidityDropsState extends State<HumidityDrops> with SingleTickerProvider
           seconds: _elapsed.inMicroseconds / 1e6,
           percent: widget.percent,
           period: _period(widget.profile),
+          compact: widget.compact,
         ),
         child: const SizedBox.expand(),
       ),
@@ -65,19 +72,25 @@ class _HumidityDropsState extends State<HumidityDrops> with SingleTickerProvider
 }
 
 class _DropsPainter extends CustomPainter {
-  _DropsPainter({required this.seconds, required this.percent, required this.period});
+  _DropsPainter({
+    required this.seconds,
+    required this.percent,
+    required this.period,
+    this.compact = false,
+  });
 
   final double seconds;
   final double percent;
   final double period;
+  final bool compact;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
-    final count = 10 + (percent / 14).round();
+    final count = compact ? 5 + (percent / 28).round() : 10 + (percent / 14).round();
     final density = (percent / 100).clamp(0.25, 1.0);
     for (var i = 0; i < count; i++) {
-      final s = 4.2 + (i % 4) * 1.7;
+      final s = compact ? 2.6 + (i % 4) * 1.1 : 4.2 + (i % 4) * 1.7;
       final speed = 0.55 + (i % 5) * 0.12;
       final phase = i * 0.173;
       final fall = (seconds / period * speed + phase) % 1.0;
@@ -88,7 +101,8 @@ class _DropsPainter extends CustomPainter {
       final travel = size.height + pad * 2;
       final y = -pad + travel * fall;
       if (y < -pad || y > size.height + pad) continue;
-      _drop(canvas, Offset(x, y), s, const Color(0xFF3F77DA).withValues(alpha: 0.22 + density * 0.42));
+      final alpha = compact ? 0.1 + density * 0.16 : 0.22 + density * 0.42;
+      _drop(canvas, Offset(x, y), s, const Color(0xFF3F77DA).withValues(alpha: alpha));
     }
   }
 
@@ -102,7 +116,10 @@ class _DropsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DropsPainter oldDelegate) =>
-      oldDelegate.seconds != seconds || oldDelegate.percent != percent || oldDelegate.period != period;
+      oldDelegate.seconds != seconds ||
+      oldDelegate.percent != percent ||
+      oldDelegate.period != period ||
+      oldDelegate.compact != compact;
 }
 
 class SprinklerFx extends StatefulWidget {
@@ -259,6 +276,7 @@ class LightBulbGlyph extends StatefulWidget {
     this.onIcon = Icons.lightbulb_rounded,
     this.offIcon = Icons.lightbulb_outline_rounded,
     this.glowColor = const Color(0xFFF5C542),
+    this.size = 48,
   });
 
   final bool on;
@@ -266,6 +284,7 @@ class LightBulbGlyph extends StatefulWidget {
   final IconData onIcon;
   final IconData offIcon;
   final Color glowColor;
+  final double size;
 
   @override
   State<LightBulbGlyph> createState() => _LightBulbGlyphState();
@@ -319,8 +338,8 @@ class _LightBulbGlyphState extends State<LightBulbGlyph> with SingleTickerProvid
         final glow = widget.on ? 0.55 + _controller.value * 0.45 : 0.0;
         return AnimatedContainer(
           duration: tokenMotion(widget.profile),
-          width: 48,
-          height: 48,
+          width: widget.size,
+          height: widget.size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: amber.withValues(alpha: widget.on ? 0.18 + _controller.value * 0.1 : 0.06),
@@ -338,7 +357,7 @@ class _LightBulbGlyphState extends State<LightBulbGlyph> with SingleTickerProvid
           child: Icon(
             widget.on ? widget.onIcon : widget.offIcon,
             color: widget.on ? amber : TokenColors.offline,
-            size: 28,
+            size: widget.size * 0.58,
           ),
         );
       },

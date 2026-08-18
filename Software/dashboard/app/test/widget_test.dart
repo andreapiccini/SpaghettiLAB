@@ -1,6 +1,7 @@
 import 'package:dashboard_app/app.dart';
 import 'package:dashboard_app/theme/spaghetti_theme.dart';
 import 'package:dashboard_app/widgets/app_states.dart';
+import 'package:dashboard_app/widgets/edit_jiggle.dart';
 import 'package:dashboard_domain/dashboard_domain.dart';
 import 'package:dashboard_host/dashboard_host.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,68 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Schema'), findsWidgets);
     expect(find.text('Pompa'), findsWidgets);
+  });
+
+  testWidgets('schema edit jiggles cards and can remove one', (tester) async {
+    final host = FakeHost();
+    addTearDown(host.dispose);
+    await _pumpApp(tester, host: host);
+    await tester.tap(find.text('Schema'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Modifica'));
+    await tester.pumpAndSettle();
+    expect(find.byType(EditJiggle), findsWidgets);
+    expect(find.byKey(const ValueKey('remove-node-pump')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('remove-node-pump')));
+    await tester.pumpAndSettle();
+    expect(find.text('Pompa'), findsNothing);
+    final scene = await host.getScene(FakeHost.demoSystemId, 'machine');
+    expect(scene.nodes.any((n) => n.nodeId == 'pump'), isFalse);
+  });
+
+  testWidgets('schema edit can add a node and remove a wire', (tester) async {
+    final host = FakeHost();
+    addTearDown(host.dispose);
+    await _pumpApp(tester, host: host);
+    await tester.tap(find.text('Schema'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Modifica'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('edge-handle-in-pump')));
+    await tester.pumpAndSettle();
+    expect(find.text('Aggiungi card'), findsOneWidget);
+    expect(find.text('Aggiungi nodo'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('schema-add-node')));
+    await tester.pumpAndSettle();
+    expect(find.text('Nodo'), findsOneWidget);
+    var scene = await host.getScene(FakeHost.demoSystemId, 'machine');
+    expect(scene.nodes.any((n) => n.label == 'Nodo'), isTrue);
+    expect(scene.edges.any((e) => e.from == 'in' && e.to == 'pump'), isFalse);
+
+    await tester.tap(find.byKey(const ValueKey('edge-handle-temp-pump')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('schema-remove-edge')));
+    await tester.pumpAndSettle();
+    scene = await host.getScene(FakeHost.demoSystemId, 'machine');
+    expect(scene.edges.any((e) => e.from == 'temp' && e.to == 'pump'), isFalse);
+  });
+
+  testWidgets('schema edit can add a card from the chrome', (tester) async {
+    final host = FakeHost();
+    addTearDown(host.dispose);
+    await _pumpApp(tester, host: host);
+    await tester.tap(find.text('Schema'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Modifica'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('view-add')));
+    await tester.pumpAndSettle();
+    expect(find.text('Aggiungi card'), findsOneWidget);
+    await tester.tap(find.text('Luce ingresso'));
+    await tester.pumpAndSettle();
+    expect(find.text('Luce ingresso'), findsOneWidget);
+    final scene = await host.getScene(FakeHost.demoSystemId, 'machine');
+    expect(scene.nodes.any((n) => n.pointId == 'ingresso.luce'), isTrue);
   });
 
   testWidgets('canvas tap opens point detail', (tester) async {

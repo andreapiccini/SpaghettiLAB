@@ -16,6 +16,7 @@ class GaugeBody extends StatelessWidget {
     this.showUnit = true,
     this.decimals = 1,
     this.valueColor,
+    this.compact = false,
   });
 
   final double value;
@@ -27,6 +28,7 @@ class GaugeBody extends StatelessWidget {
   final bool showUnit;
   final int decimals;
   final Color? valueColor;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +40,14 @@ class GaugeBody extends StatelessWidget {
         final maxH = constraints.maxHeight.isFinite ? constraints.maxHeight : 160.0;
         final side = math.min(maxW, maxH);
         if (side <= 0) return const SizedBox.shrink();
-        final stroke = (side * 0.12).clamp(8.0, 16.0);
-        final resolvedValueSize = valueSize ?? (side * 0.28).clamp(22.0, 42.0);
-        final resolvedUnitSize = unitSize ?? (side * 0.13).clamp(11.0, 18.0);
+        final stroke = compact ? (side * 0.14).clamp(8.0, 13.0) : (side * 0.12).clamp(8.0, 16.0);
+        final resolvedValueSize = compact
+            ? (side * 0.18).clamp(12.0, 18.0)
+            : (valueSize ?? (side * 0.28).clamp(22.0, 42.0));
+        final resolvedUnitSize = compact
+            ? (side * 0.1).clamp(8.0, 12.0)
+            : (unitSize ?? (side * 0.13).clamp(11.0, 18.0));
+        final hole = (side - stroke * 2 - 6).clamp(12.0, side);
         return Center(
           child: SizedBox(
             width: side,
@@ -65,7 +72,9 @@ class GaugeBody extends StatelessWidget {
                     );
                   },
                 ),
-                Center(
+                SizedBox(
+                  width: compact ? hole * 0.72 : hole * 0.86,
+                  height: compact ? hole * 0.4 : hole * 0.48,
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Row(
@@ -83,7 +92,7 @@ class GaugeBody extends StatelessWidget {
                         ),
                         if (showUnit && unit != null && unit!.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.only(left: 4),
+                            padding: const EdgeInsets.only(left: 3),
                             child: Text(
                               unit!,
                               style: theme.textTheme.bodySmall?.copyWith(

@@ -45,7 +45,11 @@ class ViewChrome extends StatelessWidget {
                 ),
               if (showEdit) const SizedBox(width: TokenSpace.sm),
               if (editing && onAdd != null)
-                TextButton(onPressed: onAdd, child: const Text('Aggiungi')),
+                TextButton(
+                  key: const ValueKey('view-add'),
+                  onPressed: onAdd,
+                  child: const Text('Aggiungi'),
+                ),
               if (onCustomize != null)
                 TextButton(onPressed: onCustomize, child: const Text('Aspetto')),
             ],
