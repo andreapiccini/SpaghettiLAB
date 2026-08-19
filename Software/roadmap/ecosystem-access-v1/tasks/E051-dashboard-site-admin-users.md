@@ -1,6 +1,6 @@
 # E051 — Dashboard site admin (utenti)
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE (2026-08-19)
 **Dipende da:** E050, E020
 
 ## Obiettivo
@@ -21,5 +21,5 @@
 
 ## Fine task
 
-- [ ] UI + host endpoints inviti.
-- [ ] Spec UX tab utenti.
+- [x] UI + host endpoints inviti.
+- [x] Spec UX tab utenti.

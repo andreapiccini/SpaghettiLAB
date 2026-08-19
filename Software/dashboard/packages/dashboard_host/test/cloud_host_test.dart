@@ -119,4 +119,21 @@ void main() {
     await host.logout();
     expect(await host.currentSession(), isNull);
   });
+
+  test('cloud loopback lists site users and rejects integrator invite', () async {
+    final host = CloudHost.loopback();
+    addTearDown(host.dispose);
+    final users = await host.listSiteUsers(FakeHost.demoSiteId);
+    expect(users.any((u) => u.email == FakeHost.demoAdminEmail), isTrue);
+    await expectLater(
+      host.inviteSiteUser(siteId: FakeHost.demoSiteId, email: 'int@demo.local', role: SiteRole.integrator),
+      throwsA(isA<HostException>()),
+    );
+    final invite = await host.inviteSiteUser(
+      siteId: FakeHost.demoSiteId,
+      email: 'cloud@demo.local',
+      role: SiteRole.viewer,
+    );
+    expect(invite.email, 'cloud@demo.local');
+  });
 }

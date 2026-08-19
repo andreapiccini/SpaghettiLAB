@@ -134,6 +134,57 @@ class CloudHost implements HostPort {
     }
   }
 
+  @override
+  Future<List<SiteUser>> listSiteUsers(String siteId) async {
+    try {
+      return [for (final u in asJsonObjectList(await _transport.get(HostApiPaths.siteUsers(siteId)))) SiteUser.parse(u)];
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<SiteInvite> inviteSiteUser({required String siteId, required String email, required SiteRole role}) async {
+    try {
+      return SiteInvite.parse(
+        asJsonMap(
+          await _transport.post(HostApiPaths.siteInvites(siteId), {'email': email, 'role': siteRoleWire(role)}),
+        ),
+      );
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<void> revokeSiteUser({required String siteId, required String userId}) async {
+    try {
+      await _transport.post(HostApiPaths.siteUserRevoke(siteId, userId));
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<List<SiteSession>> listSiteSessions(String siteId) async {
+    try {
+      return [
+        for (final s in asJsonObjectList(await _transport.get(HostApiPaths.siteSessions(siteId)))) SiteSession.parse(s),
+      ];
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<SupportRequest> requestSupport(String siteId) async {
+    try {
+      return SupportRequest.parse(asJsonMap(await _transport.post(HostApiPaths.siteSupport(siteId))));
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
   void start() {
     unawaited(_connect());
   }

@@ -1,5 +1,16 @@
 # Host API — changelog
 
+## 2026-08-19 — V1.8 additive (utenti site)
+
+`site_admin` invita visitatori/operatori, revoca accesso, vede sessioni.
+
+- `GET /v1/sites/{siteId}/users` · `POST /v1/sites/{siteId}/invites`
+- `POST /v1/sites/{siteId}/users/{userId}/revoke` · `GET /v1/sites/{siteId}/sessions`
+- `POST /v1/sites/{siteId}/support-requests` (placeholder E080)
+- Invito `integrator` → `unauthorized`. Audit host su invite/revoke
+- UI: Impostazioni → tab Utenti (scope `host.user.manage`)
+- Documento: [HOST_IDENTITY_API.md](HOST_IDENTITY_API.md)
+
 ## 2026-08-17 — V1.7 additive (editor stili card)
 
 Ricetta JSON per layout/formati/raggio/soglie. Niente eval Dart.

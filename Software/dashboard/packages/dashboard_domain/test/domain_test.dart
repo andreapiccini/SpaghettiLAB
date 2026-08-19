@@ -354,4 +354,45 @@ void main() {
     expect(await host.currentSession(), isNull);
     host.dispose();
   });
+
+  test('site admin invites viewer/operator, rejects integrator, audits revoke', () async {
+    final host = FakeHost(requireLogin: true);
+    await host.login(email: FakeHost.demoViewerEmail, password: 'viewer');
+    await expectLater(host.listSiteUsers(FakeHost.demoSiteId), throwsA(isA<HostException>()));
+
+    await host.login(email: FakeHost.demoAdminEmail, password: 'admin');
+    await expectLater(
+      host.inviteSiteUser(siteId: FakeHost.demoSiteId, email: 'int@demo.local', role: SiteRole.integrator),
+      throwsA(
+        isA<HostException>().having((e) => e.code, 'code', 'unauthorized'),
+      ),
+    );
+    expect(host.auditLog.where((e) => e.action == 'invite'), isEmpty);
+
+    final invite = await host.inviteSiteUser(
+      siteId: FakeHost.demoSiteId,
+      email: 'ospite@demo.local',
+      role: SiteRole.operator,
+    );
+    expect(invite.role, SiteRole.operator);
+    expect(invite.link, contains('/join/'));
+    expect(
+      (await host.listSiteUsers(FakeHost.demoSiteId)).singleWhere((u) => u.email == 'ospite@demo.local').status,
+      SiteUserStatus.invited,
+    );
+    expect(host.auditLog.where((e) => e.action == 'invite').length, 1);
+
+    await host.revokeSiteUser(siteId: FakeHost.demoSiteId, userId: 'user-viewer');
+    expect(
+      (await host.listSiteUsers(FakeHost.demoSiteId)).singleWhere((u) => u.email == FakeHost.demoViewerEmail).status,
+      SiteUserStatus.revoked,
+    );
+    expect(host.auditLog.where((e) => e.action == 'revoke').single.detail, FakeHost.demoViewerEmail);
+
+    await expectLater(
+      host.revokeSiteUser(siteId: FakeHost.demoSiteId, userId: 'user-admin'),
+      throwsA(isA<HostException>()),
+    );
+    host.dispose();
+  });
 }

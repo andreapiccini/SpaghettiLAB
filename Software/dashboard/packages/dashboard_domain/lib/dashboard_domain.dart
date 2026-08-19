@@ -14,6 +14,7 @@ export 'src/layout.dart';
 export 'src/pack_signature.dart';
 export 'src/point.dart';
 export 'src/scene.dart';
+export 'src/site_users.dart';
 export 'src/store_catalog.dart';
 export 'src/system.dart';
 export 'src/view.dart';

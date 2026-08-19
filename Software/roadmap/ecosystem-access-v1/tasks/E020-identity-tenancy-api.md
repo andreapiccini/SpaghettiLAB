@@ -28,4 +28,4 @@ Contratto Host per identità multi-tenant: org, site, utente, ruolo, sessione.
 
 - [x] API spec scritta (`HOST_IDENTITY_API.md`).
 - [x] FakeHost stub auth per dev dashboard.
-- [ ] JWT issuer di produzione e CRUD org/site/invite (E051).
+- [ ] JWT issuer di produzione e CRUD org/site (host di produzione). Inviti site: E051.

@@ -354,4 +354,68 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('login-screen')), findsOneWidget);
   });
+
+  testWidgets('viewer cannot see site users tab', (tester) async {
+    final host = FakeHost(requireLogin: true);
+    addTearDown(host.dispose);
+    await _pumpApp(tester, host: host);
+    await tester.enterText(find.byKey(const ValueKey('login-email')), FakeHost.demoViewerEmail);
+    await tester.enterText(find.byKey(const ValueKey('login-password')), 'viewer');
+    await tester.tap(find.byKey(const ValueKey('login-submit')));
+    await tester.pumpAndSettle();
+    await _openTab(tester, 'Impostazioni');
+    expect(find.text('Utenti'), findsNothing);
+    expect(find.byKey(const ValueKey('invite-user')), findsNothing);
+  });
+
+  testWidgets('site admin invites and revokes users', (tester) async {
+    final host = FakeHost();
+    addTearDown(host.dispose);
+    await _pumpApp(tester, host: host);
+    await _openTab(tester, 'Impostazioni');
+    expect(find.text('Utenti'), findsOneWidget);
+    await tester.tap(find.text('Utenti'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('invite-user')), findsOneWidget);
+    expect(find.text('Viewer demo'), findsOneWidget);
+    expect(find.textContaining('Questa sessione', skipOffstage: false), findsOneWidget);
+    final settingsScroll = find.descendant(
+      of: find.byKey(const ValueKey('settings-list')),
+      matching: find.byType(Scrollable),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('invite-user')));
+    await tester.pumpAndSettle();
+    expect(find.text('Integratore'), findsNothing);
+    await tester.enterText(find.byKey(const ValueKey('invite-email')), 'ospite@demo.local');
+    await tester.tap(find.byKey(const ValueKey('invite-submit')));
+    await tester.pumpAndSettle();
+    expect(find.text('Invito inviato'), findsOneWidget);
+    await tester.tap(find.text('Ok'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('ospite@demo.local', skipOffstage: false), findsOneWidget);
+    expect(find.textContaining('Invitato', skipOffstage: false), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('revoke-user-user-viewer')),
+      200,
+      scrollable: settingsScroll,
+    );
+    await tester.tap(find.byKey(const ValueKey('revoke-user-user-viewer')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Revoca'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Revocato', skipOffstage: false), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('request-support')),
+      240,
+      scrollable: settingsScroll,
+    );
+    await tester.ensureVisible(find.byKey(const ValueKey('request-support')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('request-support')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('E080'), findsOneWidget);
+  });
 }

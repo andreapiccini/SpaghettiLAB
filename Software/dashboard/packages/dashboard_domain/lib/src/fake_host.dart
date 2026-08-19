@@ -12,6 +12,7 @@ import 'layout.dart';
 import 'pack_signature.dart';
 import 'point.dart';
 import 'scene.dart';
+import 'site_users.dart';
 import 'store_catalog.dart';
 import 'system.dart';
 import 'view.dart';
@@ -106,6 +107,27 @@ class FakeHost implements HostPort {
     if (!requireLogin) {
       _session = _issue(_accounts[demoAdminEmail]!);
     }
+    _seedMembers();
+    final session = _session;
+    if (session != null) _touchSession(session);
+  }
+
+  void _seedMembers() {
+    SiteUser member(_DemoAccount account) => SiteUser(
+          userId: 'user-${account.email.split('@').first}',
+          email: account.email,
+          displayName: account.displayName,
+          role: account.role,
+        );
+    _members[demoSiteId] = [
+      member(_accounts[demoViewerEmail]!),
+      member(_accounts[demoOperatorEmail]!),
+      member(_accounts[demoAdminEmail]!),
+      member(_accounts[demoPartnerEmail]!),
+    ];
+    _members[demoSerraSiteId] = [
+      member(_accounts[demoPartnerEmail]!),
+    ];
   }
 
   static const String demoSystemId = 'casa-demo';
@@ -173,6 +195,10 @@ class FakeHost implements HostPort {
   final _trust = PackTrust.dev();
   List<CardStyle> _cardStyles = builtinCardCatalog();
   AuthSession? _session;
+  final _members = <String, List<SiteUser>>{};
+  final _invites = <SiteInvite>[];
+  final _siteSessions = <SiteSession>[];
+  final auditLog = <HostAuditEvent>[];
   static const _accounts = <String, _DemoAccount>{
     demoViewerEmail: _DemoAccount(
       email: demoViewerEmail,
@@ -273,11 +299,16 @@ class FakeHost implements HostPort {
       throw const HostException('unauthorized', 'credenziali non valide');
     }
     _session = _issue(account);
+    _touchSession(_session!);
     return _session!;
   }
 
   @override
   Future<void> logout() async {
+    final session = _session;
+    if (session != null) {
+      _siteSessions.removeWhere((s) => s.sessionId == session.token);
+    }
     _session = null;
   }
 
@@ -292,7 +323,135 @@ class FakeHost implements HostPort {
       throw const HostException('unauthorized', 'sito non disponibile');
     }
     _session = session.copyWith(token: 'dev.${session.user.email}.$siteId', selectedSiteId: siteId);
+    _touchSession(_session!);
     return _session!;
+  }
+
+  void _touchSession(AuthSession session) {
+    _siteSessions.removeWhere((s) => s.sessionId == session.token || s.userId == session.user.userId);
+    _siteSessions.add(
+      SiteSession(
+        sessionId: session.token,
+        userId: session.user.userId,
+        email: session.user.email,
+        device: 'Questa app',
+        lastSeen: DateTime.now().toUtc(),
+        current: true,
+      ),
+    );
+  }
+
+  void _requireSite(String siteId) {
+    requireScope(HostScopes.hostUserManage);
+    final session = _liveSession();
+    if (session == null || !session.sites.any((s) => s.siteId == siteId)) {
+      throw const HostException('unauthorized', 'sito non disponibile');
+    }
+  }
+
+  List<SiteUser> _usersOf(String siteId) => _members.putIfAbsent(siteId, () => []);
+
+  void _audit(String action, String detail) {
+    final email = _liveSession()?.user.email ?? 'unknown';
+    auditLog.add(
+      HostAuditEvent(at: DateTime.now().toUtc(), action: action, actorEmail: email, detail: detail),
+    );
+  }
+
+  @override
+  Future<List<SiteUser>> listSiteUsers(String siteId) async {
+    _requireSite(siteId);
+    return List.unmodifiable(_usersOf(siteId));
+  }
+
+  @override
+  Future<SiteInvite> inviteSiteUser({
+    required String siteId,
+    required String email,
+    required SiteRole role,
+  }) async {
+    _requireSite(siteId);
+    final trimmed = email.trim().toLowerCase();
+    if (trimmed.isEmpty || !trimmed.contains('@')) {
+      throw const HostException('internal', 'email non valida');
+    }
+    if (!invitableSiteRoles.contains(role)) {
+      throw const HostException('unauthorized', 'ruolo non consentito');
+    }
+    final users = _usersOf(siteId);
+    if (users.any((u) => u.email == trimmed && u.status != SiteUserStatus.revoked)) {
+      throw const HostException('internal', 'utente già presente');
+    }
+    final invite = SiteInvite(
+      inviteId: 'inv-${_invites.length + 1}',
+      email: trimmed,
+      role: role,
+      link: 'https://demo.local/join/inv-${_invites.length + 1}',
+      createdAt: DateTime.now().toUtc(),
+    );
+    _invites.add(invite);
+    users.removeWhere((u) => u.email == trimmed);
+    users.add(
+      SiteUser(
+        userId: 'user-${trimmed.split('@').first}',
+        email: trimmed,
+        displayName: trimmed.split('@').first,
+        role: role,
+        status: SiteUserStatus.invited,
+      ),
+    );
+    _audit('invite', '$trimmed ${siteRoleWire(role)}');
+    return invite;
+  }
+
+  @override
+  Future<void> revokeSiteUser({required String siteId, required String userId}) async {
+    _requireSite(siteId);
+    final session = _liveSession();
+    if (session?.user.userId == userId) {
+      throw const HostException('unauthorized', 'non puoi revocare te stesso');
+    }
+    final users = _usersOf(siteId);
+    final index = users.indexWhere((u) => u.userId == userId);
+    if (index < 0) throw const HostException('internal', 'utente assente');
+    final previous = users[index];
+    users[index] = previous.copyWith(status: SiteUserStatus.revoked);
+    _siteSessions.removeWhere((s) => s.userId == userId);
+    _audit('revoke', previous.email);
+  }
+
+  @override
+  Future<List<SiteSession>> listSiteSessions(String siteId) async {
+    _requireSite(siteId);
+    final emails = {for (final u in _usersOf(siteId)) u.email};
+    final currentToken = _liveSession()?.token;
+    return [
+      for (final session in _siteSessions)
+        if (emails.contains(session.email))
+          SiteSession(
+            sessionId: session.sessionId,
+            userId: session.userId,
+            email: session.email,
+            device: session.device,
+            lastSeen: session.lastSeen,
+            current: session.sessionId == currentToken,
+          ),
+    ];
+  }
+
+  @override
+  Future<SupportRequest> requestSupport(String siteId) async {
+    requireScope(HostScopes.hostSupportGrantApprove);
+    final session = _liveSession();
+    if (session == null || !session.sites.any((s) => s.siteId == siteId)) {
+      throw const HostException('unauthorized', 'sito non disponibile');
+    }
+    _audit('support_request', siteId);
+    return SupportRequest(
+      requestId: 'sup-${auditLog.length}',
+      status: 'placeholder',
+      message: 'La richiesta è registrata. Il flusso Support Grant (E080) arriverà in un aggiornamento.',
+    );
   }
 
   void start() {

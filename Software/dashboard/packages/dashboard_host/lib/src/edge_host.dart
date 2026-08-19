@@ -99,6 +99,23 @@ class EdgeHost implements HostPort {
   Future<AuthSession> selectSite(String siteId) => _presentation.selectSite(siteId);
 
   @override
+  Future<List<SiteUser>> listSiteUsers(String siteId) => _presentation.listSiteUsers(siteId);
+
+  @override
+  Future<SiteInvite> inviteSiteUser({required String siteId, required String email, required SiteRole role}) =>
+      _presentation.inviteSiteUser(siteId: siteId, email: email, role: role);
+
+  @override
+  Future<void> revokeSiteUser({required String siteId, required String userId}) =>
+      _presentation.revokeSiteUser(siteId: siteId, userId: userId);
+
+  @override
+  Future<List<SiteSession>> listSiteSessions(String siteId) => _presentation.listSiteSessions(siteId);
+
+  @override
+  Future<SupportRequest> requestSupport(String siteId) => _presentation.requestSupport(siteId);
+
+  @override
   Future<List<LabSystem>> listSystems() async {
     _presentation.requireScope(HostScopes.dashboardView);
     return [

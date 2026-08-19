@@ -67,6 +67,9 @@ class MemoryHostApiTransport implements HostApiTransport {
     if (parts.length >= 2 && parts[1] == 'auth') {
       return _auth(method, parts, body);
     }
+    if (parts.length >= 2 && parts[1] == 'sites') {
+      return _sites(method, parts, body);
+    }
     if (parts.length >= 2 && parts[1] == 'marketplace') {
       return _marketplace(method, parts, body);
     }
@@ -163,6 +166,33 @@ class MemoryHostApiTransport implements HostApiTransport {
     }
     if (parts.length == 5 && parts[2] == 'card-styles' && parts[4] == 'install' && method == 'POST') {
       await inner.installCardStyle(parts[3]);
+      return const <String, Object?>{};
+    }
+    throw HostApiException('internal', parts.join('/'));
+  }
+
+  Future<Object?> _sites(String method, List<String> parts, Map<String, Object?>? body) async {
+    if (parts.length < 3) throw HostApiException('internal', parts.join('/'));
+    final siteId = parts[2];
+    if (parts.length == 4 && parts[3] == 'users' && method == 'GET') {
+      return [for (final u in await inner.listSiteUsers(siteId)) u.toJson()];
+    }
+    if (parts.length == 4 && parts[3] == 'invites' && method == 'POST') {
+      return (await inner.inviteSiteUser(
+        siteId: siteId,
+        email: body?['email'] as String? ?? '',
+        role: parseSiteRole(body?['role'] as String? ?? 'viewer'),
+      ))
+          .toJson();
+    }
+    if (parts.length == 4 && parts[3] == 'sessions' && method == 'GET') {
+      return [for (final s in await inner.listSiteSessions(siteId)) s.toJson()];
+    }
+    if (parts.length == 4 && parts[3] == 'support-requests' && method == 'POST') {
+      return (await inner.requestSupport(siteId)).toJson();
+    }
+    if (parts.length == 6 && parts[3] == 'users' && parts[5] == 'revoke' && method == 'POST') {
+      await inner.revokeSiteUser(siteId: siteId, userId: parts[4]);
       return const <String, Object?>{};
     }
     throw HostApiException('internal', parts.join('/'));

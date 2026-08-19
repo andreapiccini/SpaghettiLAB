@@ -1,7 +1,7 @@
 # Host API V1
 
 **Stato:** congelata 2026-08-16 (D070)  
-**Versione:** `Host API V1` (estensioni additive V1.1–V1.7)  
+**Versione:** `Host API V1` (estensioni additive V1.1–V1.8)  
 **Changelog:** [HOST_API_CHANGELOG.md](HOST_API_CHANGELOG.md)
 
 La Flutter app consuma **solo** questo contratto (via `HostPort`). Automazioni
@@ -16,6 +16,7 @@ Estensione **additiva** (V1.4): storico punti (`getPointHistory`).
 Estensione **additiva** (V1.5): store pack firmati (`installStorePack`).  
 Estensione **additiva** (V1.6): identità (`login` / `logout` / `currentSession` / `selectSite`).  
 Estensione **additiva** (V1.7): ricetta stile card (`putCardStyle` + `recipe`).  
+Estensione **additiva** (V1.8): utenti site (`listSiteUsers` / `inviteSiteUser` / `revokeSiteUser` / `listSiteSessions` / `requestSupport`).  
 Runtime prodotto: `cards` e `schematic`. `top_down` / `first_person` restano sul wire e vengono mappati a `cards`.  
 `custom` resta riservato.
 
@@ -49,6 +50,11 @@ Solo questi metodi esistono nel client Flutter. Nessun altro endpoint è usato.
 | `logout` | `POST /v1/auth/logout` |
 | `currentSession` | `GET /v1/me` |
 | `selectSite` | `POST /v1/auth/select-site` |
+| `listSiteUsers` | `GET /v1/sites/{siteId}/users` |
+| `inviteSiteUser` | `POST /v1/sites/{siteId}/invites` |
+| `revokeSiteUser` | `POST /v1/sites/{siteId}/users/{userId}/revoke` |
+| `listSiteSessions` | `GET /v1/sites/{siteId}/sessions` |
+| `requestSupport` | `POST /v1/sites/{siteId}/support-requests` |
 | `listSystems` | `GET /v1/systems` |
 | `getSystem` | `GET /v1/systems/{id}` |
 | `createSystem` | `POST /v1/systems` |
@@ -74,7 +80,7 @@ Solo questi metodi esistono nel client Flutter. Nessun altro endpoint è usato.
 
 `DELETE /v1/systems/{id}`, `GET …/points/{pointId}`,
 `GET …/visual-packs/{packId}`, eventi stream `alarm` e `view_updated`,
-viste `custom`.
+viste `custom`. CRUD `CustomerOrg` / `Site`. Support Grant reale (E080).
 
 Estensione futura = campi/endpoint **additivi**. Breaking change = V2.
 

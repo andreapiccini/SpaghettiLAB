@@ -1,12 +1,12 @@
 # Host Identity API V1
 
-**Stato:** FakeHost + HOST_API V1.6 (E020 stub)  
+**Stato:** FakeHost + HOST_API V1.8 (E020 stub + E051 utenti site)  
 **Allinea:** [DEPLOYMENT_ACCESS_MODEL.md](../DEPLOYMENT_ACCESS_MODEL.md)  
 **Presentation:** [HOST_API.md](HOST_API.md)
 
 Identità e tenancy. La Flutter app parla solo `HostPort` (`login`, `logout`,
-`currentSession`, `selectSite`). JWT reale e CRUD org/site/invite restano per
-l’host di produzione (E051+). FakeHost emette un token opaco `dev.*`, non un JWT.
+`currentSession`, `selectSite`, utenti site). JWT reale e CRUD org/site restano per
+l’host di produzione. FakeHost emette un token opaco `dev.*`, non un JWT.
 
 JSON **camelCase**. Errori: `offline` | `unauthorized` | `internal`.
 
@@ -49,14 +49,34 @@ Claim previsti per un JWT di produzione: `sub`, `orgId`, `siteId`, `roles[]`,
 | `logout` | `POST /v1/auth/logout` |
 | `currentSession` | `GET /v1/me` |
 | `selectSite` | `POST /v1/auth/select-site` `{ siteId }` → session |
+| `listSiteUsers` | `GET /v1/sites/{siteId}/users` |
+| `inviteSiteUser` | `POST /v1/sites/{siteId}/invites` `{ email, role }` → invite |
+| `revokeSiteUser` | `POST /v1/sites/{siteId}/users/{userId}/revoke` |
+| `listSiteSessions` | `GET /v1/sites/{siteId}/sessions` |
+| `requestSupport` | `POST /v1/sites/{siteId}/support-requests` → placeholder E080 |
 
 `GET /v1/me` senza sessione valida → `unauthorized`.
 
+Utenti site richiedono `host.user.manage`. Invito: `role` solo `viewer` | `operator`
+(`integrator` → `unauthorized`). Revoca non può colpire l’attore. Sessioni read-only.
+
+```json
+{
+  "userId": "user-viewer",
+  "email": "viewer@demo.local",
+  "displayName": "Viewer demo",
+  "role": "viewer",
+  "status": "active"
+}
+```
+
+`status`: `active` | `invited` | `revoked`.
+
 HTTP: header `Authorization: Bearer <token>` sulle chiamate successive (CloudHost).
 
-### Riservati (E051 / E080)
+### Riservati (E080)
 
-`POST /v1/sites/{id}/invites`, CRUD `CustomerOrg` / `Site`, Support Grant.
+CRUD `CustomerOrg` / `Site`. Support Grant reale (approvazione, sessione a tempo).
 
 ---
 

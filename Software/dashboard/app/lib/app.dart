@@ -472,6 +472,10 @@ class _DashboardAppState extends State<DashboardApp> {
           onOpenMarketplace: _allows(HostScopes.dashboardMarketplace)
               ? () => setState(() => _dest = _Dest.packs)
               : null,
+          host: widget.host,
+          siteId: _session?.selectedSite?.siteId,
+          canManageUsers: _allows(HostScopes.hostUserManage),
+          canRequestSupport: _allows(HostScopes.hostSupportGrantApprove),
         ),
     };
   }

@@ -31,7 +31,7 @@ Permettere di vendere:
 | ⬜ | [E071 — Activation wizard](tasks/E071-site-activation-wizard.md) | Host + dashboard | Primo avvio, site_admin, apply package. |
 | | **E040 — Dashboard auth UI** | Flutter | |
 | ✅ | [E050 — Login & role-aware shell](tasks/E050-dashboard-login-rbac-shell.md) | Dashboard | Login, nav e comandi per scope. |
-| ⬜ | [E051 — Settings admin (site users)](tasks/E051-dashboard-site-admin-users.md) | Dashboard | site_admin: inviti utenti base. |
+| ✅ | [E051 — Settings admin (site users)](tasks/E051-dashboard-site-admin-users.md) | Dashboard | site_admin: inviti utenti base. |
 | | **E050 — Node-RED access** | Node-RED | |
 | ⬜ | [E060 — Node-RED auth proxy](tasks/E060-nodered-auth-scoped-access.md) | Node-RED + host | Admin dietro host; deploy scoped. |
 | | **E060 — Support remoto** | Host | |

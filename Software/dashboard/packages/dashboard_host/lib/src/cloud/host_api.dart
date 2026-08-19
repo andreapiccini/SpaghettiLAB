@@ -14,6 +14,11 @@ class HostApiPaths {
   static const logout = '/v1/auth/logout';
   static const selectSite = '/v1/auth/select-site';
   static const me = '/v1/me';
+  static String siteUsers(String siteId) => '/v1/sites/$siteId/users';
+  static String siteInvites(String siteId) => '/v1/sites/$siteId/invites';
+  static String siteUserRevoke(String siteId, String userId) => '/v1/sites/$siteId/users/$userId/revoke';
+  static String siteSessions(String siteId) => '/v1/sites/$siteId/sessions';
+  static String siteSupport(String siteId) => '/v1/sites/$siteId/support-requests';
   static const systems = '/v1/systems';
   static String system(String id) => '/v1/systems/$id';
   static String points(String id) => '/v1/systems/$id/points';

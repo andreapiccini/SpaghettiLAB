@@ -51,6 +51,26 @@ class CompositeHost implements HostPort {
   Future<AuthSession> selectSite(String siteId) => demo.selectSite(siteId);
 
   @override
+  Future<List<SiteUser>> listSiteUsers(String siteId) =>
+      _gated(HostScopes.hostUserManage, () => demo.listSiteUsers(siteId));
+
+  @override
+  Future<SiteInvite> inviteSiteUser({required String siteId, required String email, required SiteRole role}) =>
+      _gated(HostScopes.hostUserManage, () => demo.inviteSiteUser(siteId: siteId, email: email, role: role));
+
+  @override
+  Future<void> revokeSiteUser({required String siteId, required String userId}) =>
+      _gated(HostScopes.hostUserManage, () => demo.revokeSiteUser(siteId: siteId, userId: userId));
+
+  @override
+  Future<List<SiteSession>> listSiteSessions(String siteId) =>
+      _gated(HostScopes.hostUserManage, () => demo.listSiteSessions(siteId));
+
+  @override
+  Future<SupportRequest> requestSupport(String siteId) =>
+      _gated(HostScopes.hostSupportGrantApprove, () => demo.requestSupport(siteId));
+
+  @override
   Future<List<LabSystem>> listSystems() async {
     demo.requireScope(HostScopes.dashboardView);
     return [
