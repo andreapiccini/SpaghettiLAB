@@ -65,7 +65,6 @@ class _SceneScreenState extends State<SceneScreen> {
             onToggle: () => setState(() => _editing = !_editing),
             onChangeView: ctx.onChangeView,
             onAdd: editing ? _addCard : null,
-            onCustomize: ctx.canEditAppearance ? ctx.onCustomizeAppearance : null,
           ),
           Expanded(
             child: scene == null
@@ -87,18 +86,14 @@ class _SceneScreenState extends State<SceneScreen> {
                                   ),
                                 ),
                               ),
-                            Positioned.fill(
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTapUp: (details) {
-                                  if (editing) {
-                                    _onEditCanvasTap(details.localPosition, size);
-                                  } else {
-                                    _onViewTap(details.localPosition, size);
-                                  }
-                                },
+                            if (editing)
+                              Positioned.fill(
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTapUp: (details) => _onEditCanvasTap(details.localPosition, size),
+                                  child: const SizedBox.expand(),
+                                ),
                               ),
-                            ),
                             for (final node in scene.nodes) _placed(node, size, editing),
                             if (editing)
                               for (final edge in scene.edges) _edgeHandle(edge, size),
@@ -124,101 +119,119 @@ class _SceneScreenState extends State<SceneScreen> {
   Widget _placed(SceneNode node, Size size, bool editing) {
     final rect = _nodeRect(node, size);
     final point = node.pointId == null ? null : ctx.point(node.pointId!);
+    Widget body = Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanStart: editing ? (_) => _dragging = node.nodeId : null,
+            onPanUpdate: editing
+                ? (d) {
+                    final scene = _scene;
+                    if (scene == null || _dragging != node.nodeId) return;
+                    final current = scene.nodes.firstWhere((n) => n.nodeId == node.nodeId);
+                    final next = _clampedPercent(
+                      current,
+                      size,
+                      current.transform.x + d.delta.dx / size.width * 100,
+                      current.transform.y + d.delta.dy / size.height * 100,
+                    );
+                    setState(() {
+                      _scene = scene.copyWith(
+                        nodes: [
+                          for (final n in scene.nodes)
+                            if (n.nodeId == node.nodeId)
+                              n.copyWith(transform: n.transform.copyWith(x: next.dx, y: next.dy))
+                            else
+                              n,
+                        ],
+                      );
+                    });
+                  }
+                : null,
+            onPanEnd: editing
+                ? (_) {
+                    _dragging = null;
+                    final scene = _scene;
+                    if (scene != null) ctx.onSaveScene?.call(scene);
+                  }
+                : null,
+            onTap: () {
+              if (editing) {
+                _bind(node);
+              } else if (point != null) {
+                _openDetail(point);
+              }
+            },
+            child: IgnorePointer(
+              ignoring: editing,
+              child: _FlowNode(
+                node: node,
+                point: point,
+                appearance: ctx.appearance,
+                style: _styleFor(point),
+                onCommand: point == null || !ctx.canCommand
+                    ? null
+                    : (value) => ctx.onCommand(point.pointId, value),
+              ),
+            ),
+          ),
+        ),
+        if (editing)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Material(
+              color: Theme.of(context).colorScheme.surface,
+              shape: const CircleBorder(),
+              elevation: 2,
+              child: IconButton(
+                key: ValueKey('remove-node-${node.nodeId}'),
+                tooltip: 'Rimuovi',
+                visualDensity: VisualDensity.compact,
+                iconSize: 18,
+                onPressed: () => _removeNode(node),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ),
+          ),
+      ],
+    );
+    if (editing) {
+      body = EditJiggle(enabled: true, seed: node.nodeId.hashCode, child: body);
+    }
     return Positioned(
       left: rect.left,
       top: rect.top,
       width: rect.width,
       height: rect.height,
-      child: EditJiggle(
-        enabled: editing,
-        seed: node.nodeId.hashCode,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onPanStart: editing ? (_) => _dragging = node.nodeId : null,
-                onPanUpdate: editing
-                    ? (d) {
-                        final scene = _scene;
-                        if (scene == null || _dragging != node.nodeId) return;
-                        final current = scene.nodes.firstWhere((n) => n.nodeId == node.nodeId);
-                        final nx = (current.transform.x + d.delta.dx / size.width * 100).clamp(6, 94).toDouble();
-                        final ny = (current.transform.y + d.delta.dy / size.height * 100).clamp(8, 92).toDouble();
-                        setState(() {
-                          _scene = scene.copyWith(
-                            nodes: [
-                              for (final n in scene.nodes)
-                                if (n.nodeId == node.nodeId)
-                                  n.copyWith(transform: n.transform.copyWith(x: nx, y: ny))
-                                else
-                                  n,
-                            ],
-                          );
-                        });
-                      }
-                    : null,
-                onPanEnd: editing
-                    ? (_) {
-                        _dragging = null;
-                        final scene = _scene;
-                        if (scene != null) ctx.onSaveScene?.call(scene);
-                      }
-                    : null,
-                onTap: editing ? () => _bind(node) : null,
-                child: IgnorePointer(
-                  ignoring: editing,
-                  child: _FlowNode(
-                    node: node,
-                    point: point,
-                    appearance: ctx.appearance,
-                    style: _styleFor(point),
-                    onCommand: point == null || !ctx.canCommand
-                        ? null
-                        : (value) => ctx.onCommand(point.pointId, value),
-                  ),
-                ),
-              ),
-            ),
-            if (editing)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IconButton(
-                  key: ValueKey('remove-node-${node.nodeId}'),
-                  tooltip: 'Rimuovi',
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 18,
-                  onPressed: () => _removeNode(node),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ),
-          ],
-        ),
-      ),
+      child: body,
     );
   }
 
   Widget _edgeHandle(SceneEdge edge, Size size) {
     final scene = _scene;
     if (scene == null) return const SizedBox.shrink();
-    final path = _edgePath(scene, edge, size);
-    if (path == null) return const SizedBox.shrink();
-    final at = _pathMid(path);
+    final at = _visibleWirePoint(scene, edge, size);
+    if (at == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
     return Positioned(
-      left: at.dx - 14,
-      top: at.dy - 14,
-      width: 28,
-      height: 28,
-      child: Material(
-        key: ValueKey('edge-handle-${edge.from}-${edge.to}'),
-        color: Theme.of(context).colorScheme.surface,
-        shape: const CircleBorder(),
-        elevation: 2,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () => _openEdgeMenu(edge, at, size),
-          child: Icon(Icons.add_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+      left: at.dx - 18,
+      top: at.dy - 18,
+      width: 36,
+      height: 36,
+      child: Tooltip(
+        message: 'Collegamento',
+        child: Material(
+          key: ValueKey('edge-handle-${edge.from}-${edge.to}'),
+          color: theme.colorScheme.primary,
+          shape: const CircleBorder(),
+          elevation: 3,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => _openEdgeMenu(edge, at, size),
+            child: Icon(Icons.add_rounded, size: 22, color: theme.colorScheme.onPrimary),
+          ),
         ),
       ),
     );
@@ -236,24 +249,15 @@ class _SceneScreenState extends State<SceneScreen> {
     return id == null ? null : styles[id];
   }
 
-  SceneNode? _hitNode(Offset local, Size size) {
-    final scene = _scene;
-    if (scene == null) return null;
-    for (final node in scene.nodes.reversed) {
-      if (_nodeRect(node, size).inflate(10).contains(local)) return node;
-    }
-    return null;
-  }
-
   SceneEdge? _hitEdge(Offset local, Size size) {
     final scene = _scene;
     if (scene == null) return null;
     SceneEdge? best;
-    var bestDist = 18.0;
+    var bestDist = 28.0;
     for (final edge in scene.edges) {
-      final path = _edgePath(scene, edge, size);
-      if (path == null) continue;
-      final dist = _distanceToPath(path, local);
+      final pts = _edgePoints(scene, edge, size);
+      if (pts == null) continue;
+      final dist = _distanceToPolyline(pts, local);
       if (dist < bestDist) {
         bestDist = dist;
         best = edge;
@@ -262,13 +266,7 @@ class _SceneScreenState extends State<SceneScreen> {
     return best;
   }
 
-  void _onViewTap(Offset local, Size size) {
-    final scene = _scene;
-    if (scene == null) return;
-    final node = _hitNode(local, size);
-    if (node?.pointId == null) return;
-    final point = ctx.point(node!.pointId!);
-    if (point == null) return;
+  void _openDetail(ExposurePoint point) {
     openPointDetail(
       context,
       point: point,
@@ -279,7 +277,6 @@ class _SceneScreenState extends State<SceneScreen> {
   }
 
   Future<void> _onEditCanvasTap(Offset local, Size size) async {
-    if (_hitNode(local, size) != null) return;
     final edge = _hitEdge(local, size);
     if (edge == null) return;
     await _openEdgeMenu(edge, local, size);
@@ -406,10 +403,18 @@ class _SceneScreenState extends State<SceneScreen> {
   void _insertOnEdge(SceneEdge edge, Offset insertAt, Size size, {required ExposurePoint? point}) {
     final scene = _scene;
     if (scene == null) return;
-    final path = _edgePath(scene, edge, size);
-    final raw = path == null ? insertAt : _projectOnPath(path, insertAt);
-    final x = (raw.dx / size.width * 100).clamp(8, 92).toDouble();
-    final y = (raw.dy / size.height * 100).clamp(10, 90).toDouble();
+    final pts = _edgePoints(scene, edge, size);
+    final raw = pts == null ? insertAt : _projectOnPolyline(pts, insertAt);
+    var x = (raw.dx / size.width * 100).toDouble();
+    var y = (raw.dy / size.height * 100).toDouble();
+    final placeholder = SceneNode(
+      nodeId: 'new',
+      pointId: point?.pointId,
+      transform: SceneTransform(x: x, y: y),
+    );
+    final clamped = _clampedPercent(placeholder, size, x, y);
+    x = clamped.dx;
+    y = clamped.dy;
     final id = _newNodeId(scene);
     final node = SceneNode(
       nodeId: id,
@@ -593,9 +598,23 @@ class _FlowNode extends StatelessWidget {
 }
 
 Rect _nodeRect(SceneNode node, Size size) {
-  final center = Offset(node.transform.x / 100 * size.width, node.transform.y / 100 * size.height);
+  final dim = _nodeSize(node);
+  final p = _clampedPercent(node, size, node.transform.x, node.transform.y);
+  final center = Offset(p.dx / 100 * size.width, p.dy / 100 * size.height);
+  return Rect.fromCenter(center: center, width: dim.width, height: dim.height);
+}
+
+Size _nodeSize(SceneNode node) {
   final card = node.pointId != null;
-  return Rect.fromCenter(center: center, width: card ? _cardW : _hubW, height: card ? _cardH : _hubH);
+  return Size(card ? _cardW : _hubW, card ? _cardH : _hubH);
+}
+
+Offset _clampedPercent(SceneNode node, Size canvas, double x, double y) {
+  final dim = _nodeSize(node);
+  const pad = 10.0;
+  final minX = canvas.width <= dim.width + pad * 2 ? 50.0 : (dim.width / 2 + pad) / canvas.width * 100;
+  final minY = canvas.height <= dim.height + pad * 2 ? 50.0 : (dim.height / 2 + pad) / canvas.height * 100;
+  return Offset(x.clamp(minX, 100 - minX).toDouble(), y.clamp(minY, 100 - minY).toDouble());
 }
 
 bool _sameEdge(SceneEdge a, SceneEdge b) =>
@@ -609,6 +628,49 @@ Path? _edgePath(Scene scene, SceneEdge edge, Size size) {
   final ra = _nodeRect(a, size);
   final rb = _nodeRect(b, size);
   return _wirePath(_wireKind(edge.shape, ra, rb), ra.center, rb.center);
+}
+
+List<Offset>? _edgePoints(Scene scene, SceneEdge edge, Size size) {
+  final byId = {for (final n in scene.nodes) n.nodeId: n};
+  final a = byId[edge.from];
+  final b = byId[edge.to];
+  if (a == null || b == null) return null;
+  final ra = _nodeRect(a, size);
+  final rb = _nodeRect(b, size);
+  return _wirePolyline(ra.center, rb.center);
+}
+
+Offset? _visibleWirePoint(Scene scene, SceneEdge edge, Size size) {
+  final pts = _edgePoints(scene, edge, size);
+  if (pts == null || pts.length < 2) return null;
+  final covered = [for (final n in scene.nodes) _nodeRect(n, size).inflate(6)];
+  Offset? best;
+  var bestScore = -1.0;
+  var traveled = 0.0;
+  var total = 0.0;
+  for (var i = 0; i < pts.length - 1; i++) {
+    total += (pts[i + 1] - pts[i]).distance;
+  }
+  if (total < 1) return pts.first;
+  for (var i = 0; i < pts.length - 1; i++) {
+    final a = pts[i];
+    final b = pts[i + 1];
+    final len = (b - a).distance;
+    const steps = 12;
+    for (var s = 0; s <= steps; s++) {
+      final t = s / steps;
+      final p = Offset.lerp(a, b, t)!;
+      final along = (traveled + len * t) / total;
+      final hidden = covered.any((r) => r.contains(p));
+      final score = hidden ? -1.0 : 1.0 - (along - 0.5).abs();
+      if (score > bestScore) {
+        bestScore = score;
+        best = p;
+      }
+    }
+    traveled += len;
+  }
+  return best ?? pts[pts.length ~/ 2];
 }
 
 enum _WireKind { horizontal, vertical, rounded }
@@ -625,17 +687,22 @@ _WireKind _wireKind(SceneEdgeShape shape, Rect a, Rect b) {
 }
 
 Path _wirePath(_WireKind kind, Offset start, Offset end) {
-  final dx = (end.dx - start.dx).abs();
-  final dy = (end.dy - start.dy).abs();
-  if (dx < 8 || dy < 8) {
+  final pts = _wirePolyline(start, end);
+  if (pts.length < 3) {
     return Path()
       ..moveTo(start.dx, start.dy)
       ..lineTo(end.dx, end.dy);
   }
-  final radius = kind == _WireKind.rounded ? 22.0 : 16.0;
+  return _roundedElbow(pts[0], pts[2], horizontalFirst: true, radius: kind == _WireKind.rounded ? 22.0 : 16.0);
+}
+
+List<Offset> _wirePolyline(Offset start, Offset end) {
+  final dx = (end.dx - start.dx).abs();
+  final dy = (end.dy - start.dy).abs();
+  if (dx < 8 || dy < 8) return [start, end];
   final upper = start.dy <= end.dy ? start : end;
   final lower = start.dy <= end.dy ? end : start;
-  return _roundedElbow(upper, lower, horizontalFirst: true, radius: radius);
+  return [upper, Offset(lower.dx, upper.dy), lower];
 }
 
 Path _roundedElbow(
@@ -664,41 +731,34 @@ Path _roundedElbow(
   return path;
 }
 
-Offset _pathMid(Path path) {
-  for (final metric in path.computeMetrics()) {
-    if (metric.length <= 0) continue;
-    return metric.getTangentForOffset(metric.length / 2)?.position ?? Offset.zero;
-  }
-  return Offset.zero;
-}
-
-Offset _projectOnPath(Path path, Offset point) {
-  var best = point;
+Offset _projectOnPolyline(List<Offset> pts, Offset point) {
+  var best = pts.first;
   var minD = double.infinity;
-  for (final metric in path.computeMetrics()) {
-    for (var d = 0.0; d <= metric.length; d += 4) {
-      final tangent = metric.getTangentForOffset(d);
-      if (tangent == null) continue;
-      final dist = (tangent.position - point).distance;
-      if (dist < minD) {
-        minD = dist;
-        best = tangent.position;
-      }
+  for (var i = 0; i < pts.length - 1; i++) {
+    final projected = _projectOnSegment(pts[i], pts[i + 1], point);
+    final dist = (projected - point).distance;
+    if (dist < minD) {
+      minD = dist;
+      best = projected;
     }
   }
   return best;
 }
 
-double _distanceToPath(Path path, Offset point) {
+double _distanceToPolyline(List<Offset> pts, Offset point) {
   var minD = double.infinity;
-  for (final metric in path.computeMetrics()) {
-    for (var d = 0.0; d <= metric.length; d += 6) {
-      final tangent = metric.getTangentForOffset(d);
-      if (tangent == null) continue;
-      minD = math.min(minD, (tangent.position - point).distance);
-    }
+  for (var i = 0; i < pts.length - 1; i++) {
+    minD = math.min(minD, (_projectOnSegment(pts[i], pts[i + 1], point) - point).distance);
   }
   return minD;
+}
+
+Offset _projectOnSegment(Offset a, Offset b, Offset p) {
+  final ab = b - a;
+  final len2 = ab.dx * ab.dx + ab.dy * ab.dy;
+  if (len2 < 1) return a;
+  final t = ((p.dx - a.dx) * ab.dx + (p.dy - a.dy) * ab.dy) / len2;
+  return a + ab * t.clamp(0.0, 1.0);
 }
 
 class _EdgePainter extends CustomPainter {

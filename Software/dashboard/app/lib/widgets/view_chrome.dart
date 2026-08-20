@@ -13,7 +13,6 @@ class ViewChrome extends StatelessWidget {
     this.onToggle,
     this.onChangeView,
     this.onAdd,
-    this.onCustomize,
   });
 
   final String title;
@@ -23,7 +22,6 @@ class ViewChrome extends StatelessWidget {
   final VoidCallback? onToggle;
   final ValueChanged<ViewModeKind>? onChangeView;
   final VoidCallback? onAdd;
-  final VoidCallback? onCustomize;
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +48,6 @@ class ViewChrome extends StatelessWidget {
                   onPressed: onAdd,
                   child: const Text('Aggiungi'),
                 ),
-              if (onCustomize != null)
-                TextButton(onPressed: onCustomize, child: const Text('Aspetto')),
             ],
           ),
           if (onChangeView != null) ...[
