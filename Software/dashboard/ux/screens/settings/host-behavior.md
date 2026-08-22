@@ -13,6 +13,9 @@
 | Invito | `POST /v1/sites/{siteId}/invites` `{ email, role }` — `role`: `viewer` \| `operator` |
 | Revoca | `POST /v1/sites/{siteId}/users/{userId}/revoke` |
 | Sessioni | `GET /v1/sites/{siteId}/sessions` read-only |
-| Supporto | `POST /v1/sites/{siteId}/support-requests` (`host.support.grant.approve`) → placeholder E080 |
+| Grant | `GET` / `POST /v1/sites/{siteId}/support-grants` |
+| Approva grant | `POST /v1/sites/{siteId}/support-grants/{grantId}/approve` |
+| Revoca grant | `POST /v1/sites/{siteId}/support-grants/{grantId}/revoke` |
 
-`integrator` in invite → `unauthorized`. Audit host su invite/revoke.
+`integrator` in invite → `unauthorized`. Audit host su invite/revoke e su request/approve/revoke grant.
+Accesso `spaghetti_support` impossibile senza grant `approved` non scaduto.

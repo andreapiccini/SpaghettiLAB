@@ -191,7 +191,8 @@ SupportGrant
 
 1. Cliente apre ticket / partner richiede accesso / SpaghettiLAB propone grant.
 2. `site_admin` (o `partner_admin` se contratto lo prevede) **approva** scope + durata.
-3. Sessione temporanea (VPN/tunnel reverse o HTTPS mTLS channel — dettaglio infra E060).
+3. Sessione temporanea. Infra produzione: reverse SSH / Tailscale ACL / HTTPS mTLS
+   (nessuna porta permanente). FakeHost usa `channel: demo://loopback`.
 4. Ogni azione in grant → audit (`host.support.session` scope).
 5. Scadenza automatica; revoca manuale anytime.
 

@@ -1,12 +1,22 @@
 # Host API — changelog
 
+## 2026-08-20 — V1.9 additive (Support Grant)
+
+Accesso SpaghettiLAB solo con grant approvato, a tempo, auditato.
+
+- `GET` / `POST /v1/sites/{siteId}/support-grants`
+- `POST …/support-grants/{grantId}/approve` · `POST …/revoke`
+- Senza `approved` non scaduto: `spaghetti_support` non entra nel site
+- Canale demo `demo://loopback` (nessuna porta permanente)
+- UI: Impostazioni → Supporto; schermata di attesa se il grant manca
+- Documento: [HOST_IDENTITY_API.md](HOST_IDENTITY_API.md)
+
 ## 2026-08-19 — V1.8 additive (utenti site)
 
 `site_admin` invita visitatori/operatori, revoca accesso, vede sessioni.
 
 - `GET /v1/sites/{siteId}/users` · `POST /v1/sites/{siteId}/invites`
 - `POST /v1/sites/{siteId}/users/{userId}/revoke` · `GET /v1/sites/{siteId}/sessions`
-- `POST /v1/sites/{siteId}/support-requests` (placeholder E080)
 - Invito `integrator` → `unauthorized`. Audit host su invite/revoke
 - UI: Impostazioni → tab Utenti (scope `host.user.manage`)
 - Documento: [HOST_IDENTITY_API.md](HOST_IDENTITY_API.md)

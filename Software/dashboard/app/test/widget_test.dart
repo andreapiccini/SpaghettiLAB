@@ -406,16 +406,43 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Revoca'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Revocato', skipOffstage: false), findsOneWidget);
+  });
 
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('request-support')),
-      240,
-      scrollable: settingsScroll,
-    );
-    await tester.ensureVisible(find.byKey(const ValueKey('request-support')));
+  testWidgets('support waits for grant then site admin can approve', (tester) async {
+    final host = FakeHost(requireLogin: true);
+    addTearDown(host.dispose);
+    await _pumpApp(tester, host: host);
+
+    await tester.enterText(find.byKey(const ValueKey('login-email')), FakeHost.demoSupportEmail);
+    await tester.enterText(find.byKey(const ValueKey('login-password')), 'support');
+    await tester.tap(find.byKey(const ValueKey('login-submit')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('awaiting-grant')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('awaiting-grant-logout')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const ValueKey('login-email')), FakeHost.demoAdminEmail);
+    await tester.enterText(find.byKey(const ValueKey('login-password')), 'admin');
+    await tester.tap(find.byKey(const ValueKey('login-submit')));
+    await tester.pumpAndSettle();
+    await _openTab(tester, 'Impostazioni');
+    await tester.tap(find.text('Supporto'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('request-support')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('E080'), findsOneWidget);
+    expect(find.textContaining('In attesa', skipOffstage: false), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('approve-grant-grant-1')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Sessione attiva', skipOffstage: false), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('logout')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('login-email')), FakeHost.demoSupportEmail);
+    await tester.enterText(find.byKey(const ValueKey('login-password')), 'support');
+    await tester.tap(find.byKey(const ValueKey('login-submit')));
+    await tester.pumpAndSettle();
+    expect(find.text('Temperatura salotto'), findsOneWidget);
+    expect(find.text('Modifica'), findsNothing);
+    expect(tester.widget<Switch>(find.byType(Switch).first).onChanged, isNull);
   });
 }

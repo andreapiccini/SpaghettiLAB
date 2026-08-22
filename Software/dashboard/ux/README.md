@@ -34,7 +34,7 @@ Ogni `visual.md` cita i token per nome (`color.bg.surface`, `type.display`, `mot
 | [point-detail](screens/point-detail/) | D025 | ✅ spec |
 | [appearance](screens/appearance/) | D026 | ✅ spec |
 | [marketplace](screens/marketplace/) | D029 | ✅ spec |
-| [settings](screens/settings/) | D027 / E051 | ✅ spec |
+| [settings](screens/settings/) | D027 / E051 / E080 | ✅ spec |
 | [states](screens/states/) | D028 | ✅ spec |
 | [login](screens/login/) | E050 | ✅ spec |
 | [select-site](screens/select-site/) | E050 | ✅ spec |

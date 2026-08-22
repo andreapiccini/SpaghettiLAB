@@ -18,7 +18,11 @@ class HostApiPaths {
   static String siteInvites(String siteId) => '/v1/sites/$siteId/invites';
   static String siteUserRevoke(String siteId, String userId) => '/v1/sites/$siteId/users/$userId/revoke';
   static String siteSessions(String siteId) => '/v1/sites/$siteId/sessions';
-  static String siteSupport(String siteId) => '/v1/sites/$siteId/support-requests';
+  static String siteSupportGrants(String siteId) => '/v1/sites/$siteId/support-grants';
+  static String siteSupportGrantApprove(String siteId, String grantId) =>
+      '/v1/sites/$siteId/support-grants/$grantId/approve';
+  static String siteSupportGrantRevoke(String siteId, String grantId) =>
+      '/v1/sites/$siteId/support-grants/$grantId/revoke';
   static const systems = '/v1/systems';
   static String system(String id) => '/v1/systems/$id';
   static String points(String id) => '/v1/systems/$id/points';

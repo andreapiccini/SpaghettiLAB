@@ -188,8 +188,18 @@ class MemoryHostApiTransport implements HostApiTransport {
     if (parts.length == 4 && parts[3] == 'sessions' && method == 'GET') {
       return [for (final s in await inner.listSiteSessions(siteId)) s.toJson()];
     }
-    if (parts.length == 4 && parts[3] == 'support-requests' && method == 'POST') {
-      return (await inner.requestSupport(siteId)).toJson();
+    if (parts.length == 4 && parts[3] == 'support-grants' && method == 'GET') {
+      return [for (final g in await inner.listSupportGrants(siteId)) g.toJson()];
+    }
+    if (parts.length == 4 && parts[3] == 'support-grants' && method == 'POST') {
+      return (await inner.requestSupportGrant(siteId)).toJson();
+    }
+    if (parts.length == 6 && parts[3] == 'support-grants' && parts[5] == 'approve' && method == 'POST') {
+      return (await inner.approveSupportGrant(siteId: siteId, grantId: parts[4])).toJson();
+    }
+    if (parts.length == 6 && parts[3] == 'support-grants' && parts[5] == 'revoke' && method == 'POST') {
+      await inner.revokeSupportGrant(siteId: siteId, grantId: parts[4]);
+      return const <String, Object?>{};
     }
     if (parts.length == 6 && parts[3] == 'users' && parts[5] == 'revoke' && method == 'POST') {
       await inner.revokeSiteUser(siteId: siteId, userId: parts[4]);

@@ -177,9 +177,41 @@ class CloudHost implements HostPort {
   }
 
   @override
-  Future<SupportRequest> requestSupport(String siteId) async {
+  Future<List<SupportGrant>> listSupportGrants(String siteId) async {
     try {
-      return SupportRequest.parse(asJsonMap(await _transport.post(HostApiPaths.siteSupport(siteId))));
+      return [
+        for (final g in asJsonObjectList(await _transport.get(HostApiPaths.siteSupportGrants(siteId))))
+          SupportGrant.parse(g),
+      ];
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<SupportGrant> requestSupportGrant(String siteId) async {
+    try {
+      return SupportGrant.parse(asJsonMap(await _transport.post(HostApiPaths.siteSupportGrants(siteId))));
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<SupportGrant> approveSupportGrant({required String siteId, required String grantId}) async {
+    try {
+      return SupportGrant.parse(
+        asJsonMap(await _transport.post(HostApiPaths.siteSupportGrantApprove(siteId, grantId))),
+      );
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<void> revokeSupportGrant({required String siteId, required String grantId}) async {
+    try {
+      await _transport.post(HostApiPaths.siteSupportGrantRevoke(siteId, grantId));
     } on HostApiException catch (error) {
       throw _wrap(error);
     }

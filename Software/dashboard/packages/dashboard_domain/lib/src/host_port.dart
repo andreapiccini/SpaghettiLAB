@@ -22,7 +22,10 @@ abstract class HostPort {
   Future<SiteInvite> inviteSiteUser({required String siteId, required String email, required SiteRole role});
   Future<void> revokeSiteUser({required String siteId, required String userId});
   Future<List<SiteSession>> listSiteSessions(String siteId);
-  Future<SupportRequest> requestSupport(String siteId);
+  Future<List<SupportGrant>> listSupportGrants(String siteId);
+  Future<SupportGrant> requestSupportGrant(String siteId);
+  Future<SupportGrant> approveSupportGrant({required String siteId, required String grantId});
+  Future<void> revokeSupportGrant({required String siteId, required String grantId});
   Future<List<LabSystem>> listSystems();
   Future<LabSystem> getSystem(String systemId);
   Future<LabSystem> createSystem({required String name, String address = ''});

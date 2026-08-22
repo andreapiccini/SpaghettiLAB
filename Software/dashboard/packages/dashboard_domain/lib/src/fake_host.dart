@@ -137,6 +137,7 @@ class FakeHost implements HostPort {
   static const String demoViewerEmail = 'viewer@demo.local';
   static const String demoOperatorEmail = 'operator@demo.local';
   static const String demoPartnerEmail = 'partner@demo.local';
+  static const String demoSupportEmail = 'support@demo.local';
 
   /// When true, [currentSession] starts empty and mutating calls need [login].
   final bool requireLogin;
@@ -198,6 +199,7 @@ class FakeHost implements HostPort {
   final _members = <String, List<SiteUser>>{};
   final _invites = <SiteInvite>[];
   final _siteSessions = <SiteSession>[];
+  final _grants = <SupportGrant>[];
   final auditLog = <HostAuditEvent>[];
   static const _accounts = <String, _DemoAccount>{
     demoViewerEmail: _DemoAccount(
@@ -228,6 +230,13 @@ class FakeHost implements HostPort {
       role: SiteRole.partnerAdmin,
       siteIds: [demoSiteId, demoSerraSiteId],
     ),
+    demoSupportEmail: _DemoAccount(
+      email: demoSupportEmail,
+      password: 'support',
+      displayName: 'Supporto SpaghettiLAB',
+      role: SiteRole.spaghettiSupport,
+      siteIds: [],
+    ),
   };
   static const _sites = <String, SiteMembership>{
     demoSiteId: SiteMembership(
@@ -257,6 +266,27 @@ class FakeHost implements HostPort {
     );
   }
 
+  void expireSupportGrants() {
+    final now = DateTime.now().toUtc().subtract(const Duration(seconds: 1));
+    for (var i = 0; i < _grants.length; i++) {
+      final grant = _grants[i];
+      if (grant.status == SupportGrantStatus.approved) {
+        _grants[i] = SupportGrant(
+          grantId: grant.grantId,
+          siteId: grant.siteId,
+          requesterEmail: grant.requesterEmail,
+          approvedByEmail: grant.approvedByEmail,
+          status: SupportGrantStatus.expired,
+          scope: grant.scope,
+          channel: grant.channel,
+          createdAt: grant.createdAt,
+          expiresAt: now,
+        );
+      }
+    }
+    _refreshSupportSession();
+  }
+
   AuthSession? _liveSession() {
     final session = _session;
     if (session == null) return null;
@@ -264,10 +294,48 @@ class FakeHost implements HostPort {
       _session = null;
       return null;
     }
-    return session;
+    _sweepGrants();
+    if (session.user.email == demoSupportEmail) {
+      _refreshSupportSession();
+    }
+    return _session;
+  }
+
+  void _sweepGrants() {
+    final now = DateTime.now().toUtc();
+    for (var i = 0; i < _grants.length; i++) {
+      final grant = _grants[i];
+      if (grant.status == SupportGrantStatus.approved &&
+          grant.expiresAt != null &&
+          !grant.expiresAt!.isAfter(now)) {
+        _grants[i] = SupportGrant(
+          grantId: grant.grantId,
+          siteId: grant.siteId,
+          requesterEmail: grant.requesterEmail,
+          approvedByEmail: grant.approvedByEmail,
+          status: SupportGrantStatus.expired,
+          scope: grant.scope,
+          channel: grant.channel,
+          createdAt: grant.createdAt,
+          expiresAt: grant.expiresAt,
+        );
+      }
+    }
+  }
+
+  void _refreshSupportSession() {
+    final session = _session;
+    if (session == null || session.user.email != demoSupportEmail) return;
+    final next = _issue(_accounts[demoSupportEmail]!, selectedSiteId: session.selectedSiteId);
+    final sameSites = next.sites.length == session.sites.length &&
+        next.sites.every((site) => session.sites.any((other) => other.siteId == site.siteId));
+    if (!sameSites || next.selectedSiteId != session.selectedSiteId) {
+      _session = next;
+    }
   }
 
   AuthSession _issue(_DemoAccount account, {String? selectedSiteId}) {
+    _sweepGrants();
     final memberships = [
       for (final id in account.siteIds)
         SiteMembership(
@@ -277,8 +345,20 @@ class FakeHost implements HostPort {
           roles: [account.role],
           scopes: scopesForRole(account.role),
         ),
+      if (account.role == SiteRole.spaghettiSupport)
+        for (final grant in _grants)
+          if (grant.status == SupportGrantStatus.approved)
+            SiteMembership(
+              siteId: grant.siteId,
+              name: _sites[grant.siteId]!.name,
+              orgId: _sites[grant.siteId]!.orgId,
+              roles: const [SiteRole.spaghettiSupport],
+              scopes: const {HostScopes.dashboardView, HostScopes.hostSupportSession},
+            ),
     ];
-    final selected = selectedSiteId ?? (memberships.length == 1 ? memberships.first.siteId : null);
+    final selected = selectedSiteId != null && memberships.any((s) => s.siteId == selectedSiteId)
+        ? selectedSiteId
+        : (memberships.length == 1 ? memberships.first.siteId : null);
     return AuthSession(
       token: 'dev.${account.email}.$selected',
       user: AuthUser(
@@ -440,18 +520,105 @@ class FakeHost implements HostPort {
   }
 
   @override
-  Future<SupportRequest> requestSupport(String siteId) async {
+  Future<List<SupportGrant>> listSupportGrants(String siteId) async {
+    _requireSupportSite(siteId);
+    _sweepGrants();
+    return [
+      for (final grant in _grants)
+        if (grant.siteId == siteId) grant,
+    ];
+  }
+
+  @override
+  Future<SupportGrant> requestSupportGrant(String siteId) async {
     requireScope(HostScopes.hostSupportGrantApprove);
     final session = _liveSession();
     if (session == null || !session.sites.any((s) => s.siteId == siteId)) {
       throw const HostException('unauthorized', 'sito non disponibile');
     }
-    _audit('support_request', siteId);
-    return SupportRequest(
-      requestId: 'sup-${auditLog.length}',
-      status: 'placeholder',
-      message: 'La richiesta è registrata. Il flusso Support Grant (E080) arriverà in un aggiornamento.',
+    if (_grants.any((g) => g.siteId == siteId && g.status == SupportGrantStatus.pending)) {
+      throw const HostException('internal', 'richiesta già in attesa');
+    }
+    final grant = SupportGrant(
+      grantId: 'grant-${_grants.length + 1}',
+      siteId: siteId,
+      requesterEmail: session.user.email,
+      status: SupportGrantStatus.pending,
+      scope: 'read_only',
+      channel: supportGrantDemoChannel,
+      createdAt: DateTime.now().toUtc(),
     );
+    _grants.add(grant);
+    _audit('support_request', grant.grantId);
+    return grant;
+  }
+
+  @override
+  Future<SupportGrant> approveSupportGrant({required String siteId, required String grantId}) async {
+    requireScope(HostScopes.hostSupportGrantApprove);
+    final session = _liveSession();
+    if (session == null || !session.sites.any((s) => s.siteId == siteId)) {
+      throw const HostException('unauthorized', 'sito non disponibile');
+    }
+    final index = _grants.indexWhere((g) => g.grantId == grantId && g.siteId == siteId);
+    if (index < 0) throw const HostException('internal', 'grant assente');
+    final previous = _grants[index];
+    if (previous.status != SupportGrantStatus.pending) {
+      throw const HostException('internal', 'grant non in attesa');
+    }
+    final approved = SupportGrant(
+      grantId: previous.grantId,
+      siteId: previous.siteId,
+      requesterEmail: previous.requesterEmail,
+      approvedByEmail: session.user.email,
+      status: SupportGrantStatus.approved,
+      scope: previous.scope,
+      channel: previous.channel,
+      createdAt: previous.createdAt,
+      expiresAt: DateTime.now().toUtc().add(const Duration(hours: 8)),
+    );
+    _grants[index] = approved;
+    _audit('support_approve', grantId);
+    return approved;
+  }
+
+  @override
+  Future<void> revokeSupportGrant({required String siteId, required String grantId}) async {
+    _requireSupportSite(siteId);
+    final session = _liveSession();
+    final canApprove = session?.allows(HostScopes.hostSupportGrantApprove) ?? false;
+    if (!canApprove && !(session?.allows(HostScopes.hostSupportSession) ?? false)) {
+      throw const HostException('unauthorized');
+    }
+    final index = _grants.indexWhere((g) => g.grantId == grantId && g.siteId == siteId);
+    if (index < 0) throw const HostException('internal', 'grant assente');
+    final previous = _grants[index];
+    if (previous.status == SupportGrantStatus.revoked || previous.status == SupportGrantStatus.expired) {
+      throw const HostException('internal', 'grant già chiuso');
+    }
+    _grants[index] = SupportGrant(
+      grantId: previous.grantId,
+      siteId: previous.siteId,
+      requesterEmail: previous.requesterEmail,
+      approvedByEmail: previous.approvedByEmail,
+      status: SupportGrantStatus.revoked,
+      scope: previous.scope,
+      channel: previous.channel,
+      createdAt: previous.createdAt,
+      expiresAt: previous.expiresAt,
+    );
+    _audit('support_revoke', grantId);
+    _refreshSupportSession();
+  }
+
+  void _requireSupportSite(String siteId) {
+    final session = _liveSession();
+    if (session == null) throw const HostException('unauthorized');
+    final canSee =
+        session.allows(HostScopes.hostSupportGrantApprove) || session.allows(HostScopes.hostSupportSession);
+    if (!canSee || !session.sites.any((s) => s.siteId == siteId)) {
+      throw const HostException('unauthorized', 'sito non disponibile');
+    }
   }
 
   void start() {

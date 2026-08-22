@@ -171,10 +171,10 @@ Dettaglio: [dashboard/roadmap/dashboard-v1/README.md](dashboard/roadmap/dashboar
 | Area | Done | Open |
 |---|---:|---:|
 | Modello formale | ✅ E010 | — |
-| Identity / RBAC | ✅ E020 · E021 · E050 · E051 | — |
-| Implementazione | 4 | **6 task** |
+| Identity / RBAC | ✅ E020 · E021 · E050 · E051 · E080 | — |
+| Implementazione | 5 | **5 task** |
 
-**Task ancora ⬜:** `E070` · `E071` · `E060` · `E080` · `E081` · `E090`
+**Task ancora ⬜:** `E070` · `E071` · `E060` · `E081` · `E090`
 
 Dettaglio: [roadmap/ecosystem-access-v1/README.md](roadmap/ecosystem-access-v1/README.md)
 
@@ -250,7 +250,7 @@ Cartelle `dashboard/ux/screens/*/` — tre file per schermata:
 - [x] E050 — Dashboard login + shell role-aware
 - [x] E051 — Site admin utenti
 - [ ] E060 — Node-RED auth scoped
-- [ ] E080 — Support Grant flow
+- [x] E080 — Support Grant flow
 - [ ] E081 — Partner multi-site console
 - [ ] E090 — **Gate threat model & audit**
 

@@ -1,7 +1,7 @@
 # Host API V1
 
 **Stato:** congelata 2026-08-16 (D070)  
-**Versione:** `Host API V1` (estensioni additive V1.1–V1.8)  
+**Versione:** `Host API V1` (estensioni additive V1.1–V1.9)  
 **Changelog:** [HOST_API_CHANGELOG.md](HOST_API_CHANGELOG.md)
 
 La Flutter app consuma **solo** questo contratto (via `HostPort`). Automazioni
@@ -16,7 +16,8 @@ Estensione **additiva** (V1.4): storico punti (`getPointHistory`).
 Estensione **additiva** (V1.5): store pack firmati (`installStorePack`).  
 Estensione **additiva** (V1.6): identità (`login` / `logout` / `currentSession` / `selectSite`).  
 Estensione **additiva** (V1.7): ricetta stile card (`putCardStyle` + `recipe`).  
-Estensione **additiva** (V1.8): utenti site (`listSiteUsers` / `inviteSiteUser` / `revokeSiteUser` / `listSiteSessions` / `requestSupport`).  
+Estensione **additiva** (V1.8): utenti site (`listSiteUsers` / `inviteSiteUser` / `revokeSiteUser` / `listSiteSessions`).  
+Estensione **additiva** (V1.9): Support Grant (`listSupportGrants` / `requestSupportGrant` / `approveSupportGrant` / `revokeSupportGrant`).  
 Runtime prodotto: `cards` e `schematic`. `top_down` / `first_person` restano sul wire e vengono mappati a `cards`.  
 `custom` resta riservato.
 
@@ -54,7 +55,10 @@ Solo questi metodi esistono nel client Flutter. Nessun altro endpoint è usato.
 | `inviteSiteUser` | `POST /v1/sites/{siteId}/invites` |
 | `revokeSiteUser` | `POST /v1/sites/{siteId}/users/{userId}/revoke` |
 | `listSiteSessions` | `GET /v1/sites/{siteId}/sessions` |
-| `requestSupport` | `POST /v1/sites/{siteId}/support-requests` |
+| `listSupportGrants` | `GET /v1/sites/{siteId}/support-grants` |
+| `requestSupportGrant` | `POST /v1/sites/{siteId}/support-grants` |
+| `approveSupportGrant` | `POST /v1/sites/{siteId}/support-grants/{grantId}/approve` |
+| `revokeSupportGrant` | `POST /v1/sites/{siteId}/support-grants/{grantId}/revoke` |
 | `listSystems` | `GET /v1/systems` |
 | `getSystem` | `GET /v1/systems/{id}` |
 | `createSystem` | `POST /v1/systems` |
@@ -80,7 +84,7 @@ Solo questi metodi esistono nel client Flutter. Nessun altro endpoint è usato.
 
 `DELETE /v1/systems/{id}`, `GET …/points/{pointId}`,
 `GET …/visual-packs/{packId}`, eventi stream `alarm` e `view_updated`,
-viste `custom`. CRUD `CustomerOrg` / `Site`. Support Grant reale (E080).
+viste `custom`. CRUD `CustomerOrg` / `Site`. Tunnel Support Grant di produzione.
 
 Estensione futura = campi/endpoint **additivi**. Breaking change = V2.
 
@@ -382,7 +386,7 @@ Nessun endpoint, campo o evento per:
 Le automazioni restano responsabilità **host / Node-RED / Config**. Aggiornano
 `ExposurePoint` sotto la UI; la dashboard non le definisce.
 
-Identità: [HOST_IDENTITY_API.md](HOST_IDENTITY_API.md). Support Grant: E080.
+Identità: [HOST_IDENTITY_API.md](HOST_IDENTITY_API.md). Support Grant: V1.9.
 
 ---
 

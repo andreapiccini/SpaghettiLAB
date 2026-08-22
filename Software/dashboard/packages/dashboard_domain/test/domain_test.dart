@@ -395,4 +395,47 @@ void main() {
     );
     host.dispose();
   });
+
+  test('support grant requires approve and expires', () async {
+    final host = FakeHost(requireLogin: true);
+
+    var support = await host.login(email: FakeHost.demoSupportEmail, password: 'support');
+    expect(support.sites, isEmpty);
+    await expectLater(host.getPoints(FakeHost.demoSystemId), throwsA(isA<HostException>()));
+
+    await host.login(email: FakeHost.demoAdminEmail, password: 'admin');
+    final pending = await host.requestSupportGrant(FakeHost.demoSiteId);
+    expect(pending.status, SupportGrantStatus.pending);
+
+    support = await host.login(email: FakeHost.demoSupportEmail, password: 'support');
+    expect(support.sites, isEmpty);
+    await expectLater(host.getPoints(FakeHost.demoSystemId), throwsA(isA<HostException>()));
+
+    await host.login(email: FakeHost.demoAdminEmail, password: 'admin');
+    final approved = await host.approveSupportGrant(siteId: FakeHost.demoSiteId, grantId: pending.grantId);
+    expect(approved.status, SupportGrantStatus.approved);
+
+    support = await host.login(email: FakeHost.demoSupportEmail, password: 'support');
+    expect(support.sites.single.siteId, FakeHost.demoSiteId);
+    expect((await host.getPoints(FakeHost.demoSystemId)).isNotEmpty, isTrue);
+    await expectLater(
+      host.sendCommand(FakeHost.demoSystemId, 'giardino.pompa', true),
+      throwsA(isA<HostException>()),
+    );
+
+    host.expireSupportGrants();
+    support = (await host.currentSession())!;
+    expect(support.sites, isEmpty);
+    await expectLater(host.getPoints(FakeHost.demoSystemId), throwsA(isA<HostException>()));
+
+    await host.login(email: FakeHost.demoAdminEmail, password: 'admin');
+    final again = await host.requestSupportGrant(FakeHost.demoSiteId);
+    await host.approveSupportGrant(siteId: FakeHost.demoSiteId, grantId: again.grantId);
+    await host.revokeSupportGrant(siteId: FakeHost.demoSiteId, grantId: again.grantId);
+
+    support = await host.login(email: FakeHost.demoSupportEmail, password: 'support');
+    expect(support.sites, isEmpty);
+    await expectLater(host.getPoints(FakeHost.demoSystemId), throwsA(isA<HostException>()));
+    host.dispose();
+  });
 }

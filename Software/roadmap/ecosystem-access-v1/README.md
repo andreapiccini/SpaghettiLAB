@@ -35,7 +35,7 @@ Permettere di vendere:
 | | **E050 — Node-RED access** | Node-RED | |
 | ⬜ | [E060 — Node-RED auth proxy](tasks/E060-nodered-auth-scoped-access.md) | Node-RED + host | Admin dietro host; deploy scoped. |
 | | **E060 — Support remoto** | Host | |
-| ⬜ | [E080 — Support Grant flow](tasks/E080-support-grant-flow.md) | Host | Richiesta → approvazione → sessione audit. |
+| ✅ | [E080 — Support Grant flow](tasks/E080-support-grant-flow.md) | Host | Richiesta → approvazione → sessione audit. |
 | ⬜ | [E081 — Partner multi-site console](tasks/E081-partner-multi-site-console.md) | Host + dashboard | partner_admin: elenco site clienti. |
 | | **E090 — Chiusura** | | |
 | ⬜ | [E090 — Threat model & audit gate](tasks/E090-access-threat-audit-gate.md) | Tutti | Nessun segreto in log; grant testati. |

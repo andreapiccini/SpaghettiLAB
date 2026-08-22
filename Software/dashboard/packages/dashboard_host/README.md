@@ -11,7 +11,7 @@ importano questo package (solo `main.dart` per il wiring).
 - `CloudHost` — `HostPort` su HOST_API JSON (`https://…/v1` o `cloud://loopback`)
 - `CompositeHost` — Casa demo + Core live + Core MQTT/cloud aggiunti
 - Store pack: `installStorePack` verifica Ed25519 (D250)
-- Identità: `login` / `GET /v1/me` (E050); utenti site (E051); JWT HTTP Bearer su CloudHost
+- Identità: `login` / `GET /v1/me` (E050); utenti site (E051); Support Grant (E080); JWT HTTP Bearer su CloudHost
 
 Indirizzo MQTT: `mqtt://127.0.0.1:1883/<base>/v1/cores/<id>` oppure
 `ws://127.0.0.1:9001/v1/cores/<id>`. Sul web `mqtt://` viene riscritto su

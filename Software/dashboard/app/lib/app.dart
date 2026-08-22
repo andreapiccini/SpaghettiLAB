@@ -80,6 +80,11 @@ class _DashboardAppState extends State<DashboardApp> {
     return session.selectedSite == null && session.sites.length > 1;
   }
 
+  bool get _awaitingGrant {
+    final session = _session;
+    return session != null && session.sites.isEmpty;
+  }
+
   bool _allows(String scope) => _session?.allows(scope) ?? false;
 
   @override
@@ -95,7 +100,9 @@ class _DashboardAppState extends State<DashboardApp> {
     try {
       final session = await widget.host.currentSession();
       if (!mounted) return;
-      if (session == null || (session.selectedSite == null && session.sites.length > 1)) {
+      if (session == null ||
+          session.sites.isEmpty ||
+          (session.selectedSite == null && session.sites.length > 1)) {
         setState(() {
           _session = session;
           _loading = false;
@@ -127,7 +134,7 @@ class _DashboardAppState extends State<DashboardApp> {
       _session = session;
       _bootError = null;
     });
-    if (session.selectedSite == null && session.sites.length > 1) {
+    if (session.sites.isEmpty || (session.selectedSite == null && session.sites.length > 1)) {
       setState(() => _loading = false);
       return;
     }
@@ -284,6 +291,12 @@ class _DashboardAppState extends State<DashboardApp> {
                     if (!mounted) return;
                     await _enterSession(session);
                   },
+                );
+              }
+              if (_awaitingGrant) {
+                return AwaitingGrantScreen(
+                  session: _session!,
+                  onLogout: () => unawaited(_logout()),
                 );
               }
               if (_needsSite) {
@@ -475,7 +488,8 @@ class _DashboardAppState extends State<DashboardApp> {
           host: widget.host,
           siteId: _session?.selectedSite?.siteId,
           canManageUsers: _allows(HostScopes.hostUserManage),
-          canRequestSupport: _allows(HostScopes.hostSupportGrantApprove),
+          canApproveSupport: _allows(HostScopes.hostSupportGrantApprove),
+          canSeeSupportSession: _allows(HostScopes.hostSupportSession),
         ),
     };
   }

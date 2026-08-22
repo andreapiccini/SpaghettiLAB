@@ -1,11 +1,11 @@
 # Host Identity API V1
 
-**Stato:** FakeHost + HOST_API V1.8 (E020 stub + E051 utenti site)  
+**Stato:** FakeHost + HOST_API V1.9 (E020 stub + E051 utenti + E080 Support Grant)  
 **Allinea:** [DEPLOYMENT_ACCESS_MODEL.md](../DEPLOYMENT_ACCESS_MODEL.md)  
 **Presentation:** [HOST_API.md](HOST_API.md)
 
 Identità e tenancy. La Flutter app parla solo `HostPort` (`login`, `logout`,
-`currentSession`, `selectSite`, utenti site). JWT reale e CRUD org/site restano per
+`currentSession`, `selectSite`, utenti site, Support Grant). JWT reale e CRUD org/site restano per
 l’host di produzione. FakeHost emette un token opaco `dev.*`, non un JWT.
 
 JSON **camelCase**. Errori: `offline` | `unauthorized` | `internal`.
@@ -53,7 +53,10 @@ Claim previsti per un JWT di produzione: `sub`, `orgId`, `siteId`, `roles[]`,
 | `inviteSiteUser` | `POST /v1/sites/{siteId}/invites` `{ email, role }` → invite |
 | `revokeSiteUser` | `POST /v1/sites/{siteId}/users/{userId}/revoke` |
 | `listSiteSessions` | `GET /v1/sites/{siteId}/sessions` |
-| `requestSupport` | `POST /v1/sites/{siteId}/support-requests` → placeholder E080 |
+| `listSupportGrants` | `GET /v1/sites/{siteId}/support-grants` |
+| `requestSupportGrant` | `POST /v1/sites/{siteId}/support-grants` |
+| `approveSupportGrant` | `POST /v1/sites/{siteId}/support-grants/{grantId}/approve` |
+| `revokeSupportGrant` | `POST /v1/sites/{siteId}/support-grants/{grantId}/revoke` |
 
 `GET /v1/me` senza sessione valida → `unauthorized`.
 
@@ -72,11 +75,45 @@ Utenti site richiedono `host.user.manage`. Invito: `role` solo `viewer` | `opera
 
 `status`: `active` | `invited` | `revoked`.
 
+### Support Grant
+
+`spaghetti_support` entra in un site solo con grant `approved` non scaduto
+(`approvedBy` obbligatorio). Scope sessione: `dashboard.view` + `host.support.session`.
+Durata demo: 8 ore. Audit: `support_request` / `support_approve` / `support_revoke`.
+
+```json
+{
+  "grantId": "grant-1",
+  "siteId": "site-casa",
+  "requesterEmail": "admin@demo.local",
+  "approvedByEmail": "admin@demo.local",
+  "status": "approved",
+  "scope": "read_only",
+  "channel": "demo://loopback",
+  "createdAt": "2026-08-20T13:00:00Z",
+  "expiresAt": "2026-08-20T21:00:00Z"
+}
+```
+
+`status`: `pending` | `approved` | `revoked` | `expired`.  
+`scope`: `read_only` (demo). `channel` è opaco: **nessuna porta permanente**.
+
+Opzioni tunnel di produzione (scelta infra, non in FakeHost):
+
+| Canale | Nota |
+|---|---|
+| Reverse SSH / WireGuard outbound | Il site apre verso SpaghettiLAB; no inbound 24/7 |
+| Tailscale ACL | Solo nodi nel grant, scadenza via ACL |
+| HTTPS mTLS | Certificato a tempo sul grant, revoca = CRL/short TTL |
+
+Partner su site **già** in portafoglio usa il ruolo permanente. Partner su site
+extra: stesso flusso grant.
+
 HTTP: header `Authorization: Bearer <token>` sulle chiamate successive (CloudHost).
 
-### Riservati (E080)
+### Riservati
 
-CRUD `CustomerOrg` / `Site`. Support Grant reale (approvazione, sessione a tempo).
+CRUD `CustomerOrg` / `Site`. Tunnel di produzione.
 
 ---
 
@@ -109,6 +146,7 @@ Matrice ruolo → scope: `scopesForRole` in `dashboard_domain`. Enforcement sul 
 | `operator@demo.local` | `operator` | operator |
 | `admin@demo.local` | `admin` | site_admin |
 | `partner@demo.local` | `partner` | partner_admin (Casa + Serra) |
+| `support@demo.local` | `support` | spaghetti_support (solo con grant approvato) |
 
 `FakeHost(requireLogin: true)` parte senza sessione. Senza il flag, sessione
 `site_admin` (test e host interni).

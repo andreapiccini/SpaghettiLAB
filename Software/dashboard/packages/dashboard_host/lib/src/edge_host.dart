@@ -113,7 +113,18 @@ class EdgeHost implements HostPort {
   Future<List<SiteSession>> listSiteSessions(String siteId) => _presentation.listSiteSessions(siteId);
 
   @override
-  Future<SupportRequest> requestSupport(String siteId) => _presentation.requestSupport(siteId);
+  Future<List<SupportGrant>> listSupportGrants(String siteId) => _presentation.listSupportGrants(siteId);
+
+  @override
+  Future<SupportGrant> requestSupportGrant(String siteId) => _presentation.requestSupportGrant(siteId);
+
+  @override
+  Future<SupportGrant> approveSupportGrant({required String siteId, required String grantId}) =>
+      _presentation.approveSupportGrant(siteId: siteId, grantId: grantId);
+
+  @override
+  Future<void> revokeSupportGrant({required String siteId, required String grantId}) =>
+      _presentation.revokeSupportGrant(siteId: siteId, grantId: grantId);
 
   @override
   Future<List<LabSystem>> listSystems() async {

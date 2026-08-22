@@ -1,6 +1,6 @@
 # E080 — Support Grant flow
 
-**Stato:** ⬜ TODO
+**Stato:** ✅ DONE (2026-08-20)
 **Dipende da:** E021, E051
 **Blocca:** E090
 
@@ -28,5 +28,5 @@ Accesso remoto SpaghettiLAB (e partner con contratto) **solo** via grant approva
 
 ## Fine task
 
-- [ ] Flow completo demo.
+- [x] Flow completo demo.
 - [ ] Threat notes in E090.

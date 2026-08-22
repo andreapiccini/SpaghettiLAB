@@ -7,7 +7,7 @@ import '../role_copy.dart';
 import '../theme/spaghetti_theme.dart';
 import '../widgets/drop_segmented.dart';
 
-enum _SettingsPane { display, users }
+enum _SettingsPane { display, users, support }
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -23,7 +23,8 @@ class SettingsScreen extends StatefulWidget {
     this.host,
     this.siteId,
     this.canManageUsers = false,
-    this.canRequestSupport = false,
+    this.canApproveSupport = false,
+    this.canSeeSupportSession = false,
   });
 
   final DashboardAppearance appearance;
@@ -37,7 +38,10 @@ class SettingsScreen extends StatefulWidget {
   final HostPort? host;
   final String? siteId;
   final bool canManageUsers;
-  final bool canRequestSupport;
+  final bool canApproveSupport;
+  final bool canSeeSupportSession;
+
+  bool get canSeeSupport => canApproveSupport || canSeeSupportSession;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -47,8 +51,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   var _pane = _SettingsPane.display;
   List<SiteUser>? _users;
   List<SiteSession>? _sessions;
+  List<SupportGrant>? _grants;
   String? _usersError;
+  String? _grantsError;
   var _usersBusy = false;
+  var _grantsBusy = false;
+
+  bool get _showSwitcher => widget.canManageUsers || widget.canSeeSupport;
 
   @override
   void initState() {
@@ -56,17 +65,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (widget.canManageUsers) {
       unawaited(_loadUsers());
     }
+    if (widget.canSeeSupport) {
+      unawaited(_loadGrants());
+    }
   }
 
   @override
   void didUpdateWidget(SettingsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.canManageUsers && _pane == _SettingsPane.users) {
+    if (_pane == _SettingsPane.users && !widget.canManageUsers) {
+      _pane = _SettingsPane.display;
+    }
+    if (_pane == _SettingsPane.support && !widget.canSeeSupport) {
       _pane = _SettingsPane.display;
     }
     if (widget.canManageUsers &&
         (oldWidget.siteId != widget.siteId || oldWidget.host != widget.host || !oldWidget.canManageUsers)) {
       unawaited(_loadUsers());
+    }
+    if (widget.canSeeSupport &&
+        (oldWidget.siteId != widget.siteId ||
+            oldWidget.host != widget.host ||
+            !oldWidget.canSeeSupport)) {
+      unawaited(_loadGrants());
     }
   }
 
@@ -100,6 +121,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _usersBusy = false;
         _usersError = _hostMessage(error);
+      });
+    }
+  }
+
+  Future<void> _loadGrants() async {
+    final host = widget.host;
+    final siteId = widget.siteId;
+    if (host == null || siteId == null || siteId.isEmpty) {
+      setState(() {
+        _grants = const [];
+        _grantsError = 'Sito non disponibile';
+        _grantsBusy = false;
+      });
+      return;
+    }
+    setState(() {
+      _grantsBusy = true;
+      _grantsError = null;
+    });
+    try {
+      final grants = await host.listSupportGrants(siteId);
+      if (!mounted) return;
+      setState(() {
+        _grants = grants;
+        _grantsBusy = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _grantsBusy = false;
+        _grantsError = _hostMessage(error);
       });
     }
   }
@@ -159,9 +211,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final siteId = widget.siteId;
     if (host == null || siteId == null) return;
     try {
-      final request = await host.requestSupport(siteId);
+      await host.requestSupportGrant(siteId);
+      await _loadGrants();
+    } catch (error) {
       if (!mounted) return;
-      await _alert(request.message);
+      await _alert(_hostMessage(error));
+    }
+  }
+
+  Future<void> _approveGrant(SupportGrant grant) async {
+    final host = widget.host;
+    final siteId = widget.siteId;
+    if (host == null || siteId == null) return;
+    try {
+      await host.approveSupportGrant(siteId: siteId, grantId: grant.grantId);
+      await _loadGrants();
+    } catch (error) {
+      if (!mounted) return;
+      await _alert(_hostMessage(error));
+    }
+  }
+
+  Future<void> _revokeGrant(SupportGrant grant) async {
+    final host = widget.host;
+    final siteId = widget.siteId;
+    if (host == null || siteId == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Revocare il grant?'),
+        content: const Text('La sessione di supporto viene chiusa.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annulla')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Revoca')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await host.revokeSupportGrant(siteId: siteId, grantId: grant.grantId);
+      await _loadGrants();
     } catch (error) {
       if (!mounted) return;
       await _alert(_hostMessage(error));
@@ -185,6 +274,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final session = widget.session;
+    final segments = <DropSegment<_SettingsPane>>[
+      const DropSegment(value: _SettingsPane.display, label: 'Display'),
+      if (widget.canManageUsers) const DropSegment(value: _SettingsPane.users, label: 'Utenti'),
+      if (widget.canSeeSupport) const DropSegment(value: _SettingsPane.support, label: 'Supporto'),
+    ];
     return ListView(
       key: const ValueKey('settings-list'),
       padding: const EdgeInsets.fromLTRB(TokenSpace.lg, TokenSpace.lg, TokenSpace.lg, TokenSpace.xl * 3),
@@ -213,18 +307,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
           ),
         ],
-        if (widget.canManageUsers) ...[
+        if (_showSwitcher) ...[
           const SizedBox(height: TokenSpace.lg),
           DropSegmented<_SettingsPane>(
-            segments: const [
-              DropSegment(value: _SettingsPane.display, label: 'Display'),
-              DropSegment(value: _SettingsPane.users, label: 'Utenti'),
-            ],
+            segments: segments,
             value: _pane,
             onChanged: (pane) => setState(() => _pane = pane),
           ),
         ],
-        if (!widget.canManageUsers || _pane == _SettingsPane.display) ..._displayPane(theme) else ..._usersPane(theme),
+        if (!_showSwitcher || _pane == _SettingsPane.display)
+          ..._displayPane(theme)
+        else if (_pane == _SettingsPane.users)
+          ..._usersPane(theme)
+        else
+          ..._supportPane(theme),
       ],
     );
   }
@@ -232,8 +328,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   List<Widget> _displayPane(ThemeData theme) {
     return [
       const SizedBox(height: TokenSpace.lg),
-      if (!widget.canManageUsers) Text('Display', style: theme.textTheme.titleMedium),
-      if (!widget.canManageUsers) const SizedBox(height: TokenSpace.sm),
+      if (!_showSwitcher) Text('Display', style: theme.textTheme.titleMedium),
+      if (!_showSwitcher) const SizedBox(height: TokenSpace.sm),
       DropSegmented<DisplayMode>(
         segments: const [
           DropSegment(value: DisplayMode.normal, label: 'Normale'),
@@ -363,20 +459,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: theme.textTheme.bodySmall,
           ),
         ),
-      if (widget.canRequestSupport) ...[
-        const SizedBox(height: TokenSpace.lg),
+    ];
+  }
+
+  List<Widget> _supportPane(ThemeData theme) {
+    return [
+      const SizedBox(height: TokenSpace.lg),
+      Row(
+        children: [
+          Expanded(child: Text('Support Grant', style: theme.textTheme.titleMedium)),
+          if (widget.canApproveSupport)
+            FilledButton(
+              key: const ValueKey('request-support'),
+              onPressed: _grantsBusy ? null : () => unawaited(_requestSupport()),
+              child: const Text('Richiedi'),
+            ),
+        ],
+      ),
+      const SizedBox(height: TokenSpace.sm),
+      Text(
+        'Accesso remoto SpaghettiLAB solo dopo approvazione. Scade o si revoca.',
+        style: theme.textTheme.bodySmall,
+      ),
+      if (_grantsError != null)
+        Padding(
+          padding: const EdgeInsets.only(top: TokenSpace.sm),
+          child: Text(_grantsError!, style: theme.textTheme.bodySmall?.copyWith(color: TokenColors.error)),
+        ),
+      if (_grantsBusy && _grants == null)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: TokenSpace.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      if (!_grantsBusy && (_grants ?? const <SupportGrant>[]).isEmpty)
         ListTile(
-          key: const ValueKey('request-support'),
           contentPadding: EdgeInsets.zero,
-          hoverColor: tokenHoverFill(context),
-          title: const Text('Richiedi supporto SpaghettiLAB'),
+          title: Text('Nessun grant', style: theme.textTheme.bodySmall),
+        ),
+      for (final grant in _grants ?? const <SupportGrant>[]) ...[
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(grant.requesterEmail),
           subtitle: Text(
-            'Apre il flusso Support Grant quando sarà disponibile.',
+            [
+              _grantStatusLabel(grant.status),
+              if (grant.approvedByEmail != null) 'da ${grant.approvedByEmail}',
+              if (grant.expiresAt != null) 'scade ${_formatSeen(grant.expiresAt!)}',
+            ].join(' · '),
             style: theme.textTheme.bodySmall,
           ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: _usersBusy ? null : () => unawaited(_requestSupport()),
         ),
+        if (grant.status == SupportGrantStatus.pending || grant.status == SupportGrantStatus.approved)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: TokenSpace.sm,
+              children: [
+                if (widget.canApproveSupport && grant.status == SupportGrantStatus.pending)
+                  TextButton(
+                    key: ValueKey('approve-grant-${grant.grantId}'),
+                    onPressed: _grantsBusy ? null : () => unawaited(_approveGrant(grant)),
+                    child: const Text('Approva'),
+                  ),
+                TextButton(
+                  key: ValueKey('revoke-grant-${grant.grantId}'),
+                  onPressed: _grantsBusy ? null : () => unawaited(_revokeGrant(grant)),
+                  child: const Text('Revoca'),
+                ),
+              ],
+            ),
+          ),
       ],
     ];
   }
@@ -478,6 +630,13 @@ String _statusLabel(SiteUserStatus status) => switch (status) {
       SiteUserStatus.active => 'Attivo',
       SiteUserStatus.invited => 'Invitato',
       SiteUserStatus.revoked => 'Revocato',
+    };
+
+String _grantStatusLabel(SupportGrantStatus status) => switch (status) {
+      SupportGrantStatus.pending => 'In attesa',
+      SupportGrantStatus.approved => 'Sessione attiva',
+      SupportGrantStatus.revoked => 'Revocato',
+      SupportGrantStatus.expired => 'Scaduto',
     };
 
 String _formatSeen(DateTime at) {

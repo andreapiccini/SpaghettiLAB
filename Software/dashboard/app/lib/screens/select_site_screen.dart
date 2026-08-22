@@ -56,3 +56,50 @@ class SelectSiteScreen extends StatelessWidget {
     );
   }
 }
+
+class AwaitingGrantScreen extends StatelessWidget {
+  const AwaitingGrantScreen({
+    super.key,
+    required this.session,
+    required this.onLogout,
+  });
+
+  final AuthSession session;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: ListView(
+            padding: const EdgeInsets.all(TokenSpace.lg),
+            children: [
+              Text(
+                key: const ValueKey('awaiting-grant'),
+                'In attesa di Support Grant',
+                style: theme.textTheme.headlineMedium,
+              ),
+              const SizedBox(height: TokenSpace.sm),
+              Text(
+                'Ciao ${session.user.displayName}. Un site admin deve approvare l’accesso remoto.',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: TokenSpace.lg),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const ValueKey('awaiting-grant-logout'),
+                  onPressed: onLogout,
+                  child: const Text('Esci'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

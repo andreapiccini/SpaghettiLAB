@@ -6,4 +6,5 @@
 - Submit disabilitato mentre la richiesta è in corso.
 - Credenziali errate: "Accesso non consentito" (niente dettaglio password).
 - Se la sessione ha più siti senza `selectedSiteId`, passa a `select-site`.
+- Se `spaghetti_support` non ha grant approvato (sites vuoti), schermata di attesa.
 - Nessun MQTT, nessun SDK.

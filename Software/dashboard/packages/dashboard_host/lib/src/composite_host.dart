@@ -67,8 +67,19 @@ class CompositeHost implements HostPort {
       _gated(HostScopes.hostUserManage, () => demo.listSiteSessions(siteId));
 
   @override
-  Future<SupportRequest> requestSupport(String siteId) =>
-      _gated(HostScopes.hostSupportGrantApprove, () => demo.requestSupport(siteId));
+  Future<List<SupportGrant>> listSupportGrants(String siteId) => demo.listSupportGrants(siteId);
+
+  @override
+  Future<SupportGrant> requestSupportGrant(String siteId) =>
+      _gated(HostScopes.hostSupportGrantApprove, () => demo.requestSupportGrant(siteId));
+
+  @override
+  Future<SupportGrant> approveSupportGrant({required String siteId, required String grantId}) =>
+      _gated(HostScopes.hostSupportGrantApprove, () => demo.approveSupportGrant(siteId: siteId, grantId: grantId));
+
+  @override
+  Future<void> revokeSupportGrant({required String siteId, required String grantId}) =>
+      demo.revokeSupportGrant(siteId: siteId, grantId: grantId);
 
   @override
   Future<List<LabSystem>> listSystems() async {

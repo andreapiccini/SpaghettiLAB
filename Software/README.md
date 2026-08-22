@@ -55,8 +55,8 @@ Due modelli: **ecosistema** (progettista implementa) e **turnkey Site Package**
 | UX React Flow | ✅ doc |
 | Dashboard D010–D080 | ✅ gate 2026-08-16 |
 | Ecosystem E010 | ✅ doc |
-| Ecosystem E020 · E021 · E050 · E051 | ✅ stub + login + utenti site |
-| Ecosystem E060–E090 | ⬜ 6 task |
+| Ecosystem E020 · E021 · E050 · E051 · E080 | ✅ stub + login + utenti + grant |
+| Ecosystem E060–E090 | ⬜ 5 task |
 
 Dettaglio e checklist completa: [**SOFTWARE_MASTER_INDEX.md § 6**](SOFTWARE_MASTER_INDEX.md#6-elenco-task-mancanti-checklist-revisione).
 

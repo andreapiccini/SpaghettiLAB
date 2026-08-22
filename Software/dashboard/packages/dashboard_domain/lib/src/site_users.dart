@@ -136,29 +136,74 @@ class SiteSession {
       };
 }
 
-class SupportRequest {
-  const SupportRequest({
-    required this.requestId,
+enum SupportGrantStatus { pending, approved, revoked, expired }
+
+String supportGrantStatusWire(SupportGrantStatus status) => switch (status) {
+      SupportGrantStatus.pending => 'pending',
+      SupportGrantStatus.approved => 'approved',
+      SupportGrantStatus.revoked => 'revoked',
+      SupportGrantStatus.expired => 'expired',
+    };
+
+SupportGrantStatus parseSupportGrantStatus(String raw) => switch (raw) {
+      'pending' => SupportGrantStatus.pending,
+      'approved' => SupportGrantStatus.approved,
+      'revoked' => SupportGrantStatus.revoked,
+      'expired' => SupportGrantStatus.expired,
+      _ => throw FormatException('stato grant sconosciuto: $raw'),
+    };
+
+/// Canale demo: nessun tunnel reale. Opzioni infra in HOST_IDENTITY_API.
+const supportGrantDemoChannel = 'demo://loopback';
+
+class SupportGrant {
+  const SupportGrant({
+    required this.grantId,
+    required this.siteId,
+    required this.requesterEmail,
     required this.status,
-    required this.message,
+    required this.scope,
+    required this.channel,
+    required this.createdAt,
+    this.approvedByEmail,
+    this.expiresAt,
   });
 
-  final String requestId;
-  final String status;
-  final String message;
+  final String grantId;
+  final String siteId;
+  final String requesterEmail;
+  final String? approvedByEmail;
+  final SupportGrantStatus status;
+  final String scope;
+  final String channel;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
 
-  factory SupportRequest.parse(Map<String, Object?> json) {
-    return SupportRequest(
-      requestId: json['requestId'] as String? ?? '',
-      status: json['status'] as String? ?? 'placeholder',
-      message: json['message'] as String? ?? '',
+  factory SupportGrant.parse(Map<String, Object?> json) {
+    return SupportGrant(
+      grantId: json['grantId'] as String? ?? '',
+      siteId: json['siteId'] as String? ?? '',
+      requesterEmail: json['requesterEmail'] as String? ?? '',
+      approvedByEmail: json['approvedByEmail'] as String?,
+      status: parseSupportGrantStatus(json['status'] as String? ?? 'pending'),
+      scope: json['scope'] as String? ?? 'read_only',
+      channel: json['channel'] as String? ?? '',
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? '')?.toUtc(),
     );
   }
 
   Map<String, Object?> toJson() => {
-        'requestId': requestId,
-        'status': status,
-        'message': message,
+        'grantId': grantId,
+        'siteId': siteId,
+        'requesterEmail': requesterEmail,
+        if (approvedByEmail != null) 'approvedByEmail': approvedByEmail,
+        'status': supportGrantStatusWire(status),
+        'scope': scope,
+        'channel': channel,
+        'createdAt': createdAt.toIso8601String(),
+        if (expiresAt != null) 'expiresAt': expiresAt!.toIso8601String(),
       };
 }
 
