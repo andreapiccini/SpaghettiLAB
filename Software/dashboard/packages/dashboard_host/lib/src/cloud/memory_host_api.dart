@@ -67,6 +67,9 @@ class MemoryHostApiTransport implements HostApiTransport {
     if (parts.length >= 2 && parts[1] == 'auth') {
       return _auth(method, parts, body);
     }
+    if (parts.length >= 2 && parts[1] == 'partner') {
+      return _partner(method, parts, body);
+    }
     if (parts.length >= 2 && parts[1] == 'sites') {
       return _sites(method, parts, body);
     }
@@ -167,6 +170,26 @@ class MemoryHostApiTransport implements HostApiTransport {
     if (parts.length == 5 && parts[2] == 'card-styles' && parts[4] == 'install' && method == 'POST') {
       await inner.installCardStyle(parts[3]);
       return const <String, Object?>{};
+    }
+    throw HostApiException('internal', parts.join('/'));
+  }
+
+  Future<Object?> _partner(String method, List<String> parts, Map<String, Object?>? body) async {
+    if (parts.length == 3 && parts[2] == 'sites' && method == 'GET') {
+      return [for (final s in await inner.listPartnerSites()) s.toJson()];
+    }
+    if (parts.length == 5 && parts[2] == 'sites' && parts[4] == 'access-request' && method == 'POST') {
+      return (await inner.requestPartnerSiteAccess(parts[3])).toJson();
+    }
+    if (parts.length == 5 && parts[2] == 'sites' && parts[4] == 'brand' && method == 'POST') {
+      return (await inner.applyPartnerBrand(
+        siteId: parts[3],
+        packId: body?['packId'] as String? ?? '',
+      ))
+          .toJson();
+    }
+    if (parts.length == 5 && parts[2] == 'sites' && parts[4] == 'package-update' && method == 'POST') {
+      return (await inner.queueSitePackageUpdate(parts[3])).toJson();
     }
     throw HostApiException('internal', parts.join('/'));
   }

@@ -74,7 +74,7 @@ export function ConfiguredPortNode({ data, selected }: NodeProps & { readonly da
       <div
         className={`w-72 overflow-hidden bg-surface shadow-e1 transition-[box-shadow,outline] group-hover:shadow-e2 ${selected ? "" : "outline outline-1 outline-[var(--color-border)]"}`}
         style={{
-          borderRadius: "20px 2px 20px 2px",
+          borderRadius: "2px 2px 2px 20px",
           outline: selected ? "2px solid var(--color-brand-blue)" : undefined,
         }}
       >

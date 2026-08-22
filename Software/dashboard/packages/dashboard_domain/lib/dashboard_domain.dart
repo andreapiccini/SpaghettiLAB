@@ -12,6 +12,7 @@ export 'src/history.dart';
 export 'src/host_port.dart';
 export 'src/layout.dart';
 export 'src/pack_signature.dart';
+export 'src/partner.dart';
 export 'src/point.dart';
 export 'src/scene.dart';
 export 'src/site_users.dart';

@@ -80,6 +80,17 @@ class _DashboardAppState extends State<DashboardApp> {
     return session.selectedSite == null && session.sites.length > 1;
   }
 
+  bool get _partnerConsole {
+    final session = _session;
+    if (session == null || session.selectedSite != null) return false;
+    return session.sites.any(
+      (s) =>
+          s.roles.contains(SiteRole.partnerAdmin) ||
+          s.roles.contains(SiteRole.partnerEngineer) ||
+          s.scopes.contains(HostScopes.partnerSiteManage),
+    );
+  }
+
   bool get _awaitingGrant {
     final session = _session;
     return session != null && session.sites.isEmpty;
@@ -297,6 +308,23 @@ class _DashboardAppState extends State<DashboardApp> {
                 return AwaitingGrantScreen(
                   session: _session!,
                   onLogout: () => unawaited(_logout()),
+                );
+              }
+              if (_partnerConsole) {
+                return PartnerConsoleScreen(
+                  host: widget.host,
+                  session: _session!,
+                  onLogout: () => unawaited(_logout()),
+                  onOpenSite: (siteId) => unawaited(() async {
+                    try {
+                      final session = await widget.host.selectSite(siteId);
+                      if (!mounted) return;
+                      await _enterSession(session);
+                    } on HostException catch (error) {
+                      if (!mounted) return;
+                      setState(() => _bootError = error.code);
+                    }
+                  }()),
                 );
               }
               if (_needsSite) {

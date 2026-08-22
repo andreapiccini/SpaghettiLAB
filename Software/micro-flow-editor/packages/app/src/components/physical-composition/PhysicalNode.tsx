@@ -23,7 +23,7 @@ export function PhysicalNode({ data, selected }: NodeProps & { readonly data: Ph
     <div
       className={`flex items-center gap-3 bg-surface p-3 shadow-e1 ${wide ? "min-w-56" : "w-56"}`}
       style={{
-        borderRadius: "16px 2px 16px 2px",
+        borderRadius: "2px 2px 2px 16px",
         borderLeft: `3px solid ${data.hasError ? "var(--color-error)" : config.colorVar}`,
         outline: selected ? "2px solid var(--color-brand-blue)" : "1px solid var(--color-border)",
       }}

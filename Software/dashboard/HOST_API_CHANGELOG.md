@@ -1,5 +1,16 @@
 # Host API — changelog
 
+## 2026-08-22 — V1.10 additive (Partner multi-site)
+
+Console partner: portafoglio per `PartnerOrg`, isolamento tenant, brand e coda Site Package.
+
+- `GET /v1/partner/sites` (`listPartnerSites`)
+- `POST /v1/partner/sites/{siteId}/access-request` · `/brand` · `/package-update`
+- Accesso site: `permanent` | `grant_required` | `grant_pending` | `grant_active`
+- FakeHost: `partner@demo.local` (Verde) vs `partner-b@demo.local` (Blu)
+- UI: Console partner al posto del semplice select-site
+- Documento: [HOST_IDENTITY_API.md](HOST_IDENTITY_API.md)
+
 ## 2026-08-20 — V1.9 additive (Support Grant)
 
 Accesso SpaghettiLAB solo con grant approvato, a tempo, auditato.

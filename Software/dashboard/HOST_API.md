@@ -1,7 +1,7 @@
 # Host API V1
 
 **Stato:** congelata 2026-08-16 (D070)  
-**Versione:** `Host API V1` (estensioni additive V1.1–V1.9)  
+**Versione:** `Host API V1` (estensioni additive V1.1–V1.10)  
 **Changelog:** [HOST_API_CHANGELOG.md](HOST_API_CHANGELOG.md)
 
 La Flutter app consuma **solo** questo contratto (via `HostPort`). Automazioni
@@ -18,6 +18,7 @@ Estensione **additiva** (V1.6): identità (`login` / `logout` / `currentSession`
 Estensione **additiva** (V1.7): ricetta stile card (`putCardStyle` + `recipe`).  
 Estensione **additiva** (V1.8): utenti site (`listSiteUsers` / `inviteSiteUser` / `revokeSiteUser` / `listSiteSessions`).  
 Estensione **additiva** (V1.9): Support Grant (`listSupportGrants` / `requestSupportGrant` / `approveSupportGrant` / `revokeSupportGrant`).  
+Estensione **additiva** (V1.10): Partner console (`listPartnerSites` / `requestPartnerSiteAccess` / `applyPartnerBrand` / `queueSitePackageUpdate`).  
 Runtime prodotto: `cards` e `schematic`. `top_down` / `first_person` restano sul wire e vengono mappati a `cards`.  
 `custom` resta riservato.
 

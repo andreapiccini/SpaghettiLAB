@@ -327,7 +327,7 @@ void main() {
     expect(find.text('In funzione'), findsOneWidget);
   });
 
-  testWidgets('partner picks a site then can open canvas', (tester) async {
+  testWidgets('partner console lists portfolio, brand and grant request', (tester) async {
     final host = FakeHost(requireLogin: true);
     addTearDown(host.dispose);
     await _pumpApp(tester, host: host);
@@ -335,9 +335,24 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('login-password')), 'partner');
     await tester.tap(find.byKey(const ValueKey('login-submit')));
     await tester.pumpAndSettle();
-    expect(find.text('Scegli un sito'), findsOneWidget);
+    expect(find.byKey(const ValueKey('partner-console')), findsOneWidget);
     expect(find.text('Serra nord'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('site-site-serra')));
+    expect(find.text('Cliente prospect'), findsOneWidget);
+    expect(find.text('Showroom Blu'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('request-access-site-prospect')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Grant in attesa', skipOffstage: false), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('apply-brand-site-serra')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('brand garden', skipOffstage: false), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('queue-package-site-serra')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Update in coda', skipOffstage: false), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('open-site-site-serra')));
     await tester.pumpAndSettle();
     expect(find.text('Temperatura salotto'), findsOneWidget);
     expect(find.text('Pack'), findsOneWidget);

@@ -10,6 +10,7 @@ import 'history.dart';
 import 'host_port.dart';
 import 'layout.dart';
 import 'pack_signature.dart';
+import 'partner.dart';
 import 'point.dart';
 import 'scene.dart';
 import 'site_users.dart';
@@ -128,15 +129,27 @@ class FakeHost implements HostPort {
     _members[demoSerraSiteId] = [
       member(_accounts[demoPartnerEmail]!),
     ];
+    _members[demoProspectSiteId] = [
+      member(_accounts[demoProspectAdminEmail]!),
+    ];
+    _members[demoBluSiteId] = [
+      member(_accounts[demoPartnerBEmail]!),
+    ];
   }
 
   static const String demoSystemId = 'casa-demo';
   static const String demoSiteId = 'site-casa';
   static const String demoSerraSiteId = 'site-serra';
+  static const String demoProspectSiteId = 'site-prospect';
+  static const String demoBluSiteId = 'site-blu';
+  static const String demoPartnerOrgId = 'org-partner-verde';
+  static const String demoPartnerBOrgId = 'org-partner-blu';
   static const String demoAdminEmail = 'admin@demo.local';
   static const String demoViewerEmail = 'viewer@demo.local';
   static const String demoOperatorEmail = 'operator@demo.local';
   static const String demoPartnerEmail = 'partner@demo.local';
+  static const String demoPartnerBEmail = 'partner-b@demo.local';
+  static const String demoProspectAdminEmail = 'admin-prospect@demo.local';
   static const String demoSupportEmail = 'support@demo.local';
 
   /// When true, [currentSession] starts empty and mutating calls need [login].
@@ -200,6 +213,42 @@ class FakeHost implements HostPort {
   final _invites = <SiteInvite>[];
   final _siteSessions = <SiteSession>[];
   final _grants = <SupportGrant>[];
+  final _partnerSites = <String, _PartnerSiteRecord>{
+    demoSiteId: const _PartnerSiteRecord(
+      siteId: demoSiteId,
+      name: 'Casa demo',
+      customerOrgName: 'Casa Rossi',
+      partnerOrgId: demoPartnerOrgId,
+      permanent: true,
+      status: PartnerSiteStatus.online,
+    ),
+    demoSerraSiteId: const _PartnerSiteRecord(
+      siteId: demoSerraSiteId,
+      name: 'Serra nord',
+      customerOrgName: 'Serra Nord SA',
+      partnerOrgId: demoPartnerOrgId,
+      permanent: true,
+      status: PartnerSiteStatus.online,
+    ),
+    demoProspectSiteId: const _PartnerSiteRecord(
+      siteId: demoProspectSiteId,
+      name: 'Cliente prospect',
+      customerOrgName: 'Prospect SRL',
+      partnerOrgId: demoPartnerOrgId,
+      permanent: false,
+      status: PartnerSiteStatus.offline,
+    ),
+    demoBluSiteId: const _PartnerSiteRecord(
+      siteId: demoBluSiteId,
+      name: 'Showroom Blu',
+      customerOrgName: 'Blu Retail',
+      partnerOrgId: demoPartnerBOrgId,
+      permanent: true,
+      status: PartnerSiteStatus.online,
+    ),
+  };
+  final _siteBrandPack = <String, String>{};
+  final _queuedPackageSites = <String>{};
   final auditLog = <HostAuditEvent>[];
   static const _accounts = <String, _DemoAccount>{
     demoViewerEmail: _DemoAccount(
@@ -226,9 +275,25 @@ class FakeHost implements HostPort {
     demoPartnerEmail: _DemoAccount(
       email: demoPartnerEmail,
       password: 'partner',
-      displayName: 'Partner demo',
+      displayName: 'Partner Verde',
       role: SiteRole.partnerAdmin,
       siteIds: [demoSiteId, demoSerraSiteId],
+      partnerOrgId: demoPartnerOrgId,
+    ),
+    demoPartnerBEmail: _DemoAccount(
+      email: demoPartnerBEmail,
+      password: 'partner',
+      displayName: 'Partner Blu',
+      role: SiteRole.partnerAdmin,
+      siteIds: [demoBluSiteId],
+      partnerOrgId: demoPartnerBOrgId,
+    ),
+    demoProspectAdminEmail: _DemoAccount(
+      email: demoProspectAdminEmail,
+      password: 'admin',
+      displayName: 'Admin prospect',
+      role: SiteRole.siteAdmin,
+      siteIds: [demoProspectSiteId],
     ),
     demoSupportEmail: _DemoAccount(
       email: demoSupportEmail,
@@ -242,12 +307,22 @@ class FakeHost implements HostPort {
     demoSiteId: SiteMembership(
       siteId: demoSiteId,
       name: 'Casa demo',
-      orgId: 'org-demo',
+      orgId: 'org-casa',
     ),
     demoSerraSiteId: SiteMembership(
       siteId: demoSerraSiteId,
       name: 'Serra nord',
-      orgId: 'org-demo',
+      orgId: 'org-serra',
+    ),
+    demoProspectSiteId: SiteMembership(
+      siteId: demoProspectSiteId,
+      name: 'Cliente prospect',
+      orgId: 'org-prospect',
+    ),
+    demoBluSiteId: SiteMembership(
+      siteId: demoBluSiteId,
+      name: 'Showroom Blu',
+      orgId: 'org-blu',
     ),
   };
 
@@ -336,7 +411,7 @@ class FakeHost implements HostPort {
 
   AuthSession _issue(_DemoAccount account, {String? selectedSiteId}) {
     _sweepGrants();
-    final memberships = [
+    final memberships = <SiteMembership>[
       for (final id in account.siteIds)
         SiteMembership(
           siteId: id,
@@ -354,6 +429,18 @@ class FakeHost implements HostPort {
               orgId: _sites[grant.siteId]!.orgId,
               roles: const [SiteRole.spaghettiSupport],
               scopes: const {HostScopes.dashboardView, HostScopes.hostSupportSession},
+            ),
+      if (account.partnerOrgId != null)
+        for (final grant in _grants)
+          if (grant.status == SupportGrantStatus.approved &&
+              grant.requesterEmail == account.email &&
+              !account.siteIds.contains(grant.siteId))
+            SiteMembership(
+              siteId: grant.siteId,
+              name: _sites[grant.siteId]!.name,
+              orgId: _sites[grant.siteId]!.orgId,
+              roles: [account.role],
+              scopes: scopesForRole(account.role),
             ),
     ];
     final selected = selectedSiteId != null && memberships.any((s) => s.siteId == selectedSiteId)
@@ -579,6 +666,8 @@ class FakeHost implements HostPort {
     );
     _grants[index] = approved;
     _audit('support_approve', grantId);
+    _refreshSupportSession();
+    _refreshPartnerSessions();
     return approved;
   }
 
@@ -609,6 +698,155 @@ class FakeHost implements HostPort {
     );
     _audit('support_revoke', grantId);
     _refreshSupportSession();
+    _refreshPartnerSessions();
+  }
+
+  void _refreshPartnerSessions() {
+    final session = _session;
+    if (session == null) return;
+    final account = _accounts[session.user.email];
+    if (account?.partnerOrgId == null) return;
+    final next = _issue(account!, selectedSiteId: session.selectedSiteId);
+    final sameSites = next.sites.length == session.sites.length &&
+        next.sites.every((site) => session.sites.any((other) => other.siteId == site.siteId));
+    if (!sameSites || next.selectedSiteId != session.selectedSiteId) {
+      _session = next;
+    }
+  }
+
+  bool _sessionHasScope(String scope) {
+    final session = _liveSession();
+    if (session == null) return false;
+    if (session.selectedSite != null) return session.allows(scope);
+    return session.sites.any((s) => s.scopes.contains(scope));
+  }
+
+  _DemoAccount _requirePartner() {
+    if (!_sessionHasScope(HostScopes.partnerSiteManage)) {
+      throw const HostException('unauthorized');
+    }
+    final session = _liveSession();
+    if (session == null) throw const HostException('unauthorized');
+    final account = _accounts[session.user.email];
+    if (account?.partnerOrgId == null) {
+      throw const HostException('unauthorized', 'solo partner');
+    }
+    return account!;
+  }
+
+  PartnerSiteAccess _accessFor(_PartnerSiteRecord record, String partnerEmail) {
+    if (record.permanent) return PartnerSiteAccess.permanent;
+    final grants = [
+      for (final g in _grants)
+        if (g.siteId == record.siteId && g.requesterEmail == partnerEmail) g,
+    ];
+    if (grants.any((g) => g.status == SupportGrantStatus.approved)) {
+      return PartnerSiteAccess.grantActive;
+    }
+    if (grants.any((g) => g.status == SupportGrantStatus.pending)) {
+      return PartnerSiteAccess.grantPending;
+    }
+    return PartnerSiteAccess.grantRequired;
+  }
+
+  PartnerSiteSummary _summaryFor(_PartnerSiteRecord record, String partnerEmail) {
+    final status = _queuedPackageSites.contains(record.siteId)
+        ? PartnerSiteStatus.updateQueued
+        : record.status;
+    return PartnerSiteSummary(
+      siteId: record.siteId,
+      name: record.name,
+      customerOrgName: record.customerOrgName,
+      partnerOrgId: record.partnerOrgId,
+      status: status,
+      access: _accessFor(record, partnerEmail),
+      brandPackId: _siteBrandPack[record.siteId],
+    );
+  }
+
+  @override
+  Future<List<PartnerSiteSummary>> listPartnerSites() async {
+    final account = _requirePartner();
+    _sweepGrants();
+    return [
+      for (final record in _partnerSites.values)
+        if (record.partnerOrgId == account.partnerOrgId) _summaryFor(record, account.email),
+    ];
+  }
+
+  @override
+  Future<SupportGrant> requestPartnerSiteAccess(String siteId) async {
+    final account = _requirePartner();
+    final record = _partnerSites[siteId];
+    if (record == null || record.partnerOrgId != account.partnerOrgId) {
+      throw const HostException('unauthorized', 'sito fuori portafoglio');
+    }
+    if (record.permanent) {
+      throw const HostException('internal', 'accesso già permanente');
+    }
+    _sweepGrants();
+    if (_grants.any(
+      (g) =>
+          g.siteId == siteId &&
+          g.requesterEmail == account.email &&
+          (g.status == SupportGrantStatus.pending || g.status == SupportGrantStatus.approved),
+    )) {
+      throw const HostException('internal', 'richiesta già attiva');
+    }
+    final grant = SupportGrant(
+      grantId: 'grant-${_grants.length + 1}',
+      siteId: siteId,
+      requesterEmail: account.email,
+      status: SupportGrantStatus.pending,
+      scope: 'partner_access',
+      channel: supportGrantDemoChannel,
+      createdAt: DateTime.now().toUtc(),
+    );
+    _grants.add(grant);
+    _audit('partner_access_request', grant.grantId);
+    return grant;
+  }
+
+  @override
+  Future<PartnerSiteSummary> applyPartnerBrand({required String siteId, required String packId}) async {
+    if (!_sessionHasScope(HostScopes.partnerBrandManage)) {
+      throw const HostException('unauthorized');
+    }
+    final account = _requirePartner();
+    final record = _partnerSites[siteId];
+    if (record == null || record.partnerOrgId != account.partnerOrgId) {
+      throw const HostException('unauthorized', 'sito fuori portafoglio');
+    }
+    final access = _accessFor(record, account.email);
+    if (access != PartnerSiteAccess.permanent && access != PartnerSiteAccess.grantActive) {
+      throw const HostException('unauthorized', 'accesso site assente');
+    }
+    if (!_packs.any((p) => p.packId == packId) && !_localPacks.containsKey(packId)) {
+      throw const HostException('internal', 'pack assente');
+    }
+    _siteBrandPack[siteId] = packId;
+    final session = _liveSession();
+    if (session?.selectedSiteId == siteId) {
+      await applyPack(demoSystemId, packId);
+    }
+    _audit('partner_brand_apply', '$siteId:$packId');
+    return _summaryFor(record, account.email);
+  }
+
+  @override
+  Future<PartnerSiteSummary> queueSitePackageUpdate(String siteId) async {
+    final account = _requirePartner();
+    final record = _partnerSites[siteId];
+    if (record == null || record.partnerOrgId != account.partnerOrgId) {
+      throw const HostException('unauthorized', 'sito fuori portafoglio');
+    }
+    final access = _accessFor(record, account.email);
+    if (access != PartnerSiteAccess.permanent && access != PartnerSiteAccess.grantActive) {
+      throw const HostException('unauthorized', 'accesso site assente');
+    }
+    _queuedPackageSites.add(siteId);
+    _audit('partner_package_queue', siteId);
+    return _summaryFor(record, account.email);
   }
 
   void _requireSupportSite(String siteId) {
@@ -1030,6 +1268,7 @@ class _DemoAccount {
     required this.displayName,
     required this.role,
     required this.siteIds,
+    this.partnerOrgId,
   });
 
   final String email;
@@ -1037,5 +1276,24 @@ class _DemoAccount {
   final String displayName;
   final SiteRole role;
   final List<String> siteIds;
+  final String? partnerOrgId;
+}
+
+class _PartnerSiteRecord {
+  const _PartnerSiteRecord({
+    required this.siteId,
+    required this.name,
+    required this.customerOrgName,
+    required this.partnerOrgId,
+    required this.permanent,
+    required this.status,
+  });
+
+  final String siteId;
+  final String name;
+  final String customerOrgName;
+  final String partnerOrgId;
+  final bool permanent;
+  final PartnerSiteStatus status;
 }
 

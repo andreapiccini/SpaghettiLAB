@@ -438,4 +438,53 @@ void main() {
     await expectLater(host.getPoints(FakeHost.demoSystemId), throwsA(isA<HostException>()));
     host.dispose();
   });
+
+  test('partner portfolio is isolated and brand pack applies per site', () async {
+    final host = FakeHost(requireLogin: true);
+
+    final verde = await host.login(email: FakeHost.demoPartnerEmail, password: 'partner');
+    expect(verde.sites.map((s) => s.siteId), containsAll([FakeHost.demoSiteId, FakeHost.demoSerraSiteId]));
+    expect(verde.sites.map((s) => s.siteId), isNot(contains(FakeHost.demoBluSiteId)));
+
+    final portfolio = await host.listPartnerSites();
+    expect(portfolio.map((s) => s.siteId).toSet(), {
+      FakeHost.demoSiteId,
+      FakeHost.demoSerraSiteId,
+      FakeHost.demoProspectSiteId,
+    });
+    expect(portfolio.every((s) => s.partnerOrgId == FakeHost.demoPartnerOrgId), isTrue);
+
+    final branded = await host.applyPartnerBrand(siteId: FakeHost.demoSerraSiteId, packId: 'garden');
+    expect(branded.brandPackId, 'garden');
+    final queued = await host.queueSitePackageUpdate(FakeHost.demoSerraSiteId);
+    expect(queued.status, PartnerSiteStatus.updateQueued);
+
+    final grant = await host.requestPartnerSiteAccess(FakeHost.demoProspectSiteId);
+    expect(grant.status, SupportGrantStatus.pending);
+    expect(
+      (await host.listPartnerSites()).singleWhere((s) => s.siteId == FakeHost.demoProspectSiteId).access,
+      PartnerSiteAccess.grantPending,
+    );
+    await expectLater(host.selectSite(FakeHost.demoProspectSiteId), throwsA(isA<HostException>()));
+
+    await host.login(email: FakeHost.demoProspectAdminEmail, password: 'admin');
+    await host.approveSupportGrant(siteId: FakeHost.demoProspectSiteId, grantId: grant.grantId);
+
+    final unlocked = await host.login(email: FakeHost.demoPartnerEmail, password: 'partner');
+    expect(unlocked.sites.map((s) => s.siteId), contains(FakeHost.demoProspectSiteId));
+    expect(
+      (await host.listPartnerSites()).singleWhere((s) => s.siteId == FakeHost.demoProspectSiteId).access,
+      PartnerSiteAccess.grantActive,
+    );
+
+    final blu = await host.login(email: FakeHost.demoPartnerBEmail, password: 'partner');
+    expect(blu.sites.single.siteId, FakeHost.demoBluSiteId);
+    final bluSites = await host.listPartnerSites();
+    expect(bluSites.map((s) => s.siteId), [FakeHost.demoBluSiteId]);
+    await expectLater(
+      host.applyPartnerBrand(siteId: FakeHost.demoSerraSiteId, packId: 'garden'),
+      throwsA(isA<HostException>()),
+    );
+    host.dispose();
+  });
 }

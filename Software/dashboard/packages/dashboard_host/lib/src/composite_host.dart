@@ -82,6 +82,19 @@ class CompositeHost implements HostPort {
       demo.revokeSupportGrant(siteId: siteId, grantId: grantId);
 
   @override
+  Future<List<PartnerSiteSummary>> listPartnerSites() => demo.listPartnerSites();
+
+  @override
+  Future<SupportGrant> requestPartnerSiteAccess(String siteId) => demo.requestPartnerSiteAccess(siteId);
+
+  @override
+  Future<PartnerSiteSummary> applyPartnerBrand({required String siteId, required String packId}) =>
+      demo.applyPartnerBrand(siteId: siteId, packId: packId);
+
+  @override
+  Future<PartnerSiteSummary> queueSitePackageUpdate(String siteId) => demo.queueSitePackageUpdate(siteId);
+
+  @override
   Future<List<LabSystem>> listSystems() async {
     demo.requireScope(HostScopes.dashboardView);
     return [

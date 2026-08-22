@@ -127,6 +127,21 @@ class EdgeHost implements HostPort {
       _presentation.revokeSupportGrant(siteId: siteId, grantId: grantId);
 
   @override
+  Future<List<PartnerSiteSummary>> listPartnerSites() => _presentation.listPartnerSites();
+
+  @override
+  Future<SupportGrant> requestPartnerSiteAccess(String siteId) =>
+      _presentation.requestPartnerSiteAccess(siteId);
+
+  @override
+  Future<PartnerSiteSummary> applyPartnerBrand({required String siteId, required String packId}) =>
+      _presentation.applyPartnerBrand(siteId: siteId, packId: packId);
+
+  @override
+  Future<PartnerSiteSummary> queueSitePackageUpdate(String siteId) =>
+      _presentation.queueSitePackageUpdate(siteId);
+
+  @override
   Future<List<LabSystem>> listSystems() async {
     _presentation.requireScope(HostScopes.dashboardView);
     return [

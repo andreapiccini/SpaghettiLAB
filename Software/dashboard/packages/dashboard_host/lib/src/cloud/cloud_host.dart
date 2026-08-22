@@ -217,6 +217,49 @@ class CloudHost implements HostPort {
     }
   }
 
+  @override
+  Future<List<PartnerSiteSummary>> listPartnerSites() async {
+    try {
+      return [
+        for (final s in asJsonObjectList(await _transport.get(HostApiPaths.partnerSites)))
+          PartnerSiteSummary.parse(s),
+      ];
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<SupportGrant> requestPartnerSiteAccess(String siteId) async {
+    try {
+      return SupportGrant.parse(asJsonMap(await _transport.post(HostApiPaths.partnerSiteAccess(siteId))));
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<PartnerSiteSummary> applyPartnerBrand({required String siteId, required String packId}) async {
+    try {
+      return PartnerSiteSummary.parse(
+        asJsonMap(await _transport.post(HostApiPaths.partnerSiteBrand(siteId), {'packId': packId})),
+      );
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
+  @override
+  Future<PartnerSiteSummary> queueSitePackageUpdate(String siteId) async {
+    try {
+      return PartnerSiteSummary.parse(
+        asJsonMap(await _transport.post(HostApiPaths.partnerSitePackageUpdate(siteId))),
+      );
+    } on HostApiException catch (error) {
+      throw _wrap(error);
+    }
+  }
+
   void start() {
     unawaited(_connect());
   }

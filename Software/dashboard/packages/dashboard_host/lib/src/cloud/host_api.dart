@@ -23,6 +23,10 @@ class HostApiPaths {
       '/v1/sites/$siteId/support-grants/$grantId/approve';
   static String siteSupportGrantRevoke(String siteId, String grantId) =>
       '/v1/sites/$siteId/support-grants/$grantId/revoke';
+  static const partnerSites = '/v1/partner/sites';
+  static String partnerSiteAccess(String siteId) => '/v1/partner/sites/$siteId/access-request';
+  static String partnerSiteBrand(String siteId) => '/v1/partner/sites/$siteId/brand';
+  static String partnerSitePackageUpdate(String siteId) => '/v1/partner/sites/$siteId/package-update';
   static const systems = '/v1/systems';
   static String system(String id) => '/v1/systems/$id';
   static String points(String id) => '/v1/systems/$id/points';

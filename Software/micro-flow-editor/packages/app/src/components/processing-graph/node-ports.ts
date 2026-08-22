@@ -7,10 +7,7 @@ import type { DeviceProcessingNodeData } from "@spaghettilab/device-processing-g
  * kind here and the node picks up the n8n-style shell without a one-off branch
  * in ProcessingNode.
  *
- * - input only  → closed (more rounded) on the right
- * - output only → closed (more rounded) on the left
- * - both/none   → even rounding on the remaining corners
- * Top-right and bottom-left are always sharper than the rest — the canvas block mark.
+ * The card shell is sharp on three corners; only bottom-left is rounded.
  */
 export type NodePortLayout = {
   readonly hasInput: boolean;
@@ -31,13 +28,12 @@ export function portsForKind(kind: DeviceProcessingNodeData["kind"]): NodePortLa
 
 const CLOSED = 28;
 const OPEN = 12;
-/** Sharper top-right and bottom-left than the other corners — the canvas block's mark. */
+/** Sharp corners; only bottom-left is rounded. */
 const MARK = 2;
 
 export function nodeShellRadius(ports: NodePortLayout): string {
-  const left = ports.hasInput ? OPEN : CLOSED;
-  const right = ports.hasOutput ? OPEN : CLOSED;
-  return `${left}px ${MARK}px ${right}px ${MARK}px`;
+  const round = ports.hasInput ? OPEN : CLOSED;
+  return `${MARK}px ${MARK}px ${MARK}px ${round}px`;
 }
 
 export const SOURCE_HANDLE_STYLE: CSSProperties = {

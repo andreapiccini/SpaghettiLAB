@@ -5,6 +5,7 @@ import 'card_style.dart';
 import 'events.dart';
 import 'history.dart';
 import 'layout.dart';
+import 'partner.dart';
 import 'point.dart';
 import 'scene.dart';
 import 'site_users.dart';
@@ -26,6 +27,10 @@ abstract class HostPort {
   Future<SupportGrant> requestSupportGrant(String siteId);
   Future<SupportGrant> approveSupportGrant({required String siteId, required String grantId});
   Future<void> revokeSupportGrant({required String siteId, required String grantId});
+  Future<List<PartnerSiteSummary>> listPartnerSites();
+  Future<SupportGrant> requestPartnerSiteAccess(String siteId);
+  Future<PartnerSiteSummary> applyPartnerBrand({required String siteId, required String packId});
+  Future<PartnerSiteSummary> queueSitePackageUpdate(String siteId);
   Future<List<LabSystem>> listSystems();
   Future<LabSystem> getSystem(String systemId);
   Future<LabSystem> createSystem({required String name, String address = ''});

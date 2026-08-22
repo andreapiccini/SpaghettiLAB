@@ -1,0 +1,34 @@
+{
+    "layout": {
+        "hspace": "2mm",
+        "vspace": "2mm",
+        "rows": "2",
+        "cols": "2"
+    },
+    "tabs": {
+        "vwidth": "5mm",
+        "hwidth": "5mm",
+        "spacing": "30mm"
+    },
+    "cuts": {
+        "type": "mousebites",
+        "drill": "0.6mm",
+        "spacing": "1mm",
+        "offset": "0.2mm",
+        "prolong": "0.5mm"
+    },
+    "framing": {
+        "type": "frame",
+        "hspace": "3mm",
+        "vspace": "3mm"
+    },
+    "tooling": {
+        "type": "4hole",
+        "hoffset": "3.85mm",
+        "voffset": "3.85mm"
+    },
+    "post": {
+        "millradius": "1mm",
+        "refillzones": "True"
+    }
+}

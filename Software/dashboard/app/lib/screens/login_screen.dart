@@ -123,5 +123,5 @@ class _LoginScreenState extends State<LoginScreen> {
 abstract final class FakeHostHint {
   static const adminEmail = 'admin@demo.local';
   static const accounts =
-      'Demo: viewer@demo.local / viewer · operator@demo.local / operator · admin@demo.local / admin · partner@demo.local / partner · support@demo.local / support';
+      'Demo: viewer@demo.local / viewer · operator@demo.local / operator · admin@demo.local / admin · partner@demo.local / partner · partner-b@demo.local / partner · support@demo.local / support';
 }

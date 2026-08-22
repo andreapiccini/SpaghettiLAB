@@ -17,16 +17,16 @@ describe("portsForKind", () => {
 });
 
 describe("nodeShellRadius", () => {
-  it("rounds the closed left side of an output-only node", () => {
-    expect(nodeShellRadius({ hasInput: false, hasOutput: true })).toBe("28px 2px 12px 2px");
+  it("rounds only the bottom-left of an output-only node", () => {
+    expect(nodeShellRadius({ hasInput: false, hasOutput: true })).toBe("2px 2px 2px 28px");
   });
 
-  it("rounds the closed right side of an input-only node", () => {
-    expect(nodeShellRadius({ hasInput: true, hasOutput: false })).toBe("12px 2px 28px 2px");
+  it("rounds only the bottom-left of an input-only node", () => {
+    expect(nodeShellRadius({ hasInput: true, hasOutput: false })).toBe("2px 2px 2px 12px");
   });
 
-  it("keeps sharper top-right and bottom-left corners as the block mark", () => {
-    expect(nodeShellRadius({ hasInput: true, hasOutput: true })).toBe("12px 2px 12px 2px");
-    expect(nodeShellRadius({ hasInput: false, hasOutput: false })).toBe("28px 2px 28px 2px");
+  it("keeps a single rounded bottom-left as the block mark", () => {
+    expect(nodeShellRadius({ hasInput: true, hasOutput: true })).toBe("2px 2px 2px 12px");
+    expect(nodeShellRadius({ hasInput: false, hasOutput: false })).toBe("2px 2px 2px 28px");
   });
 });
