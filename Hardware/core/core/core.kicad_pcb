@@ -17936,7 +17936,7 @@
 			(justify left bottom)
 		)
 	)
-	(gr_text "PLATE"
+	(gr_text "SPICE"
 		(at 70.595 70.81 90)
 		(layer "B.SilkS" knockout)
 		(uuid "c6b35df8-a3bf-45e2-a546-60c4cd4ac02b")
