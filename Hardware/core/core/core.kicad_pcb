@@ -113,7 +113,6 @@
 		)
 		(capping no)
 		(filling no)
-		(zone_defaults)
 		(pcbplotparams
 			(layerselection 0x00000000_00000000_55555555_5755f5ff)
 			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
@@ -14983,46 +14982,6 @@
 		(layer "F.SilkS")
 		(uuid "7d89b7fa-cf27-4140-bab5-e5e25e69798c")
 	)
-	(gr_line
-		(start 82.595 120.14)
-		(end 83.665 120.14)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "693da07f-71d3-4e77-bc87-f7c9bfce6d35")
-	)
-	(gr_line
-		(start 82.595 120.93)
-		(end 82.595 120.14)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "1d80450f-99ff-482c-9a12-d769f3cca86b")
-	)
-	(gr_line
-		(start 82.635 125.49)
-		(end 82.635 124.42)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "3dc80c47-2387-44d4-a79e-d3476788828f")
-	)
-	(gr_line
-		(start 83.425 125.49)
-		(end 82.635 125.49)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "b05b993b-b96b-4955-b763-7f5cd3ed0e5f")
-	)
 	(gr_rect
 		(start 84.04 131.31)
 		(end 87.54 134.8)
@@ -15045,16 +15004,6 @@
 		(layer "F.SilkS")
 		(uuid "f1db86eb-6d38-44e5-a15c-e0d442041f24")
 	)
-	(gr_line
-		(start 85.45 120.14)
-		(end 86.24 120.14)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "6782bee0-3081-4dbe-a364-986288275027")
-	)
 	(gr_rect
 		(start 86.05 110.79)
 		(end 94.41 118.32)
@@ -15065,36 +15014,6 @@
 		(fill no)
 		(layer "F.SilkS")
 		(uuid "1098656c-eef3-4092-878f-fbd06cbf1fa4")
-	)
-	(gr_line
-		(start 86.24 120.14)
-		(end 86.24 121.21)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "366dde6e-a63c-47df-947d-dea25e3be42c")
-	)
-	(gr_line
-		(start 86.28 124.7)
-		(end 86.28 125.49)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "08d21770-5b0a-4018-b4dd-d7a518e709a4")
-	)
-	(gr_line
-		(start 86.28 125.49)
-		(end 85.21 125.49)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "959b9501-99b5-4b75-9a49-3267a79176f7")
 	)
 	(gr_rect
 		(start 86.74 133.42)
@@ -17634,6 +17553,86 @@
 		(layer "B.SilkS")
 		(uuid "5e3feb0d-fe57-4597-bb2d-53d799b0d5f5")
 	)
+	(gr_line
+		(start 68.91 75.03)
+		(end 68.91 75.82)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "1d80450f-99ff-482c-9a12-d769f3cca86b")
+	)
+	(gr_line
+		(start 68.91 75.82)
+		(end 69.98 75.82)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "693da07f-71d3-4e77-bc87-f7c9bfce6d35")
+	)
+	(gr_line
+		(start 68.95 70.47)
+		(end 68.95 71.54)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "3dc80c47-2387-44d4-a79e-d3476788828f")
+	)
+	(gr_line
+		(start 69.74 70.47)
+		(end 68.95 70.47)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "b05b993b-b96b-4955-b763-7f5cd3ed0e5f")
+	)
+	(gr_line
+		(start 71.765 75.82)
+		(end 72.555 75.82)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "6782bee0-3081-4dbe-a364-986288275027")
+	)
+	(gr_line
+		(start 72.555 75.82)
+		(end 72.555 74.75)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "366dde6e-a63c-47df-947d-dea25e3be42c")
+	)
+	(gr_line
+		(start 72.595 70.47)
+		(end 71.525 70.47)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "959b9501-99b5-4b75-9a49-3267a79176f7")
+	)
+	(gr_line
+		(start 72.595 71.26)
+		(end 72.595 70.47)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "08d21770-5b0a-4018-b4dd-d7a518e709a4")
+	)
 	(gr_arc
 		(start 67.085239 71.7)
 		(mid 68.256812 68.871573)
@@ -17872,32 +17871,6 @@
 			(justify left bottom)
 		)
 	)
-	(gr_text "CORE"
-		(at 84.28 124.95 90)
-		(layer "F.SilkS" knockout)
-		(uuid "c6b35df8-a3bf-45e2-a546-60c4cd4ac02b")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.2)
-				(bold yes)
-			)
-			(justify left bottom)
-		)
-	)
-	(gr_text "BOARD"
-		(at 85.98 125.38 90)
-		(layer "F.SilkS")
-		(uuid "1829cf79-7c9e-4269-aa9f-0090ba7e1042")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.2)
-				(bold yes)
-			)
-			(justify left bottom)
-		)
-	)
 	(gr_text "TO BACKBONE"
 		(at 88.21 82.95 90)
 		(layer "F.SilkS" knockout)
@@ -17961,6 +17934,32 @@
 				(bold yes)
 			)
 			(justify left bottom)
+		)
+	)
+	(gr_text "PLATE"
+		(at 70.595 70.81 90)
+		(layer "B.SilkS" knockout)
+		(uuid "c6b35df8-a3bf-45e2-a546-60c4cd4ac02b")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.2)
+				(bold yes)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text "BOARD"
+		(at 72.295 70.58 90)
+		(layer "B.SilkS")
+		(uuid "1829cf79-7c9e-4269-aa9f-0090ba7e1042")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.2)
+				(bold yes)
+			)
+			(justify left bottom mirror)
 		)
 	)
 	(segment
