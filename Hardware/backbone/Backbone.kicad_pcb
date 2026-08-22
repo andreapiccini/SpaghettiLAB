@@ -38271,28 +38271,8 @@
 		(uuid "9e0cbbac-b7ba-4d72-a96b-10c8a2bf8182")
 	)
 	(gr_line
-		(start 154.02 106.13)
-		(end 154.02 107.03)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "B.SilkS")
-		(uuid "a28467f3-71a2-41e2-b3f0-9e248700381b")
-	)
-	(gr_line
-		(start 154.105 112.845)
-		(end 154.105 113.695)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "B.SilkS")
-		(uuid "d83d07de-ca8a-4362-a742-7840262cb5c8")
-	)
-	(gr_line
-		(start 154.105 113.695)
-		(end 155.005 113.695)
+		(start 177.8 102.925)
+		(end 177.8 103.825)
 		(stroke
 			(width 0.1)
 			(type default)
@@ -38301,18 +38281,8 @@
 		(uuid "3f042c99-b94c-49ff-b933-94eb75718e4c")
 	)
 	(gr_line
-		(start 154.87 106.13)
-		(end 154.02 106.13)
-		(stroke
-			(width 0.1)
-			(type default)
-		)
-		(layer "B.SilkS")
-		(uuid "0ef9d7dd-2cc8-45ab-9c7a-04eb9770d1f2")
-	)
-	(gr_line
-		(start 156.18 113.68)
-		(end 157.03 113.68)
+		(start 177.8 105.1)
+		(end 177.8 105.95)
 		(stroke
 			(width 0.1)
 			(type default)
@@ -38321,8 +38291,8 @@
 		(uuid "b26358bd-2304-479c-bce7-5c6e49fced98")
 	)
 	(gr_line
-		(start 157.03 113.68)
-		(end 157.03 112.78)
+		(start 177.8 105.95)
+		(end 178.7 105.95)
 		(stroke
 			(width 0.1)
 			(type default)
@@ -38331,24 +38301,54 @@
 		(uuid "1d246714-2579-460a-a19a-8e27446dfd6a")
 	)
 	(gr_line
-		(start 157.165 106.13)
-		(end 156.265 106.13)
+		(start 178.65 102.925)
+		(end 177.8 102.925)
 		(stroke
 			(width 0.1)
 			(type default)
 		)
 		(layer "B.SilkS")
-		(uuid "985f1df3-bb9a-4626-bed7-3b350379cdd9")
+		(uuid "d83d07de-ca8a-4362-a742-7840262cb5c8")
 	)
 	(gr_line
-		(start 157.165 106.98)
-		(end 157.165 106.13)
+		(start 181.76 105.98)
+		(end 182.61 105.98)
 		(stroke
 			(width 0.1)
 			(type default)
 		)
 		(layer "B.SilkS")
 		(uuid "9bca4981-6214-4537-8258-bc912d2631c2")
+	)
+	(gr_line
+		(start 182.61 102.835)
+		(end 181.71 102.835)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "a28467f3-71a2-41e2-b3f0-9e248700381b")
+	)
+	(gr_line
+		(start 182.61 103.685)
+		(end 182.61 102.835)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "0ef9d7dd-2cc8-45ab-9c7a-04eb9770d1f2")
+	)
+	(gr_line
+		(start 182.61 105.98)
+		(end 182.61 105.08)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "985f1df3-bb9a-4626-bed7-3b350379cdd9")
 	)
 	(gr_arc
 		(start 151.8 67.08)
@@ -38910,8 +38910,8 @@
 			(justify left bottom)
 		)
 	)
-	(gr_text "BACKBONE"
-		(at 155.58 106.22 90)
+	(gr_text "PLATE"
+		(at 182.52 104.395 0)
 		(layer "B.SilkS" knockout)
 		(uuid "8995923a-c88c-4a10-b527-cfbfc776f00d")
 		(effects
@@ -38924,7 +38924,7 @@
 		)
 	)
 	(gr_text "BOARD"
-		(at 156.94 106.22 90)
+		(at 182.52 105.755 0)
 		(layer "B.SilkS")
 		(uuid "49f4a9f0-aaea-4c78-b3da-9516bb1f037f")
 		(effects
