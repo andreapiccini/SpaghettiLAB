@@ -1,0 +1,6 @@
+board:
+  name: spaghettilab_core_<variant>
+  full_name: Spaghetti LAB Core <Variant>
+  vendor: spaghettilab
+  socs:
+    - name: <exact_zephyr_soc_name>

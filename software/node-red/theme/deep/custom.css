@@ -1,0 +1,328 @@
+/*
+ * Spaghetti LAB "deep" skin for the Node-RED editor — v2.
+ *
+ * Goal: feel like a modern, designed SaaS product (gradients, layered
+ * elevation, motion) rather than a re-skinned engineering tool — while
+ * still being CSS/JS on top of stock Node-RED (no fork, no npm packages,
+ * DOM structure untouched).
+ *
+ * Builds on documented --red-ui-* custom properties (see theme/safe/) and
+ * additionally restyles internal, UNDOCUMENTED class names (red-ui-tab,
+ * red-ui-palette-node, red-ui-dialog, red-ui-tray, red-ui-sidebar-*, the
+ * SVG flow-node shapes, ...). Those are not part of Node-RED's public
+ * customization API and can change between editor releases — re-check
+ * this file after bumping the Node-RED image tag. See theme/README.md.
+ *
+ * Deliberately NOT touched, same as before:
+ *  - Deploy button colors (safety signal, not a branding surface)
+ *  - transform/box-shadow transitions on anything involved in canvas
+ *    pan/zoom/node-drag (.red-ui-workspace, the drag ghost, node dragging
+ *    itself) — those need to stay perfectly immediate, animating them
+ *    would make dragging feel laggy.
+ */
+
+/* ---------------------------------------------------------------------- */
+/* 1. Brand colors, font, canvas                                          */
+/* ---------------------------------------------------------------------- */
+:root {
+  --red-ui-primary-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter,
+    Roboto, Helvetica, Arial, sans-serif;
+
+  --red-ui-primary-color: #3F77DA;
+  --red-ui-primary-border-color: #3F77DA;
+
+  --red-ui-link-color: #3F77DA;
+  --red-ui-link-link-color: #3F77DA;
+  --red-ui-link-link-active-color: #2E5FBD;
+
+  --red-ui-header-background: #ffffff;
+  --red-ui-header-text-color: #14171f;
+  --red-ui-header-accent: #3F77DA;
+  --red-ui-header-button-background: #ffffff;
+  --red-ui-header-button-background-hover: #eef1fb;
+  --red-ui-header-button-background-active: #e3e8fa;
+  --red-ui-header-height: 56px;
+
+  --red-ui-header-menu-background: #ffffff;
+  --red-ui-header-menu-color: #14171f;
+
+  --red-ui-palette-header-background: #f8f9fc;
+  --red-ui-palette-header-color: #14171f;
+
+  --red-ui-workspace-button-background-primary: #3F77DA;
+  --red-ui-workspace-button-background-primary-hover: #2E5FBD;
+  --red-ui-workspace-button-color-primary: #ffffff;
+
+  --red-ui-tab-background-selected: #eef1fb;
+  --red-ui-tab-background-active: #eef1fb;
+
+  --red-ui-view-background: #eef0f4;
+
+  --red-ui-shadow: rgba(20, 23, 31, 0.16);
+
+  --red-ui-secondary-background: #f5f6f7;
+  --red-ui-secondary-background-hover: #eef1fb;
+  --red-ui-secondary-border-color: #e1e4eb;
+  --red-ui-secondary-text-color: #14171f;
+
+  --red-ui-form-button-background: #f5f6f7;
+  --red-ui-form-input-border-color: #e1e4eb;
+  --red-ui-form-input-focus-color: #3F77DA;
+
+  /* Local design tokens for this tier only (not a Node-RED API) */
+  --sl-blue: #3F77DA;
+  --sl-blue-dark: #2E5FBD;
+  --sl-gradient: linear-gradient(135deg, #3F77DA 0%, #7D2AE8 100%);
+  --sl-ink: #14171f;
+
+  --sl-radius-sm: 10px;
+  --sl-radius-md: 16px;
+  --sl-radius-lg: 24px;
+  --sl-radius-pill: 999px;
+
+  --sl-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --sl-fast: 140ms;
+  --sl-medium: 220ms;
+
+  --sl-elevation-1: 0 1px 2px rgba(20, 23, 31, 0.06),
+    0 2px 8px rgba(20, 23, 31, 0.06);
+  --sl-elevation-2: 0 4px 16px rgba(20, 23, 31, 0.1),
+    0 2px 6px rgba(20, 23, 31, 0.08);
+  --sl-elevation-3: 0 16px 48px rgba(20, 23, 31, 0.22),
+    0 4px 16px rgba(20, 23, 31, 0.12);
+}
+
+body {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  background: var(--red-ui-view-background);
+}
+
+@keyframes sl-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes sl-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* 2. Slim, brand-tinted scrollbars                                       */
+/* ---------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c3cbe0 transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #c3cbe0;
+  border-radius: var(--sl-radius-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #a9b4d6;
+  background-clip: padding-box;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 3. Header — taller, glassy, gradient accent underline                  */
+/* ---------------------------------------------------------------------- */
+#red-ui-header {
+  position: relative;
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: var(--sl-elevation-1);
+  z-index: 20;
+}
+#red-ui-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--sl-gradient);
+  opacity: 0.9;
+}
+.red-ui-header-toolbar,
+#red-ui-header .red-ui-header-title {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 4. Workspace tabs                                                      */
+/* ---------------------------------------------------------------------- */
+.red-ui-tabs .red-ui-tab {
+  border-radius: var(--sl-radius-sm) var(--sl-radius-sm) 0 0;
+  transition: background-color var(--sl-fast) var(--sl-ease);
+}
+.red-ui-tabs .red-ui-tab.active,
+.red-ui-tabs .red-ui-tab.selected {
+  position: relative;
+}
+.red-ui-tabs .red-ui-tab.active::after,
+.red-ui-tabs .red-ui-tab.selected::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: var(--sl-radius-pill);
+  background: var(--sl-gradient);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 5. Buttons — gradient primary, pill shape, tactile hover/active        */
+/* ---------------------------------------------------------------------- */
+.red-ui-button,
+button.red-ui-button,
+a.red-ui-button,
+.red-ui-searchBox-clear {
+  border-radius: var(--sl-radius-pill) !important;
+  transition: box-shadow var(--sl-fast) var(--sl-ease),
+    background-color var(--sl-fast) var(--sl-ease),
+    transform var(--sl-fast) var(--sl-ease);
+}
+.red-ui-button:hover,
+button.red-ui-button:hover,
+a.red-ui-button:hover {
+  box-shadow: var(--sl-elevation-1);
+  transform: translateY(-1px);
+}
+.red-ui-button:active,
+button.red-ui-button:active,
+a.red-ui-button:active {
+  transform: translateY(0);
+}
+
+#red-ui-header-button-deploy-container {
+  border-radius: var(--sl-radius-pill) !important;
+  overflow: hidden;
+}
+
+/* Primary / workspace-add style buttons get the brand gradient fill */
+.red-ui-workspace-button-background-primary,
+a.red-ui-button-primary,
+button.red-ui-button-primary {
+  background: var(--sl-gradient) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 6. Search / filter inputs — pill shaped with a glow on focus           */
+/* ---------------------------------------------------------------------- */
+.red-ui-searchBox-container,
+.red-ui-searchBox-input,
+input[type="text"].red-ui-searchBox-input {
+  border-radius: var(--sl-radius-pill) !important;
+  transition: box-shadow var(--sl-fast) var(--sl-ease),
+    border-color var(--sl-fast) var(--sl-ease);
+}
+.red-ui-searchBox-container:focus-within {
+  box-shadow: 0 0 0 4px rgba(41, 84, 235, 0.15);
+  border-color: var(--sl-blue);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 7. Sidebar — card surface lifted off the canvas, more breathing room   */
+/* ---------------------------------------------------------------------- */
+.red-ui-sidebar {
+  box-shadow: var(--sl-elevation-1);
+}
+.red-ui-sidebar-header,
+.red-ui-tabs.red-ui-sidebar-tabs {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 8. Palette — chip-style node rows with a brand accent on hover         */
+/* ---------------------------------------------------------------------- */
+.red-ui-palette-node,
+.red-ui-palette-node-small {
+  border-radius: var(--sl-radius-sm);
+  border-left: 3px solid transparent;
+  transition: box-shadow var(--sl-fast) var(--sl-ease),
+    border-color var(--sl-fast) var(--sl-ease),
+    transform var(--sl-fast) var(--sl-ease);
+}
+.red-ui-palette-node:hover {
+  box-shadow: var(--sl-elevation-1);
+  border-left-color: var(--sl-blue);
+  transform: translateX(1px);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 9. Sidebar lists (Explorer, Config nodes, ...)                         */
+/* ---------------------------------------------------------------------- */
+.red-ui-editableList-item {
+  border-radius: var(--sl-radius-sm);
+  transition: background-color var(--sl-fast) var(--sl-ease);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 10. Floating dialogs — big rounded card, deep shadow, pop-in motion    */
+/* ---------------------------------------------------------------------- */
+.ui-widget-overlay {
+  background: rgba(20, 23, 31, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.ui-dialog,
+.red-ui-dialog {
+  border-radius: var(--sl-radius-lg) !important;
+  overflow: hidden;
+  box-shadow: var(--sl-elevation-3);
+  animation: sl-pop-in var(--sl-medium) var(--sl-ease);
+}
+.ui-dialog .ui-dialog-titlebar {
+  background: var(--sl-gradient);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 11. Node edit tray — rounded top, subtle entrance motion               */
+/* ---------------------------------------------------------------------- */
+.red-ui-tray {
+  animation: sl-fade-up var(--sl-medium) var(--sl-ease);
+}
+.red-ui-tray-titlebar {
+  border-radius: var(--sl-radius-md) var(--sl-radius-md) 0 0;
+}
+.red-ui-tray-footer {
+  border-radius: 0 0 var(--sl-radius-md) var(--sl-radius-md);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 12. Flow nodes on the canvas — rounder, with a soft resting shadow.    */
+/*     `rx`/`ry` are CSS-stylable SVG geometry properties in modern       */
+/*     browsers; older ones just keep the stock square corners.          */
+/*     The drop-shadow is static (no transition), so it costs nothing    */
+/*     extra during drag/pan/zoom.                                       */
+/* ---------------------------------------------------------------------- */
+rect.red-ui-flow-node {
+  rx: 10px;
+  ry: 10px;
+}
+.red-ui-flow-node-group > rect.red-ui-flow-node {
+  filter: drop-shadow(0 1px 3px rgba(20, 23, 31, 0.18));
+}

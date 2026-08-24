@@ -1,0 +1,6 @@
+{
+  "contract": "spaghettilab.studio-extension",
+  "api_version": 1,
+  "compatibility": "exact-major",
+  "surfaces": ["screens", "services", "commands", "settings"]
+}

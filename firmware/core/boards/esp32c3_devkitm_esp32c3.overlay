@@ -1,0 +1,24 @@
+/ {
+	chosen {
+		zephyr,console = &usb_serial;
+		zephyr,shell-uart = &usb_serial;
+	};
+};
+
+&pinctrl {
+	spaghetti_i2c0_default: spaghetti_i2c0_default {
+		group1 {
+			pinmux = <I2C0_SDA_GPIO3>, <I2C0_SCL_GPIO4>;
+			bias-pull-up;
+			drive-open-drain;
+			output-high;
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&spaghetti_i2c0_default>;
+	pinctrl-names = "default";
+};

@@ -1,0 +1,8 @@
+tests:
+  spaghetti.remote_console.policy:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - remote_console
+      - communication

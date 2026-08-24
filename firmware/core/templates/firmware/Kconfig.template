@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: <PROJECT-LICENSE-ID>
+
+menuconfig SPAGHETTI_EXAMPLE
+	bool "Spaghetti LAB Example component"
+	help
+	  Enable the Example component. Replace this text with the owned
+	  responsibility and relevant dependency information.
+
+if SPAGHETTI_EXAMPLE
+
+config SPAGHETTI_EXAMPLE_WORKER
+	bool "Use a dedicated Example worker"
+	default n
+	help
+	  Enable only when the component owns a blocking state machine or ordered
+	  work that must not use the system workqueue.
+
+config SPAGHETTI_EXAMPLE_STACK_SIZE
+	int "Example worker stack size"
+	depends on SPAGHETTI_EXAMPLE_WORKER
+	default 1024
+	range 512 8192
+	help
+	  Worker stack size in bytes. Confirm the default using Zephyr stack usage
+	  measurements on every supported architecture.
+
+config SPAGHETTI_EXAMPLE_THREAD_PRIORITY
+	int "Example worker preemptive priority"
+	depends on SPAGHETTI_EXAMPLE_WORKER
+	default 5
+	help
+	  Zephyr preemptive thread priority. Lower numbers have higher priority.
+	  Compare this value with all threads involved in the same data path.
+
+config SPAGHETTI_EXAMPLE_QUEUE_DEPTH
+	int "Example command queue depth"
+	depends on SPAGHETTI_EXAMPLE_WORKER
+	default 4
+	range 1 32
+	help
+	  Maximum number of copied commands waiting for the worker. The API must
+	  define behavior when the queue is full.
+
+module = SPAGHETTI_EXAMPLE
+module-str = spaghetti_example
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # SPAGHETTI_EXAMPLE

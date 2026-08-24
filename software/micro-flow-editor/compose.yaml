@@ -1,0 +1,20 @@
+# USB Serial/JTAG → ws://127.0.0.1:8766 (Safari). Docker on macOS cannot
+# see /dev/cu.usbmodem*; the browser talks to the host. `make up-d` in
+# software/micro-flow-editor starts this process automatically.
+services:
+  micro-flow-editor:
+    build: .
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${MICRO_FLOW_EDITOR_PORT:-5173}:5173"
+    volumes:
+      - .:/app
+      # npm workspaces hoist every package's dependencies into this single root
+      # node_modules (with symlinks for the local @spaghettilab/* packages) — one
+      # volume covers the whole workspace, not one per package.
+      - micro-flow-editor-node-modules:/app/node_modules
+
+volumes:
+  micro-flow-editor-node-modules:

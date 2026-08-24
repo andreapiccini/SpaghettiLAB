@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Host wrapper for: spaghetti-gateway scan|connect|serve
+# Prefer `.venv/bin/spaghetti-gateway` after `make host-tools`.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PY="${ROOT}/.venv/bin/python"
+if [[ ! -x "$PY" ]]; then
+  echo "missing ${PY}; run: make host-tools" >&2
+  exit 2
+fi
+exec "$PY" -m tools.spaghetti_gateway "$@"

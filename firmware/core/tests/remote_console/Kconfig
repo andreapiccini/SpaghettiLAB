@@ -1,0 +1,17 @@
+mainmenu "Spaghetti Remote Console tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_REMOTE_CONSOLE_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_REMOTE_CONSOLE_PORT
+	int
+	default 1338
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 100
+
+source "Kconfig.zephyr"

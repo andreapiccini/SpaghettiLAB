@@ -1,0 +1,9 @@
+{
+    "name": "SpaghettiLAB",
+    "short_name": "SpaghettiLAB",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0F1114",
+    "theme_color": "#3B82F6",
+    "description": "SpaghettiLAB dashboard"
+}

@@ -1,0 +1,37 @@
+mainmenu "Spaghetti Core tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_CORE_LOG_LEVEL
+	int
+	default 0
+
+config MCUBOOT_IMGTOOL_SIGN_VERSION
+	string
+	default "1.2.3+4"
+
+config SPAGHETTI_BOOTSTRAP_PROBE_MS
+	int
+	default 1
+
+config SPAGHETTI_TRIAL_HEALTH_MS
+	int
+	default 1
+
+config SPAGHETTI_TEST_CONFIG_ABSENT
+	bool "Simulate absent Config"
+	default n
+
+config SPAGHETTI_TEST_MAINTENANCE_MARKER
+	bool "Simulate one-shot maintenance marker"
+	default n
+
+config SPAGHETTI_TEST_BOOTSTRAP_REQUEST
+	bool "Simulate accepted bootstrap request"
+	default n
+
+config SPAGHETTI_TEST_TRIAL_IMAGE
+	bool "Simulate an unconfirmed image"
+	default n
+
+source "Kconfig.zephyr"

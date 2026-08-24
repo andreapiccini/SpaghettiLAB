@@ -1,0 +1,5 @@
+if(NOT DEFINED EXTENSION_DIR)
+  message(FATAL_ERROR "EXTENSION_DIR is required")
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/SpaghettiFirmwareExtension.cmake")
+spaghetti_validate_firmware_extension("${EXTENSION_DIR}")

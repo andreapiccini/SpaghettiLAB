@@ -1,0 +1,49 @@
+# SPAGHETTI_HEALTH is compiled into every Core image.
+
+module = SPAGHETTI_HEALTH
+module-str = spaghetti_health
+source "subsys/logging/Kconfig.template.log_config"
+
+config SPAGHETTI_HEALTH_STACK_SIZE
+	int "Health supervisor stack size"
+	range 1024 4096
+	default 1536
+	help
+	  Static stack bytes reserved for the single health supervisor thread.
+
+config SPAGHETTI_HEALTH_PRIORITY
+	int "Health supervisor thread priority"
+	range 0 14
+	default 3
+	help
+	  Preemptive priority used by the health supervisor. Lower numbers run
+	  at higher priority; keep it above monitored workers.
+
+config SPAGHETTI_HEALTH_POLL_MS
+	int "Health supervisor poll period in milliseconds"
+	range 10 5000
+	default 250
+	help
+	  Interval between heartbeat deadline evaluations and optional WDT feeds.
+
+config SPAGHETTI_HEALTH_WATCHDOG_MS
+	int "Hardware watchdog timeout in milliseconds"
+	range 100 60000
+	default 5000
+	help
+	  Timeout installed when the board provides zephyr,watchdog. Ignored when
+	  no chosen watchdog exists.
+
+config SPAGHETTI_HEALTH_MAX_WINDOW_MS
+	int "Maximum temporary health silence window in milliseconds"
+	range 100 900000
+	default 300000
+	help
+	  Upper bound accepted by spaghetti_health_window_acquire().
+
+config SPAGHETTI_HEALTH_KEEPALIVE_MS
+	int "Owner keepalive heartbeat period in milliseconds"
+	range 10 60000
+	default 1000
+	help
+	  Period used by registered owners that lack continuous work loops.

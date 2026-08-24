@@ -1,0 +1,42 @@
+<script type="text/javascript">
+  RED.nodes.registerType("spaghetti-coordinator", {
+    category: "SpaghettiLAB",
+    color: "#264653",
+    defaults: {
+      name: { value: "" },
+      linkJson: { value: "{}", required: true },
+    },
+    inputs: 1,
+    outputs: 2,
+    icon: "font-awesome/fa-random",
+    label: function () {
+      return this.name || "coordinator";
+    },
+    outputLabels: ["routed", "unmatched / unresolved"],
+  });
+</script>
+
+<script type="text/html" data-template-name="spaghetti-coordinator">
+  <div class="form-row">
+    <label for="node-input-name">Name</label>
+    <input type="text" id="node-input-name" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-linkJson">Link (JSON)</label>
+    <input type="text" id="node-input-linkJson" placeholder='{"id":"link-1","source":{...},"target":{...}}' />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="spaghetti-coordinator">
+  <p>
+    Routes an inbound <code>spaghetti-record-source</code> message against
+    one <code>@spaghettilab/system-automation-graph</code>
+    <code>SystemAutomationLink</code> (S111), pasted here as JSON. Output 1
+    fires on a match, shaped for a downstream
+    <code>spaghetti-command-target</code>; output 2 fires on a non-match or
+    an unresolved declared transformation (never forwarded untransformed).
+    Transformations are looked up from flow context
+    (<code>flow.set("spaghettiTransforms", {"celsius-to-fahrenheit": v =&gt; v
+    * 1.8 + 32})</code>) rather than written inline here.
+  </p>
+</script>

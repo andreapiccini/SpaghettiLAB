@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [
+    { "path": "../domain" },
+    { "path": "../core-admin" },
+    { "path": "../core-session" },
+    { "path": "../device-profile-authoring-model" },
+    { "path": "../device-profile-install" },
+    { "path": "../device-profile-package" },
+    { "path": "../capability-marketplace" },
+    { "path": "../ota-lifecycle" },
+    { "path": "../node-red-deploy" }
+  ],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

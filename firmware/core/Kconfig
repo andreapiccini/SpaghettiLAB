@@ -1,0 +1,694 @@
+module = SPAGHETTI_APP
+module-str = spaghetti_app
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_CORE
+module-str = spaghetti_core
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_IDENTITY
+module-str = spaghetti_identity
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_ACCESS_CONTROL
+module-str = spaghetti_access_control
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_FACTORY_RESET
+module-str = spaghetti_factory_reset
+source "subsys/logging/Kconfig.template.log_config"
+
+rsource "subsys/core/Kconfig.health"
+
+module = SPAGHETTI_PORT
+module-str = spaghetti_port
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_TOPOLOGY
+module-str = spaghetti_topology
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_SCHEMA
+module-str = spaghetti_schema
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DRIVER_REGISTRY
+module-str = spaghetti_driver_registry
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DEVICE_PROFILE
+module-str = spaghetti_device_profile
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DECLARATIVE_DEVICE
+module-str = spaghetti_declarative_device
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_MODULE_MANAGER
+module-str = spaghetti_module_manager
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DISCOVERY
+module-str = spaghetti_discovery
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_POWER
+module-str = spaghetti_power
+source "subsys/logging/Kconfig.template.log_config"
+
+rsource "subsys/power/Kconfig"
+
+module = SPAGHETTI_CONFIG
+module-str = spaghetti_config
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_RULE_REGISTRY
+module-str = spaghetti_rule_registry
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_BLOCK_REGISTRY
+module-str = spaghetti_block_registry
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_PROCESSING
+module-str = spaghetti_processing
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_STORAGE
+module-str = spaghetti_storage
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_UPDATE
+module-str = spaghetti_update
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_MAINTENANCE_LINK
+module-str = spaghetti_maintenance_link
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_OTA
+module-str = spaghetti_ota
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DATA
+module-str = spaghetti_data
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_RECORD_DELIVERY
+module-str = spaghetti_record_delivery
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_RUNTIME
+module-str = spaghetti_runtime
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_THRESHOLD
+module-str = spaghetti_threshold
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_COMMUNICATION
+module-str = spaghetti_communication
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_REMOTE_CONSOLE
+module-str = spaghetti_remote_console
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_BLE
+module-str = spaghetti_ble
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_MQTT
+module-str = spaghetti_mqtt
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_WIFI_PROFILES
+module-str = spaghetti_wifi_profiles
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_SERVICE_MANAGER
+module-str = spaghetti_service_manager
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_INA219
+module-str = spaghetti_ina219
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_RELAY
+module-str = spaghetti_relay
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DIGITAL_INPUT_TRIGGER
+module-str = spaghetti_digital_input_trigger
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_DIGITAL_LINE_SET
+module-str = spaghetti_digital_line_set
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SPAGHETTI_ON_BOOT
+module-str = spaghetti_on_boot
+source "subsys/logging/Kconfig.template.log_config"
+
+rsource "Kconfig.resources"
+rsource "subsys/connectivity/Kconfig"
+rsource "subsys/services/secure_workspace/Kconfig"
+rsource "subsys/feature_registry/Kconfig"
+rsource "subsys/resources/Kconfig"
+
+config SPAGHETTI_SERVICE_MAX_COUNT
+	int "Maximum registered optional services"
+	range 1 16
+	default 4
+	help
+	  Fixed Service Manager state slots. Descriptors and operation tables remain
+	  firmware-owned and are never copied to the heap.
+
+config SPAGHETTI_SERVICE_ID_MAX_SIZE
+	int "Maximum service ID bytes including NUL"
+	range 8 32
+	default 24
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int "Maximum optional-service stop wait in milliseconds"
+	range 1 30000
+	default 10000
+	help
+	  K_FOREVER is rejected so every lifecycle transition has a deadline.
+
+config SPAGHETTI_SERVICE_THREAD_MAX_COUNT
+	int "Maximum simultaneous optional-service threads"
+	range 1 16
+	default 4 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 6 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 8
+
+config SPAGHETTI_SERVICE_THREAD_MAX_STACK_BYTES
+	int "Maximum simultaneous optional-service stack bytes"
+	range 4096 65536
+	default 16384 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 24576 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 32768
+	help
+	  Admission limit applied before heap-backed dynamic stack allocation.
+	  A stopped and joined service returns its complete stack to the common heap.
+
+config HEAP_MEM_POOL_SIZE
+	default 20480 if SPAGHETTI_RESOURCE_PROFILE_MINIMAL
+	default 28672 if SPAGHETTI_RESOURCE_PROFILE_STANDARD
+	default 36864 if SPAGHETTI_RESOURCE_PROFILE_EXTENDED
+	help
+	  Reserve the Zephyr system heap used by k_thread_stack_alloc(). Each value
+	  covers the corresponding Spaghetti optional-stack admission limit plus
+	  allocator metadata and alignment overhead.
+
+config SPAGHETTI_DISCOVERY_MAX_RESULTS
+	int "Maximum number of retained Discovery candidates"
+	range 1 SPAGHETTI_MAX_MODULES
+	default SPAGHETTI_MAX_MODULES
+	help
+	  Fixed capacity of the Discovery candidate table. Several candidates may
+	  reference the same physical Port. Manual Modules do not consume slots.
+
+config SPAGHETTI_POWER
+	bool "Enable shared controllable power resources"
+	default n
+	help
+	  Enable only when the selected Core has a verified controllable rail.
+	  Core V1 has no such hardware and must leave this disabled.
+
+config SPAGHETTI_POWER_FAKE_BACKEND
+	bool
+	depends on SPAGHETTI_POWER
+	default n
+	help
+	  Test-only backend that exposes resource 0 without physical hardware.
+
+config SPAGHETTI_INA219_MAX_INSTANCES
+	int "Maximum number of simultaneous INA219 instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 4
+	help
+	  Number of typed INA219 contexts reserved in the driver-owned memory
+	  slab. Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_RELAY_MAX_INSTANCES
+	int "Maximum number of simultaneous Relay instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 4
+	help
+	  Number of typed Relay contexts reserved in the driver-owned memory slab.
+	  Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_DIGITAL_INPUT_TRIGGER_MAX_INSTANCES
+	int "Maximum number of simultaneous Digital Input Trigger instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 5
+	help
+	  Number of typed Digital Input Trigger contexts reserved in the
+	  driver-owned memory slab. Allocation is non-blocking and does not use
+	  the heap. Defaults to the connector's five signal lines.
+
+config SPAGHETTI_DIGITAL_INPUT_TRIGGER_POLL_MS
+	int "Digital Input Trigger poll period in milliseconds"
+	range 5 1000
+	default 20
+	help
+	  Core V1 has no GPIO interrupt/ISR API wired through the Port layer, so
+	  the trigger edge is detected by periodic polling instead.
+
+config SPAGHETTI_DIGITAL_LINE_SET_MAX_INSTANCES
+	int "Maximum number of simultaneous Digital Line Set instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 5
+	help
+	  Number of typed Digital Line Set contexts reserved in the driver-owned
+	  memory slab. Allocation is non-blocking and does not use the heap.
+	  Defaults to the connector's five signal lines.
+
+config SPAGHETTI_ON_BOOT_MAX_INSTANCES
+	int "Maximum number of simultaneous On Boot instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 1
+	help
+	  Number of typed On Boot contexts reserved in the driver-owned memory
+	  slab. Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_DECLARATIVE_DEVICE_MAX_INSTANCES
+	int "Maximum simultaneous declarative-device instances"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 4
+	help
+	  Number of typed declarative-device contexts reserved in the driver-owned
+	  memory slab. Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_DATA_LOGGER
+	bool "Enable the Data record logger consumer"
+	default y
+	help
+	  Start one bounded thread that drains the record logger subscriber
+	  and writes schema-agnostic records through Zephyr logging.
+
+config SPAGHETTI_DATA_LOGGER_STACK_SIZE
+	int "Data record logger stack size"
+	depends on SPAGHETTI_DATA_LOGGER
+	range 1024 8192
+	default 2048
+	help
+	  Static stack bytes reserved for the record logger consumer. Must fit
+	  one spaghetti_record plus logging locals.
+
+config SPAGHETTI_DATA_LOGGER_PRIORITY
+	int "Data record logger thread priority"
+	depends on SPAGHETTI_DATA_LOGGER
+	range 0 15
+	default 5
+	help
+	  Cooperative-independent preemptive priority used by the logger thread.
+
+config SPAGHETTI_RUNTIME_STACK_SIZE
+	int "Runtime worker thread stack size"
+	range 2048 8192
+	default 3072
+	help
+	  Static stack bytes reserved for the Runtime worker. Must fit one
+	  spaghetti_record plus schedule and rule locals.
+
+config SPAGHETTI_RUNTIME_PRIORITY
+	int "Runtime worker thread priority"
+	range 0 14
+	default 4
+	help
+	  Preemptive priority used by the Runtime worker. The default is one
+	  level above the Data logger so acquisition is not delayed by logging.
+
+config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
+	int "Runtime stop timeout in milliseconds"
+	range 10 5000
+	default 1000
+	help
+	  Maximum time Config waits for an active sampling operation to finish
+	  before it refuses to replace live Modules.
+
+config SPAGHETTI_THRESHOLD_MAX_INSTANCES
+	int "Maximum simultaneous Threshold rule instances"
+	range 1 SPAGHETTI_MAX_RULES
+	default SPAGHETTI_MAX_RULES
+	help
+	  Number of typed Threshold contexts reserved in the rule-owned memory
+	  slab. Allocation is non-blocking and does not use the heap.
+
+config SPAGHETTI_UPDATE_WORK_STACK_SIZE
+	int "Update cleanup workqueue stack size"
+	range 768 4096
+	default 1024
+	help
+	  Static stack bytes reserved for timeout cleanup of the secondary image.
+
+config SPAGHETTI_UPDATE_WORK_PRIORITY
+	int "Update cleanup workqueue priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority used by the Update-owned flash cleanup workqueue.
+
+config SPAGHETTI_BOOTSTRAP_PROBE_MS
+	int "Receive-only maintenance bootstrap window in milliseconds"
+	range 10 5000
+	default 500
+	help
+	  Maximum boot-time receive-only probe used when a valid Config exists.
+
+config SPAGHETTI_TRIAL_HEALTH_MS
+	int "Trial image health window in milliseconds"
+	range 100 60000
+	default 5000
+	help
+	  Stable RUNNING time required before Core confirms a trial image.
+
+config SPAGHETTI_MAINTENANCE_SESSION_MS
+	int "Maximum local firmware-upload session in milliseconds"
+	range 10000 900000
+	default 300000
+	help
+	  Absolute Update deadline opened by the first accepted UART image chunk.
+
+config SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS
+	int "Delay before reboot after a maintenance response"
+	range 100 5000
+	default 500
+	help
+	  Time reserved for the final SMP UART response to leave the transmitter.
+
+config SPAGHETTI_OTA_PORT
+	int "Authenticated OTA UDP port"
+	range 1024 65535
+	default 1337
+	help
+	  UDP port opened only during an authenticated OTA window.
+
+config SPAGHETTI_OTA_MAX_WINDOW_MS
+	int "Maximum authenticated OTA window in milliseconds"
+	range 10000 900000
+	default 300000
+	help
+	  Upper bound accepted from the local maintenance command. The complete
+	  transfer, including interruptions and retries, must finish in this time.
+
+config SPAGHETTI_OTA_MTU
+	int "Maximum OTA SMP datagram bytes"
+	range 256 1024
+	default 512
+	help
+	  Maximum complete SMP request or response carried by one DTLS datagram.
+
+config SPAGHETTI_OTA_BLE_RESUME_MS
+	int "BLE OTA disconnect resume window in milliseconds"
+	range 100 60000
+	default 10000
+	help
+	  After a BLE peer disconnect during an active BLE Update session, the
+	  adapter waits this long for the same session to continue. On expiry
+	  the secondary candidate is cancelled without touching the confirmed
+	  image.
+
+config SPAGHETTI_OTA_BLE_WINDOW_MS
+	int "BLE OTA whole-session timeout in milliseconds"
+	range 10000 900000
+	default 300000
+	help
+	  Absolute Update arm timeout used when a BLE adapter opens a session.
+
+config SPAGHETTI_OTA_LISTENER_STACK_SIZE
+	int "OTA DTLS listener stack bytes"
+	range 2048 8192
+	default 4096
+	help
+	  Static stack reserved for the authenticated DTLS receive thread.
+
+config SPAGHETTI_OTA_WORK_STACK_SIZE
+	int "OTA lifecycle workqueue stack bytes"
+	range 1024 4096
+	default 1536
+	help
+	  Static stack reserved for timeout and cleanup operations.
+
+config SPAGHETTI_REMOTE_CONSOLE_PORT
+	int "Authenticated remote-console TCP port"
+	range 1024 65535
+	default 1338
+	help
+	  TCP port used by the TLS-PSK remote console. The listener is opened only
+	  in Normal mode and only when a dedicated credential is provisioned.
+
+config SPAGHETTI_REMOTE_CONSOLE_STACK_SIZE
+	int "Remote-console listener stack bytes"
+	range 4096 12288
+	default 6144
+	help
+	  Static stack reserved for the TLS socket and bounded command dispatcher.
+
+config SPAGHETTI_REMOTE_CONSOLE_PRIORITY
+	int "Remote-console listener priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority of the single-client remote-console thread.
+
+config SPAGHETTI_REMOTE_CONSOLE_LINE_SIZE
+	int "Maximum remote command line bytes"
+	range 128 1024
+	default 600
+	help
+	  Fixed input buffer including the terminating null byte.
+
+config SPAGHETTI_REMOTE_CONSOLE_RESPONSE_SIZE
+	int "Maximum formatted remote response bytes"
+	range 128 1024
+	default 256
+	help
+	  Fixed temporary buffer used for one formatted response line.
+
+config SPAGHETTI_REMOTE_CONSOLE_LOG_CHUNK_SIZE
+	int "Maximum copied log chunk bytes"
+	range 64 512
+	default 256
+	help
+	  Fixed size of each log copy. Longer backend fragments are truncated.
+
+config SPAGHETTI_REMOTE_CONSOLE_LOG_QUEUE_DEPTH
+	int "Remote-console log queue depth"
+	range 2 32
+	default 8
+	help
+	  Number of static log chunks. The oldest chunk is dropped when full.
+
+config SPAGHETTI_REMOTE_CONSOLE_POLL_MS
+	int "Remote-console poll period in milliseconds"
+	range 10 1000
+	default 100
+	help
+	  Maximum delay for socket events and queued log forwarding.
+
+config SPAGHETTI_REMOTE_CONSOLE_IDLE_TIMEOUT_MS
+	int "Remote-console inactivity timeout in milliseconds"
+	range 10000 3600000
+	default 300000
+	help
+	  A connected authenticated client is closed after this idle interval.
+
+config SPAGHETTI_REMOTE_CONSOLE_CREDENTIAL_INPUT_TIMEOUT_SECONDS
+	int "USB remote-console credential input timeout in seconds"
+	range 10 300
+	default 60
+	help
+	  Maximum hidden-input wait used only by the local development USB Shell.
+
+config SPAGHETTI_BLE
+	bool
+	default y
+	depends on BT
+	help
+	  Compile the authenticated BLE Protocol V1 adapter. Selected automatically
+	  when CONFIG_BT is enabled so capability snapshots stay accurate.
+
+config SPAGHETTI_BLE_REASSEMBLY_TIMEOUT_MS
+	int "BLE request reassembly timeout in milliseconds"
+	depends on BT
+	range 100 60000
+	default 5000
+	help
+	  Incomplete framed requests are discarded after this idle interval.
+
+config SPAGHETTI_BLE_EVENT_CREDIT
+	int "BLE event notify credit per authenticated peer"
+	depends on BT
+	range 1 16
+	default 4
+	help
+	  Bounded notify credit. Exhausted credit increments event_dropped.
+
+config SPAGHETTI_OTA_WORK_PRIORITY
+	int "OTA lifecycle workqueue priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority shared by the OTA lifecycle and receive threads.
+
+config SPAGHETTI_MQTT_QUEUE_DEPTH
+	int "MQTT outbound publication queue depth"
+	range 1 16
+	default 4
+	help
+	  Fixed number of copied best-effort record publications retained while the
+	  network or broker is unavailable. A full queue drops the newest record.
+	  Priority state/response publications use a separate pool.
+
+config SPAGHETTI_MQTT_PRIORITY_QUEUE_DEPTH
+	int "MQTT priority (state/response) queue depth"
+	range 1 16
+	default 4
+	help
+	  Fixed number of QoS 1 state and response publications. A full priority
+	  queue returns -ENOMSG without silently dropping config/command work.
+
+config SPAGHETTI_MQTT_WORKER_STACK_SIZE
+	int "MQTT network worker stack size"
+	range 2048 8192
+	default 4096
+	help
+	  Static stack bytes reserved for DNS, socket, and MQTT client work.
+
+config SPAGHETTI_MQTT_ADAPTER_STACK_SIZE
+	int "MQTT Data adapter stack size"
+	range 1024 4096
+	default 2048
+	help
+	  Static stack bytes reserved for Record Delivery peek/ack and Protocol V1
+	  event encoding into the outbound publication queues.
+
+config SPAGHETTI_MQTT_PRIORITY
+	int "MQTT worker and adapter priority"
+	range 0 15
+	default 5
+	help
+	  Preemptive priority used by both MQTT-owned threads.
+
+config SPAGHETTI_MQTT_STOP_TIMEOUT_MS
+	int "MQTT stop timeout in milliseconds"
+	range 100 10000
+	default 2000
+	help
+	  Maximum time Config waits for the worker to stop before rejecting a new
+	  MQTT configuration.
+
+config SPAGHETTI_MQTT_ALLOW_PLAINTEXT_DEVELOPMENT
+	bool "Allow MQTT plaintext development transport"
+	default n
+	help
+	  When disabled (production default), Config cannot select
+	  SPAGHETTI_MQTT_SECURITY_PLAINTEXT_DEVELOPMENT. Enable only on
+	  development boards that intentionally talk to a cleartext broker.
+
+config SPAGHETTI_MQTT_CREDENTIAL_SLOTS
+	int "MQTT credential vault slots"
+	range 1 8
+	default 4
+	help
+	  Number of PSA ITS credential records addressable by credential_id 1..N.
+
+config SPAGHETTI_MQTT_CREDENTIAL_CA_MAX_SIZE
+	int "Maximum MQTT CA certificate bytes"
+	range 32 2048
+	default 512
+	help
+	  Upper bound for borrowed CA material stored in one credential record.
+
+config SPAGHETTI_MQTT_CREDENTIAL_CERT_MAX_SIZE
+	int "Maximum MQTT client certificate bytes"
+	range 32 2048
+	default 512
+	help
+	  Upper bound for borrowed client certificate material.
+
+config SPAGHETTI_MQTT_CREDENTIAL_KEY_MAX_SIZE
+	int "Maximum MQTT private key bytes"
+	range 32 2048
+	default 512
+	help
+	  Upper bound for borrowed private key material.
+
+config SPAGHETTI_MQTT_TEST_HOOKS
+	bool "Expose MQTT transport test hooks"
+	depends on ZTEST
+	default y if ZTEST
+	help
+	  Allows native tests to inject a stub broker transport and request
+	  payloads without opening real sockets.
+
+config SPAGHETTI_WIFI_PROFILE_MAX_COUNT
+	int "Maximum number of persistent Wi-Fi profiles"
+	range 1 8
+	default 4
+	help
+	  Fixed number of encrypted profile slots. The service uses no heap, so a
+	  larger value reserves more static RAM and persistent records.
+
+config SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	bool "Automatically connect to a known Wi-Fi network"
+	default y
+	help
+	  Scan after boot and disconnection. A visible preferred profile is tried
+	  first; other visible profiles are tried by descending signal strength.
+
+config SPAGHETTI_WIFI_PROFILE_WORKER_STACK_SIZE
+	int "Wi-Fi profile worker stack size"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 2048 8192
+	default 4096
+
+config SPAGHETTI_WIFI_PROFILE_WORKER_PRIORITY
+	int "Wi-Fi profile worker priority"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 0 15
+	default 5
+
+config SPAGHETTI_WIFI_PROFILE_STARTUP_DELAY_MS
+	int "Delay before the first automatic Wi-Fi scan"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 0 10000
+	default 3000
+	help
+	  Give the SoC radio and network stack time to settle after boot before the
+	  first automatic scan. Later manual reconnects and retries are immediate.
+
+config SPAGHETTI_WIFI_SCAN_TIMEOUT_SECONDS
+	int "Wi-Fi scan timeout in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 60
+	default 15
+
+config SPAGHETTI_WIFI_CONNECT_TIMEOUT_SECONDS
+	int "Wi-Fi connection timeout in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 120
+	default 30
+
+config SPAGHETTI_WIFI_DISCONNECT_TIMEOUT_SECONDS
+	int "Wi-Fi disconnection timeout in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 30
+	default 5
+
+config SPAGHETTI_WIFI_RETRY_SECONDS
+	int "Wi-Fi reselection interval in seconds"
+	depends on SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	range 1 3600
+	default 30
+
+config SPAGHETTI_WIFI_PASSWORD_INPUT_TIMEOUT_SECONDS
+	int "Hidden Wi-Fi password prompt timeout in seconds"
+	range 10 300
+	default 60
+
+source "Kconfig.zephyr"

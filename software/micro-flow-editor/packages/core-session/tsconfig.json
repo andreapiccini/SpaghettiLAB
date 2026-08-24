@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [{ "path": "../domain" }, { "path": "../protocol-sdk" }, { "path": "../device-profile-authoring-model" }, { "path": "../device-profile-install" }, { "path": "../config-compiler" }, { "path": "../config-deployment" }, { "path": "../core-actions" }, { "path": "../core-admin" }, { "path": "../core-status" }],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

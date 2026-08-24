@@ -1,0 +1,33 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/domain" },
+    { "path": "packages/protocol-sdk" },
+    { "path": "packages/project-store" },
+    { "path": "packages/core-session" },
+    { "path": "packages/catalog-model" },
+    { "path": "packages/editor-model" },
+    { "path": "packages/physical-composition-model" },
+    { "path": "packages/device-profile-authoring-model" },
+    { "path": "packages/device-profile-package" },
+    { "path": "packages/device-profile-install" },
+    { "path": "packages/device-processing-graph-model" },
+    { "path": "packages/processing-block-catalog" },
+    { "path": "packages/config-compiler" },
+    { "path": "packages/config-decompiler" },
+    { "path": "packages/config-deployment" },
+    { "path": "packages/telemetry-buffer" },
+    { "path": "packages/core-actions" },
+    { "path": "packages/core-status" },
+    { "path": "packages/core-admin" },
+    { "path": "packages/capability-marketplace" },
+    { "path": "packages/ota-preflight" },
+    { "path": "packages/ota-lifecycle" },
+    { "path": "packages/system-automation-graph" },
+    { "path": "packages/node-red-nodes" },
+    { "path": "packages/node-red-deploy" },
+    { "path": "packages/security-recovery" },
+    { "path": "packages/react-flow-adapter" },
+    { "path": "packages/app" }
+  ]
+}

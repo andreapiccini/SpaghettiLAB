@@ -1,0 +1,14 @@
+# Default owner for every Community change.
+* @andreapiccini
+
+# Keep governance, licensing and automation under explicit maintainer review.
+/.github/ @andreapiccini
+/LICENSES.md @andreapiccini
+/COMMERCIAL.md @andreapiccini
+/CONTRIBUTING.md @andreapiccini
+/contracts/ @andreapiccini
+
+# Public hardware and software boundaries require maintainer review.
+/hardware/ @andreapiccini
+/firmware/ @andreapiccini
+/software/ @andreapiccini

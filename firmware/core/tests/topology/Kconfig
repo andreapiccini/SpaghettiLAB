@@ -1,0 +1,9 @@
+mainmenu "Spaghetti Topology tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_TOPOLOGY_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

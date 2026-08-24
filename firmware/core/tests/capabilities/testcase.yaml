@@ -1,0 +1,25 @@
+tests:
+  spaghetti.capabilities.minimal:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_RESOURCE_PROFILE_MINIMAL=y
+    tags:
+      - spaghetti
+      - capabilities
+  spaghetti.capabilities.standard:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_RESOURCE_PROFILE_STANDARD=y
+    tags:
+      - spaghetti
+      - capabilities
+  spaghetti.capabilities.extended:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_RESOURCE_PROFILE_EXTENDED=y
+    tags:
+      - spaghetti
+      - capabilities

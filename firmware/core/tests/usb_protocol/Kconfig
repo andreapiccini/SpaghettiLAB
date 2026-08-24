@@ -1,0 +1,9 @@
+mainmenu "Spaghetti USB Protocol framing tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_COMMUNICATION_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

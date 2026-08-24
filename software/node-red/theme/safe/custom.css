@@ -1,0 +1,61 @@
+/*
+ * Spaghetti LAB brand skin for the Node-RED editor.
+ * Overrides the editor's CSS custom properties only — no layout or
+ * structural changes, so future Node-RED versions keep working.
+ * Colors approximate https://spaghetti-lab.my.canva.site
+ */
+:root {
+  --red-ui-primary-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter,
+    Roboto, Helvetica, Arial, sans-serif;
+
+  /* Brand accent (Spaghetti LAB blue) */
+  --red-ui-primary-color: #3F77DA;
+  --red-ui-primary-border-color: #3F77DA;
+
+  --red-ui-link-color: #3F77DA;
+  --red-ui-link-link-color: #3F77DA;
+  --red-ui-link-link-active-color: #2E5FBD;
+
+  /* Header bar: light, matching the site instead of Node-RED's default dark bar */
+  --red-ui-header-background: #ffffff;
+  --red-ui-header-text-color: #14171f;
+  --red-ui-header-accent: #3F77DA;
+  --red-ui-header-button-background: #ffffff;
+  --red-ui-header-button-background-hover: #eef1fb;
+  --red-ui-header-button-background-active: #e3e8fa;
+
+  --red-ui-header-menu-background: #ffffff;
+  --red-ui-header-menu-color: #14171f;
+
+  --red-ui-palette-header-background: #f5f6f7;
+  --red-ui-palette-header-color: #14171f;
+
+  /* Primary workspace buttons (e.g. add tab) pick up the brand blue */
+  --red-ui-workspace-button-background-primary: #3F77DA;
+  --red-ui-workspace-button-background-primary-hover: #2E5FBD;
+  --red-ui-workspace-button-color-primary: #ffffff;
+
+  --red-ui-tab-background-selected: #eef1fb;
+  --red-ui-tab-background-active: #eef1fb;
+
+  /* Flow canvas background */
+  --red-ui-view-background: #f5f6f7;
+
+  /* Softer, more product-like drop shadows on menus/dialogs */
+  --red-ui-shadow: rgba(20, 23, 31, 0.12);
+
+  /* Secondary buttons and form inputs pick up the same cool-gray family
+     as the header/palette instead of Node-RED's neutral gray default */
+  --red-ui-secondary-background: #f5f6f7;
+  --red-ui-secondary-background-hover: #eef1fb;
+  --red-ui-secondary-border-color: #d7dbe3;
+  --red-ui-secondary-text-color: #14171f;
+
+  --red-ui-form-button-background: #f5f6f7;
+  --red-ui-form-input-border-color: #d7dbe3;
+  --red-ui-form-input-focus-color: #3F77DA;
+
+  /* NOTE: --red-ui-deploy-button-* is intentionally left untouched — its
+     red/orange/gray states are a safety signal (unsaved changes vs. clean),
+     not a branding surface. */
+}

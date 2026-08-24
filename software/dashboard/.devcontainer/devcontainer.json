@@ -1,0 +1,8 @@
+name: spaghetti-dashboard
+schemaVersion: "2.0.0"
+build:
+  dockerfile: Dockerfile
+workspace:
+  folder: /workspace
+forwardPorts:
+  - 8080

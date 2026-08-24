@@ -1,0 +1,7 @@
+{
+  "contract": "spaghettilab.telemetry-retention",
+  "version": 1,
+  "sink_api_version": 1,
+  "community_owns": ["live-records", "bounded-local-buffer", "gaps", "local-export", "mqtt-and-ble-consumers"],
+  "optional_managed_sink": ["persistent-retention", "multi-device-aggregation", "tenant-isolation", "historical-query", "storage-operations"]
+}

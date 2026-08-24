@@ -1,0 +1,36 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+#include <errno.h>
+
+#include <zephyr/ztest.h>
+
+#include <spaghetti/example.h>
+
+static void example_before(void *fixture)
+{
+	ARG_UNUSED(fixture);
+
+	/* Reset fakes and component state through an explicit test seam. */
+}
+
+ZTEST(example, test_init_rejects_null_config)
+{
+	zassert_equal(spaghetti_example_init(NULL), -EINVAL);
+}
+
+ZTEST(example, test_read_does_not_modify_output_on_failure)
+{
+	const struct spaghetti_example_result sentinel = {
+		.value_milliunits = 123,
+		.uptime_ms = 456,
+	};
+	struct spaghetti_example_result result = sentinel;
+	int err;
+
+	err = spaghetti_example_read(&result, K_NO_WAIT);
+
+	zassert_true(err < 0);
+	zassert_mem_equal(&result, &sentinel, sizeof(result));
+}
+
+ZTEST_SUITE(example, NULL, NULL, example_before, NULL, NULL);

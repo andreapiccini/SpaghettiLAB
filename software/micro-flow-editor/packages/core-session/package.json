@@ -1,0 +1,30 @@
+{
+  "name": "@spaghettilab/core-session",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@spaghettilab/config-compiler": "*",
+    "@spaghettilab/config-deployment": "*",
+    "@spaghettilab/core-actions": "*",
+    "@spaghettilab/core-admin": "*",
+    "@spaghettilab/core-status": "*",
+    "@spaghettilab/device-profile-authoring-model": "*",
+    "@spaghettilab/device-profile-install": "*",
+    "@spaghettilab/domain": "*",
+    "@spaghettilab/protocol-sdk": "*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

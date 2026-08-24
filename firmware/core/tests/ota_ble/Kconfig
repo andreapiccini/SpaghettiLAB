@@ -1,0 +1,25 @@
+mainmenu "Spaghetti BLE OTA tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_OTA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_OTA_BLE_RESUME_MS
+	int
+	default 40
+
+config SPAGHETTI_OTA_BLE_WINDOW_MS
+	int
+	default 1000
+
+config SPAGHETTI_RUNTIME_STOP_TIMEOUT_MS
+	int
+	default 20
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 100
+
+source "Kconfig.zephyr"

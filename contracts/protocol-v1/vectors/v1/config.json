@@ -1,0 +1,37 @@
+{
+  "name": "config",
+  "cbor_hex": "bf0004019fbf000a01000266696e6132313903bf011840ff04000501ffff029fff039fff04bf00f401600219075b036973706167686574746904000500ff050006bf000001000200ff079fff089fffff",
+  "normalized": {
+    "version": 4,
+    "modules": [
+      {
+        "key": 10,
+        "port": 0,
+        "bay": 0,
+        "power_rail": 1,
+        "type": "ina219",
+        "properties": {
+          "1": 64
+        }
+      }
+    ],
+    "schedules": [],
+    "rules": [],
+    "blocks": [],
+    "edges": [],
+    "connectivity_policy": 0,
+    "energy_policy": {
+      "availability": 0,
+      "window_ms": 0,
+      "period_ms": 0
+    },
+    "mqtt": {
+      "enabled": false,
+      "host": "",
+      "port": 1883,
+      "base_topic": "spaghetti",
+      "security": 0,
+      "credential_id": 0
+    }
+  }
+}

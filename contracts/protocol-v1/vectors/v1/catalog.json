@@ -1,0 +1,17 @@
+{
+  "name": "catalog",
+  "cbor_hex": "bf00010105025820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa039fbf0066696e613231390102ffff04000501ff",
+  "normalized": {
+    "protocol_version": 1,
+    "config_version": 5,
+    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "drivers": [
+      {
+        "type_id": "ina219",
+        "command_count": 2
+      }
+    ],
+    "next_cursor": 0,
+    "driver_count": 1
+  }
+}

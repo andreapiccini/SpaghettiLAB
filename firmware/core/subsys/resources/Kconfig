@@ -1,0 +1,10 @@
+module = SPAGHETTI_RESOURCES
+module-str = spaghetti_resources
+source "subsys/logging/Kconfig.template.log_config"
+
+config SPAGHETTI_RESOURCES_STACK_STATS
+	bool "Collect optional stack high-water metrics"
+	default n
+	help
+	  Enable only when stack analyzer support is intentionally selected.
+	  Production profiles keep this disabled to avoid expensive stats.

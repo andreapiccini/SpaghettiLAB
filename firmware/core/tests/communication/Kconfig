@@ -1,0 +1,30 @@
+mainmenu "Spaghetti Communication tests"
+
+rsource "../../Kconfig.resources"
+rsource "../../subsys/core/Kconfig.health"
+
+config SPAGHETTI_MAX_MODULES
+	int
+	default 8
+
+config SPAGHETTI_COMMUNICATION_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_WIFI_PROFILE_MAX_COUNT
+	int
+	default 4
+
+config SPAGHETTI_WIFI_PASSWORD_INPUT_TIMEOUT_SECONDS
+	int
+	default 60
+
+config SPAGHETTI_REMOTE_CONSOLE_CREDENTIAL_INPUT_TIMEOUT_SECONDS
+	int
+	default 60
+
+config SPAGHETTI_MAINTENANCE_REBOOT_DELAY_MS
+	int
+	default 10
+
+source "Kconfig.zephyr"

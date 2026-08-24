@@ -1,0 +1,65 @@
+description: Physical Spaghetti LAB module Port
+
+compatible: "spaghettilab,port"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+    description: Stable logical Port identifier used by runtime configuration
+
+  i2c:
+    type: phandle
+    required: false
+    description: Optional Zephyr I2C controller wired to this shared Port
+
+  spi:
+    type: phandle
+    required: false
+    description: Optional Zephyr SPI controller wired to this shared Port
+
+  spi-cs-gpios:
+    type: phandle-array
+    required: false
+    description: Optional chip-select GPIOs owned by the SPI controller path
+
+  uart:
+    type: phandle
+    required: false
+    description: Optional Zephyr UART controller for an exclusive Port endpoint
+
+  input-gpios:
+    type: phandle-array
+    required: false
+    description: Optional digital input lines mapped to connector signal indices
+
+  output-gpios:
+    type: phandle-array
+    required: false
+    description: Optional digital output lines mapped to connector signal indices
+
+  io-channels:
+    type: phandle-array
+    required: false
+    description: Optional ADC channels mapped to connector signal indices
+
+  w1:
+    type: phandle
+    required: false
+    description: Optional Zephyr 1-Wire controller wired to this shared Port
+
+  pwm:
+    type: phandle
+    required: false
+    description: Optional Zephyr PWM controller wired to this Port connector
+
+  dac:
+    type: phandle
+    required: false
+    description: Optional Zephyr DAC controller wired to this Port connector
+
+  can:
+    type: phandle
+    required: false
+    description: Optional Zephyr CAN controller wired to this Port connector

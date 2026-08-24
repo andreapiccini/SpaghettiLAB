@@ -1,0 +1,24 @@
+{
+  "contract": "spaghettilab.licensing-policy",
+  "version": 1,
+  "status": "superseded",
+  "supersededBy": "../licensing-policy-v2/manifest.json",
+  "components": {
+    "hardware": "CERN-OHL-S-2.0",
+    "firmware": "Apache-2.0",
+    "software": "Apache-2.0",
+    "documentation": "CC-BY-4.0",
+    "root-contracts": "Apache-2.0"
+  },
+  "contributions": {
+    "mechanism": "DCO-1.1",
+    "copyright_assignment": false,
+    "automatic_proprietary_relicensing_right": false
+  },
+  "rules": {
+    "commercial_use_is_prohibited": false,
+    "published_permissions_are_retroactively_revocable": false,
+    "trademark_rights_are_granted_by_source_licences": false,
+    "future_relicensing_requires_rightsholder_review": true
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "contract": "spaghettilab.protocol",
+  "version": 1,
+  "compatibility": "append-only",
+  "payload_absolute_max": 2048,
+  "operations": {
+    "GET_CATALOG": 1,
+    "GET_STATUS": 2,
+    "APPLY_CONFIG": 3,
+    "LIST_DISCOVERY": 4,
+    "SCAN_DISCOVERY": 5,
+    "ACCEPT_DISCOVERY": 6,
+    "MODULE_COMMAND": 7,
+    "GET_UPDATE_STATUS": 8,
+    "GET_CAPABILITIES": 9,
+    "GET_CONNECTIVITY_STATUS": 10,
+    "ACQUIRE_CONNECTIVITY_LEASE": 11,
+    "RELEASE_CONNECTIVITY_LEASE": 12,
+    "OPEN_NETWORK_MAINTENANCE": 13,
+    "OPEN_WIFI_UPDATE": 14,
+    "FACTORY_RESET": 15,
+    "GET_CONFIG": 16,
+    "VALIDATE_CONFIG": 17,
+    "GET_AUDIT_LOG": 18,
+    "GET_JOB_STATUS": 19,
+    "GET_TOPOLOGY": 20,
+    "GET_RESOURCES": 21,
+    "LIST_DEVICE_PROFILES": 22,
+    "GET_DEVICE_PROFILE": 23,
+    "VALIDATE_DEVICE_PROFILE": 24,
+    "INSTALL_DEVICE_PROFILE": 25,
+    "REMOVE_DEVICE_PROFILE": 26,
+    "GET_FEATURES": 27,
+    "OPEN_BLE_UPDATE": 28,
+    "WRITE_BLE_UPDATE": 29,
+    "FINISH_BLE_UPDATE": 30,
+    "CANCEL_BLE_UPDATE": 31
+  },
+  "statuses": {
+    "OK": 0,
+    "INVALID_ARGUMENT": 1,
+    "UNSUPPORTED": 2,
+    "UNAUTHORIZED": 3,
+    "CONFLICT": 4,
+    "BUSY": 5,
+    "UNAVAILABLE": 6,
+    "TIMEOUT": 7,
+    "RESOURCE_EXHAUSTED": 8,
+    "MALFORMED_REQUEST": 9,
+    "INTERNAL_ERROR": 10
+  },
+  "events": {
+    "RECORD": 1,
+    "STATUS": 2,
+    "DISCOVERY": 3,
+    "CONNECTIVITY": 4
+  },
+  "envelope_keys": {
+    "version": 0,
+    "correlation_or_sequence": 1,
+    "operation_status_or_event": 2,
+    "payload": 3
+  },
+  "capabilities": {
+    "resource_profiles": { "MINIMAL": 0, "STANDARD": 1, "EXTENDED": 2 },
+    "build_capability_bits": {
+      "BLE": 0, "WIFI": 1, "MQTT": 2, "OTA_BLE": 3,
+      "OTA_WIFI": 4, "REMOTE_CONSOLE": 5, "EXTERNAL_RAM": 6,
+      "HARDWARE_WATCHDOG": 7, "RUNTIME_PORT_MUX": 8,
+      "POWER_SWITCHING": 9, "POWER_MEASUREMENT": 10
+    },
+    "get_capabilities_response_fields": {
+      "resourceProfile": 0, "buildCapabilities": 1, "coreVariant": 2,
+      "maxProtocolPayload": 3, "maxInflightRequests": 4,
+      "replayWindowMs": 5, "maxModules": 6, "maxPrincipals": 7
+    }
+  },
+  "vectors": "vectors/v1"
+}

@@ -1,0 +1,39 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Public config helpers and descriptor for Example Module.
+ */
+
+#ifndef SPAGHETTI_EXAMPLE_MODULE_H
+#define SPAGHETTI_EXAMPLE_MODULE_H
+
+#include <stdint.h>
+
+#include <spaghetti/schema.h>
+
+/** Stable config field: 7-bit I2C address. */
+#define SPAGHETTI_EXAMPLE_MODULE_CONFIG_ADDRESS 1U
+
+/** Stable sample field: signed measurement. */
+#define SPAGHETTI_EXAMPLE_MODULE_FIELD_VALUE 1U
+
+/** Owned copy of validated Example Module configuration. */
+struct spaghetti_example_module_config {
+	uint8_t i2c_address; /**< 7-bit address; replace range with the datasheet. */
+};
+
+/**
+ * @brief Decode and range-check one borrowed property set.
+ *
+ * @param[in] properties Borrowed property set.
+ * @param[out] out Caller-owned destination written only on success.
+ *
+ * @retval 0 Properties were decoded.
+ * @retval -EINVAL Pointer or field type/range is invalid.
+ */
+int spaghetti_example_module_config_from_properties(
+	const struct spaghetti_property_set *properties,
+	struct spaghetti_example_module_config *out);
+
+#endif /* SPAGHETTI_EXAMPLE_MODULE_H */

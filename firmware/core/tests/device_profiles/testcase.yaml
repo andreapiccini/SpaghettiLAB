@@ -1,0 +1,7 @@
+tests:
+  spaghetti.device_profiles:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - device_profiles

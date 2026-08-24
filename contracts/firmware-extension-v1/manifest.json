@@ -1,0 +1,14 @@
+{
+  "contract": "spaghettilab.firmware-extension",
+  "api_version": 1,
+  "compatibility": "exact-major",
+  "component_apis": {
+    "module_driver": 2,
+    "rule_driver": 1,
+    "block_driver": 1,
+    "discovery_provider": 1,
+    "feature_pack": 1,
+    "protocol": 1,
+    "enrollment_backend": 1
+  }
+}

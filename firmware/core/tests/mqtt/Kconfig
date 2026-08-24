@@ -1,0 +1,85 @@
+mainmenu "Spaghetti MQTT tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_DATA_LOGGER
+	bool
+	default n
+
+config SPAGHETTI_DATA_LOGGER_STACK_SIZE
+	int
+	default 2048
+
+config SPAGHETTI_DATA_LOGGER_PRIORITY
+	int
+	default 5
+
+config SPAGHETTI_DATA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RECORD_DELIVERY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_MQTT_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_MQTT_QUEUE_DEPTH
+	int
+	default 4
+
+config SPAGHETTI_MQTT_PRIORITY_QUEUE_DEPTH
+	int
+	default 4
+
+config SPAGHETTI_MQTT_WORKER_STACK_SIZE
+	int
+	default 4096
+
+config SPAGHETTI_MQTT_ADAPTER_STACK_SIZE
+	int
+	default 3072
+
+config SPAGHETTI_MQTT_PRIORITY
+	int
+	default 5
+
+config SPAGHETTI_MQTT_ALLOW_PLAINTEXT_DEVELOPMENT
+	bool
+	default y
+
+config SPAGHETTI_MQTT_TEST_HOOKS
+	bool
+	default y
+
+config SPAGHETTI_MQTT_CREDENTIAL_SLOTS
+	int
+	default 4
+
+config SPAGHETTI_MQTT_CREDENTIAL_CA_MAX_SIZE
+	int
+	default 64
+
+config SPAGHETTI_MQTT_CREDENTIAL_CERT_MAX_SIZE
+	int
+	default 64
+
+config SPAGHETTI_MQTT_CREDENTIAL_KEY_MAX_SIZE
+	int
+	default 64
+
+config SPAGHETTI_SERVICE_THREAD_MAX_COUNT
+	int
+	default 4
+
+config SPAGHETTI_SERVICE_THREAD_MAX_STACK_BYTES
+	int
+	default 16384
+
+config SPAGHETTI_SERVICE_STOP_MAX_MS
+	int
+	default 5000
+
+source "Kconfig.zephyr"

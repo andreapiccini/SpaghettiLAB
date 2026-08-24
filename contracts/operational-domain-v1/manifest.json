@@ -1,0 +1,14 @@
+{
+  "contract": "spaghettilab.operational-domain",
+  "version": 1,
+  "community_identifiers": ["hardwareDeviceId", "coreBindingId", "projectId"],
+  "production_entities": ["managedDevice", "customer", "site", "fleet"],
+  "rules": {
+    "hardware_device_id_is_not_customer_identity": true,
+    "managed_device_has_one_customer": true,
+    "site_has_one_customer": true,
+    "fleet_has_one_customer": true,
+    "device_site_and_fleets_share_customer": true,
+    "community_project_requires_no_operational_assignment": true
+  }
+}

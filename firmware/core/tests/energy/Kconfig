@@ -1,0 +1,10 @@
+mainmenu "Spaghetti Energy policy tests"
+
+rsource "../../subsys/connectivity/Kconfig"
+rsource "../../subsys/power/Kconfig"
+
+config SPAGHETTI_HEALTH_KEEPALIVE_MS
+	int
+	default 1000
+
+source "Kconfig.zephyr"

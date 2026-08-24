@@ -1,0 +1,25 @@
+{
+  "contract": "spaghettilab.licensing-policy",
+  "version": 2,
+  "transitionRef": "clean-history-root",
+  "components": {
+    "hardware": "CERN-OHL-S-2.0",
+    "firmware": "GPL-3.0-or-later",
+    "software-default": "AGPL-3.0-or-later",
+    "contracts": "Apache-2.0",
+    "protocol-sdk": "Apache-2.0",
+    "dashboard-domain": "Apache-2.0",
+    "documentation": "CC-BY-4.0"
+  },
+  "contributions": {
+    "dco_areas": ["hardware", "documentation", "contracts", "protocol-sdk", "dashboard-domain"],
+    "temporarily_closed_external_code_areas": ["firmware", "agpl-software"],
+    "reason": "preserve future commercial licensing until a contributor agreement exists"
+  },
+  "rules": {
+    "commercial_use_is_prohibited": false,
+    "old_apache_grants_are_retroactively_revoked": false,
+    "third_party_code_is_relicensed": false,
+    "production_is_proprietary": true
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "int64min",
+  "cbor_hex": "3b7fffffffffffffff",
+  "normalized": {
+    "type": "int64",
+    "value": "-9223372036854775808"
+  }
+}

@@ -1,0 +1,72 @@
+# Change contract: <task and behavior>
+
+Complete this sheet before implementing a non-trivial firmware task. Replace
+every placeholder; do not keep speculative requirements.
+
+## Scope
+
+- Task:
+- Required observable outcome:
+- Explicitly excluded behavior:
+- Component that owns the change:
+- Files allowed to change:
+
+## API
+
+- Public function name:
+- Public header, or reason the function remains private:
+- Doxygen contract written beside the header declaration:
+- Purpose:
+- Synchronous, asynchronous, callback, or pure query:
+- Return type and why it matches the guide:
+- Success value:
+- Input parameters, signedness, types, units, and valid ranges:
+- Pointer direction, nullability, ownership, lifetime, and copy policy:
+- Buffer length/capacity/termination rules:
+- Output parameters and exact point at which they are written:
+- Expected negative errno values:
+- Timeout type and policy for `K_NO_WAIT`/`K_FOREVER`:
+- Thread safety, serialization, and reentrancy:
+- Idempotent: yes/no, because:
+
+## Data and ownership
+
+- New mutable object:
+- Owner:
+- Lifetime:
+- Maximum count/capacity:
+- Caller data borrowed or copied:
+- Data-sharing mechanism between files/components:
+- Static allocation, fixed pool, or justified dynamic allocation:
+- State before success:
+- State after success:
+- State after failure:
+
+## Execution
+
+- Invocation context: boot thread / normal thread / ISR / timer / workqueue:
+- Can sleep or block:
+- Maximum wait:
+- Direct call, work item, message queue, zbus, or dedicated thread:
+- Why this mechanism is the simplest correct choice:
+- Synchronization primitive and state it protects:
+- Queue-full/timeout policy:
+- Log module owner (`REGISTER`) and sibling files (`DECLARE`):
+
+## Configuration and hardware
+
+- Devicetree fact required and verification source:
+- Kconfig feature or resource bound required:
+- Runtime Config value required:
+- CMake source/directory change required:
+
+## Verification
+
+- Success test:
+- Invalid-input test:
+- Boundary test:
+- Dependency-failure test:
+- Rollback/state test:
+- Build command:
+- Hardware test and expected observation, when applicable:
+- Formatting/static checks performed:

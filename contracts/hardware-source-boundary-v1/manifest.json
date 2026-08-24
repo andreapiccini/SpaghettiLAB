@@ -1,0 +1,18 @@
+{
+  "contract": "spaghettilab.hardware-source-boundary",
+  "version": 1,
+  "public_projects": [
+    {"id": "backbone", "path": "hardware/backbone/backbone"},
+    {"id": "core", "path": "hardware/core/core"},
+    {"id": "nfc-tag", "path": "hardware/modules/nfc-tag/nfc-tag"}
+  ],
+  "community_owns": ["editable-schematic", "editable-pcb", "project-settings", "embedded-symbols", "embedded-footprints"],
+  "production_owns": ["controlled-variants", "approved-bom", "fabrication-output", "assembly-output", "certification-records"],
+  "rules": {
+    "community_requires_production_libraries": false,
+    "external_3d_models_are_optional": true,
+    "unverified_vendor_models_may_be_published": false,
+    "generated_manufacturing_files_may_be_tracked": false,
+    "production_variant_must_pin_community_commit": true
+  }
+}

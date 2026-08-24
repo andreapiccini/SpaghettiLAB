@@ -1,0 +1,29 @@
+mainmenu "Spaghetti Update tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_UPDATE_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_UPDATE_WORK_STACK_SIZE
+	int
+	default 1024
+
+config SPAGHETTI_UPDATE_WORK_PRIORITY
+	int
+	default 5
+
+config SPAGHETTI_UPDATE_TEST_TRIAL
+	bool "Start the fake backend in trial boot"
+	default n
+
+config SPAGHETTI_HEALTH_KEEPALIVE_MS
+	int
+	default 50
+
+config SPAGHETTI_HEALTH_MAX_WINDOW_MS
+	int
+	default 200
+
+source "Kconfig.zephyr"

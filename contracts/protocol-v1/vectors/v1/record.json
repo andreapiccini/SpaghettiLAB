@@ -1,0 +1,10 @@
+{
+  "name": "record",
+  "cbor_hex": "bf000a010302777370616768657474692e696e613231392e73616d706c650301ff",
+  "normalized": {
+    "source_key": 10,
+    "sequence": 3,
+    "schema_id": "spaghetti.ina219.sample",
+    "schema_version": 1
+  }
+}

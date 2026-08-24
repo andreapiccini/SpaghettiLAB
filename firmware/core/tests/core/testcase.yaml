@@ -1,0 +1,40 @@
+tests:
+  spaghetti.core:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - core
+      - engine
+  spaghetti.core.unprovisioned:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_TEST_CONFIG_ABSENT=y
+    tags:
+      - spaghetti
+      - core
+  spaghetti.core.marker:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_TEST_MAINTENANCE_MARKER=y
+    tags:
+      - spaghetti
+      - core
+  spaghetti.core.bootstrap:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_TEST_BOOTSTRAP_REQUEST=y
+    tags:
+      - spaghetti
+      - core
+  spaghetti.core.trial:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_TEST_TRIAL_IMAGE=y
+    tags:
+      - spaghetti
+      - core

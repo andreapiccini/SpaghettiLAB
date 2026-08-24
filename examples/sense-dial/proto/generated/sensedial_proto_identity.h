@@ -1,0 +1,6 @@
+#pragma once
+#include <stdint.h>
+
+#define SENSEDIAL_LOWSIDE_PROTO_VERSION 1
+
+#define SENSEDIAL_LOWSIDE_PROTO_HASH UINT64_C(0xE9215A5A78F9208C)

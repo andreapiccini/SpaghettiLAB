@@ -1,0 +1,37 @@
+import {
+  Bell,
+  Cpu,
+  Download,
+  KeyRound,
+  Keyboard,
+  Languages,
+  LayoutGrid,
+  LifeBuoy,
+  Palette,
+  RefreshCw,
+  ScrollText,
+  Settings,
+  Shield,
+  Workflow,
+  type LucideIcon,
+} from "lucide-react";
+import type { SettingsCategoryId } from "../../lib/settings-catalog.js";
+
+export const SETTINGS_CATEGORY_ICONS: Record<SettingsCategoryId, LucideIcon> = {
+  general: Settings,
+  language: Languages,
+  appearance: Palette,
+  credentials: KeyRound,
+  permissions: Shield,
+  audit: ScrollText,
+  recovery: LifeBuoy,
+  privacy: Shield,
+  backup: Download,
+  "import-export": Download,
+  nodered: Workflow,
+  "core-catalog": Cpu,
+  updates: RefreshCw,
+  editor: LayoutGrid,
+  keyboard: Keyboard,
+  notifications: Bell,
+};

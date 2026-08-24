@@ -1,0 +1,7 @@
+tests:
+  spaghetti.access_control:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - access_control

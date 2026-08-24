@@ -1,0 +1,6 @@
+mainmenu "Spaghetti Feature Packs tests"
+
+rsource "../../Kconfig.resources"
+rsource "../../subsys/feature_registry/Kconfig"
+
+source "Kconfig.zephyr"

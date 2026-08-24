@@ -1,0 +1,15 @@
+name: dashboard_domain
+description: Pure Dart models and HostPort for the SpaghettiLAB dashboard. No Flutter, no automations.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  crypto: ^3.0.6
+  ed25519_edwards: ^0.3.1
+
+dev_dependencies:
+  lints: ^5.1.1
+  test: ^1.25.8

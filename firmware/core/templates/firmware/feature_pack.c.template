@@ -1,0 +1,42 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Example Capability Pack descriptor.
+ *
+ * A pack groups compiled Module/Rule/Block types already linked into the image.
+ * Installing a pack means flashing a signed MCUboot image; packs are never
+ * dynamically loaded. Copy to subsys/feature_registry/pack_<name>.c.
+ */
+
+#include <spaghetti/config.h>
+#include <spaghetti/feature_pack.h>
+
+#include <zephyr/sys/util.h>
+
+static const char *const example_pack_modules[] = {
+	"example",
+};
+
+static const char *const example_pack_blocks[] = {
+	"example_offset",
+};
+
+SPAGHETTI_FEATURE_PACK_DEFINE(spaghetti_pack_example) = {
+	.id = "example-pack",
+	.version = "1.0.0",
+	.deps = NULL,
+	.dep_count = 0U,
+	.conflicts = NULL,
+	.conflict_count = 0U,
+	.required_hw_caps = 0U,
+	.module_types = example_pack_modules,
+	.module_type_count = ARRAY_SIZE(example_pack_modules),
+	.rule_types = NULL,
+	.rule_type_count = 0U,
+	.block_types = example_pack_blocks,
+	.block_type_count = ARRAY_SIZE(example_pack_blocks),
+	.min_protocol_version = 1U,
+	.min_config_version = SPAGHETTI_CONFIG_VERSION,
+	.abi_version = SPAGHETTI_FEATURE_PACK_ABI_VERSION,
+};

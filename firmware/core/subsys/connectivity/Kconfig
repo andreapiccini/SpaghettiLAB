@@ -1,0 +1,36 @@
+module = SPAGHETTI_CONNECTIVITY
+module-str = spaghetti_connectivity
+source "subsys/logging/Kconfig.template.log_config"
+
+choice SPAGHETTI_CONNECTIVITY_BOOT_POLICY
+	prompt "Default connectivity policy"
+	default SPAGHETTI_CONNECTIVITY_BOOT_ONLINE
+	help
+	  Select the policy passed by Core until Config persists this choice.
+
+config SPAGHETTI_CONNECTIVITY_BOOT_LOW_ENERGY
+	bool "Low energy"
+	help
+	  Keep Wi-Fi and MQTT outside the persistent service set.
+
+config SPAGHETTI_CONNECTIVITY_BOOT_ONLINE
+	bool "Online"
+	help
+	  Permit compiled Wi-Fi and MQTT. BLE stays outside this policy.
+
+endchoice
+
+config SPAGHETTI_CONNECTIVITY_MIN_LEASE_MS
+	int "Minimum temporary connectivity lease in milliseconds"
+	range 1 60000
+	default 1000
+	help
+	  Reject accidental zero or impractically short connectivity windows.
+
+config SPAGHETTI_CONNECTIVITY_MAX_LEASE_MS
+	int "Maximum temporary connectivity lease in milliseconds"
+	range SPAGHETTI_CONNECTIVITY_MIN_LEASE_MS 900000
+	default 300000
+	help
+	  Upper bound for a temporary service lease. The Manager converts the
+	  accepted duration to one absolute uptime deadline.

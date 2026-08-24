@@ -1,0 +1,15 @@
+tests:
+  spaghetti.record_delivery:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - record_delivery
+  spaghetti.record_delivery.capacity_one:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - record_delivery
+    extra_configs:
+      - CONFIG_SPAGHETTI_MAX_RECORD_QUEUE=1

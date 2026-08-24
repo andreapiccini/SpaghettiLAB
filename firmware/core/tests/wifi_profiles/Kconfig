@@ -1,0 +1,21 @@
+mainmenu "Spaghetti Wi-Fi Profiles tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_WIFI_PROFILES_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_WIFI_PROFILE_MAX_COUNT
+	int
+	default 4
+
+config SPAGHETTI_WIFI_PROFILE_AUTO_CONNECT
+	bool
+	default n
+
+config SPAGHETTI_WIFI_PROFILES_TEST_OFFLINE
+	bool "Exercise offline initialization"
+	default n
+
+source "Kconfig.zephyr"

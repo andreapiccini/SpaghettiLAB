@@ -1,0 +1,6 @@
+mainmenu "Spaghetti Health supervisor tests"
+
+rsource "../../Kconfig.resources"
+rsource "../../subsys/core/Kconfig.health"
+
+source "Kconfig.zephyr"

@@ -1,0 +1,25 @@
+{
+  "contract": "spaghettilab.authorization-boundary",
+  "version": 1,
+  "community_owns": [
+    "local-principals",
+    "local-roles",
+    "local-permissions",
+    "local-enforcement",
+    "local-audit"
+  ],
+  "production_owns": [
+    "organization-membership",
+    "organization-roles",
+    "customer-site-fleet-scope",
+    "central-policy",
+    "managed-service-audit"
+  ],
+  "composition": {
+    "community_requires_organization": false,
+    "organization_policy_can_restrict_local_access": true,
+    "organization_policy_can_bypass_local_enforcement": false,
+    "default_when_production_absent": "LOCAL_ONLY"
+  },
+  "public_permission_source": "software/micro-flow-editor/packages/domain/src/permission.ts"
+}

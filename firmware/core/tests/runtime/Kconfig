@@ -1,0 +1,46 @@
+mainmenu "Spaghetti Runtime tests"
+
+rsource "../../Kconfig.resources"
+rsource "../../subsys/core/Kconfig.health"
+
+config SPAGHETTI_RUNTIME_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RUNTIME_STACK_SIZE
+	int
+	default 4096
+
+config SPAGHETTI_RUNTIME_PRIORITY
+	int
+	default 4
+
+config SPAGHETTI_DATA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RECORD_DELIVERY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_DATA_LOGGER
+	bool
+	default n
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_RULE_REGISTRY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_THRESHOLD_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_THRESHOLD_MAX_INSTANCES
+	int
+	default SPAGHETTI_MAX_RULES
+
+source "Kconfig.zephyr"

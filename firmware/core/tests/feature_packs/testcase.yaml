@@ -1,0 +1,34 @@
+tests:
+  spaghetti.feature_packs.base:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - feature_packs
+  spaghetti.feature_packs.kalman:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_BLOCK_KALMAN=y
+      - CONFIG_SPAGHETTI_PACK_PROCESSING_KALMAN=y
+    tags:
+      - spaghetti
+      - feature_packs
+  spaghetti.feature_packs.modbus:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_PACK_MODBUS=y
+    tags:
+      - spaghetti
+      - feature_packs
+  spaghetti.feature_packs.kalman_modbus:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_BLOCK_KALMAN=y
+      - CONFIG_SPAGHETTI_PACK_PROCESSING_KALMAN=y
+      - CONFIG_SPAGHETTI_PACK_MODBUS=y
+    tags:
+      - spaghetti
+      - feature_packs

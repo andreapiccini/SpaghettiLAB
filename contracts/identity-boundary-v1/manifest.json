@@ -1,0 +1,25 @@
+{
+  "contract": "spaghettilab.identity-boundary",
+  "version": 1,
+  "community_owns": [
+    "hardware-device-id",
+    "friendly-name",
+    "local-principals",
+    "local-authorization",
+    "credential-revocation",
+    "local-audit",
+    "maintenance-recovery"
+  ],
+  "optional_backend": {
+    "name": "enterprise-enrollment",
+    "api_version": 1,
+    "absent_state": "UNMANAGED",
+    "production_owns": [
+      "organization-membership",
+      "certificate-authority-integration",
+      "certificate-renewal",
+      "fleet-revocation",
+      "tenant-policy"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+tests:
+  spaghetti.config_codec:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - config
+      - cbor

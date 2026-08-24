@@ -1,0 +1,17 @@
+mainmenu "Spaghetti Threshold tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_THRESHOLD_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_THRESHOLD_MAX_INSTANCES
+	int
+	default 4
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

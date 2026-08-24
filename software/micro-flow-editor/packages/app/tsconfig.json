@@ -1,0 +1,43 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "references": [
+    { "path": "../domain" },
+    { "path": "../capability-marketplace" },
+    { "path": "../catalog-model" },
+    { "path": "../config-compiler" },
+    { "path": "../config-decompiler" },
+    { "path": "../config-deployment" },
+    { "path": "../core-actions" },
+    { "path": "../core-admin" },
+    { "path": "../core-session" },
+    { "path": "../core-status" },
+    { "path": "../device-processing-graph-model" },
+    { "path": "../device-profile-authoring-model" },
+    { "path": "../device-profile-install" },
+    { "path": "../device-profile-package" },
+    { "path": "../editor-model" },
+    { "path": "../node-red-deploy" },
+    { "path": "../node-red-nodes" },
+    { "path": "../ota-lifecycle" },
+    { "path": "../ota-preflight" },
+    { "path": "../physical-composition-model" },
+    { "path": "../processing-block-catalog" },
+    { "path": "../protocol-sdk" },
+    { "path": "../project-store" },
+    { "path": "../react-flow-adapter" },
+    { "path": "../security-recovery" },
+    { "path": "../system-automation-graph" },
+    { "path": "../telemetry-buffer" }
+  ],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

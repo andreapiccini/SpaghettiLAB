@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2022", "DOM"]
+  },
+  "references": [
+    { "path": "../domain" },
+    { "path": "../protocol-sdk" },
+    { "path": "../physical-composition-model" },
+    { "path": "../device-processing-graph-model" }
+  ],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

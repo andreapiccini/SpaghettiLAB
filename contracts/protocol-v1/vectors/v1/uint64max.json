@@ -1,0 +1,8 @@
+{
+  "name": "uint64max",
+  "cbor_hex": "1bffffffffffffffff",
+  "normalized": {
+    "type": "uint64",
+    "value": "18446744073709551615"
+  }
+}

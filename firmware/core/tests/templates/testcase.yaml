@@ -1,0 +1,12 @@
+tests:
+  spaghetti.templates:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - templates
+      - module_driver
+      - device_profile
+      - block_driver
+      - feature_pack
+      - topology

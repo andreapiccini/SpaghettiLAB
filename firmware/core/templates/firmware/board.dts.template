@@ -1,0 +1,117 @@
+/dts-v1/;
+
+/* Include the exact Zephyr SoC DTSI used by the schematic. */
+#include <vendor/exact-soc.dtsi>
+
+/ {
+	model = "Spaghetti LAB Core <Variant>";
+	compatible = "spaghettilab,core-<variant>";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+	};
+
+	spaghetti_ports {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0: port@0 {
+			compatible = "spaghettilab,port";
+			reg = <0>;
+			i2c = <&i2c0>;
+			status = "okay";
+		};
+
+		port1: port@1 {
+			compatible = "spaghettilab,port";
+			reg = <1>;
+			i2c = <&i2c1>;
+			status = "okay";
+		};
+	};
+
+	spaghetti_flows {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		flow0: flow@0 {
+			compatible = "spaghettilab,flow";
+			reg = <0>;
+			port = <&port0>;
+			direction = "field-to-core";
+			signal-count = <5>;
+			function-bay-count = <0>;
+			status = "okay";
+		};
+
+		flow1: flow@1 {
+			compatible = "spaghettilab,flow";
+			reg = <1>;
+			port = <&port1>;
+			direction = "core-to-field";
+			signal-count = <5>;
+			function-bay-count = <2>;
+			status = "okay";
+		};
+	};
+
+	spaghetti_power_rails {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		rail0: rail@0 {
+			compatible = "spaghettilab,power-rail";
+			reg = <0>;
+			assurance = "unmanaged";
+			min-microvolts = <0>;
+			max-microvolts = <0>;
+			max-total-microamps = <0>;
+			status = "okay";
+		};
+
+		rail1: rail@1 {
+			compatible = "spaghettilab,power-rail";
+			reg = <1>;
+			assurance = "switched-and-measured";
+			min-microvolts = <3300000>;
+			max-microvolts = <3300000>;
+			max-total-microamps = <500000>;
+			status = "okay";
+		};
+	};
+
+	spaghetti_bay_power {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		bay1_0: bay-power@0 {
+			compatible = "spaghettilab,bay-power";
+			reg = <0>;
+			flow = <&flow1>;
+			bay-id = <0>;
+			available-rails = <0 1>;
+			status = "okay";
+		};
+	};
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	/* Add pinctrl states taken from the real schematic and SoC binding. */
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};

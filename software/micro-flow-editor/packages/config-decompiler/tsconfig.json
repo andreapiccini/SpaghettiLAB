@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [
+    { "path": "../domain" },
+    { "path": "../protocol-sdk" },
+    { "path": "../config-compiler" },
+    { "path": "../physical-composition-model" },
+    { "path": "../device-processing-graph-model" }
+  ],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

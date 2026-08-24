@@ -1,0 +1,15 @@
+tests:
+  spaghetti.update:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - update
+  spaghetti.update.trial:
+    platform_allow:
+      - native_sim/native/64
+    extra_configs:
+      - CONFIG_SPAGHETTI_UPDATE_TEST_TRIAL=y
+    tags:
+      - spaghetti
+      - update

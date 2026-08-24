@@ -1,0 +1,35 @@
+mainmenu "Spaghetti firmware template compile tests"
+
+rsource "../../Kconfig.resources"
+rsource "../../subsys/feature_registry/Kconfig"
+
+config SPAGHETTI_DRIVER_REGISTRY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_BLOCK_REGISTRY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_DEVICE_PROFILE_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_TOPOLOGY_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_EXAMPLE_MODULE_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_EXAMPLE_MODULE_MAX_INSTANCES
+	int "Maximum Example Module instances for template compile test"
+	range 1 SPAGHETTI_MAX_MODULES
+	default 2
+
+source "Kconfig.zephyr"

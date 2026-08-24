@@ -1,0 +1,7 @@
+tests:
+  spaghetti.module_manager:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - module_manager

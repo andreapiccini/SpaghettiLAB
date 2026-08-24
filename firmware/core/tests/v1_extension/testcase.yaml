@@ -1,0 +1,15 @@
+tests:
+  spaghetti.v1_extension:
+    platform_allow:
+      - native_sim/native/64
+    tags:
+      - spaghetti
+      - v1
+      - extension
+      - module_driver
+      - rule_driver
+      - block_driver
+      - device_profile
+      - discovery
+      - topology
+      - power

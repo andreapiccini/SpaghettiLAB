@@ -1,0 +1,26 @@
+name: dashboard_app
+description: SpaghettiLAB dashboard — presentation engine. No automations.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dashboard_domain:
+    path: ../packages/dashboard_domain
+  dashboard_host:
+    path: ../packages/dashboard_host
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.png

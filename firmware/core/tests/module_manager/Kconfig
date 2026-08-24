@@ -1,0 +1,13 @@
+mainmenu "Spaghetti Module Manager tests"
+
+rsource "../../Kconfig.resources"
+
+config SPAGHETTI_MODULE_MANAGER_LOG_LEVEL
+	int
+	default 0
+
+config SPAGHETTI_SCHEMA_LOG_LEVEL
+	int
+	default 0
+
+source "Kconfig.zephyr"

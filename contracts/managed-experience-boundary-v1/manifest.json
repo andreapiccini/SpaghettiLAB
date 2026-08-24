@@ -1,0 +1,19 @@
+{
+  "contract": "spaghettilab.managed-experience-boundary",
+  "version": 1,
+  "community_owns": {
+    "node_red": ["local-compose", "local-editor", "persistent-local-volume", "local-themes", "public-nodes"],
+    "dashboard": ["renderer", "appearance-model", "local-themes", "local-visual-packs", "local-host-contract"]
+  },
+  "production_owns": {
+    "node_red": ["multi-site-orchestration", "health-monitoring", "scheduled-encrypted-backup", "controlled-restore", "sla-operations"],
+    "dashboard": ["customer-pack-distribution", "hosted-assets", "site-rollout", "managed-brand-versioning"]
+  },
+  "rules": {
+    "community_node_red_requires_managed_controller": false,
+    "community_dashboard_requires_brand_service": false,
+    "backup_payloads_may_be_committed": false,
+    "customer_assets_may_be_committed": false,
+    "production_is_additive": true
+  }
+}

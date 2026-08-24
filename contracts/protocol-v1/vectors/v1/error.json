@@ -1,0 +1,11 @@
+{
+  "name": "error",
+  "cbor_hex": "bf000101182a02030340ff",
+  "normalized": {
+    "version": 1,
+    "correlation_id": 42,
+    "status": 3,
+    "status_name": "unauthorized",
+    "payload": {}
+  }
+}

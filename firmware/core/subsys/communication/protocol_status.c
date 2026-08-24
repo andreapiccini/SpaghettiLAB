@@ -1,0 +1,47 @@
+#include <spaghetti/protocol.h>
+
+#include <errno.h>
+
+BUILD_ASSERT(SPAGHETTI_PROTOCOL_PAYLOAD_MAX <=
+	     SPAGHETTI_PROTOCOL_PAYLOAD_ABSOLUTE_MAX);
+
+enum spaghetti_protocol_status spaghetti_protocol_status_from_errno(int error)
+{
+	if (error >= 0) {
+		return SPAGHETTI_PROTOCOL_STATUS_OK;
+	}
+
+	switch (error) {
+	case -EINVAL:
+	case -ERANGE:
+		return SPAGHETTI_PROTOCOL_STATUS_INVALID_ARGUMENT;
+	case -ENOTSUP:
+	case -EPROTONOSUPPORT:
+	case -ENOSYS:
+		return SPAGHETTI_PROTOCOL_STATUS_UNSUPPORTED;
+	case -EACCES:
+	case -EPERM:
+		return SPAGHETTI_PROTOCOL_STATUS_UNAUTHORIZED;
+	case -ESTALE:
+	case -EEXIST:
+		return SPAGHETTI_PROTOCOL_STATUS_CONFLICT;
+	case -EBUSY:
+	case -EAGAIN:
+		return SPAGHETTI_PROTOCOL_STATUS_BUSY;
+	case -ENODEV:
+	case -ENETDOWN:
+	case -ENOTCONN:
+		return SPAGHETTI_PROTOCOL_STATUS_UNAVAILABLE;
+	case -ETIMEDOUT:
+		return SPAGHETTI_PROTOCOL_STATUS_TIMEOUT;
+	case -ENOMEM:
+	case -ENOSPC:
+	case -EMSGSIZE:
+		return SPAGHETTI_PROTOCOL_STATUS_RESOURCE_EXHAUSTED;
+	case -EBADMSG:
+	case -EILSEQ:
+		return SPAGHETTI_PROTOCOL_STATUS_MALFORMED_REQUEST;
+	default:
+		return SPAGHETTI_PROTOCOL_STATUS_INTERNAL_ERROR;
+	}
+}

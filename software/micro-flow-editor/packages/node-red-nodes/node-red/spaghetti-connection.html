@@ -1,0 +1,34 @@
+<script type="text/javascript">
+  RED.nodes.registerType("spaghetti-connection", {
+    category: "config",
+    defaults: {
+      name: { value: "" },
+      url: { value: "ws://127.0.0.1:8765/", required: true },
+    },
+    label: function () {
+      return this.name || this.url || "spaghetti-connection";
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="spaghetti-connection">
+  <div class="form-row">
+    <label for="node-config-input-url">WebSocket URL</label>
+    <input type="text" id="node-config-input-url" placeholder="ws://127.0.0.1:8765/?token=..." />
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-name">Name</label>
+    <input type="text" id="node-config-input-name" placeholder="Core name" />
+  </div>
+</script>
+
+<script type="text/html" data-help-name="spaghetti-connection">
+  <p>
+    Shared connection to one SpaghettiLAB Core over a WebSocket — direct
+    Wi-Fi, or the BLE gateway documented in
+    <code>software/node-red/BLE_GATEWAY.md</code>, which tunnels the same
+    framed Protocol V1 CBOR bytes. Every <code>spaghetti record source</code>,
+    <code>spaghetti command target</code> and <code>spaghetti status</code>
+    node references this config node instead of opening its own connection.
+  </p>
+</script>

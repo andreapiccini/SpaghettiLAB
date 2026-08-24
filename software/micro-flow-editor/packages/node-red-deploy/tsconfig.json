@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "references": [{ "path": "../domain" }, { "path": "../core-session" }, { "path": "../system-automation-graph" }, { "path": "../node-red-nodes" }],
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

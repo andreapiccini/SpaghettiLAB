@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: <PROJECT-LICENSE-ID>
+
+zephyr_library()
+
+zephyr_library_sources(example.c)
+zephyr_library_sources_ifdef(CONFIG_SPAGHETTI_EXAMPLE_WORKER
+  example_worker.c
+)

@@ -1,0 +1,126 @@
+/* SPDX-License-Identifier: <PROJECT-LICENSE-ID> */
+
+/**
+ * @file
+ * @brief Public contract for the Example component.
+ * @ingroup spaghetti_example
+ */
+
+#ifndef SPAGHETTI_EXAMPLE_H
+#define SPAGHETTI_EXAMPLE_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include <zephyr/kernel.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @defgroup spaghetti_example Example component
+ * @brief Own and expose the bounded Example operation.
+ * @{
+ */
+
+/** Example component lifecycle state. */
+enum spaghetti_example_state {
+	SPAGHETTI_EXAMPLE_UNINITIALIZED, /**< No resources are owned. */
+	SPAGHETTI_EXAMPLE_READY,         /**< Configuration and dependencies are valid. */
+	SPAGHETTI_EXAMPLE_ERROR,         /**< An unrecoverable component error occurred. */
+};
+
+/** Configuration copied by the Example component during initialization. */
+struct spaghetti_example_config {
+	uint32_t period_ms; /**< Operation period in milliseconds; must be non-zero. */
+	size_t capacity;    /**< Maximum retained elements; must be non-zero. */
+};
+
+/** Result returned by one successful Example operation. */
+struct spaghetti_example_result {
+	int32_t value_milliunits; /**< Signed fixed-point value in 1/1000 units. */
+	int64_t uptime_ms;        /**< Zephyr uptime timestamp in milliseconds. */
+};
+
+/**
+ * @brief Initialize the Example component.
+ *
+ * Validate and copy the complete configuration. State changes to READY only
+ * after every required resource has been initialized successfully.
+ *
+ * @param[in] config Caller-owned configuration, valid for the duration of the
+ *                   call. The component copies values it retains.
+ *
+ * @retval 0 The component reached READY.
+ * @retval -EINVAL @p config or one of its fields is invalid.
+ * @retval -ENODEV A mandatory dependency is unavailable.
+ * @retval -EALREADY The component is already initialized.
+ *
+ * @note Call once from the Zephyr main thread during boot.
+ */
+int spaghetti_example_init(const struct spaghetti_example_config *config);
+
+/**
+ * @brief Perform one bounded Example operation.
+ *
+ * @param[out] result Caller-owned destination, written only on success.
+ * @param[in] timeout Maximum time to wait for completion.
+ *
+ * @retval 0 @p result contains a valid snapshot.
+ * @retval -EINVAL @p result is NULL or @p timeout is invalid.
+ * @retval -EACCES The component is not READY.
+ * @retval -ETIMEDOUT The operation did not finish before @p timeout.
+ * @retval -EIO The backend operation failed.
+ *
+ * @note Thread context only. The function may block for at most @p timeout.
+ */
+int spaghetti_example_read(struct spaghetti_example_result *result,
+			   k_timeout_t timeout);
+
+/**
+ * @brief Return the current Example state.
+ *
+ * @return A coherent state snapshot.
+ *
+ * @note Thread context only. The function may wait briefly for the state lock.
+ */
+enum spaghetti_example_state spaghetti_example_get_state(void);
+
+#if defined(CONFIG_SPAGHETTI_EXAMPLE_WORKER)
+/**
+ * @brief Start the application-lifetime Example worker.
+ *
+ * @retval 0 The worker was created and is ready to receive commands.
+ * @retval -EALREADY The worker has already been started.
+ *
+ * @note Call once from thread context after component initialization.
+ */
+int spaghetti_example_worker_start(void);
+
+/**
+ * @brief Submit one copied command to the Example worker.
+ *
+ * @param[in] correlation_id Caller-selected identifier copied into the command.
+ * @param[in] timeout Maximum time to wait for queue capacity. @c K_FOREVER is
+ *                    rejected so that the caller always has a bounded wait.
+ *
+ * @retval 0 The command was copied into the worker queue.
+ * @retval -EINVAL @p timeout is unbounded.
+ * @retval -EACCES The worker has not been started.
+ * @retval -EAGAIN The queue did not have capacity before @p timeout.
+ *
+ * @note Thread context only when @p timeout can wait. Use @c K_NO_WAIT from
+ *       non-blocking contexts and define the full-queue policy at the caller.
+ */
+int spaghetti_example_worker_submit(uint32_t correlation_id,
+				    k_timeout_t timeout);
+#endif /* CONFIG_SPAGHETTI_EXAMPLE_WORKER */
+
+/** @} */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SPAGHETTI_EXAMPLE_H */
