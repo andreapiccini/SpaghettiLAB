@@ -6303,6 +6303,7 @@
 		(property "Reference" "D4"
 			(at 0 -4 0)
 			(layer "F.SilkS")
+			(hide yes)
 			(uuid "4f22b6c3-5f22-4e62-be18-e037b893e0d8")
 			(effects
 				(font
@@ -6352,6 +6353,7 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -14790,6 +14792,86 @@
 		(layer "F.SilkS")
 		(uuid "7be17722-334c-43ca-afba-1e0806c4f3a5")
 	)
+	(gr_line
+		(start 68.07 121.55)
+		(end 68.07 120.65)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "b17ded99-32d6-4f3c-a2ca-8530f9aa4e91")
+	)
+	(gr_line
+		(start 68.19 112.89)
+		(end 68.74 112.89)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "a5c0759d-7104-4770-b92d-07403c25f821")
+	)
+	(gr_line
+		(start 68.19 113.74)
+		(end 68.19 112.89)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "bf765f04-11ff-4882-b7cb-d4315e48ed8d")
+	)
+	(gr_line
+		(start 68.62 121.55)
+		(end 68.07 121.55)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "49816bee-6e61-43af-b7c0-61ed21d46f1d")
+	)
+	(gr_line
+		(start 69.08 112.875)
+		(end 69.63 112.875)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "688e9b6f-a7cd-47ee-a2b6-291e5d464238")
+	)
+	(gr_line
+		(start 69.63 112.875)
+		(end 69.63 113.775)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "ab651ffa-00b9-413b-be64-4fadc1f74864")
+	)
+	(gr_line
+		(start 69.765 120.685)
+		(end 69.765 121.535)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "2faac0ff-1a9c-4a7e-ad28-776a42b0cc9c")
+	)
+	(gr_line
+		(start 69.765 121.535)
+		(end 69.15 121.535)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "c1b41772-3528-43a6-986b-835ba2dabb14")
+	)
 	(gr_rect
 		(start 71.08 112.1)
 		(end 78.41 119.59)
@@ -17706,6 +17788,32 @@
 			(justify left bottom)
 		)
 	)
+	(gr_text "CORE"
+		(at 69.4575 121.535 90)
+		(layer "F.SilkS" knockout)
+		(uuid "57d2f6e5-72d4-47e5-8138-15264d4d764e")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.2)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "BOARD"
+		(at 69.48 117.525 90)
+		(layer "F.SilkS")
+		(uuid "9ca28f8f-f19a-4586-84b0-dfd96b2b35c1")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.2)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
 	(gr_text "3.3V"
 		(at 80.4 134.7 0)
 		(layer "F.SilkS" knockout)
@@ -17722,6 +17830,18 @@
 		(at 84.83 134.7 0)
 		(layer "F.SilkS" knockout)
 		(uuid "05f61e0e-a7e6-41d6-96bb-b1ba5b9415f6")
+		(effects
+			(font
+				(size 1 1)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "REV A"
+		(at 97.14 116.47 90)
+		(layer "F.SilkS" knockout)
+		(uuid "9bda84e5-9d70-4d16-b930-f15cd3c92972")
 		(effects
 			(font
 				(size 1 1)
@@ -20212,6 +20332,38 @@
 		(uuid "cbf2d2ba-0fb7-4e9d-aa0e-7d4156190fec")
 	)
 	(segment
+		(start 83.25 131.895)
+		(end 83.25 129.97)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "Net-(D2-A)")
+		(uuid "5160ab2a-efc1-48c9-92ce-25f1d8308b69")
+	)
+	(segment
+		(start 82.79 132.355)
+		(end 83.25 131.895)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "Net-(D2-A)")
+		(uuid "67ad31a7-903c-4ce4-94dd-55c09cc8eba0")
+	)
+	(segment
+		(start 77 128.02)
+		(end 77.5 127.52)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "Net-(J18-CC1)")
+		(uuid "5fb0fce4-3022-47e4-81ad-875b4361e4fa")
+	)
+	(segment
+		(start 74.06 128.02)
+		(end 77 128.02)
+		(width 0.2)
+		(layer "F.Cu")
+		(net "Net-(J18-CC1)")
+		(uuid "d9944a4b-9243-47ca-ba01-fc9cd03f6315")
+	)
+	(segment
 		(start 77.15 126.33)
 		(end 78.2 125.28)
 		(width 0.5)
@@ -20428,38 +20580,6 @@
 		(layers "F.Cu" "B.Cu")
 		(net "VBUS")
 		(uuid "d3f8b12e-0e90-4ec5-a808-5fb3d29660bd")
-	)
-	(segment
-		(start 83.25 131.895)
-		(end 83.25 129.97)
-		(width 0.2)
-		(layer "F.Cu")
-		(net "Net-(D2-A)")
-		(uuid "5160ab2a-efc1-48c9-92ce-25f1d8308b69")
-	)
-	(segment
-		(start 82.79 132.355)
-		(end 83.25 131.895)
-		(width 0.2)
-		(layer "F.Cu")
-		(net "Net-(D2-A)")
-		(uuid "67ad31a7-903c-4ce4-94dd-55c09cc8eba0")
-	)
-	(segment
-		(start 77 128.02)
-		(end 77.5 127.52)
-		(width 0.2)
-		(layer "F.Cu")
-		(net "Net-(J18-CC1)")
-		(uuid "5fb0fce4-3022-47e4-81ad-875b4361e4fa")
-	)
-	(segment
-		(start 74.06 128.02)
-		(end 77 128.02)
-		(width 0.2)
-		(layer "F.Cu")
-		(net "Net-(J18-CC1)")
-		(uuid "d9944a4b-9243-47ca-ba01-fc9cd03f6315")
 	)
 	(segment
 		(start 78.35 95)
